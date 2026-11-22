@@ -74,7 +74,7 @@ Rectangle {
 
     SystemClock {
         id: clock
-        precision: SystemClock.Minutes
+        precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
     }
 
     Process {
@@ -208,7 +208,7 @@ Rectangle {
         spacing: 8
 
         Text {
-            text: Qt.formatDateTime(clock.date, "HH:mm")
+            text: ShellState.formatTime(clock.date)
             font.family: Theme.fontFamily
             font.pixelSize: 12
             font.weight: Font.Bold
@@ -216,7 +216,7 @@ Rectangle {
         }
 
         Text {
-            text: Qt.formatDateTime(clock.date, "ddd MMM d")
+            text: ShellState.formatDate(clock.date)
             font.family: Theme.fontFamily
             font.pixelSize: 11
             color: Theme.fgSurfaceVariant
@@ -247,6 +247,69 @@ Rectangle {
             width: 1
             height: parent.height
             visible: trayStrip.hasItems
+            color: Theme.outlineVariant
+        }
+
+        // Active-Only Status Indicators (DND / Keep Awake)
+        Rectangle {
+            width: 28
+            height: parent.height
+            radius: 0
+            visible: ShellState.dnd
+            color: dndBarMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+            Text {
+                anchors.centerIn: parent
+                text: "󰂛"
+                font.family: Theme.iconFont
+                font.pixelSize: 12
+                color: Theme.warning
+            }
+
+            MouseArea {
+                id: dndBarMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: ShellState.toggleDnd()
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: ShellState.dnd
+            color: Theme.outlineVariant
+        }
+
+        Rectangle {
+            width: 28
+            height: parent.height
+            radius: 0
+            visible: ShellState.keepAwake
+            color: awakeBarMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+            Text {
+                anchors.centerIn: parent
+                text: "󰅶"
+                font.family: Theme.iconFont
+                font.pixelSize: 12
+                color: Theme.tertiary
+            }
+
+            MouseArea {
+                id: awakeBarMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: ShellState.toggleKeepAwake()
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: ShellState.keepAwake
             color: Theme.outlineVariant
         }
 

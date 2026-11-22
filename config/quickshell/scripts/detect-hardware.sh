@@ -72,6 +72,15 @@ if not has_touchpad and shutil.which("mmsg"):
 has_wlr_randr = shutil.which("wlr-randr") is not None
 has_audio = shutil.which("pactl") is not None
 has_pavucontrol = shutil.which("pavucontrol") is not None
+has_power_profiles = shutil.which("powerprofilesctl") is not None
+has_xdg_mime = shutil.which("xdg-mime") is not None
+
+night_light_cmd = ""
+for candidate in ("hyprsunset", "wlsunset", "gammastep"):
+    if shutil.which(candidate):
+        night_light_cmd = candidate
+        break
+has_night_light = bool(night_light_cmd)
 
 locker_cmd = ""
 for candidate in ("hyprlock", "swaylock", "waylock"):
@@ -100,6 +109,10 @@ payload = {
     "hasWlrRandr": has_wlr_randr,
     "hasAudio": has_audio,
     "hasPavucontrol": has_pavucontrol,
+    "nightLightCmd": night_light_cmd,
+    "hasNightLight": has_night_light,
+    "hasPowerProfiles": has_power_profiles,
+    "hasXdgMime": has_xdg_mime,
     "lockerCmd": locker_cmd,
     "hasLocker": has_locker,
     "deviceType": device_type,

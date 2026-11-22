@@ -123,8 +123,8 @@ Item {
         osdHideTimer.stop();
         root.islandState = "notification";
         const timeoutMs = (notif.expireTimeout && notif.expireTimeout > 0)
-            ? Math.max(2500, Math.min(10000, notif.expireTimeout))
-            : 4500;
+            ? Math.max(1500, Math.min(15000, notif.expireTimeout))
+            : ShellState.notifTimeoutMs;
         notifHideTimer.interval = timeoutMs;
         if (!hoverHandler.hovered)
             notifHideTimer.restart();

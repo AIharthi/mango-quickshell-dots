@@ -14,9 +14,21 @@ ColumnLayout {
     property string activeCursor: "catppuccin-mocha-dark-cursors"
     property int activeCursorSize: 24
 
+    property string cpuInfo: ""
+    property var gpusInfo: []
+    property real memUsedGb: 0
+    property real memTotalGb: 0
+    property int memUsedPct: 0
+    property string uptimeStr: ""
+    property string timezoneStr: ""
+    property var powerProfiles: ({ hasPowerProfiles: false, active: "", available: [] })
+    property var disks: []
+
     function loadOverrides(): void {
         if (!localProc.running)
             localProc.running = true;
+        if (!sysInfoProc.running)
+            sysInfoProc.running = true;
     }
 
     function resetOverrides(): void {
@@ -24,7 +36,19 @@ ColumnLayout {
             resetProc.running = true;
     }
 
+    function setPowerProfile(prof: string): void {
+        if (powerProfProc.running)
+            return;
+        powerProfProc.command = ["powerprofilesctl", "set", prof];
+        powerProfProc.running = true;
+    }
+
     Component.onCompleted: loadOverrides()
+
+    SystemClock {
+        id: sysClock
+        precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
+    }
 
     Process {
         id: localProc
@@ -48,12 +72,46 @@ ColumnLayout {
     }
 
     Process {
+        id: sysInfoProc
+        command: [Quickshell.shellPath("scripts/manage-settings.sh"), "system-info"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    if (d.cpu) root.cpuInfo = String(d.cpu);
+                    if (Array.isArray(d.gpus)) root.gpusInfo = d.gpus;
+                    if (d.memory) {
+                        root.memUsedGb = Number(d.memory.usedGb || 0);
+                        root.memTotalGb = Number(d.memory.totalGb || 0);
+                        root.memUsedPct = Number(d.memory.usedPct || 0);
+                    }
+                    if (d.uptime) root.uptimeStr = String(d.uptime);
+                    if (d.timezone) root.timezoneStr = String(d.timezone);
+                    if (d.powerProfiles) root.powerProfiles = d.powerProfiles;
+                    if (Array.isArray(d.disks)) root.disks = d.disks;
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: powerProfProc
+        onExited: {
+            if (!sysInfoProc.running)
+                sysInfoProc.running = true;
+        }
+    }
+
+    Process {
         id: resetProc
         command: [Quickshell.shellPath("scripts/apply-local-setting.sh"), "reset"]
         onExited: root.loadOverrides()
     }
 
-    // --- 1. Host & OS Summary ---
+    // --- 1. Device & Hardware Summary ---
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: hostCol.implicitHeight + 24
@@ -69,7 +127,7 @@ ColumnLayout {
             spacing: 8
 
             Text {
-                text: "DEVICE & OS"
+                text: "DEVICE & HARDWARE"
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
@@ -122,10 +180,355 @@ ColumnLayout {
                     }
                 }
             }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: 10
+                rowSpacing: 6
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: cpuCol.implicitHeight + 12
+                    radius: Theme.r(9)
+                    color: Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    ColumnLayout {
+                        id: cpuCol
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 2
+
+                        Text {
+                            text: "PROCESSOR & MEMORY"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: root.cpuInfo.length > 0 ? root.cpuInfo : "Detecting CPU..."
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: Font.DemiBold
+                            color: Theme.fgSurface
+                        }
+
+                        Text {
+                            text: "RAM: " + root.memUsedGb.toFixed(1) + " / " + root.memTotalGb.toFixed(1) + " GB (" + root.memUsedPct + "%)"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: Theme.secondary
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: gpuCol.implicitHeight + 12
+                    radius: Theme.r(9)
+                    color: Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    ColumnLayout {
+                        id: gpuCol
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 2
+
+                        Text {
+                            text: "GRAPHICS & SESSION"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: root.gpusInfo.length > 0 ? root.gpusInfo.join(" + ") : "Wayland GPU"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: Font.DemiBold
+                            color: Theme.fgSurface
+                        }
+
+                        Text {
+                            text: "Up " + (root.uptimeStr || "-") + " · " + (root.timezoneStr || "Local")
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: Theme.tertiary
+                        }
+                    }
+                }
+            }
         }
     }
 
-    // --- 2. Detected Hardware Capabilities ---
+    // --- 2. Date & Time Format ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: clockCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: clockCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "󰥔"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 14
+                    color: Theme.primary
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "DATE & TIME FORMAT"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: previewClockTxt.implicitWidth + 14
+                    radius: Theme.r(7)
+                    color: Theme.withAlpha(Theme.primary, 0.16)
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.withAlpha(Theme.primary, 0.4)
+
+                    Text {
+                        id: previewClockTxt
+                        anchors.centerIn: parent
+                        text: ShellState.formatTime(sysClock.date) + "  ·  " + ShellState.formatDate(sysClock.date)
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Use 24-Hour Clock"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.clock24h
+                    onToggled: ShellState.setPref("clock24h", !ShellState.clock24h)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Show Seconds in Bar & Island"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.clockShowSeconds
+                    onToggled: ShellState.setPref("clockShowSeconds", !ShellState.clockShowSeconds)
+                }
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Repeater {
+                    model: ["ddd d MMM", "yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy"]
+
+                    delegate: Rectangle {
+                        id: dfPill
+                        required property string modelData
+                        readonly property bool selected: ShellState.dateFormat === dfPill.modelData
+
+                        implicitHeight: 24
+                        implicitWidth: dfTxt.implicitWidth + 14
+                        radius: Theme.r(7)
+                        color: dfPill.selected
+                            ? Theme.withAlpha(Theme.secondary, 0.22)
+                            : (dfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: dfPill.selected ? 1 : Theme.cardBorderWidth
+                        border.color: dfPill.selected ? Theme.secondary : Theme.cardBorder
+
+                        Text {
+                            id: dfTxt
+                            anchors.centerIn: parent
+                            text: Qt.formatDateTime(sysClock.date, dfPill.modelData)
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: dfPill.selected ? Font.Bold : Font.Medium
+                            color: dfPill.selected ? Theme.secondary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: dfMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("dateFormat", dfPill.modelData)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 3. Disk Storage ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: diskCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: diskCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 8
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "󰋊"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 14
+                    color: Theme.secondary
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "DISK STORAGE"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+            }
+
+            Repeater {
+                model: root.disks
+
+                delegate: Rectangle {
+                    id: diskRow
+                    required property var modelData
+                    readonly property int pct: Number(diskRow.modelData.usedPct || 0)
+                    readonly property color barColor: diskRow.pct >= 88
+                        ? Theme.error
+                        : (diskRow.pct >= 72 ? Theme.warning : Theme.primary)
+
+                    Layout.fillWidth: true
+                    implicitHeight: diskInner.implicitHeight + 14
+                    radius: Theme.r(10)
+                    color: Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    ColumnLayout {
+                        id: diskInner
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 5
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Text {
+                                text: diskRow.modelData.mount
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                                color: Theme.fgSurface
+                            }
+
+                            Text {
+                                text: "(" + diskRow.modelData.device + " · " + diskRow.modelData.fs + ")"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 9
+                                color: Theme.fgSurfaceVariant
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: diskRow.modelData.usedGb + " / " + diskRow.modelData.totalGb + " GB (" + diskRow.modelData.availGb + " GB free)"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                color: Theme.fgSurfaceVariant
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 6
+                            radius: Theme.r(3)
+                            color: Theme.surfaceContainerHighest
+
+                            Rectangle {
+                                width: Math.max(0, Math.min(parent.width, parent.width * (diskRow.pct / 100.0)))
+                                height: parent.height
+                                radius: Theme.r(3)
+                                color: diskRow.barColor
+
+                                Behavior on width {
+                                    enabled: !Theme.isSimple
+                                    NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                visible: root.disks.length === 0
+                text: "No mounted block storage reported"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                color: Theme.fgSurfaceVariant
+            }
+        }
+    }
+
+    // --- 4. Detected Hardware Capabilities ---
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: capCol.implicitHeight + 24
@@ -175,7 +578,10 @@ ColumnLayout {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: DeviceCaps.refresh()
+                        onClicked: {
+                            DeviceCaps.refresh();
+                            root.loadOverrides();
+                        }
                     }
                 }
             }
@@ -188,14 +594,18 @@ ColumnLayout {
 
                 Repeater {
                     model: [
-                        { label: "Audio",     ok: DeviceCaps.hasAudio },
-                        { label: "Displays",  ok: DeviceCaps.hasWlrRandr },
-                        { label: "Wi-Fi",     ok: DeviceCaps.hasWifi },
-                        { label: "Bluetooth", ok: DeviceCaps.hasBluetooth },
-                        { label: "Battery",   ok: DeviceCaps.hasBattery },
-                        { label: "Backlight", ok: DeviceCaps.hasBacklight },
-                        { label: "Touchpad",  ok: DeviceCaps.hasTouchpad },
-                        { label: "Locker",    ok: DeviceCaps.hasLocker }
+                        { label: "Audio",       ok: DeviceCaps.hasAudio },
+                        { label: "Displays",    ok: DeviceCaps.hasWlrRandr },
+                        { label: "Wi-Fi",       ok: DeviceCaps.hasWifi },
+                        { label: "Bluetooth",   ok: DeviceCaps.hasBluetooth },
+                        { label: "Battery",     ok: DeviceCaps.hasBattery },
+                        { label: "Backlight",   ok: DeviceCaps.hasBacklight },
+                        { label: "Touchpad",    ok: DeviceCaps.hasTouchpad },
+                        { label: "Locker",      ok: DeviceCaps.hasLocker },
+                        { label: "Night Light", ok: DeviceCaps.hasNightLight },
+                        { label: "Power Prof.", ok: DeviceCaps.hasPowerProfiles },
+                        { label: "XDG MIME",    ok: DeviceCaps.hasXdgMime },
+                        { label: "Idle Inhib.", ok: true }
                     ]
 
                     delegate: Rectangle {
@@ -235,7 +645,7 @@ ColumnLayout {
         }
     }
 
-    // --- 3. Power Actions ---
+    // --- 5. Power, Idle Inhibitor & Session ---
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: pwrCol.implicitHeight + 24
@@ -248,14 +658,109 @@ ColumnLayout {
             id: pwrCol
             anchors.fill: parent
             anchors.margins: 12
-            spacing: 8
+            spacing: 10
 
             Text {
-                text: "POWER & SESSION"
+                text: "POWER, IDLE & SESSION"
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    text: "󰅶"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 15
+                    color: ShellState.keepAwake ? Theme.tertiary : Theme.fgSurfaceVariant
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        text: "Keep Screen Awake (Idle Inhibitor)"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
+                    }
+
+                    Text {
+                        text: "Prevents Wayland display sleep or automatic locking while enabled"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.keepAwake
+                    activeColor: Theme.tertiary
+                    onToggled: ShellState.toggleKeepAwake()
+                }
+            }
+
+            // Conditional Power Profile Selector (only if power-profiles-daemon is available)
+            ColumnLayout {
+                visible: !!root.powerProfiles.hasPowerProfiles
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    text: "POWER PROFILE"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: root.powerProfiles.available || []
+
+                        delegate: Rectangle {
+                            id: ppPill
+                            required property string modelData
+                            readonly property bool selected: root.powerProfiles.active === ppPill.modelData
+
+                            implicitHeight: 26
+                            implicitWidth: ppTxt.implicitWidth + 16
+                            radius: Theme.r(8)
+                            color: ppPill.selected
+                                ? Theme.withAlpha(Theme.primary, 0.22)
+                                : (ppMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                            border.width: ppPill.selected ? 1 : Theme.cardBorderWidth
+                            border.color: ppPill.selected ? Theme.primary : Theme.cardBorder
+
+                            Text {
+                                id: ppTxt
+                                anchors.centerIn: parent
+                                text: ppPill.modelData
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                font.weight: ppPill.selected ? Font.Bold : Font.Medium
+                                color: ppPill.selected ? Theme.primary : Theme.fgSurface
+                            }
+
+                            MouseArea {
+                                id: ppMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.setPowerProfile(ppPill.modelData)
+                            }
+                        }
+                    }
+                }
             }
 
             PowerMenu {
@@ -264,7 +769,7 @@ ColumnLayout {
         }
     }
 
-    // --- 4. Per-Device MangoWC Overrides ---
+    // --- 6. Per-Device MangoWC Overrides ---
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: 46

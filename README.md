@@ -12,14 +12,17 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
     - **Laptops** automatically surface live **Battery % / charging status** (in the Dynamic Island pill, Simple Bar, and System Monitor), **Backlight brightness**, **Wi-Fi**, **Bluetooth**, and **Touchpad** settings.
   - **Multi-Monitor Support**: Wraps `PanelWindow`s in Quickshell `Variants` over `Quickshell.screens`, syncing per-monitor MangoWC tags across all connected displays.
   - **Per-Device MangoWC Overrides (`~/.config/mango/local.conf`)**: Included via `source_optional=~/.config/mango/local.conf` (ignored by Git and preserved across `./install.sh` re-runs), so every machine can pull the same dotfiles while keeping its own monitor rules, keyboard layout, and touchpad settings.
-- **Built-in Quickshell Settings App (`Super + S`)** *(with smooth open/close, sidebar indicator, toggle & page transitions)*
-  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), theme presets or dynamic Matugen mode, Dark/Light scheme, **Cursor Theme & Size** (`20`–`48px` + auto-hide idle/typing, synced across MangoWC, GTK 3/4, `~/.icons/default`, and `gsettings`), and MangoWC animation styles/speeds (`zoom`/`slide`/`fade`/`none`), shadows, border width, blur opacity/radius/passes/saturation/brightness, corner radius, and gaps (`mode-prefs.json`).
+- **Built-in Quickshell Settings App (`Super + S`)** *(with live sidebar search, smooth open/close, sliding indicator, toggle & page transitions)*
+  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), theme presets or dynamic Matugen mode, Dark/Light scheme, **Typography & System Font** selector & point size (synced across Quickshell, GTK 3/4, `gsettings`, Foot, and Kitty), **Cursor Theme & Size** (`20`–`48px` + auto-hide idle/typing, synced across MangoWC, GTK 3/4, `~/.icons/default`, and `gsettings`), MangoWC animation styles/speeds (`zoom`/`slide`/`fade`/`none`), shadows, border width, blur parameters, corner radius, and gaps.
   - **Windows**: Focus follows mouse (`sloppy_focus`), cursor warp (`warp_cursor`), focus on activate, new-as-master, master area ratio, smart gaps, drag-to-swap, scroller column proportion, and floating magnetic snapping (`~/.config/mango/local.conf`).
-  - **Audio**: Output & microphone volume sliders, mute toggles, live default sink/source switching via `pactl`, and quick launch for `pavucontrol`.
-  - **Displays**: Inspect connected outputs (`wlr-randr`), switch resolution, refresh rate, and fractional scaling live, or persist `monitor_rule` directly to `~/.config/mango/local.conf`.
+  - **Audio**: Output & microphone volume sliders, mute toggles, live default sink/source switching, **Application Volume Mixer** (per-stream volume & mute via `pactl --format=json list sink-inputs`), and quick launch for `pavucontrol`.
+  - **Displays**: Inspect connected outputs (`wlr-randr`), switch resolution, refresh rate, fractional scaling, **Orientation / Rotation** (`0°`–`270°`), and **Adaptive Sync (VRR)** live or persist `monitor_rule` to `~/.config/mango/local.conf`, plus conditional **Night Light** *(when `hyprsunset`/`wlsunset`/`gammastep` is installed)*.
   - **Network & Bluetooth** *(shown only when hardware exists)*: Wi-Fi radio toggle, scanning, and network connect (with inline password prompt); Bluetooth power toggle, scanning, and device connect/disconnect.
   - **Input**: Per-device keyboard layouts (`xkb_rules_layout`), switch shortcut (`xkb_rules_options`), repeat rate/delay, NumLock on startup, mouse/trackpad acceleration profile (`Flat` / `Adaptive`) & pointer speed, natural scrolling, and touchpad controls *(touchpad section shown only when a touchpad is detected)*.
-  - **System**: Host & distro summary, active mode/cursor readout, detected hardware capability matrix, embedded **Power Menu**, and MangoWC reload / `local.conf` reset.
+  - **Notifications**: **Do Not Disturb** toggle (`󰂛` active badge in bar & island), popup auto-hide duration (`2.5s`–`10s`), **Test Notification** trigger, and scrollable session **Notification History** with individual dismiss and Clear All.
+  - **Apps & Startup**: Configure **Quick-Launch Keybind Apps** (`Super + Return` / `B` / `Z` via `launch-app.sh`), system **XDG Default Apps** (`xdg-mime` for Web, Files, Text, Images, Video), and **Startup Applications** (`exec_once` in `~/.config/mango/local.conf` alongside built-in `autostart.sh` services).
+  - **Shortcuts**: Searchable, categorized **MangoWC Keybindings & Mouse Actions** viewer parsed directly from your live compositor config.
+  - **System**: CPU, GPU, RAM, uptime, **Disk Storage** usage bars, **Date & Time** format (`24h`/`12h`, seconds, date pattern, timezone), **Keep Screen Awake** (`Wayland IdleInhibitor`), conditional **Power Profiles** (`powerprofilesctl`), detected hardware capability badges, embedded **Power Menu**, and MangoWC reload / `local.conf` reset.
 - **Morphing Dynamic Island (`Quickshell`)**
   - Compact top pill showing time, optional battery indicator, and collapsible Spotify/MPRIS mini-player with spinning album art and equalizer bars.
   - Hover or press `Super + D` to open the **Hub**: MPRIS Media Card, live CPU/RAM (+ optional Battery) System Monitor, interactive MangoWC Tags (`1`–`9`) + layout switcher, hardware-aware Quick Controls, **System Tray** (`StatusNotifierItem`), and collapsible **Power Menu** (Lock, Suspend, Logout, Reboot, Poweroff with confirmation).
@@ -42,10 +45,10 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 ├── fonts/                        # Bundled JetBrains Mono & Symbols Nerd Font
 ├── config/
 │   ├── mango/                    # MangoWC config, mode.conf, theme.conf, autostart.sh
-│   ├── quickshell/               # ShellRoot, Theme & DeviceCaps singletons, JSON state
+│   ├── quickshell/               # ShellRoot, Theme, DeviceCaps & ShellState singletons, JSON state
 │   │   ├── components/           # DynamicIsland, SimpleBar, QuickControls, SystemTrayStrip, PowerMenu, etc.
-│   │   ├── settings/             # Modular Settings app (Appearance, Windows, Audio, Display, Network, BT, Input, System)
-│   │   └── scripts/              # apply-mode.sh, apply-theme.sh, detect-hardware.sh, apply-local-setting.sh, lock.sh, etc.
+│   │   ├── settings/             # Modular Settings app (11 pages: Appearance .. Shortcuts, System)
+│   │   └── scripts/              # apply-mode.sh, apply-theme.sh, manage-settings.sh, launch-app.sh, detect-hardware.sh, etc.
 │   ├── matugen/                  # Matugen config & templates (QS, GTK3/4, Mango, Foot, Kitty)
 │   ├── foot/                     # Foot terminal config + synced colors
 │   ├── kitty/                    # Kitty terminal config + synced colors
@@ -187,8 +190,8 @@ cd mango-quickshell-dots
 
 1. Place your wallpapers in `~/Pictures/Wallpapers/` (`.png`, `.jpg`, `.jpeg`, `.webp`).
 2. Open the Theme Switcher (`Super + Shift + T`), select **Dynamic (Matugen)** or **Presets**, and click any wallpaper to apply it live.
-3. Press `Super + S` to open **Settings** and configure per-device display resolution/scaling, keyboard layouts, touchpad/mouse options, audio defaults, or blur/gap tuning — per-device hardware rules are written cleanly to `~/.config/mango/local.conf`.
-4. Optional: edit `~/.config/mango/config.conf` if you want different default app binds (`SUPER+B` → `helium`, `SUPER+Z` → `zedit`) or cursor theme (`catppuccin-mocha-dark-cursors`).
+3. Press `Super + S` to open **Settings** and configure fonts, displays, audio mixer, notifications, default apps/startup entries, or per-device hardware rules — hardware overrides are written cleanly to `~/.config/mango/local.conf` and UI/default-app preferences to `~/.config/quickshell/shell-prefs.json`.
+4. Optional: customize `Super + Return / B / Z` default terminal/browser/editor directly inside **Settings → Apps & Startup** (powered by `launch-app.sh`).
 
 ---
 
@@ -196,7 +199,8 @@ cd mango-quickshell-dots
 
 | Shortcut | Action |
 | --- | --- |
-| `Super + Return` | Open terminal (`foot`) |
+| `Super + Return` | Open default terminal (`launch-app.sh terminal`) |
+| `Super + B` / `Super + Z` | Open default browser / editor (`launch-app.sh browser` / `editor`) |
 | `Super + Space` / `Super + A` | Toggle Quickshell App Launcher |
 | `Super + D` | Toggle Dynamic Island Hub |
 | `Super + S` | Toggle Built-in Settings App |
@@ -221,10 +225,12 @@ qs ipc call island setShellMode default
 qs ipc call island setShellMode simple
 qs ipc call island setShellMode blur
 
-# Settings Window
+# Settings Window & Toggles
 qs ipc call island toggleSettings
-qs ipc call island openSettings audio   # appearance | windows | audio | displays | network | bluetooth | input | system
+qs ipc call island openSettings audio   # appearance | windows | audio | displays | network | bluetooth | input | notifications | apps | shortcuts | system
 qs ipc call island closeSettings
+qs ipc call island toggleDnd
+qs ipc call island toggleKeepAwake
 ```
 
 ---

@@ -14,10 +14,16 @@ ColumnLayout {
     property int cursorHideTimeout: 0
     property bool cursorHideKeypress: false
     property var availableCursors: ["catppuccin-mocha-dark-cursors", "Adwaita"]
+    property var monospaceFonts: ["JetBrains Mono", "DejaVu Sans Mono", "Liberation Mono"]
+    property var allFonts: []
+    property bool showAllFonts: false
+    property string fontSearch: ""
 
     function loadCursorSettings(): void {
         if (!cursorReadProc.running)
             cursorReadProc.running = true;
+        if (!fontListProc.running)
+            fontListProc.running = true;
     }
 
     function setLocal(key: string, val: var): void {
@@ -56,6 +62,25 @@ ColumnLayout {
                         root.cursorHideKeypress = d.cursor_hide_on_keypress;
                     if (Array.isArray(d.availableCursors) && d.availableCursors.length > 0)
                         root.availableCursors = d.availableCursors;
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: fontListProc
+        command: [Quickshell.shellPath("scripts/manage-settings.sh"), "list-fonts"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    if (Array.isArray(d.monospace) && d.monospace.length > 0)
+                        root.monospaceFonts = d.monospace;
+                    if (Array.isArray(d.families) && d.families.length > 0)
+                        root.allFonts = d.families;
                 } catch (err) {}
             }
         }
@@ -360,7 +385,240 @@ ColumnLayout {
         }
     }
 
-    // --- 3. Cursor Theme, Size & Auto-Hide ---
+    // --- 3. Typography & System Font ---
+    Rectangle {
+        id: fontCard
+        Layout.fillWidth: true
+        implicitHeight: fontCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        readonly property var displayedFonts: {
+            const base = root.showAllFonts && root.allFonts.length > 0 ? root.allFonts : root.monospaceFonts;
+            const q = root.fontSearch.trim().toLowerCase();
+            if (q.length === 0)
+                return base.slice(0, 24);
+            const filtered = [];
+            for (let i = 0; i < base.length; i++) {
+                if (base[i].toLowerCase().indexOf(q) !== -1)
+                    filtered.push(base[i]);
+                if (filtered.length >= 24)
+                    break;
+            }
+            return filtered;
+        }
+
+        ColumnLayout {
+            id: fontCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "TYPOGRAPHY & SYSTEM FONT (SHELL · GTK · TERMINAL)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: allFontsLbl.implicitWidth + 14
+                    radius: Theme.r(7)
+                    color: root.showAllFonts ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: root.showAllFonts ? Theme.secondary : Theme.cardBorder
+
+                    Text {
+                        id: allFontsLbl
+                        anchors.centerIn: parent
+                        text: root.showAllFonts ? "All Fonts" : "Monospace"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: root.showAllFonts ? Theme.secondary : Theme.fgSurfaceVariant
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.showAllFonts = !root.showAllFonts
+                    }
+                }
+            }
+
+            // Optional Filter Input when exploring fonts
+            Rectangle {
+                visible: root.showAllFonts || root.monospaceFonts.length > 10
+                Layout.fillWidth: true
+                implicitHeight: 28
+                radius: Theme.r(8)
+                color: Theme.subCardBg
+                border.width: fontFilterInput.activeFocus ? 1 : Theme.cardBorderWidth
+                border.color: fontFilterInput.activeFocus ? Theme.primary : Theme.cardBorder
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 8
+                    spacing: 6
+
+                    Text {
+                        text: "󰍉"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 11
+                        color: Theme.fgSurfaceVariant
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        implicitHeight: 16
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Filter font families..."
+                            visible: fontFilterInput.text.length === 0
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        TextInput {
+                            id: fontFilterInput
+                            anchors.fill: parent
+                            verticalAlignment: TextInput.AlignVCenter
+                            text: root.fontSearch
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: Theme.fgSurface
+                            clip: true
+                            onTextEdited: root.fontSearch = text
+                        }
+                    }
+                }
+            }
+
+            // Font Family Chips
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Repeater {
+                    model: fontCard.displayedFonts
+
+                    delegate: Rectangle {
+                        id: fontPill
+                        required property string modelData
+                        readonly property bool selected: ShellState.uiFontFamily === fontPill.modelData
+
+                        implicitHeight: 28
+                        implicitWidth: fontNameTxt.implicitWidth + 18
+                        radius: Theme.r(8)
+                        color: fontPill.selected
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (fontPillMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: fontPill.selected ? 1 : Theme.cardBorderWidth
+                        border.color: fontPill.selected ? Theme.primary : Theme.cardBorder
+                        scale: fontPillMouse.pressed ? 0.96 : 1.0
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.isSimple
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
+
+                        Text {
+                            id: fontNameTxt
+                            anchors.centerIn: parent
+                            text: fontPill.modelData
+                            font.family: fontPill.modelData
+                            font.pixelSize: 11
+                            font.weight: fontPill.selected ? Font.Bold : Font.Normal
+                            color: fontPill.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: fontPillMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setFont(fontPill.modelData, ShellState.uiFontSize)
+                        }
+                    }
+                }
+            }
+
+            // Font Size + Sample Preview Row
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "Font Size (GTK / Terminal)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Item { Layout.fillWidth: true }
+
+                RowLayout {
+                    spacing: 5
+
+                    Repeater {
+                        model: [9, 10, 11, 12]
+
+                        delegate: Rectangle {
+                            id: fSzPill
+                            required property int modelData
+                            readonly property bool selected: ShellState.uiFontSize === fSzPill.modelData
+
+                            implicitHeight: 24
+                            implicitWidth: fSzLbl.implicitWidth + 14
+                            radius: Theme.r(7)
+                            color: fSzPill.selected
+                                ? Theme.withAlpha(Theme.secondary, 0.22)
+                                : (fSzMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                            border.width: fSzPill.selected ? 1 : Theme.cardBorderWidth
+                            border.color: fSzPill.selected ? Theme.secondary : Theme.cardBorder
+
+                            Text {
+                                id: fSzLbl
+                                anchors.centerIn: parent
+                                text: fSzPill.modelData + "pt"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                font.weight: fSzPill.selected ? Font.Bold : Font.Medium
+                                color: fSzPill.selected ? Theme.secondary : Theme.fgSurface
+                            }
+
+                            MouseArea {
+                                id: fSzMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: ShellState.setFont(ShellState.uiFontFamily, fSzPill.modelData)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 4. Cursor Theme, Size & Auto-Hide ---
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: curCol.implicitHeight + 24

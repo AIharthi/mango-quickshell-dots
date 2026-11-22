@@ -18,6 +18,7 @@ ColumnLayout {
     property string defaultSource: ""
     property var sinks: []
     property var sources: []
+    property var sinkInputs: []
 
     function refresh(): void {
         if (!audioQueryProc.running)
@@ -36,6 +37,34 @@ ColumnLayout {
         root.inVolume = c;
         root.inMuted = c <= 0.001;
         Quickshell.execDetached(["pactl", "set-source-volume", "@DEFAULT_SOURCE@", Math.round(c * 100) + "%"]);
+    }
+
+    function setStreamVolume(streamIdx: int, ratio: real): void {
+        const c = Math.max(0.0, Math.min(1.5, ratio));
+        const pct = Math.round(c * 100);
+        const updated = [];
+        for (let i = 0; i < root.sinkInputs.length; i++) {
+            const it = root.sinkInputs[i];
+            if (it.index === streamIdx)
+                updated.push(Object.assign({}, it, { vol: c, mute: pct <= 0 }));
+            else
+                updated.push(it);
+        }
+        root.sinkInputs = updated;
+        Quickshell.execDetached(["pactl", "set-sink-input-volume", String(streamIdx), pct + "%"]);
+    }
+
+    function toggleStreamMute(streamIdx: int): void {
+        const updated = [];
+        for (let i = 0; i < root.sinkInputs.length; i++) {
+            const it = root.sinkInputs[i];
+            if (it.index === streamIdx)
+                updated.push(Object.assign({}, it, { mute: !it.mute }));
+            else
+                updated.push(it);
+        }
+        root.sinkInputs = updated;
+        Quickshell.execDetached(["pactl", "set-sink-input-mute", String(streamIdx), "toggle"]);
     }
 
     function runAudioAction(cmd: list<string>): void {
@@ -60,13 +89,26 @@ ColumnLayout {
             "  return int(m.group(1))/100.0 if m else 0.5\n" +
             "sinks_raw = out(['pactl','--format=json','list','sinks'])\n" +
             "srcs_raw = out(['pactl','--format=json','list','sources'])\n" +
+            "inputs_raw = out(['pactl','--format=json','list','sink-inputs'])\n" +
             "sinks = [{'name':x['name'],'desc':x.get('description') or x['name']} for x in (json.loads(sinks_raw) if sinks_raw else [])]\n" +
             "sources = [{'name':x['name'],'desc':x.get('description') or x['name']} for x in (json.loads(srcs_raw) if srcs_raw else []) if not x['name'].endswith('.monitor')]\n" +
+            "def stream_pct(v):\n" +
+            "  vals = []\n" +
+            "  for ch in (v or {}).values():\n" +
+            "    m = re.search(r'(\\d+)%', str(ch.get('value_percent','')))\n" +
+            "    if m: vals.append(int(m.group(1)))\n" +
+            "  return (sum(vals)/len(vals)/100.0) if vals else 1.0\n" +
+            "inputs = []\n" +
+            "for x in (json.loads(inputs_raw) if inputs_raw else []):\n" +
+            "  p = x.get('properties') or {}\n" +
+            "  app = p.get('application.name') or p.get('application.process.binary') or 'Audio Stream'\n" +
+            "  media = p.get('media.name') or ''\n" +
+            "  inputs.append({'index': x.get('index', 0), 'name': app, 'media': media if media != app else '', 'mute': bool(x.get('mute')), 'vol': stream_pct(x.get('volume'))})\n" +
             "sv = out(['pactl','get-sink-volume','@DEFAULT_SINK@'])\n" +
             "sm = out(['pactl','get-sink-mute','@DEFAULT_SINK@'])\n" +
             "iv = out(['pactl','get-source-volume','@DEFAULT_SOURCE@'])\n" +
             "im = out(['pactl','get-source-mute','@DEFAULT_SOURCE@'])\n" +
-            "print(json.dumps({'defaultSink':out(['pactl','get-default-sink']).strip(),'defaultSource':out(['pactl','get-default-source']).strip(),'outVol':pct(sv),'outMuted':('yes' in sm),'inVol':pct(iv),'inMuted':('yes' in im),'sinks':sinks,'sources':sources}))"
+            "print(json.dumps({'defaultSink':out(['pactl','get-default-sink']).strip(),'defaultSource':out(['pactl','get-default-source']).strip(),'outVol':pct(sv),'outMuted':('yes' in sm),'inVol':pct(iv),'inMuted':('yes' in im),'sinks':sinks,'sources':sources,'sinkInputs':inputs}))"
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -83,6 +125,7 @@ ColumnLayout {
                     root.inMuted = !!d.inMuted;
                     root.sinks = Array.isArray(d.sinks) ? d.sinks : [];
                     root.sources = Array.isArray(d.sources) ? d.sources : [];
+                    root.sinkInputs = Array.isArray(d.sinkInputs) ? d.sinkInputs : [];
                 } catch (err) {}
             }
         }
@@ -516,6 +559,187 @@ ColumnLayout {
             Text {
                 visible: root.sources.length === 0
                 text: "No microphone input devices detected"
+                font.family: Theme.fontFamily
+                font.pixelSize: 11
+                color: Theme.fgSurfaceVariant
+            }
+        }
+    }
+
+    // --- 3. Application Volume Mixer ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: appMixCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: appMixCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "APPLICATION MIXER (ACTIVE STREAMS)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: mixRefLbl.implicitWidth + 12
+                    radius: Theme.r(7)
+                    color: mixRefMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: mixRefLbl
+                        anchors.centerIn: parent
+                        text: "Refresh"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        id: mixRefMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.refresh()
+                    }
+                }
+            }
+
+            Repeater {
+                model: root.sinkInputs
+
+                delegate: Rectangle {
+                    id: streamRow
+                    required property var modelData
+                    readonly property real clampedRatio: Math.max(0.0, Math.min(1.0, Number(streamRow.modelData.vol || 0)))
+
+                    Layout.fillWidth: true
+                    implicitHeight: 44
+                    radius: Theme.r(11)
+                    color: Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 10
+
+                        Rectangle {
+                            implicitWidth: 26
+                            implicitHeight: 26
+                            radius: Theme.r(8)
+                            color: streamRow.modelData.mute ? Theme.withAlpha(Theme.error, 0.18) : Theme.withAlpha(Theme.primary, 0.16)
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: streamRow.modelData.mute ? "󰖁" : "󰎈"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 13
+                                color: streamRow.modelData.mute ? Theme.error : Theme.primary
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.toggleStreamMute(streamRow.modelData.index)
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.preferredWidth: 150
+                            spacing: 1
+
+                            Text {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: streamRow.modelData.name
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                                color: streamRow.modelData.mute ? Theme.fgSurfaceVariant : Theme.fgSurface
+                            }
+
+                            Text {
+                                visible: (streamRow.modelData.media || "").length > 0
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: streamRow.modelData.media || ""
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 9
+                                color: Theme.fgSurfaceVariant
+                            }
+                        }
+
+                        // Horizontal App Stream Slider
+                        Item {
+                            id: streamTrackHost
+                            Layout.fillWidth: true
+                            implicitHeight: 22
+
+                            Rectangle {
+                                id: streamTrack
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width
+                                height: 8
+                                radius: Theme.r(4)
+                                color: Theme.surfaceContainerHighest
+
+                                Rectangle {
+                                    width: parent.width * streamRow.clampedRatio
+                                    height: parent.height
+                                    radius: Theme.r(4)
+                                    color: streamRow.modelData.mute ? Theme.outlineVariant : Theme.primary
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onPressed: mouse => root.setStreamVolume(streamRow.modelData.index, mouse.x / Math.max(1, width))
+                                onPositionChanged: mouse => {
+                                    if (pressed)
+                                        root.setStreamVolume(streamRow.modelData.index, mouse.x / Math.max(1, width));
+                                }
+                            }
+                        }
+
+                        Text {
+                            Layout.preferredWidth: 38
+                            horizontalAlignment: Text.AlignRight
+                            text: streamRow.modelData.mute ? "Mute" : (Math.round(streamRow.modelData.vol * 100) + "%")
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: Font.Bold
+                            color: streamRow.modelData.mute ? Theme.error : Theme.fgSurface
+                        }
+                    }
+                }
+            }
+
+            Text {
+                visible: root.sinkInputs.length === 0
+                text: "No active audio playback streams right now"
                 font.family: Theme.fontFamily
                 font.pixelSize: 11
                 color: Theme.fgSurfaceVariant

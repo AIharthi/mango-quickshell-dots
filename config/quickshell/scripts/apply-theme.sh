@@ -660,13 +660,35 @@ apply_gtk_settings() {
         fi
     done
 
+    local font_name="JetBrains Mono 10"
+    local prefs_file="$HOME/.config/quickshell/shell-prefs.json"
+    if [[ -f "$prefs_file" ]]; then
+        local parsed_font
+        parsed_font=$(python3 - "$prefs_file" <<'PY' 2>/dev/null || true
+import json, sys
+try:
+    with open(sys.argv[1], "r", encoding="utf-8") as f:
+        d = json.load(f)
+    fam = str(d.get("uiFontFamily", "")).strip()
+    sz = int(d.get("uiFontSize", 10))
+    if fam:
+        print(f"{fam} {sz}")
+except Exception:
+    pass
+PY
+)
+        if [[ -n "$parsed_font" ]]; then
+            font_name="$parsed_font"
+        fi
+    fi
+
     for ini in "$GTK3_DIR/settings.ini" "$GTK4_DIR/settings.ini"; do
         atomic_write "$ini" <<EOF
 [Settings]
 gtk-application-prefer-dark-theme=${prefer_dark}
 gtk-theme-name=${theme_name}
 gtk-icon-theme-name=Adwaita
-gtk-font-name=JetBrains Mono 10
+gtk-font-name=${font_name}
 gtk-cursor-theme-name=${cursor_theme}
 gtk-cursor-theme-size=${cursor_size}
 EOF
@@ -682,6 +704,7 @@ EOF
         # Momentary value change forces running GTK3/GTK4 apps & xdg-desktop-portal to reload gtk.css live
         gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface cursor-size "$cursor_size" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface font-name "$font_name" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface gtk-theme "$pulse_theme" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface color-scheme "default" 2>/dev/null || true
         sleep 0.05

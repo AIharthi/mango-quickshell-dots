@@ -80,7 +80,9 @@ ShellRoot {
 
         onNotification: notification => {
             notification.tracked = true;
-            root.forEachIsland(isl => isl.showNotification(notification));
+            ShellState.recordNotification(notification);
+            if (!ShellState.dnd)
+                root.forEachIsland(isl => isl.showNotification(notification));
         }
     }
 
@@ -154,6 +156,11 @@ ShellRoot {
                     ? WlrKeyboardFocus.Exclusive
                     : WlrKeyboardFocus.None
 
+                IdleInhibitor {
+                    enabled: ShellState.keepAwake && (Quickshell.screens.length === 0 || screenScope.modelData === Quickshell.screens[0])
+                    window: islandWindow
+                }
+
                 DynamicIsland {
                     id: islandItem
                     anchors.fill: parent
@@ -224,6 +231,14 @@ ShellRoot {
 
         function closeSettings(): void {
             root.closeSettings();
+        }
+
+        function toggleDnd(): void {
+            ShellState.toggleDnd();
+        }
+
+        function toggleKeepAwake(): void {
+            ShellState.toggleKeepAwake();
         }
     }
 }

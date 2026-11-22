@@ -44,7 +44,7 @@ Singleton {
     ]
 
     // --- Typography & Design Tokens ---
-    readonly property string fontFamily: "JetBrains Mono"
+    readonly property string fontFamily: ShellState.uiFontFamily.length > 0 ? ShellState.uiFontFamily : "JetBrains Mono"
     readonly property string iconFont: "Symbols Nerd Font"
     readonly property int animFast: isSimple ? 0 : 160
     readonly property int animNormal: isSimple ? 0 : 260

@@ -26,7 +26,7 @@ ColumnLayout {
 
     SystemClock {
         id: headerClock
-        precision: SystemClock.Minutes
+        precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
     }
 
     // --- Header Bar (Clock/Date left, Segmented Tabs dead-center, Pin/Close right) ---
@@ -41,7 +41,7 @@ ColumnLayout {
             spacing: 8
 
             Text {
-                text: Qt.formatDateTime(headerClock.date, "HH:mm")
+                text: ShellState.formatTime(headerClock.date)
                 font.family: Theme.fontFamily
                 font.pixelSize: 15
                 font.weight: Font.Bold
@@ -49,7 +49,7 @@ ColumnLayout {
             }
 
             Text {
-                text: Qt.formatDateTime(headerClock.date, "ddd, MMM d")
+                text: ShellState.formatDate(headerClock.date)
                 font.family: Theme.fontFamily
                 font.pixelSize: 11
                 color: Theme.fgSurfaceVariant
@@ -136,6 +136,59 @@ ColumnLayout {
 
             SystemTrayStrip {
                 compact: false
+            }
+
+            // Active-only status chips (click to turn off)
+            Rectangle {
+                visible: ShellState.dnd
+                implicitWidth: 28
+                implicitHeight: 28
+                radius: Theme.r(14)
+                color: dndHeaderArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.warning, 0.16)
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.withAlpha(Theme.warning, 0.45)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰂛"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                    color: Theme.warning
+                }
+
+                MouseArea {
+                    id: dndHeaderArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: ShellState.toggleDnd()
+                }
+            }
+
+            Rectangle {
+                visible: ShellState.keepAwake
+                implicitWidth: 28
+                implicitHeight: 28
+                radius: Theme.r(14)
+                color: awakeHeaderArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.tertiary, 0.16)
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.withAlpha(Theme.tertiary, 0.45)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰅶"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                    color: Theme.tertiary
+                }
+
+                MouseArea {
+                    id: awakeHeaderArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: ShellState.toggleKeepAwake()
+                }
             }
 
             Rectangle {

@@ -24,22 +24,41 @@ RowLayout {
         return title || artist || (root.player.identity || "Playing");
     }
 
-    spacing: (hasMedia || DeviceCaps.hasBattery) ? 10 : 0
+    spacing: (hasMedia || DeviceCaps.hasBattery || ShellState.dnd || ShellState.keepAwake) ? 8 : 0
 
     SystemClock {
         id: clock
-        precision: SystemClock.Minutes
+        precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
     }
 
     // --- Bold Compact Clock ---
     Text {
         id: clockText
         Layout.alignment: Qt.AlignVCenter
-        text: Qt.formatDateTime(clock.date, "HH:mm")
+        text: ShellState.formatTime(clock.date)
         font.family: Theme.fontFamily
         font.pixelSize: 13
         font.weight: Font.Bold
         color: Theme.fgSurface
+    }
+
+    // --- Active-Only Status Badges (DND / Keep Awake) ---
+    Text {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.dnd
+        text: "󰂛"
+        font.family: Theme.iconFont
+        font.pixelSize: 12
+        color: Theme.warning
+    }
+
+    Text {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.keepAwake
+        text: "󰅶"
+        font.family: Theme.iconFont
+        font.pixelSize: 12
+        color: Theme.tertiary
     }
 
     // --- Hardware-Aware Battery Chip (Laptops only) ---

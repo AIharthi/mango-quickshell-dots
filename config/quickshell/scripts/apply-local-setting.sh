@@ -5,7 +5,7 @@ set -euo pipefail
 # Usage:
 #   apply-local-setting.sh get
 #   apply-local-setting.sh set <key> <value>
-#   apply-local-setting.sh set-monitor <name> <width> <height> <refresh> <scale>
+#   apply-local-setting.sh set-monitor <name> <width> <height> <refresh> <scale> [rr] [vrr]
 #   apply-local-setting.sh reset
 
 MANGO_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/mango"
@@ -297,7 +297,7 @@ elif cmd == "set":
 
 elif cmd == "set-monitor":
     if len(args) < 5:
-        sys.exit("Usage: apply-local-setting.sh set-monitor <name> <width> <height> <refresh> <scale>")
+        sys.exit("Usage: apply-local-setting.sh set-monitor <name> <width> <height> <refresh> <scale> [rr] [vrr]")
     name, width, height, refresh, scale = args[:5]
     if not re.match(r"^[A-Za-z0-9._-]+$", name):
         sys.exit(f"Invalid monitor name: {name}")
@@ -307,8 +307,10 @@ elif cmd == "set-monitor":
     r_str = str(int(r_num)) if float(r_num).is_integer() else f"{r_num:.2f}"
     s_num = round(float(scale), 2)
     s_str = str(int(s_num)) if float(s_num).is_integer() else f"{s_num:g}"
+    rr_int = max(0, min(3, int(float(args[5])))) if len(args) >= 6 else 0
+    vrr_int = 1 if (len(args) >= 7 and str(args[6]).strip().lower() in ("1", "true", "on", "yes", "enabled")) else 0
 
-    rule_line = f"monitor_rule=name:{name},width:{w},height:{h},refresh:{r_str},scale:{s_str}\n"
+    rule_line = f"monitor_rule=name:{name},width:{w},height:{h},refresh:{r_str},scale:{s_str},rr:{rr_int},vrr:{vrr_int}\n"
     lines = read_lines(local_conf)
     new_lines = []
     replaced = False

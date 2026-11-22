@@ -16,24 +16,76 @@ PanelWindow {
     signal pageSelected(string page)
     signal closeRequested()
 
+    property string searchQuery: ""
+
     Component.onCompleted: Qt.callLater(() => { root._entered = true; })
+    onIsOpenChanged: {
+        if (!isOpen)
+            searchQuery = "";
+    }
 
     readonly property var navItems: {
         const items = [
-            { id: "appearance", label: "Appearance", icon: "󰏘", source: "AppearancePage.qml", sub: "Modes, Matugen palette, cursor & animations" },
-            { id: "windows",    label: "Windows",    icon: "󰖲", source: "WindowsPage.qml",    sub: "Tiling layouts, focus behavior & snapping" }
+            { id: "appearance", label: "Appearance",    icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, palette, fonts, cursor & animations" },
+            { id: "windows",    label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Tiling layouts, focus behavior & snapping" }
         ];
         if (DeviceCaps.hasAudio)
-            items.push({ id: "audio", label: "Audio", icon: "󰋋", source: "AudioPage.qml", sub: "Output sinks, microphones & volume" });
+            items.push({ id: "audio", label: "Audio", icon: "󰋋", source: "AudioPage.qml", sub: "Output sinks, microphones & per-app mixer" });
         if (DeviceCaps.hasWlrRandr)
-            items.push({ id: "displays", label: "Displays", icon: "󰍹", source: "DisplayPage.qml", sub: "Resolution, refresh rate & scaling" });
+            items.push({ id: "displays", label: "Displays", icon: "󰍹", source: "DisplayPage.qml", sub: "Resolution, rotation, VRR & scaling" });
         if (DeviceCaps.hasWifi)
             items.push({ id: "network", label: "Network", icon: "󰤨", source: "NetworkPage.qml", sub: "Wi-Fi radio & nearby networks" });
         if (DeviceCaps.hasBluetooth)
             items.push({ id: "bluetooth", label: "Bluetooth", icon: "󰂯", source: "BluetoothPage.qml", sub: "Adapter power & paired devices" });
-        items.push({ id: "input",  label: "Input",  icon: "󰌌", source: "InputPage.qml",  sub: "Keyboard layouts, pointer speed & trackpad" });
-        items.push({ id: "system", label: "System", icon: "󰋼", source: "SystemPage.qml", sub: "Hardware probe, power & local.conf" });
+        items.push({ id: "input",         label: "Input",         icon: "󰌌", source: "InputPage.qml",         sub: "Keyboard layouts, pointer speed & trackpad" });
+        items.push({ id: "notifications", label: "Notifications", icon: "󰂚", source: "NotificationsPage.qml", sub: "Do Not Disturb, popup duration & history" });
+        items.push({ id: "apps",          label: "Apps & Startup",icon: "󰀻", source: "AppsPage.qml",          sub: "Default apps, launchers & autostart entries" });
+        items.push({ id: "shortcuts",     label: "Shortcuts",     icon: "󰌌", source: "ShortcutsPage.qml",     sub: "MangoWC keybindings & mouse actions" });
+        items.push({ id: "system",        label: "System",        icon: "󰋼", source: "SystemPage.qml",        sub: "Clock, keep-awake, hardware, storage & local.conf" });
         return items;
+    }
+
+    readonly property var searchIndex: [
+        { label: "Shell Modes & Blur",      pageId: "appearance",    keywords: "mode simple blur glass opacity radius border" },
+        { label: "Colors & Wallpaper",      pageId: "appearance",    keywords: "theme dark light matugen preset catppuccin tokyo gruvbox nord wallpaper" },
+        { label: "UI & Terminal Font",      pageId: "appearance",    keywords: "font typography family size jetbrains mono foot kitty gtk" },
+        { label: "Cursor Theme & Size",     pageId: "appearance",    keywords: "cursor pointer size theme hide" },
+        { label: "Window Animations",       pageId: "appearance",    keywords: "animation slide zoom duration direction" },
+        { label: "Tiling & Master Ratio",   pageId: "windows",       keywords: "tiling scroller master gaps snap floating focus warp" },
+        { label: "Output & Input Volume",   pageId: "audio",         keywords: "audio sound volume mute speaker headphone microphone sink" },
+        { label: "Per-App Volume Mixer",    pageId: "audio",         keywords: "app application mixer stream sink-input firefox mpv spotify" },
+        { label: "Resolution & Refresh",    pageId: "displays",      keywords: "display monitor screen resolution hz refresh scale" },
+        { label: "Rotation & VRR",          pageId: "displays",      keywords: "rotate rotation portrait landscape 90 180 270 vrr adaptive sync" },
+        { label: "Night Light",             pageId: "displays",      keywords: "night light warmth temperature blue filter kelvin" },
+        { label: "Wi-Fi & Networks",        pageId: "network",       keywords: "wifi wireless network ssid password internet" },
+        { label: "Bluetooth Devices",       pageId: "bluetooth",     keywords: "bluetooth pair connect audio device" },
+        { label: "Keyboard & Pointer",      pageId: "input",         keywords: "keyboard layout repeat rate delay mouse sensitivity accel touchpad scroll" },
+        { label: "Do Not Disturb & History",pageId: "notifications", keywords: "notification dnd do not disturb popup duration history clear test" },
+        { label: "Default Applications",    pageId: "apps",          keywords: "default browser terminal editor file manager xdg-mime app" },
+        { label: "Startup Applications",    pageId: "apps",          keywords: "startup autostart exec_once login boot" },
+        { label: "Keyboard Shortcuts",      pageId: "shortcuts",     keywords: "shortcut keybind hotkeys super mod mousebind" },
+        { label: "Clock, Date & Timezone",  pageId: "system",        keywords: "clock 24h 12h am pm seconds date format timezone time" },
+        { label: "Keep Awake & Power",      pageId: "system",        keywords: "sleep idle inhibitor keep awake power profile shutdown reboot logout" },
+        { label: "About Hardware & Storage",pageId: "system",        keywords: "cpu gpu memory ram disk storage uptime distro kernel reset" }
+    ]
+
+    readonly property var searchMatches: {
+        const q = (root.searchQuery || "").trim().toLowerCase();
+        if (q.length === 0)
+            return [];
+        const availableIds = {};
+        for (let i = 0; i < root.navItems.length; i++)
+            availableIds[root.navItems[i].id] = true;
+        const hits = [];
+        for (let i = 0; i < root.searchIndex.length; i++) {
+            const entry = root.searchIndex[i];
+            if (!availableIds[entry.pageId])
+                continue;
+            const hay = (entry.label + " " + entry.keywords + " " + entry.pageId).toLowerCase();
+            if (hay.indexOf(q) !== -1)
+                hits.push(entry);
+        }
+        return hits;
     }
 
     readonly property int currentNavIndex: {
@@ -94,8 +146,8 @@ PanelWindow {
             id: dialog
             anchors.centerIn: parent
             anchors.verticalCenterOffset: root.shown ? 0 : (Theme.isSimple ? 0 : 14)
-            width: Math.min(parent.width - 48, 840)
-            height: Math.min(parent.height - 48, 570)
+            width: Math.min(parent.width - 48, 880)
+            height: Math.min(parent.height - 48, 600)
             radius: Theme.r(22)
             color: Theme.notchBg
             border.width: Theme.islandBorderWidth
@@ -148,7 +200,7 @@ PanelWindow {
                 // --- Left Navigation Sidebar ---
                 Rectangle {
                     Layout.fillHeight: true
-                    Layout.preferredWidth: 196
+                    Layout.preferredWidth: 204
                     color: Theme.isSimple ? Theme.surfaceContainerLow : Theme.withAlpha(Theme.surfaceContainerLow, Theme.isBlur ? 0.45 : 0.72)
 
                     ColumnLayout {
@@ -215,103 +267,275 @@ PanelWindow {
                             }
                         }
 
-                        // Dynamic Navigation Links with Sliding Selection Indicator
-                        Item {
+                        // Search Bar (jump directly to any setting group)
+                        Rectangle {
                             Layout.fillWidth: true
-                            implicitHeight: navCol.implicitHeight
+                            implicitHeight: 30
+                            radius: Theme.r(8)
+                            color: Theme.subCardBg
+                            border.width: searchInput.activeFocus ? 1 : Theme.cardBorderWidth
+                            border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
 
-                            Rectangle {
-                                id: navIndicator
-                                x: 0
-                                y: root.currentNavIndex * 38
-                                width: parent.width
-                                height: 34
-                                radius: Theme.r(10)
-                                color: Theme.primary
-                                border.width: Theme.isSimple ? 1 : 0
-                                border.color: Theme.primary
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 6
+                                spacing: 6
 
-                                Behavior on y {
-                                    enabled: !Theme.isSimple
-                                    NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                                Text {
+                                    text: "󰍉"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 12
+                                    color: searchInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
                                 }
-                            }
 
-                            ColumnLayout {
-                                id: navCol
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                spacing: 4
+                                Item {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 18
 
-                                Repeater {
-                                    model: root.navItems
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "Search settings..."
+                                        visible: searchInput.text.length === 0
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: 11
+                                        color: Theme.fgSurfaceVariant
+                                    }
 
-                                    delegate: Rectangle {
-                                        id: navBtn
-                                        required property var modelData
-                                        readonly property bool isSelected: root.resolvedPage === navBtn.modelData.id
-
-                                        Layout.fillWidth: true
-                                        implicitHeight: 34
-                                        radius: Theme.r(10)
-                                        color: (!navBtn.isSelected && navMouse.containsMouse) ? Theme.hoverBg : "transparent"
-                                        scale: navMouse.pressed ? 0.97 : 1.0
-
-                                        Behavior on color {
-                                            enabled: !Theme.isSimple
-                                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                                        }
-                                        Behavior on scale {
-                                            enabled: !Theme.isSimple
-                                            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-                                        }
-
-                                        RowLayout {
-                                            anchors.fill: parent
-                                            anchors.leftMargin: 10
-                                            anchors.rightMargin: 10
-                                            spacing: 9
-
-                                            Text {
-                                                text: navBtn.modelData.icon
-                                                font.family: Theme.iconFont
-                                                font.pixelSize: 14
-                                                color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurfaceVariant
-
-                                                Behavior on color {
-                                                    enabled: !Theme.isSimple
-                                                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
-                                                }
-                                            }
-
-                                            Text {
-                                                Layout.fillWidth: true
-                                                text: navBtn.modelData.label
-                                                font.family: Theme.fontFamily
-                                                font.pixelSize: 12
-                                                font.weight: navBtn.isSelected ? Font.Bold : Font.Medium
-                                                color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurface
-
-                                                Behavior on color {
-                                                    enabled: !Theme.isSimple
-                                                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
-                                                }
+                                    TextInput {
+                                        id: searchInput
+                                        anchors.fill: parent
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        text: root.searchQuery
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: 11
+                                        color: Theme.fgSurface
+                                        clip: true
+                                        selectByMouse: true
+                                        onTextEdited: root.searchQuery = text
+                                        Keys.onEscapePressed: event => {
+                                            if (text.length > 0) {
+                                                root.searchQuery = "";
+                                                event.accepted = true;
+                                            } else {
+                                                root.closeRequested();
+                                                event.accepted = true;
                                             }
                                         }
-
-                                        MouseArea {
-                                            id: navMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: root.pageSelected(navBtn.modelData.id)
+                                        Keys.onReturnPressed: {
+                                            if (root.searchMatches.length > 0) {
+                                                root.pageSelected(root.searchMatches[0].pageId);
+                                                root.searchQuery = "";
+                                            }
                                         }
+                                    }
+                                }
+
+                                Rectangle {
+                                    visible: root.searchQuery.length > 0
+                                    implicitWidth: 18
+                                    implicitHeight: 18
+                                    radius: Theme.r(6)
+                                    color: clearSearchMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰅖"
+                                        font.family: Theme.iconFont
+                                        font.pixelSize: 10
+                                        color: Theme.fgSurfaceVariant
+                                    }
+
+                                    MouseArea {
+                                        id: clearSearchMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.searchQuery = ""
                                     }
                                 }
                             }
                         }
 
-                        Item { Layout.fillHeight: true }
+                        // Search Results OR Scrollable Category Navigation
+                        Flickable {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+                            contentWidth: width
+                            contentHeight: root.searchQuery.trim().length > 0 ? searchCol.implicitHeight : navHost.implicitHeight
+                            boundsBehavior: Flickable.StopAtBounds
+
+                            ColumnLayout {
+                                id: searchCol
+                                visible: root.searchQuery.trim().length > 0
+                                width: parent.width
+                                spacing: 4
+
+                                Text {
+                                    visible: root.searchMatches.length === 0
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 8
+                                    text: "No matching setting"
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 11
+                                    color: Theme.fgSurfaceVariant
+                                }
+
+                                Repeater {
+                                    model: root.searchMatches
+
+                                    delegate: Rectangle {
+                                        id: hitBtn
+                                        required property var modelData
+                                        Layout.fillWidth: true
+                                        implicitHeight: 38
+                                        radius: Theme.r(9)
+                                        color: hitMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                                        border.width: Theme.cardBorderWidth
+                                        border.color: Theme.cardBorder
+
+                                        ColumnLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 9
+                                            anchors.rightMargin: 9
+                                            anchors.topMargin: 5
+                                            anchors.bottomMargin: 5
+                                            spacing: 1
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                elide: Text.ElideRight
+                                                text: hitBtn.modelData.label
+                                                font.family: Theme.fontFamily
+                                                font.pixelSize: 11
+                                                font.weight: Font.Bold
+                                                color: Theme.fgSurface
+                                            }
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                elide: Text.ElideRight
+                                                text: "in " + hitBtn.modelData.pageId
+                                                font.family: Theme.fontFamily
+                                                font.pixelSize: 9
+                                                color: Theme.primary
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: hitMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                root.pageSelected(hitBtn.modelData.pageId);
+                                                root.searchQuery = "";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Dynamic Navigation Links with Sliding Selection Indicator
+                            Item {
+                                id: navHost
+                                visible: root.searchQuery.trim().length === 0
+                                width: parent.width
+                                implicitHeight: navCol.implicitHeight
+
+                                Rectangle {
+                                    id: navIndicator
+                                    x: 0
+                                    y: root.currentNavIndex * 38
+                                    width: parent.width
+                                    height: 34
+                                    radius: Theme.r(10)
+                                    color: Theme.primary
+                                    border.width: Theme.isSimple ? 1 : 0
+                                    border.color: Theme.primary
+
+                                    Behavior on y {
+                                        enabled: !Theme.isSimple
+                                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    id: navCol
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    spacing: 4
+
+                                    Repeater {
+                                        model: root.navItems
+
+                                        delegate: Rectangle {
+                                            id: navBtn
+                                            required property var modelData
+                                            readonly property bool isSelected: root.resolvedPage === navBtn.modelData.id
+
+                                            Layout.fillWidth: true
+                                            implicitHeight: 34
+                                            radius: Theme.r(10)
+                                            color: (!navBtn.isSelected && navMouse.containsMouse) ? Theme.hoverBg : "transparent"
+                                            scale: navMouse.pressed ? 0.97 : 1.0
+
+                                            Behavior on color {
+                                                enabled: !Theme.isSimple
+                                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                                            }
+                                            Behavior on scale {
+                                                enabled: !Theme.isSimple
+                                                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                            }
+
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 10
+                                                anchors.rightMargin: 10
+                                                spacing: 9
+
+                                                Text {
+                                                    text: navBtn.modelData.icon
+                                                    font.family: Theme.iconFont
+                                                    font.pixelSize: 14
+                                                    color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+
+                                                    Behavior on color {
+                                                        enabled: !Theme.isSimple
+                                                        ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                                    }
+                                                }
+
+                                                Text {
+                                                    Layout.fillWidth: true
+                                                    elide: Text.ElideRight
+                                                    text: navBtn.modelData.label
+                                                    font.family: Theme.fontFamily
+                                                    font.pixelSize: 12
+                                                    font.weight: navBtn.isSelected ? Font.Bold : Font.Medium
+                                                    color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurface
+
+                                                    Behavior on color {
+                                                        enabled: !Theme.isSimple
+                                                        ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                                    }
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: navMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: root.pageSelected(navBtn.modelData.id)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
                         // Active Mode Pill in Footer
                         Rectangle {

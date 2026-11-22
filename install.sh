@@ -85,8 +85,9 @@ if command -v fc-cache >/dev/null 2>&1; then
     fc-cache -f "$FONT_DIR" >/dev/null 2>&1 || true
 fi
 
-echo "==> Initializing visual mode and default theme"
+echo "==> Initializing visual mode, settings prefs, and default theme"
 "$CONFIG_DIR/quickshell/scripts/apply-mode.sh" default --no-reload || true
+"$CONFIG_DIR/quickshell/scripts/manage-settings.sh" prefs-get >/dev/null || true
 "$CONFIG_DIR/quickshell/scripts/apply-theme.sh" --mode preset --preset catppuccin-mocha --scheme dark --no-wallpaper || true
 
 if [[ "$INSTALL_SESSION" -eq 1 ]]; then
@@ -98,6 +99,6 @@ fi
 echo ""
 echo "Done! Next steps:"
 echo "  1. Drop wallpapers into ~/Pictures/Wallpapers/ for the Theme Switcher & Matugen."
-echo "  2. Press Super+S anytime to open Settings (Audio, Displays, Input, Appearance, Power)."
-echo "  3. Per-device overrides are saved to ~/.config/mango/local.conf (or edit config.conf)."
+echo "  2. Press Super+S anytime to open Settings (Appearance, Windows, Audio Mixer, Displays, Notifications, Apps, Shortcuts, System)."
+echo "  3. Per-device overrides are saved to ~/.config/mango/local.conf and preferences to ~/.config/quickshell/shell-prefs.json."
 echo "  4. Log in to MangoWC (or run 'mmsg dispatch reload_config' if already in MangoWC)."

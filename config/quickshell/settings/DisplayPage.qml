@@ -12,7 +12,23 @@ ColumnLayout {
     property var outputs: []
     property var selectedModeByOutput: ({})
     property var selectedScaleByOutput: ({})
+    property var selectedTransformByOutput: ({})
+    property var selectedVrrByOutput: ({})
     property string statusMsg: ""
+
+    readonly property var rotationOptions: [
+        { label: "0° Normal",  wlr: "normal", rr: 0 },
+        { label: "90° Right",  wlr: "90",     rr: 1 },
+        { label: "180° Flip",  wlr: "180",    rr: 2 },
+        { label: "270° Left",  wlr: "270",    rr: 3 }
+    ]
+
+    function rrForTransform(tr: string): int {
+        if (tr === "90") return 1;
+        if (tr === "180") return 2;
+        if (tr === "270") return 3;
+        return 0;
+    }
 
     function refresh(): void {
         if (!randrProc.running)
@@ -31,27 +47,51 @@ ColumnLayout {
         root.selectedScaleByOutput = next;
     }
 
+    function setSelectedTransform(outName: string, trVal: string): void {
+        const next = Object.assign({}, root.selectedTransformByOutput);
+        next[outName] = trVal;
+        root.selectedTransformByOutput = next;
+    }
+
+    function setSelectedVrr(outName: string, enabled: bool): void {
+        const next = Object.assign({}, root.selectedVrrByOutput);
+        next[outName] = !!enabled;
+        root.selectedVrrByOutput = next;
+    }
+
     function applyLive(outName: string): void {
         const m = root.selectedModeByOutput[outName];
         const s = root.selectedScaleByOutput[outName] || 1.0;
+        const tr = root.selectedTransformByOutput[outName] || "normal";
+        const vrr = !!root.selectedVrrByOutput[outName];
         if (!m)
             return;
         const modeArg = m.width + "x" + m.height + "@" + m.refreshStr + "Hz";
-        root.statusMsg = "Applying " + outName + " (" + modeArg + " @ " + s + "x)...";
-        applyProc.command = ["wlr-randr", "--output", outName, "--mode", modeArg, "--scale", String(s)];
+        root.statusMsg = "Applying " + outName + " (" + modeArg + " @ " + s + "x, " + tr + ")...";
+        applyProc.command = [
+            "wlr-randr", "--output", outName,
+            "--mode", modeArg,
+            "--scale", String(s),
+            "--transform", tr,
+            "--adaptive-sync", vrr ? "enabled" : "disabled"
+        ];
         applyProc.running = true;
     }
 
     function savePersistent(outName: string): void {
         const m = root.selectedModeByOutput[outName];
         const s = root.selectedScaleByOutput[outName] || 1.0;
+        const tr = root.selectedTransformByOutput[outName] || "normal";
+        const rr = root.rrForTransform(tr);
+        const vrr = root.selectedVrrByOutput[outName] ? "1" : "0";
         if (!m)
             return;
         root.statusMsg = "Saved " + outName + " rule to ~/.config/mango/local.conf";
         applyProc.command = [
             Quickshell.shellPath("scripts/apply-local-setting.sh"),
             "set-monitor", outName,
-            String(m.width), String(m.height), m.refreshStr, String(s)
+            String(m.width), String(m.height), m.refreshStr, String(s),
+            String(rr), vrr
         ];
         applyProc.running = true;
     }
@@ -73,6 +113,8 @@ ColumnLayout {
                     const parsed = [];
                     const modeMap = {};
                     const scaleMap = {};
+                    const transMap = {};
+                    const vrrMap = {};
 
                     for (let i = 0; i < arr.length; i++) {
                         const o = arr[i];
@@ -112,18 +154,24 @@ ColumnLayout {
 
                         modeMap[o.name] = currentMode;
                         scaleMap[o.name] = Number(o.scale || 1.0);
+                        transMap[o.name] = String(o.transform || "normal");
+                        vrrMap[o.name] = !!o.adaptive_sync;
 
                         parsed.push({
                             name: o.name,
                             description: o.description || o.model || o.name,
                             enabled: !!o.enabled,
                             scale: Number(o.scale || 1.0),
+                            transform: String(o.transform || "normal"),
+                            adaptiveSync: !!o.adaptive_sync,
                             currentMode: currentMode,
                             modes: topModes
                         });
                     }
                     root.selectedModeByOutput = modeMap;
                     root.selectedScaleByOutput = scaleMap;
+                    root.selectedTransformByOutput = transMap;
+                    root.selectedVrrByOutput = vrrMap;
                     root.outputs = parsed;
                 } catch (err) {}
             }
@@ -203,6 +251,12 @@ ColumnLayout {
             readonly property real activeScale: root.selectedScaleByOutput[outCard.modelData.name] !== undefined
                 ? root.selectedScaleByOutput[outCard.modelData.name]
                 : outCard.modelData.scale
+            readonly property string activeTransform: root.selectedTransformByOutput[outCard.modelData.name] !== undefined
+                ? root.selectedTransformByOutput[outCard.modelData.name]
+                : (outCard.modelData.transform || "normal")
+            readonly property bool activeVrr: root.selectedVrrByOutput[outCard.modelData.name] !== undefined
+                ? root.selectedVrrByOutput[outCard.modelData.name]
+                : !!outCard.modelData.adaptiveSync
 
             Layout.fillWidth: true
             implicitHeight: outCol.implicitHeight + 24
@@ -387,6 +441,90 @@ ColumnLayout {
                     }
                 }
 
+                // Orientation / Rotation
+                Text {
+                    text: "ORIENTATION & ROTATION"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: root.rotationOptions
+
+                        delegate: Rectangle {
+                            id: rotPill
+                            required property var modelData
+                            readonly property bool selected: outCard.activeTransform === rotPill.modelData.wlr
+
+                            implicitHeight: 26
+                            implicitWidth: rotTxt.implicitWidth + 16
+                            radius: Theme.r(8)
+                            color: rotPill.selected
+                                ? Theme.withAlpha(Theme.primary, 0.22)
+                                : (rotMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                            border.width: rotPill.selected ? 1 : Theme.cardBorderWidth
+                            border.color: rotPill.selected ? Theme.primary : Theme.cardBorder
+
+                            Text {
+                                id: rotTxt
+                                anchors.centerIn: parent
+                                text: rotPill.modelData.label
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                font.weight: rotPill.selected ? Font.Bold : Font.Medium
+                                color: rotPill.selected ? Theme.primary : Theme.fgSurface
+                            }
+
+                            MouseArea {
+                                id: rotMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.setSelectedTransform(outCard.modelData.name, rotPill.modelData.wlr)
+                            }
+                        }
+                    }
+                }
+
+                // Adaptive Sync (VRR)
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        Text {
+                            text: "Adaptive Sync (VRR)"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                            color: Theme.fgSurface
+                        }
+
+                        Text {
+                            text: "Synchronize refresh rate with variable-rate content (if supported by display)"
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: Theme.fgSurfaceVariant
+                        }
+                    }
+
+                    ToggleSwitch {
+                        checked: outCard.activeVrr
+                        onToggled: root.setSelectedVrr(outCard.modelData.name, !outCard.activeVrr)
+                    }
+                }
+
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -458,6 +596,104 @@ ColumnLayout {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: root.savePersistent(outCard.modelData.name)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- Conditional Night Light Card (visible only if hyprsunset / wlsunset / gammastep is installed) ---
+    Rectangle {
+        visible: DeviceCaps.hasNightLight
+        Layout.fillWidth: true
+        implicitHeight: nlCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: nlCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "󰖔"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 15
+                    color: ShellState.nightLightEnabled ? Theme.warning : Theme.fgSurfaceVariant
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        text: "NIGHT LIGHT (" + (DeviceCaps.nightLightCmd.length > 0 ? DeviceCaps.nightLightCmd : "color filter") + ")"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.fgSurfaceVariant
+                    }
+
+                    Text {
+                        text: "Reduce blue light emission at " + ShellState.nightLightTemp + "K"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        color: Theme.fgSurface
+                    }
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.nightLightEnabled
+                    activeColor: Theme.warning
+                    onToggled: ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp)
+                }
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Repeater {
+                    model: [3000, 3500, 4000, 4500, 5200, 6000]
+
+                    delegate: Rectangle {
+                        id: nlPill
+                        required property int modelData
+                        readonly property bool selected: ShellState.nightLightTemp === nlPill.modelData
+
+                        implicitHeight: 26
+                        implicitWidth: nlTxt.implicitWidth + 14
+                        radius: Theme.r(8)
+                        color: nlPill.selected
+                            ? Theme.withAlpha(Theme.warning, 0.22)
+                            : (nlMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: nlPill.selected ? 1 : Theme.cardBorderWidth
+                        border.color: nlPill.selected ? Theme.warning : Theme.cardBorder
+
+                        Text {
+                            id: nlTxt
+                            anchors.centerIn: parent
+                            text: nlPill.modelData + "K"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: nlPill.selected ? Font.Bold : Font.Medium
+                            color: nlPill.selected ? Theme.warning : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: nlMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setNightLight(true, nlPill.modelData)
                         }
                     }
                 }

@@ -17,6 +17,10 @@ Singleton {
     property bool hasWlrRandr: false
     property bool hasAudio: false
     property bool hasPavucontrol: false
+    property bool hasNightLight: false
+    property string nightLightCmd: ""
+    property bool hasPowerProfiles: false
+    property bool hasXdgMime: false
     property bool hasLocker: false
     property string lockerCmd: ""
     property string deviceType: "desktop"       // "desktop" | "laptop"
@@ -95,6 +99,10 @@ Singleton {
                     root.hasWlrRandr = !!data.hasWlrRandr;
                     root.hasAudio = !!data.hasAudio;
                     root.hasPavucontrol = !!data.hasPavucontrol;
+                    root.hasNightLight = !!data.hasNightLight;
+                    root.nightLightCmd = data.nightLightCmd || "";
+                    root.hasPowerProfiles = !!data.hasPowerProfiles;
+                    root.hasXdgMime = !!data.hasXdgMime;
                     root.hasLocker = !!data.hasLocker;
                     root.lockerCmd = data.lockerCmd || "";
                     root.deviceType = data.deviceType || "desktop";
