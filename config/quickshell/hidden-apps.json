@@ -1,0 +1,35 @@
+{
+  "hiddenIds": [
+    "foot-server",
+    "footclient",
+    "assistant",
+    "designer",
+    "linguist",
+    "qdbusviewer",
+    "libfm-pref-apps",
+    "pcmanfm-desktop-pref",
+    "lxshortcut",
+    "cups",
+    "rofi",
+    "rofi-theme-selector",
+    "gtk3-demo",
+    "gtk4-demo",
+    "gtk3-widget-factory",
+    "gtk4-widget-factory",
+    "gtk3-icon-browser",
+    "gtk4-icon-browser",
+    "org.gtk.Demo4",
+    "org.gtk.IconBrowser4",
+    "org.gtk.WidgetFactory4",
+    "xdg-desktop-portal-gtk",
+    "avahi-discover",
+    "bssh",
+    "bvnc",
+    "qv4l2",
+    "qvidcap"
+  ],
+  "hiddenNamePrefixes": [
+    "qt ",
+    "gtk"
+  ]
+}
