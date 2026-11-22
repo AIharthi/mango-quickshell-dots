@@ -55,6 +55,11 @@ RowLayout {
             color: DeviceCaps.batteryLow
                 ? Theme.error
                 : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant)
+
+            Behavior on color {
+                enabled: !Theme.isSimple
+                ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
+            }
         }
 
         Text {
@@ -65,6 +70,11 @@ RowLayout {
             color: DeviceCaps.batteryLow
                 ? Theme.error
                 : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant)
+
+            Behavior on color {
+                enabled: !Theme.isSimple
+                ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
+            }
         }
     }
 

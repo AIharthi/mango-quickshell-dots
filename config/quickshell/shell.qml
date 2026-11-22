@@ -11,6 +11,7 @@ ShellRoot {
     id: root
 
     property bool settingsOpen: false
+    property bool _settingsLoaded: false
     property string settingsPage: "appearance"
 
     function primaryIsland(): var {
@@ -37,14 +38,33 @@ ShellRoot {
     function openSettings(page: string): void {
         root.settingsPage = (page && page.length > 0) ? page : "appearance";
         root.collapseAll();
+        settingsUnloadTimer.stop();
+        root._settingsLoaded = true;
         root.settingsOpen = true;
     }
 
+    function closeSettings(): void {
+        root.settingsOpen = false;
+        if (root._settingsLoaded)
+            settingsUnloadTimer.restart();
+    }
+
     function toggleSettings(): void {
-        if (root.settingsOpen) {
-            root.settingsOpen = false;
-        } else {
+        if (root.settingsOpen)
+            root.closeSettings();
+        else
             root.openSettings("appearance");
+    }
+
+    Timer {
+        id: settingsUnloadTimer
+        interval: Theme.isSimple ? 10 : 250
+        repeat: false
+        onTriggered: {
+            if (!root.settingsOpen) {
+                root._settingsLoaded = false;
+                gc();
+            }
         }
     }
 
@@ -144,15 +164,16 @@ ShellRoot {
         }
     }
 
-    // Built-in Hardware-Aware Settings Window (lazy-loaded on demand)
+    // Built-in Hardware-Aware Settings Window (lazy-loaded on demand, unloaded after exit animation)
     LazyLoader {
         id: settingsLoader
-        active: root.settingsOpen
+        active: root._settingsLoaded
 
         SettingsWindow {
+            isOpen: root.settingsOpen
             activePage: root.settingsPage
             onPageSelected: page => { root.settingsPage = page; }
-            onCloseRequested: root.settingsOpen = false
+            onCloseRequested: root.closeSettings()
         }
     }
 
@@ -202,7 +223,7 @@ ShellRoot {
         }
 
         function closeSettings(): void {
-            root.settingsOpen = false;
+            root.closeSettings();
         }
     }
 }

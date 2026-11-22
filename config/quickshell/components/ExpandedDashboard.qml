@@ -145,6 +145,16 @@ ColumnLayout {
                 color: settingsArea.containsMouse ? Theme.hoverBg : Theme.cardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                scale: settingsArea.pressed ? 0.92 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                }
 
                 Text {
                     anchors.centerIn: parent
@@ -152,6 +162,16 @@ ColumnLayout {
                     font.family: Theme.iconFont
                     font.pixelSize: 13
                     color: settingsArea.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+                    rotation: settingsArea.containsMouse ? 45 : 0
+
+                    Behavior on rotation {
+                        enabled: !Theme.isSimple
+                        NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on color {
+                        enabled: !Theme.isSimple
+                        ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    }
                 }
 
                 MouseArea {
@@ -172,6 +192,16 @@ ColumnLayout {
                     : (powerArea.containsMouse ? Theme.hoverBg : Theme.cardBg)
                 border.width: Theme.cardBorderWidth
                 border.color: root.powerMenuOpen ? Theme.error : Theme.cardBorder
+                scale: powerArea.pressed ? 0.92 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                }
 
                 Text {
                     anchors.centerIn: parent
@@ -199,6 +229,16 @@ ColumnLayout {
                     : (pinArea.containsMouse ? Theme.hoverBg : Theme.cardBg)
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                scale: pinArea.pressed ? 0.92 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                }
 
                 Text {
                     anchors.centerIn: parent
@@ -226,6 +266,16 @@ ColumnLayout {
                     : Theme.cardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                scale: closeArea.pressed ? 0.92 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                }
 
                 Text {
                     anchors.centerIn: parent
@@ -246,11 +296,27 @@ ColumnLayout {
         }
     }
 
-    // --- Collapsible Power Action Strip ---
-    PowerMenu {
+    // --- Collapsible Animated Power Action Strip ---
+    Item {
         Layout.fillWidth: true
-        visible: root.powerMenuOpen
-        onActionTriggered: root.closeRequested()
+        Layout.preferredHeight: root.powerMenuOpen ? 34 : 0
+        opacity: root.powerMenuOpen ? 1.0 : 0.0
+        visible: opacity > 0.01
+        clip: true
+
+        Behavior on Layout.preferredHeight {
+            enabled: !Theme.isSimple
+            NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+        }
+        Behavior on opacity {
+            enabled: !Theme.isSimple
+            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+        }
+
+        PowerMenu {
+            anchors.fill: parent
+            onActionTriggered: root.closeRequested()
+        }
     }
 
     property string _prevTab: activeTab

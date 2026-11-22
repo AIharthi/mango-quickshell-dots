@@ -8,13 +8,20 @@ import ".."
 PanelWindow {
     id: root
 
+    property bool isOpen: true
     property string activePage: "appearance"
+    property bool _entered: false
+    readonly property bool shown: root.isOpen && root._entered
+
     signal pageSelected(string page)
     signal closeRequested()
 
+    Component.onCompleted: Qt.callLater(() => { root._entered = true; })
+
     readonly property var navItems: {
         const items = [
-            { id: "appearance", label: "Appearance", icon: "󰏘", source: "AppearancePage.qml", sub: "Modes, Matugen palette & MangoWC effects" }
+            { id: "appearance", label: "Appearance", icon: "󰏘", source: "AppearancePage.qml", sub: "Modes, Matugen palette, cursor & animations" },
+            { id: "windows",    label: "Windows",    icon: "󰖲", source: "WindowsPage.qml",    sub: "Tiling layouts, focus behavior & snapping" }
         ];
         if (DeviceCaps.hasAudio)
             items.push({ id: "audio", label: "Audio", icon: "󰋋", source: "AudioPage.qml", sub: "Output sinks, microphones & volume" });
@@ -24,19 +31,20 @@ PanelWindow {
             items.push({ id: "network", label: "Network", icon: "󰤨", source: "NetworkPage.qml", sub: "Wi-Fi radio & nearby networks" });
         if (DeviceCaps.hasBluetooth)
             items.push({ id: "bluetooth", label: "Bluetooth", icon: "󰂯", source: "BluetoothPage.qml", sub: "Adapter power & paired devices" });
-        items.push({ id: "input",  label: "Input",  icon: "󰌌", source: "InputPage.qml",  sub: "Keyboard layouts, mouse & trackpad" });
+        items.push({ id: "input",  label: "Input",  icon: "󰌌", source: "InputPage.qml",  sub: "Keyboard layouts, pointer speed & trackpad" });
         items.push({ id: "system", label: "System", icon: "󰋼", source: "SystemPage.qml", sub: "Hardware probe, power & local.conf" });
         return items;
     }
 
-    readonly property var currentNavItem: {
+    readonly property int currentNavIndex: {
         for (let i = 0; i < navItems.length; i++) {
             if (navItems[i].id === root.activePage)
-                return navItems[i];
+                return i;
         }
-        return navItems[0];
+        return 0;
     }
 
+    readonly property var currentNavItem: navItems[currentNavIndex]
     readonly property string resolvedPage: currentNavItem.id
     readonly property string pageSource: currentNavItem.source
 
@@ -53,11 +61,13 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-settings"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: root.isOpen
+        ? WlrKeyboardFocus.Exclusive
+        : WlrKeyboardFocus.None
 
     FocusScope {
         anchors.fill: parent
-        focus: true
+        focus: root.isOpen
 
         Keys.onEscapePressed: root.closeRequested()
 
@@ -65,9 +75,16 @@ PanelWindow {
         Rectangle {
             anchors.fill: parent
             color: Qt.rgba(0, 0, 0, Theme.isSimple ? 0.56 : 0.44)
+            opacity: root.shown ? 1.0 : 0.0
+
+            Behavior on opacity {
+                enabled: !Theme.isSimple
+                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+            }
 
             MouseArea {
                 anchors.fill: parent
+                enabled: root.isOpen
                 onClicked: root.closeRequested()
             }
         }
@@ -76,13 +93,34 @@ PanelWindow {
         Rectangle {
             id: dialog
             anchors.centerIn: parent
-            width: Math.min(parent.width - 48, 800)
-            height: Math.min(parent.height - 48, 540)
+            anchors.verticalCenterOffset: root.shown ? 0 : (Theme.isSimple ? 0 : 14)
+            width: Math.min(parent.width - 48, 840)
+            height: Math.min(parent.height - 48, 570)
             radius: Theme.r(22)
             color: Theme.notchBg
             border.width: Theme.islandBorderWidth
             border.color: Theme.islandBorder
             clip: true
+
+            opacity: root.shown ? 1.0 : 0.0
+            scale: root.shown ? 1.0 : (Theme.isSimple ? 1.0 : 0.93)
+
+            Behavior on opacity {
+                enabled: !Theme.isSimple
+                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+            }
+            Behavior on scale {
+                enabled: !Theme.isSimple
+                NumberAnimation {
+                    duration: 240
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 0.45
+                }
+            }
+            Behavior on anchors.verticalCenterOffset {
+                enabled: !Theme.isSimple
+                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+            }
 
             // Eat clicks inside dialog so backdrop MouseArea does not close it
             MouseArea {
@@ -177,57 +215,97 @@ PanelWindow {
                             }
                         }
 
-                        // Dynamic Navigation Links
-                        ColumnLayout {
+                        // Dynamic Navigation Links with Sliding Selection Indicator
+                        Item {
                             Layout.fillWidth: true
-                            spacing: 4
+                            implicitHeight: navCol.implicitHeight
 
-                            Repeater {
-                                model: root.navItems
+                            Rectangle {
+                                id: navIndicator
+                                x: 0
+                                y: root.currentNavIndex * 38
+                                width: parent.width
+                                height: 34
+                                radius: Theme.r(10)
+                                color: Theme.primary
+                                border.width: Theme.isSimple ? 1 : 0
+                                border.color: Theme.primary
 
-                                delegate: Rectangle {
-                                    id: navBtn
-                                    required property var modelData
-                                    readonly property bool isSelected: root.resolvedPage === navBtn.modelData.id
+                                Behavior on y {
+                                    enabled: !Theme.isSimple
+                                    NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                                }
+                            }
 
-                                    Layout.fillWidth: true
-                                    implicitHeight: 34
-                                    radius: Theme.r(10)
-                                    color: navBtn.isSelected
-                                        ? Theme.primary
-                                        : (navMouse.containsMouse ? Theme.hoverBg : "transparent")
-                                    border.width: (Theme.isSimple && navBtn.isSelected) ? 1 : 0
-                                    border.color: Theme.primary
+                            ColumnLayout {
+                                id: navCol
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                spacing: 4
 
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 10
-                                        spacing: 9
+                                Repeater {
+                                    model: root.navItems
 
-                                        Text {
-                                            text: navBtn.modelData.icon
-                                            font.family: Theme.iconFont
-                                            font.pixelSize: 14
-                                            color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                    delegate: Rectangle {
+                                        id: navBtn
+                                        required property var modelData
+                                        readonly property bool isSelected: root.resolvedPage === navBtn.modelData.id
+
+                                        Layout.fillWidth: true
+                                        implicitHeight: 34
+                                        radius: Theme.r(10)
+                                        color: (!navBtn.isSelected && navMouse.containsMouse) ? Theme.hoverBg : "transparent"
+                                        scale: navMouse.pressed ? 0.97 : 1.0
+
+                                        Behavior on color {
+                                            enabled: !Theme.isSimple
+                                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                                        }
+                                        Behavior on scale {
+                                            enabled: !Theme.isSimple
+                                            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
                                         }
 
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: navBtn.modelData.label
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: 12
-                                            font.weight: navBtn.isSelected ? Font.Bold : Font.Medium
-                                            color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurface
-                                        }
-                                    }
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 10
+                                            anchors.rightMargin: 10
+                                            spacing: 9
 
-                                    MouseArea {
-                                        id: navMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.pageSelected(navBtn.modelData.id)
+                                            Text {
+                                                text: navBtn.modelData.icon
+                                                font.family: Theme.iconFont
+                                                font.pixelSize: 14
+                                                color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+
+                                                Behavior on color {
+                                                    enabled: !Theme.isSimple
+                                                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                                }
+                                            }
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: navBtn.modelData.label
+                                                font.family: Theme.fontFamily
+                                                font.pixelSize: 12
+                                                font.weight: navBtn.isSelected ? Font.Bold : Font.Medium
+                                                color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurface
+
+                                                Behavior on color {
+                                                    enabled: !Theme.isSimple
+                                                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                                }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: navMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: root.pageSelected(navBtn.modelData.id)
+                                        }
                                     }
                                 }
                             }
@@ -320,6 +398,16 @@ PanelWindow {
                                 : Theme.cardBg
                             border.width: Theme.cardBorderWidth
                             border.color: Theme.cardBorder
+                            scale: closeBtnMouse.pressed ? 0.90 : 1.0
+
+                            Behavior on color {
+                                enabled: !Theme.isSimple
+                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                            }
+                            Behavior on scale {
+                                enabled: !Theme.isSimple
+                                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                            }
 
                             Text {
                                 anchors.centerIn: parent
@@ -346,7 +434,7 @@ PanelWindow {
                         color: Theme.isSimple ? Theme.outlineVariant : Theme.withAlpha(Theme.outlineVariant, 0.35)
                     }
 
-                    // Scrollable Page Container
+                    // Scrollable Page Container with Animated Page Entry
                     Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -364,7 +452,36 @@ PanelWindow {
                                 id: pageLoader
                                 width: scrollFlick.width
                                 source: root.pageSource
-                                onLoaded: scrollFlick.contentY = 0
+
+                                ParallelAnimation {
+                                    id: pageEnterAnim
+                                    NumberAnimation {
+                                        target: pageLoader
+                                        property: "opacity"
+                                        from: 0.0
+                                        to: 1.0
+                                        duration: 180
+                                        easing.type: Easing.OutCubic
+                                    }
+                                    NumberAnimation {
+                                        target: pageLoader
+                                        property: "y"
+                                        from: 10
+                                        to: 0
+                                        duration: 200
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
+
+                                onLoaded: {
+                                    scrollFlick.contentY = 0;
+                                    if (!Theme.isSimple) {
+                                        pageEnterAnim.restart();
+                                    } else {
+                                        pageLoader.opacity = 1.0;
+                                        pageLoader.y = 0;
+                                    }
+                                }
                             }
                         }
                     }

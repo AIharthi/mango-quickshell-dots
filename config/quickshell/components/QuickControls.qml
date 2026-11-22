@@ -13,6 +13,7 @@ Rectangle {
 
     property real volumeLevel: 0.5
     property bool volumeMuted: false
+    property bool _dragging: false
 
     property real brightnessLevel: 0.8
     property bool brightnessSupported: false
@@ -253,6 +254,11 @@ Rectangle {
                         width: parent.width * root.volumeLevel
                         radius: Theme.r(4)
                         color: root.volumeMuted ? Theme.outline : Theme.primary
+
+                        Behavior on width {
+                            enabled: !root._dragging && !Theme.isSimple
+                            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                        }
                     }
                 }
 
@@ -260,6 +266,7 @@ Rectangle {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onPressed: mouse => {
+                        root._dragging = true;
                         root.draggingChanged(true);
                         root.applyVolume(mouse.x / width);
                     }
@@ -267,8 +274,14 @@ Rectangle {
                         if (pressed)
                             root.applyVolume(mouse.x / width);
                     }
-                    onReleased: root.draggingChanged(false)
-                    onCanceled: root.draggingChanged(false)
+                    onReleased: {
+                        root._dragging = false;
+                        root.draggingChanged(false);
+                    }
+                    onCanceled: {
+                        root._dragging = false;
+                        root.draggingChanged(false);
+                    }
                 }
             }
 
@@ -321,6 +334,11 @@ Rectangle {
                         width: root.brightnessSupported ? (parent.width * root.brightnessLevel) : 0
                         radius: Theme.r(4)
                         color: Theme.warning
+
+                        Behavior on width {
+                            enabled: !root._dragging && !Theme.isSimple
+                            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                        }
                     }
                 }
 
@@ -329,6 +347,7 @@ Rectangle {
                     enabled: root.brightnessSupported
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onPressed: mouse => {
+                        root._dragging = true;
                         root.draggingChanged(true);
                         root.applyBrightness(mouse.x / width);
                     }
@@ -336,8 +355,14 @@ Rectangle {
                         if (pressed)
                             root.applyBrightness(mouse.x / width);
                     }
-                    onReleased: root.draggingChanged(false)
-                    onCanceled: root.draggingChanged(false)
+                    onReleased: {
+                        root._dragging = false;
+                        root.draggingChanged(false);
+                    }
+                    onCanceled: {
+                        root._dragging = false;
+                        root.draggingChanged(false);
+                    }
                 }
             }
 
@@ -369,6 +394,16 @@ Rectangle {
                     : (wifiArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                 border.width: Theme.cardBorderWidth
                 border.color: root.wifiEnabled ? Theme.primary : Theme.cardBorder
+                scale: wifiArea.pressed ? 0.97 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -423,6 +458,16 @@ Rectangle {
                     : (btArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                 border.width: Theme.cardBorderWidth
                 border.color: root.btEnabled ? Theme.secondary : Theme.cardBorder
+                scale: btArea.pressed ? 0.97 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -476,6 +521,16 @@ Rectangle {
             color: audioSettingsArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
             border.width: Theme.cardBorderWidth
             border.color: Theme.cardBorder
+            scale: audioSettingsArea.pressed ? 0.97 : 1.0
+
+            Behavior on color {
+                enabled: !Theme.isSimple
+                ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+            }
+            Behavior on scale {
+                enabled: !Theme.isSimple
+                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+            }
 
             RowLayout {
                 anchors.fill: parent
@@ -533,6 +588,16 @@ Rectangle {
                     : (simpleArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                 border.width: Theme.isSimple ? 1 : Theme.cardBorderWidth
                 border.color: Theme.isSimple ? Theme.primary : Theme.cardBorder
+                scale: simpleArea.pressed ? 0.97 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -578,6 +643,16 @@ Rectangle {
                     : (blurArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                 border.width: Theme.isBlur ? 1 : Theme.cardBorderWidth
                 border.color: Theme.isBlur ? Theme.secondary : Theme.cardBorder
+                scale: blurArea.pressed ? 0.97 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                }
 
                 RowLayout {
                     anchors.fill: parent

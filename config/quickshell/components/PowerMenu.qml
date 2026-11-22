@@ -82,6 +82,16 @@ Rectangle {
                 }
                 border.width: Theme.cardBorderWidth
                 border.color: btn.isPending ? Theme.error : Theme.cardBorder
+                scale: btnArea.pressed ? 0.95 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                }
 
                 RowLayout {
                     anchors.centerIn: parent

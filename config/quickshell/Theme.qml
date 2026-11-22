@@ -24,9 +24,17 @@ Singleton {
     property real blurUnfocusedOpacity: 0.76
     property int blurRadius: 8
     property int blurPasses: 4
+    property real blurSaturation: 1.25
+    property real blurBrightness: 0.90
     property int defaultRadius: 20
     property int defaultGaps: 8
+    property int defaultBorderPx: 0
+    property bool wmShadows: true
     property bool wmAnimations: true
+    property string animTypeOpen: "zoom"
+    property string animTypeClose: "slide"
+    property int animDuration: 300
+    property int tagAnimDirection: 1
 
     readonly property var availablePresets: [
         { id: "catppuccin-mocha", label: "Catppuccin", swatch: "#cba6f7", bg: "#1e1e2e" },
@@ -246,12 +254,28 @@ Singleton {
                 root.blurRadius = Math.round(p.blurRadius);
             if (typeof p.blurPasses === "number")
                 root.blurPasses = Math.round(p.blurPasses);
+            if (typeof p.blurSaturation === "number")
+                root.blurSaturation = p.blurSaturation;
+            if (typeof p.blurBrightness === "number")
+                root.blurBrightness = p.blurBrightness;
             if (typeof p.defaultRadius === "number")
                 root.defaultRadius = Math.round(p.defaultRadius);
             if (typeof p.defaultGaps === "number")
                 root.defaultGaps = Math.round(p.defaultGaps);
+            if (typeof p.defaultBorderPx === "number")
+                root.defaultBorderPx = Math.round(p.defaultBorderPx);
+            if (typeof p.shadows === "boolean")
+                root.wmShadows = p.shadows;
             if (typeof p.animations === "boolean")
                 root.wmAnimations = p.animations;
+            if (typeof p.animationTypeOpen === "string")
+                root.animTypeOpen = p.animationTypeOpen;
+            if (typeof p.animationTypeClose === "string")
+                root.animTypeClose = p.animationTypeClose;
+            if (typeof p.animationDuration === "number")
+                root.animDuration = Math.round(p.animationDuration);
+            if (typeof p.tagAnimationDirection === "number")
+                root.tagAnimDirection = Math.round(p.tagAnimationDirection);
         } catch (err) {
             prefsRetryTimer.restart();
         }
@@ -292,12 +316,28 @@ Singleton {
             root.blurRadius = Math.round(Number(val));
         else if (key === "blurPasses")
             root.blurPasses = Math.round(Number(val));
+        else if (key === "blurSaturation")
+            root.blurSaturation = Number(val);
+        else if (key === "blurBrightness")
+            root.blurBrightness = Number(val);
         else if (key === "defaultRadius")
             root.defaultRadius = Math.round(Number(val));
         else if (key === "defaultGaps")
             root.defaultGaps = Math.round(Number(val));
+        else if (key === "defaultBorderPx")
+            root.defaultBorderPx = Math.round(Number(val));
+        else if (key === "shadows")
+            root.wmShadows = !!val;
         else if (key === "animations")
             root.wmAnimations = !!val;
+        else if (key === "animationTypeOpen")
+            root.animTypeOpen = String(val);
+        else if (key === "animationTypeClose")
+            root.animTypeClose = String(val);
+        else if (key === "animationDuration")
+            root.animDuration = Math.round(Number(val));
+        else if (key === "tagAnimationDirection")
+            root.tagAnimDirection = Math.round(Number(val));
         _runModeScript(["--update-pref", key, String(val)]);
     }
 

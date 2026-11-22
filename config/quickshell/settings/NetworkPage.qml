@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Quickshell.Io
 import ".."
 
@@ -225,28 +224,9 @@ ColumnLayout {
                 }
             }
 
-            Rectangle {
-                implicitWidth: 56
-                implicitHeight: 28
-                radius: Theme.r(8)
-                color: root.wifiEnabled ? Theme.primary : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
-                border.color: root.wifiEnabled ? Theme.primary : Theme.cardBorder
-
-                Text {
-                    anchors.centerIn: parent
-                    text: root.wifiEnabled ? "ON" : "OFF"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 10
-                    font.weight: Font.Bold
-                    color: root.wifiEnabled ? Theme.fgPrimary : Theme.fgSurfaceVariant
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.toggleWifi()
-                }
+            ToggleSwitch {
+                checked: root.wifiEnabled
+                onToggled: root.toggleWifi()
             }
         }
     }

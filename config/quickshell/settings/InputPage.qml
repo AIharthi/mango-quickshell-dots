@@ -10,14 +10,21 @@ ColumnLayout {
     spacing: 12
 
     property string kbLayout: "us,ara"
+    property string kbOptions: "grp:alt_shift_toggle"
+    property bool numlockOn: false
     property int repeatRate: 30
     property int repeatDelay: 450
-    property int cursorSize: 24
+
+    property int mouseAccelProfile: 2
+    property real mouseAccelSpeed: 0.0
     property bool mouseNaturalScroll: false
+
     property bool tapToClick: true
     property bool trackpadNaturalScroll: false
     property bool disableWhileTyping: true
     property bool disableTrackpad: false
+    property int trackpadAccelProfile: 2
+    property real trackpadAccelSpeed: 0.0
 
     function loadSettings(): void {
         if (!readProc.running)
@@ -27,12 +34,18 @@ ColumnLayout {
     function setSetting(key: string, val: var): void {
         if (key === "xkb_rules_layout")
             root.kbLayout = String(val);
+        else if (key === "xkb_rules_options")
+            root.kbOptions = String(val);
+        else if (key === "numlock_on")
+            root.numlockOn = !!val;
         else if (key === "repeat_rate")
             root.repeatRate = Number(val);
         else if (key === "repeat_delay")
             root.repeatDelay = Number(val);
-        else if (key === "cursor_size")
-            root.cursorSize = Number(val);
+        else if (key === "mouse_accel_profile")
+            root.mouseAccelProfile = Number(val);
+        else if (key === "mouse_accel_speed")
+            root.mouseAccelSpeed = Number(val);
         else if (key === "mouse_natural_scrolling")
             root.mouseNaturalScroll = !!val;
         else if (key === "tap_to_click")
@@ -43,6 +56,10 @@ ColumnLayout {
             root.disableWhileTyping = !!val;
         else if (key === "disable_trackpad")
             root.disableTrackpad = !!val;
+        else if (key === "trackpad_accel_profile")
+            root.trackpadAccelProfile = Number(val);
+        else if (key === "trackpad_accel_speed")
+            root.trackpadAccelSpeed = Number(val);
 
         const outVal = (typeof val === "boolean") ? (val ? "1" : "0") : String(val);
         Quickshell.execDetached([Quickshell.shellPath("scripts/apply-local-setting.sh"), "set", key, outVal]);
@@ -64,12 +81,18 @@ ColumnLayout {
                         root.kbLayout = d.xkb_rules_layout;
                         layoutInput.text = d.xkb_rules_layout;
                     }
+                    if (typeof d.xkb_rules_options === "string")
+                        root.kbOptions = d.xkb_rules_options;
+                    if (typeof d.numlock_on === "boolean")
+                        root.numlockOn = d.numlock_on;
                     if (typeof d.repeat_rate === "number")
                         root.repeatRate = d.repeat_rate;
                     if (typeof d.repeat_delay === "number")
                         root.repeatDelay = d.repeat_delay;
-                    if (typeof d.cursor_size === "number")
-                        root.cursorSize = d.cursor_size;
+                    if (typeof d.mouse_accel_profile === "number")
+                        root.mouseAccelProfile = d.mouse_accel_profile;
+                    if (typeof d.mouse_accel_speed === "number")
+                        root.mouseAccelSpeed = d.mouse_accel_speed;
                     if (typeof d.mouse_natural_scrolling === "boolean")
                         root.mouseNaturalScroll = d.mouse_natural_scrolling;
                     if (typeof d.tap_to_click === "boolean")
@@ -80,6 +103,10 @@ ColumnLayout {
                         root.disableWhileTyping = d.trackpad_disable_while_typing;
                     if (typeof d.disable_trackpad === "boolean")
                         root.disableTrackpad = d.disable_trackpad;
+                    if (typeof d.trackpad_accel_profile === "number")
+                        root.trackpadAccelProfile = d.trackpad_accel_profile;
+                    if (typeof d.trackpad_accel_speed === "number")
+                        root.trackpadAccelSpeed = d.trackpad_accel_speed;
                 } catch (err) {}
             }
         }
@@ -129,6 +156,16 @@ ColumnLayout {
                             : (layMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                         border.width: layChip.selected ? 1 : Theme.cardBorderWidth
                         border.color: layChip.selected ? Theme.primary : Theme.cardBorder
+                        scale: layMouse.pressed ? 0.95 : 1.0
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.isSimple
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
 
                         Text {
                             anchors.centerIn: parent
@@ -187,6 +224,16 @@ ColumnLayout {
                     implicitHeight: 30
                     radius: Theme.r(8)
                     color: applyLayMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+                    scale: applyLayMouse.pressed ? 0.95 : 1.0
+
+                    Behavior on color {
+                        enabled: !Theme.isSimple
+                        ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on scale {
+                        enabled: !Theme.isSimple
+                        NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                    }
 
                     Text {
                         anchors.centerIn: parent
@@ -207,10 +254,75 @@ ColumnLayout {
                 }
             }
 
+            // XKB Switch Shortcut
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 115
+                    text: "Switch Shortcut"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { label: "Alt+Shift", val: "grp:alt_shift_toggle" },
+                        { label: "Win+Space", val: "grp:win_space_toggle" },
+                        { label: "Caps Lock", val: "grp:caps_toggle" },
+                        { label: "Caps→Esc",  val: "caps:escape" }
+                    ]
+
+                    delegate: Rectangle {
+                        id: optBtn
+                        required property var modelData
+                        readonly property bool selected: root.kbOptions === optBtn.modelData.val
+
+                        Layout.fillWidth: true
+                        implicitHeight: 26
+                        radius: Theme.r(8)
+                        color: optBtn.selected
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (optMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: optBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.color: optBtn.selected ? Theme.primary : Theme.cardBorder
+                        scale: optMouse.pressed ? 0.95 : 1.0
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.isSimple
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: optBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: optBtn.selected ? Font.Bold : Font.Normal
+                            color: optBtn.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: optMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.setSetting("xkb_rules_options", optBtn.modelData.val)
+                        }
+                    }
+                }
+            }
+
             // Repeat Rate
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 6
 
                 Text {
                     Layout.preferredWidth: 115
@@ -236,6 +348,16 @@ ColumnLayout {
                             : (rateMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                         border.width: rateBtn.selected ? 1 : Theme.cardBorderWidth
                         border.color: rateBtn.selected ? Theme.secondary : Theme.cardBorder
+                        scale: rateMouse.pressed ? 0.95 : 1.0
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.isSimple
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
 
                         Text {
                             anchors.centerIn: parent
@@ -260,7 +382,7 @@ ColumnLayout {
             // Repeat Delay
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 6
 
                 Text {
                     Layout.preferredWidth: 115
@@ -286,6 +408,16 @@ ColumnLayout {
                             : (delayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                         border.width: delayBtn.selected ? 1 : Theme.cardBorderWidth
                         border.color: delayBtn.selected ? Theme.secondary : Theme.cardBorder
+                        scale: delayMouse.pressed ? 0.95 : 1.0
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.isSimple
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
 
                         Text {
                             anchors.centerIn: parent
@@ -306,10 +438,28 @@ ColumnLayout {
                     }
                 }
             }
+
+            // NumLock on Startup
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Enable NumLock on Startup"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: root.numlockOn
+                    onToggled: root.setSetting("numlock_on", !root.numlockOn)
+                }
+            }
         }
     }
 
-    // --- 2. Mouse & Cursor Settings ---
+    // --- 2. Mouse & Pointer Settings ---
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: mouseCol.implicitHeight + 24
@@ -324,12 +474,94 @@ ColumnLayout {
             anchors.margins: 12
             spacing: 10
 
-            Text {
-                text: "POINTER & CURSOR"
-                font.family: Theme.fontFamily
-                font.pixelSize: 10
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    text: "MOUSE & POINTER"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Text {
+                    text: "Cursor theme & size → Appearance"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 9
+                    color: Theme.fgSurfaceVariant
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 115
+                    text: "Accel Profile"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { label: "Flat (Raw)", val: 1 },
+                        { label: "Adaptive",   val: 2 }
+                    ]
+
+                    delegate: Rectangle {
+                        id: mProfBtn
+                        required property var modelData
+                        readonly property bool selected: root.mouseAccelProfile === mProfBtn.modelData.val
+
+                        Layout.fillWidth: true
+                        implicitHeight: 26
+                        radius: Theme.r(8)
+                        color: mProfBtn.selected
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (mProfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: mProfBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.color: mProfBtn.selected ? Theme.primary : Theme.cardBorder
+                        scale: mProfMouse.pressed ? 0.96 : 1.0
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.isSimple
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: mProfBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: mProfBtn.selected ? Font.Bold : Font.Normal
+                            color: mProfBtn.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: mProfMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.setSetting("mouse_accel_profile", mProfBtn.modelData.val)
+                        }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "Mouse Pointer Speed"
+                displayValue: (root.mouseAccelSpeed >= 0 ? "+" : "") + root.mouseAccelSpeed.toFixed(1)
+                onDecremented: root.setSetting("mouse_accel_speed", Number(Math.max(-1.0, root.mouseAccelSpeed - 0.1).toFixed(1)))
+                onIncremented: root.setSetting("mouse_accel_speed", Number(Math.min(1.0, root.mouseAccelSpeed + 0.1).toFixed(1)))
             }
 
             RowLayout {
@@ -343,77 +575,9 @@ ColumnLayout {
                     color: Theme.fgSurface
                 }
 
-                Rectangle {
-                    implicitWidth: 56
-                    implicitHeight: 24
-                    radius: Theme.r(8)
-                    color: root.mouseNaturalScroll ? Theme.withAlpha(Theme.primary, 0.24) : Theme.subCardBg
-                    border.width: root.mouseNaturalScroll ? 1 : Theme.cardBorderWidth
-                    border.color: root.mouseNaturalScroll ? Theme.primary : Theme.cardBorder
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.mouseNaturalScroll ? "ON" : "OFF"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        font.weight: Font.Bold
-                        color: root.mouseNaturalScroll ? Theme.primary : Theme.fgSurfaceVariant
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.setSetting("mouse_natural_scrolling", !root.mouseNaturalScroll)
-                    }
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
-                    Layout.preferredWidth: 115
-                    text: "Cursor Size"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    color: Theme.fgSurface
-                }
-
-                Repeater {
-                    model: [20, 24, 28, 32]
-
-                    delegate: Rectangle {
-                        id: curBtn
-                        required property int modelData
-                        readonly property bool selected: root.cursorSize === curBtn.modelData
-
-                        Layout.fillWidth: true
-                        implicitHeight: 26
-                        radius: Theme.r(8)
-                        color: curBtn.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (curMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: curBtn.selected ? 1 : Theme.cardBorderWidth
-                        border.color: curBtn.selected ? Theme.primary : Theme.cardBorder
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: curBtn.modelData + "px"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 10
-                            font.weight: curBtn.selected ? Font.Bold : Font.Normal
-                            color: curBtn.selected ? Theme.primary : Theme.fgSurface
-                        }
-
-                        MouseArea {
-                            id: curMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.setSetting("cursor_size", curBtn.modelData)
-                        }
-                    }
+                ToggleSwitch {
+                    checked: root.mouseNaturalScroll
+                    onToggled: root.setSetting("mouse_natural_scrolling", !root.mouseNaturalScroll)
                 }
             }
         }
@@ -433,7 +597,7 @@ ColumnLayout {
             id: tpCol
             anchors.fill: parent
             anchors.margins: 12
-            spacing: 8
+            spacing: 9
 
             Text {
                 text: "TOUCHPAD"
@@ -464,30 +628,81 @@ ColumnLayout {
                         color: Theme.fgSurface
                     }
 
-                    Rectangle {
-                        implicitWidth: 56
-                        implicitHeight: 24
+                    ToggleSwitch {
+                        checked: tpRow.modelData.val
+                        onToggled: root.setSetting(tpRow.modelData.key, !tpRow.modelData.val)
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 115
+                    text: "Accel Profile"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { label: "Flat",     val: 1 },
+                        { label: "Adaptive", val: 2 }
+                    ]
+
+                    delegate: Rectangle {
+                        id: tpProfBtn
+                        required property var modelData
+                        readonly property bool selected: root.trackpadAccelProfile === tpProfBtn.modelData.val
+
+                        Layout.fillWidth: true
+                        implicitHeight: 26
                         radius: Theme.r(8)
-                        color: tpRow.modelData.val ? Theme.withAlpha(Theme.primary, 0.24) : Theme.subCardBg
-                        border.width: tpRow.modelData.val ? 1 : Theme.cardBorderWidth
-                        border.color: tpRow.modelData.val ? Theme.primary : Theme.cardBorder
+                        color: tpProfBtn.selected
+                            ? Theme.withAlpha(Theme.secondary, 0.22)
+                            : (tpProfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: tpProfBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.color: tpProfBtn.selected ? Theme.secondary : Theme.cardBorder
+                        scale: tpProfMouse.pressed ? 0.96 : 1.0
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.isSimple
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
 
                         Text {
                             anchors.centerIn: parent
-                            text: tpRow.modelData.val ? "ON" : "OFF"
+                            text: tpProfBtn.modelData.label
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
-                            font.weight: Font.Bold
-                            color: tpRow.modelData.val ? Theme.primary : Theme.fgSurfaceVariant
+                            font.weight: tpProfBtn.selected ? Font.Bold : Font.Normal
+                            color: tpProfBtn.selected ? Theme.secondary : Theme.fgSurface
                         }
 
                         MouseArea {
+                            id: tpProfMouse
                             anchors.fill: parent
+                            hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.setSetting(tpRow.modelData.key, !tpRow.modelData.val)
+                            onClicked: root.setSetting("trackpad_accel_profile", tpProfBtn.modelData.val)
                         }
                     }
                 }
+            }
+
+            StepControl {
+                label: "Touchpad Speed"
+                displayValue: (root.trackpadAccelSpeed >= 0 ? "+" : "") + root.trackpadAccelSpeed.toFixed(1)
+                accentColor: Theme.secondary
+                onDecremented: root.setSetting("trackpad_accel_speed", Number(Math.max(-1.0, root.trackpadAccelSpeed - 0.1).toFixed(1)))
+                onIncremented: root.setSetting("trackpad_accel_speed", Number(Math.min(1.0, root.trackpadAccelSpeed + 0.1).toFixed(1)))
             }
         }
     }

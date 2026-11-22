@@ -11,6 +11,8 @@ ColumnLayout {
     spacing: 12
 
     property int overrideCount: 0
+    property string activeCursor: "catppuccin-mocha-dark-cursors"
+    property int activeCursorSize: 24
 
     function loadOverrides(): void {
         if (!localProc.running)
@@ -36,6 +38,10 @@ ColumnLayout {
                     const d = JSON.parse(raw);
                     if (typeof d.overrideCount === "number")
                         root.overrideCount = d.overrideCount;
+                    if (typeof d.cursor_theme === "string")
+                        root.activeCursor = d.cursor_theme;
+                    if (typeof d.cursor_size === "number")
+                        root.activeCursorSize = d.cursor_size;
                 } catch (err) {}
             }
         }
@@ -106,6 +112,13 @@ ColumnLayout {
                         font.family: Theme.fontFamily
                         font.pixelSize: 10
                         color: Theme.fgSurfaceVariant
+                    }
+
+                    Text {
+                        text: "Mode: " + Theme.shellMode.toUpperCase() + " · Cursor: " + root.activeCursor + " (" + root.activeCursorSize + "px)"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        color: Theme.primary
                     }
                 }
             }
@@ -288,11 +301,58 @@ ColumnLayout {
 
             Rectangle {
                 implicitHeight: 26
+                implicitWidth: reloadWmLbl.implicitWidth + 16
+                radius: Theme.r(8)
+                color: reloadWmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.cardBorder
+                scale: reloadWmMouse.pressed ? 0.95 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                }
+
+                Text {
+                    id: reloadWmLbl
+                    anchors.centerIn: parent
+                    text: "Reload WM"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.primary
+                }
+
+                MouseArea {
+                    id: reloadWmMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Quickshell.execDetached(["mmsg", "dispatch", "reload_config"])
+                }
+            }
+
+            Rectangle {
+                implicitHeight: 26
                 implicitWidth: rstLocalLbl.implicitWidth + 16
                 radius: Theme.r(8)
                 color: rstLocalMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                scale: rstLocalMouse.pressed ? 0.95 : 1.0
+
+                Behavior on color {
+                    enabled: !Theme.isSimple
+                    ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.isSimple
+                    NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                }
 
                 Text {
                     id: rstLocalLbl

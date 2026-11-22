@@ -12,13 +12,14 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
     - **Laptops** automatically surface live **Battery % / charging status** (in the Dynamic Island pill, Simple Bar, and System Monitor), **Backlight brightness**, **Wi-Fi**, **Bluetooth**, and **Touchpad** settings.
   - **Multi-Monitor Support**: Wraps `PanelWindow`s in Quickshell `Variants` over `Quickshell.screens`, syncing per-monitor MangoWC tags across all connected displays.
   - **Per-Device MangoWC Overrides (`~/.config/mango/local.conf`)**: Included via `source_optional=~/.config/mango/local.conf` (ignored by Git and preserved across `./install.sh` re-runs), so every machine can pull the same dotfiles while keeping its own monitor rules, keyboard layout, and touchpad settings.
-- **Built-in Quickshell Settings App (`Super + S`)**
-  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), theme presets or dynamic Matugen mode, Dark/Light scheme, and tune blur opacity/radius/passes, corner radius, window gaps, and animations (`mode-prefs.json`).
+- **Built-in Quickshell Settings App (`Super + S`)** *(with smooth open/close, sidebar indicator, toggle & page transitions)*
+  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), theme presets or dynamic Matugen mode, Dark/Light scheme, **Cursor Theme & Size** (`20`–`48px` + auto-hide idle/typing, synced across MangoWC, GTK 3/4, `~/.icons/default`, and `gsettings`), and MangoWC animation styles/speeds (`zoom`/`slide`/`fade`/`none`), shadows, border width, blur opacity/radius/passes/saturation/brightness, corner radius, and gaps (`mode-prefs.json`).
+  - **Windows**: Focus follows mouse (`sloppy_focus`), cursor warp (`warp_cursor`), focus on activate, new-as-master, master area ratio, smart gaps, drag-to-swap, scroller column proportion, and floating magnetic snapping (`~/.config/mango/local.conf`).
   - **Audio**: Output & microphone volume sliders, mute toggles, live default sink/source switching via `pactl`, and quick launch for `pavucontrol`.
   - **Displays**: Inspect connected outputs (`wlr-randr`), switch resolution, refresh rate, and fractional scaling live, or persist `monitor_rule` directly to `~/.config/mango/local.conf`.
   - **Network & Bluetooth** *(shown only when hardware exists)*: Wi-Fi radio toggle, scanning, and network connect (with inline password prompt); Bluetooth power toggle, scanning, and device connect/disconnect.
-  - **Input**: Per-device keyboard layouts (`xkb_rules_layout`), repeat rate/delay, cursor size, mouse natural scrolling, and touchpad controls *(touchpad section shown only when a touchpad is detected)*.
-  - **System**: Host & distro summary, detected hardware capability matrix, embedded **Power Menu**, and `local.conf` override counter/reset.
+  - **Input**: Per-device keyboard layouts (`xkb_rules_layout`), switch shortcut (`xkb_rules_options`), repeat rate/delay, NumLock on startup, mouse/trackpad acceleration profile (`Flat` / `Adaptive`) & pointer speed, natural scrolling, and touchpad controls *(touchpad section shown only when a touchpad is detected)*.
+  - **System**: Host & distro summary, active mode/cursor readout, detected hardware capability matrix, embedded **Power Menu**, and MangoWC reload / `local.conf` reset.
 - **Morphing Dynamic Island (`Quickshell`)**
   - Compact top pill showing time, optional battery indicator, and collapsible Spotify/MPRIS mini-player with spinning album art and equalizer bars.
   - Hover or press `Super + D` to open the **Hub**: MPRIS Media Card, live CPU/RAM (+ optional Battery) System Monitor, interactive MangoWC Tags (`1`–`9`) + layout switcher, hardware-aware Quick Controls, **System Tray** (`StatusNotifierItem`), and collapsible **Power Menu** (Lock, Suspend, Logout, Reboot, Poweroff with confirmation).
@@ -43,7 +44,7 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 │   ├── mango/                    # MangoWC config, mode.conf, theme.conf, autostart.sh
 │   ├── quickshell/               # ShellRoot, Theme & DeviceCaps singletons, JSON state
 │   │   ├── components/           # DynamicIsland, SimpleBar, QuickControls, SystemTrayStrip, PowerMenu, etc.
-│   │   ├── settings/             # Modular Settings app (Appearance, Audio, Display, Network, BT, Input, System)
+│   │   ├── settings/             # Modular Settings app (Appearance, Windows, Audio, Display, Network, BT, Input, System)
 │   │   └── scripts/              # apply-mode.sh, apply-theme.sh, detect-hardware.sh, apply-local-setting.sh, lock.sh, etc.
 │   ├── matugen/                  # Matugen config & templates (QS, GTK3/4, Mango, Foot, Kitty)
 │   ├── foot/                     # Foot terminal config + synced colors
@@ -222,7 +223,7 @@ qs ipc call island setShellMode blur
 
 # Settings Window
 qs ipc call island toggleSettings
-qs ipc call island openSettings audio   # appearance | audio | displays | network | bluetooth | input | system
+qs ipc call island openSettings audio   # appearance | windows | audio | displays | network | bluetooth | input | system
 qs ipc call island closeSettings
 ```
 

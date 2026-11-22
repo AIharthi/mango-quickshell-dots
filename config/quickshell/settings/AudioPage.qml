@@ -13,6 +13,7 @@ ColumnLayout {
     property bool outMuted: false
     property real inVolume: 0.5
     property bool inMuted: false
+    property bool _dragging: false
     property string defaultSink: ""
     property string defaultSource: ""
     property var sinks: []
@@ -250,17 +251,27 @@ ColumnLayout {
                             width: parent.width * root.outVolume
                             radius: Theme.r(4)
                             color: root.outMuted ? Theme.outline : Theme.primary
+
+                            Behavior on width {
+                                enabled: !root._dragging && !Theme.isSimple
+                                NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                            }
                         }
                     }
 
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onPressed: mouse => root.setSinkVolume(mouse.x / width)
+                        onPressed: mouse => {
+                            root._dragging = true;
+                            root.setSinkVolume(mouse.x / width);
+                        }
                         onPositionChanged: mouse => {
                             if (pressed)
                                 root.setSinkVolume(mouse.x / width);
                         }
+                        onReleased: root._dragging = false
+                        onCanceled: root._dragging = false
                     }
                 }
 
@@ -291,6 +302,16 @@ ColumnLayout {
                         : (sinkMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                     border.width: sinkRow.isDefault ? 1 : Theme.cardBorderWidth
                     border.color: sinkRow.isDefault ? Theme.primary : Theme.cardBorder
+                    scale: sinkMouse.pressed ? 0.98 : 1.0
+
+                    Behavior on color {
+                        enabled: !Theme.isSimple
+                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on scale {
+                        enabled: !Theme.isSimple
+                        NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                    }
 
                     RowLayout {
                         anchors.fill: parent
@@ -396,17 +417,27 @@ ColumnLayout {
                             width: parent.width * root.inVolume
                             radius: Theme.r(4)
                             color: root.inMuted ? Theme.outline : Theme.secondary
+
+                            Behavior on width {
+                                enabled: !root._dragging && !Theme.isSimple
+                                NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                            }
                         }
                     }
 
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onPressed: mouse => root.setSourceVolume(mouse.x / width)
+                        onPressed: mouse => {
+                            root._dragging = true;
+                            root.setSourceVolume(mouse.x / width);
+                        }
                         onPositionChanged: mouse => {
                             if (pressed)
                                 root.setSourceVolume(mouse.x / width);
                         }
+                        onReleased: root._dragging = false
+                        onCanceled: root._dragging = false
                     }
                 }
 
@@ -437,6 +468,16 @@ ColumnLayout {
                         : (srcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                     border.width: srcRow.isDefault ? 1 : Theme.cardBorderWidth
                     border.color: srcRow.isDefault ? Theme.secondary : Theme.cardBorder
+                    scale: srcMouse.pressed ? 0.98 : 1.0
+
+                    Behavior on color {
+                        enabled: !Theme.isSimple
+                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on scale {
+                        enabled: !Theme.isSimple
+                        NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                    }
 
                     RowLayout {
                         anchors.fill: parent

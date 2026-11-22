@@ -3,7 +3,15 @@
   "blurUnfocusedOpacity": 0.76,
   "blurRadius": 8,
   "blurPasses": 4,
+  "blurSaturation": 1.25,
+  "blurBrightness": 0.90,
   "defaultRadius": 20,
   "defaultGaps": 8,
-  "animations": true
+  "defaultBorderPx": 0,
+  "shadows": true,
+  "animations": true,
+  "animationTypeOpen": "zoom",
+  "animationTypeClose": "slide",
+  "animationDuration": 300,
+  "tagAnimationDirection": 1
 }

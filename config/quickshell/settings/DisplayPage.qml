@@ -296,6 +296,16 @@ ColumnLayout {
                                 : (modePillMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                             border.width: modePill.selected ? 1 : Theme.cardBorderWidth
                             border.color: modePill.selected ? Theme.primary : Theme.cardBorder
+                            scale: modePillMouse.pressed ? 0.95 : 1.0
+
+                            Behavior on color {
+                                enabled: !Theme.isSimple
+                                ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                            }
+                            Behavior on scale {
+                                enabled: !Theme.isSimple
+                                NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                            }
 
                             Text {
                                 id: modeTxt
@@ -346,6 +356,16 @@ ColumnLayout {
                                 : (scaleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                             border.width: scalePill.selected ? 1 : Theme.cardBorderWidth
                             border.color: scalePill.selected ? Theme.secondary : Theme.cardBorder
+                            scale: scaleMouse.pressed ? 0.95 : 1.0
+
+                            Behavior on color {
+                                enabled: !Theme.isSimple
+                                ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                            }
+                            Behavior on scale {
+                                enabled: !Theme.isSimple
+                                NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                            }
 
                             Text {
                                 anchors.centerIn: parent
@@ -376,6 +396,16 @@ ColumnLayout {
                         implicitHeight: 30
                         radius: Theme.r(9)
                         color: applyLiveMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+                        scale: applyLiveMouse.pressed ? 0.97 : 1.0
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.isSimple
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
 
                         Text {
                             anchors.centerIn: parent
@@ -402,6 +432,16 @@ ColumnLayout {
                         color: saveRuleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
                         border.width: Theme.cardBorderWidth
                         border.color: Theme.cardBorder
+                        scale: saveRuleMouse.pressed ? 0.97 : 1.0
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.isSimple
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
 
                         Text {
                             anchors.centerIn: parent

@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Quickshell.Io
 import ".."
 
@@ -169,28 +168,10 @@ ColumnLayout {
                 }
             }
 
-            Rectangle {
-                implicitWidth: 56
-                implicitHeight: 28
-                radius: Theme.r(8)
-                color: root.powered ? Theme.secondary : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
-                border.color: root.powered ? Theme.secondary : Theme.cardBorder
-
-                Text {
-                    anchors.centerIn: parent
-                    text: root.powered ? "ON" : "OFF"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 10
-                    font.weight: Font.Bold
-                    color: root.powered ? Theme.fgSecondary : Theme.fgSurfaceVariant
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.togglePower()
-                }
+            ToggleSwitch {
+                checked: root.powered
+                activeColor: Theme.secondary
+                onToggled: root.togglePower()
             }
         }
     }

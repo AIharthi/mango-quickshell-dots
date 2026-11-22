@@ -31,6 +31,16 @@ RowLayout {
                 : (root.compact ? "transparent" : Theme.cardBg)
             border.width: root.compact ? 0 : Theme.cardBorderWidth
             border.color: Theme.cardBorder
+            scale: trayMouse.pressed ? 0.90 : (trayMouse.containsMouse ? 1.08 : 1.0)
+
+            Behavior on color {
+                enabled: !Theme.isSimple
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+            }
+            Behavior on scale {
+                enabled: !Theme.isSimple
+                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+            }
 
             IconImage {
                 anchors.centerIn: parent

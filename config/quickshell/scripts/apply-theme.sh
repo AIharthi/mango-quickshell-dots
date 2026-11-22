@@ -648,6 +648,18 @@ apply_gtk_settings() {
         fi
     fi
 
+    local cursor_theme="catppuccin-mocha-dark-cursors"
+    local cursor_size="24"
+    for cfg_src in "$CONFIG_DIR/mango/config.conf" "$CONFIG_DIR/mango/local.conf"; do
+        if [[ -f "$cfg_src" ]]; then
+            local ct cs
+            ct=$(awk -F= '/^[[:space:]]*cursor_theme[[:space:]]*=/{val=$2} END{gsub(/^[[:space:]]+|[[:space:]]+$/, "", val); print val}' "$cfg_src")
+            cs=$(awk -F= '/^[[:space:]]*cursor_size[[:space:]]*=/{val=$2} END{gsub(/^[[:space:]]+|[[:space:]]+$/, "", val); print val}' "$cfg_src")
+            [[ -n "$ct" ]] && cursor_theme="$ct"
+            [[ -n "$cs" ]] && cursor_size="$cs"
+        fi
+    done
+
     for ini in "$GTK3_DIR/settings.ini" "$GTK4_DIR/settings.ini"; do
         atomic_write "$ini" <<EOF
 [Settings]
@@ -655,8 +667,8 @@ gtk-application-prefer-dark-theme=${prefer_dark}
 gtk-theme-name=${theme_name}
 gtk-icon-theme-name=Adwaita
 gtk-font-name=JetBrains Mono 10
-gtk-cursor-theme-name=catppuccin-mocha-dark-cursors
-gtk-cursor-theme-size=24
+gtk-cursor-theme-name=${cursor_theme}
+gtk-cursor-theme-size=${cursor_size}
 EOF
     done
 
@@ -668,6 +680,8 @@ EOF
         local pulse_theme="Adwaita"
         [[ "$SCHEME" == "light" ]] && pulse_theme="Adwaita-dark"
         # Momentary value change forces running GTK3/GTK4 apps & xdg-desktop-portal to reload gtk.css live
+        gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface cursor-size "$cursor_size" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface gtk-theme "$pulse_theme" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface color-scheme "default" 2>/dev/null || true
         sleep 0.05
