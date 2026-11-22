@@ -14,11 +14,19 @@ Singleton {
     property string lastError: ""
     readonly property bool applyingTheme: applyProcess.running
 
-    // --- Shell & MangoWC Visual Mode (synced via shell-mode.json) ---
+    // --- Shell & MangoWC Visual Mode (synced via shell-mode.json & mode-prefs.json) ---
     property string shellMode: "default"         // "default" | "simple" | "blur"
     readonly property bool isSimple: shellMode === "simple"
     readonly property bool isBlur: shellMode === "blur"
     readonly property bool applyingMode: modeProcess.running
+
+    property real blurFocusedOpacity: 0.86
+    property real blurUnfocusedOpacity: 0.76
+    property int blurRadius: 8
+    property int blurPasses: 4
+    property int defaultRadius: 20
+    property int defaultGaps: 8
+    property bool wmAnimations: true
 
     readonly property var availablePresets: [
         { id: "catppuccin-mocha", label: "Catppuccin", swatch: "#cba6f7", bg: "#1e1e2e" },
@@ -225,26 +233,76 @@ Singleton {
         }
     }
 
+    function applyPrefsJson(raw: string): void {
+        if (!raw || raw.trim().length === 0)
+            return;
+        try {
+            const p = JSON.parse(raw);
+            if (typeof p.blurFocusedOpacity === "number")
+                root.blurFocusedOpacity = p.blurFocusedOpacity;
+            if (typeof p.blurUnfocusedOpacity === "number")
+                root.blurUnfocusedOpacity = p.blurUnfocusedOpacity;
+            if (typeof p.blurRadius === "number")
+                root.blurRadius = Math.round(p.blurRadius);
+            if (typeof p.blurPasses === "number")
+                root.blurPasses = Math.round(p.blurPasses);
+            if (typeof p.defaultRadius === "number")
+                root.defaultRadius = Math.round(p.defaultRadius);
+            if (typeof p.defaultGaps === "number")
+                root.defaultGaps = Math.round(p.defaultGaps);
+            if (typeof p.animations === "boolean")
+                root.wmAnimations = p.animations;
+        } catch (err) {
+            prefsRetryTimer.restart();
+        }
+    }
+
     // --- Public Shell & MangoWC Mode Switching API (invokes scripts/apply-mode.sh) ---
-    property string _pendingMode: ""
+    property var _pendingModeCmd: []
+
+    function _runModeScript(args: list<string>): void {
+        const cmd = [Quickshell.shellPath("scripts/apply-mode.sh")].concat(args);
+        if (modeProcess.running) {
+            root._pendingModeCmd = cmd;
+            return;
+        }
+        modeProcess.command = cmd;
+        modeProcess.running = true;
+    }
 
     function setShellMode(mode: string): void {
         if (mode !== "default" && mode !== "simple" && mode !== "blur")
             return;
         root.shellMode = mode;
-        const scriptPath = Quickshell.shellPath("scripts/apply-mode.sh");
-        if (modeProcess.running) {
-            root._pendingMode = mode;
-            return;
-        }
-        modeProcess.command = [scriptPath, mode];
-        modeProcess.running = true;
+        _runModeScript([mode]);
     }
 
     function toggleShellMode(mode: string): void {
         if (mode !== "simple" && mode !== "blur")
             return;
         setShellMode(root.shellMode === mode ? "default" : mode);
+    }
+
+    function updateModePref(key: string, val: var): void {
+        if (key === "blurFocusedOpacity")
+            root.blurFocusedOpacity = Number(val);
+        else if (key === "blurUnfocusedOpacity")
+            root.blurUnfocusedOpacity = Number(val);
+        else if (key === "blurRadius")
+            root.blurRadius = Math.round(Number(val));
+        else if (key === "blurPasses")
+            root.blurPasses = Math.round(Number(val));
+        else if (key === "defaultRadius")
+            root.defaultRadius = Math.round(Number(val));
+        else if (key === "defaultGaps")
+            root.defaultGaps = Math.round(Number(val));
+        else if (key === "animations")
+            root.wmAnimations = !!val;
+        _runModeScript(["--update-pref", key, String(val)]);
+    }
+
+    function resetModePrefs(): void {
+        _runModeScript(["--reset-prefs"]);
     }
 
     // --- Public Theme Switching API (invokes scripts/apply-theme.sh) ---
@@ -326,6 +384,15 @@ Singleton {
         onLoaded: root.applyModeJson(text())
     }
 
+    FileView {
+        id: prefsFile
+        path: Quickshell.shellPath("mode-prefs.json")
+        watchChanges: true
+        preload: true
+        onFileChanged: reload()
+        onLoaded: root.applyPrefsJson(text())
+    }
+
     Timer {
         id: colorsRetryTimer
         interval: 60
@@ -347,6 +414,13 @@ Singleton {
         onTriggered: modeFile.reload()
     }
 
+    Timer {
+        id: prefsRetryTimer
+        interval: 60
+        repeat: false
+        onTriggered: prefsFile.reload()
+    }
+
     Process {
         id: modeProcess
         running: false
@@ -360,10 +434,10 @@ Singleton {
         onExited: exitCode => {
             if (exitCode !== 0 && root.lastError.length === 0)
                 root.lastError = "Mode script exited with code " + exitCode;
-            if (root._pendingMode.length > 0) {
-                const nextMode = root._pendingMode;
-                root._pendingMode = "";
-                modeProcess.command = [Quickshell.shellPath("scripts/apply-mode.sh"), nextMode];
+            if (root._pendingModeCmd.length > 0) {
+                const nextCmd = root._pendingModeCmd;
+                root._pendingModeCmd = [];
+                modeProcess.command = nextCmd;
                 modeProcess.running = true;
             }
         }

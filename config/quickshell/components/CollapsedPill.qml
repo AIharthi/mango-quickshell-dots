@@ -24,7 +24,7 @@ RowLayout {
         return title || artist || (root.player.identity || "Playing");
     }
 
-    spacing: hasMedia ? 10 : 0
+    spacing: (hasMedia || DeviceCaps.hasBattery) ? 10 : 0
 
     SystemClock {
         id: clock
@@ -40,6 +40,32 @@ RowLayout {
         font.pixelSize: 13
         font.weight: Font.Bold
         color: Theme.fgSurface
+    }
+
+    // --- Hardware-Aware Battery Chip (Laptops only) ---
+    RowLayout {
+        Layout.alignment: Qt.AlignVCenter
+        spacing: 4
+        visible: DeviceCaps.hasBattery
+
+        Text {
+            text: DeviceCaps.batteryIcon
+            font.family: Theme.iconFont
+            font.pixelSize: 13
+            color: DeviceCaps.batteryLow
+                ? Theme.error
+                : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant)
+        }
+
+        Text {
+            text: DeviceCaps.batteryPercent + "%"
+            font.family: Theme.fontFamily
+            font.pixelSize: 11
+            font.weight: Font.DemiBold
+            color: DeviceCaps.batteryLow
+                ? Theme.error
+                : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant)
+        }
     }
 
     // --- Collapsible Spotify / MPRIS Mini-Player ---

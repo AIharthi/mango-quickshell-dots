@@ -9,6 +9,7 @@ Rectangle {
     id: root
 
     property bool active: true
+    property string screenName: ""
     property string monitorName: ""
     property string currentLayout: "T"
     property var tagsModel: [
@@ -25,6 +26,7 @@ Rectangle {
 
     signal toggleDashboardRequested()
     signal toggleLauncherRequested()
+    signal toggleSettingsRequested()
 
     color: Theme.surfaceContainerLowest
     radius: 0
@@ -39,9 +41,10 @@ Rectangle {
             if (!list || list.length === 0)
                 return;
 
+            const targetMon = root.screenName.length > 0 ? root.screenName : root.monitorName;
             let chosen = list[0];
             for (let i = 0; i < list.length; i++) {
-                if (list[i].monitor === root.monitorName) {
+                if (list[i].monitor === targetMon) {
                     chosen = list[i];
                     break;
                 }
@@ -220,12 +223,103 @@ Rectangle {
         }
     }
 
-    // Right: Minimal Square Mode Switches + Hub Toggle
+    // Right: Tray + Battery (if present) + Settings + Mode Switches + Hub Toggle
     Row {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         spacing: 0
+
+        // System Tray (shown only when tray apps exist)
+        Item {
+            width: trayStrip.implicitWidth + 10
+            height: parent.height
+            visible: trayStrip.hasItems
+
+            SystemTrayStrip {
+                id: trayStrip
+                anchors.centerIn: parent
+                compact: true
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: trayStrip.hasItems
+            color: Theme.outlineVariant
+        }
+
+        // Hardware-Aware Battery Indicator (Laptops only)
+        Rectangle {
+            width: batRow.implicitWidth + 14
+            height: parent.height
+            radius: 0
+            visible: DeviceCaps.hasBattery
+            color: "transparent"
+
+            Row {
+                id: batRow
+                anchors.centerIn: parent
+                spacing: 4
+
+                Text {
+                    text: DeviceCaps.batteryIcon
+                    font.family: Theme.iconFont
+                    font.pixelSize: 12
+                    color: DeviceCaps.batteryLow
+                        ? Theme.error
+                        : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant)
+                }
+
+                Text {
+                    text: DeviceCaps.batteryPercent + "%"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: DeviceCaps.batteryLow
+                        ? Theme.error
+                        : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurface)
+                }
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: DeviceCaps.hasBattery
+            color: Theme.outlineVariant
+        }
+
+        // Settings Window Toggle
+        Rectangle {
+            width: 30
+            height: parent.height
+            radius: 0
+            color: settingsBtnMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+            Text {
+                anchors.centerIn: parent
+                text: "󰒓"
+                font.family: Theme.iconFont
+                font.pixelSize: 13
+                color: Theme.fgSurfaceVariant
+            }
+
+            MouseArea {
+                id: settingsBtnMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.toggleSettingsRequested()
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            color: Theme.outlineVariant
+        }
 
         // Simple Mode Toggle (click to return to Default mode)
         Rectangle {

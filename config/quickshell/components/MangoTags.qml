@@ -9,6 +9,7 @@ Rectangle {
     id: root
 
     property bool active: false
+    property string screenName: ""
     property string monitorName: ""
     property string currentLayout: "T"
     property var tagsModel: [
@@ -38,10 +39,11 @@ Rectangle {
             if (!list || list.length === 0)
                 return;
 
-            // Prefer primary / first monitor with an active tag
+            // Prefer the assigned screen monitor name, else fallback to monitorName / first
+            const targetMon = root.screenName.length > 0 ? root.screenName : root.monitorName;
             let chosen = list[0];
             for (let i = 0; i < list.length; i++) {
-                if (list[i].monitor === root.monitorName) {
+                if (list[i].monitor === targetMon) {
                     chosen = list[i];
                     break;
                 }

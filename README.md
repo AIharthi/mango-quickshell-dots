@@ -1,22 +1,35 @@
 # MangoWC + Quickshell Dynamic Island Dotfiles
 
-A complete, reactive Wayland desktop built around **MangoWC** (`mangowm` + `scenefx`) and **Quickshell**, featuring a morphing **Dynamic Island**, live **Matugen** wallpaper theming (synced across Quickshell, MangoWC, GTK 3/4, Foot, and Kitty), and **three instant visual modes** toggleable directly from Quick Controls.
+A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` + `scenefx`) and **Quickshell**, designed to adapt automatically across **desktops and laptops** (including multi-monitor setups), with live **Matugen** wallpaper theming, **three instant visual modes**, and a **built-in Quickshell Settings app**.
 
 ---
 
 ## Features
 
+- **Hardware-Aware Multi-Device Adaptation (`DeviceCaps`)**
+  - Automatically probes your machine at startup (`detect-hardware.sh`) and adapts the shell UI to the hardware actually present:
+    - **Desktop PCs** without Wi-Fi, Bluetooth, backlight, battery, or touchpad automatically hide those unused controls and tabs — replacing clutter with a clean **Audio Output & Settings** shortcut.
+    - **Laptops** automatically surface live **Battery % / charging status** (in the Dynamic Island pill, Simple Bar, and System Monitor), **Backlight brightness**, **Wi-Fi**, **Bluetooth**, and **Touchpad** settings.
+  - **Multi-Monitor Support**: Wraps `PanelWindow`s in Quickshell `Variants` over `Quickshell.screens`, syncing per-monitor MangoWC tags across all connected displays.
+  - **Per-Device MangoWC Overrides (`~/.config/mango/local.conf`)**: Included via `source_optional=~/.config/mango/local.conf` (ignored by Git and preserved across `./install.sh` re-runs), so every machine can pull the same dotfiles while keeping its own monitor rules, keyboard layout, and touchpad settings.
+- **Built-in Quickshell Settings App (`Super + S`)**
+  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), theme presets or dynamic Matugen mode, Dark/Light scheme, and tune blur opacity/radius/passes, corner radius, window gaps, and animations (`mode-prefs.json`).
+  - **Audio**: Output & microphone volume sliders, mute toggles, live default sink/source switching via `pactl`, and quick launch for `pavucontrol`.
+  - **Displays**: Inspect connected outputs (`wlr-randr`), switch resolution, refresh rate, and fractional scaling live, or persist `monitor_rule` directly to `~/.config/mango/local.conf`.
+  - **Network & Bluetooth** *(shown only when hardware exists)*: Wi-Fi radio toggle, scanning, and network connect (with inline password prompt); Bluetooth power toggle, scanning, and device connect/disconnect.
+  - **Input**: Per-device keyboard layouts (`xkb_rules_layout`), repeat rate/delay, cursor size, mouse natural scrolling, and touchpad controls *(touchpad section shown only when a touchpad is detected)*.
+  - **System**: Host & distro summary, detected hardware capability matrix, embedded **Power Menu**, and `local.conf` override counter/reset.
 - **Morphing Dynamic Island (`Quickshell`)**
-  - Compact top pill showing time + collapsible Spotify/MPRIS mini-player with spinning album art and equalizer bars.
-  - Hover or press `Super + D` to open the **Hub**: MPRIS Media Card, live CPU/RAM System Monitor, interactive MangoWC Tags (`1`–`9`) + layout switcher, and Quick Controls (volume, brightness, visual modes).
+  - Compact top pill showing time, optional battery indicator, and collapsible Spotify/MPRIS mini-player with spinning album art and equalizer bars.
+  - Hover or press `Super + D` to open the **Hub**: MPRIS Media Card, live CPU/RAM (+ optional Battery) System Monitor, interactive MangoWC Tags (`1`–`9`) + layout switcher, hardware-aware Quick Controls, **System Tray** (`StatusNotifierItem`), and collapsible **Power Menu** (Lock, Suspend, Logout, Reboot, Poweroff with confirmation).
   - Built-in **Fuzzy App Launcher** (`Super + Space` / `Super + A`) with desktop entry filtering (`hidden-apps.json`).
   - Built-in **Theme & Wallpaper Switcher** (`Super + Shift + T`): live **Matugen** Material You extraction from `~/Pictures/Wallpapers`, 4 built-in presets (*Catppuccin Mocha*, *Tokyo Night*, *Gruvbox*, *Nord*), and instant Dark/Light switching synced across Quickshell, MangoWC, GTK 3/4, Foot, and Kitty.
   - Integrated **OSD** (volume, mute, brightness) and **Notification Server** with action buttons and critical urgency accents.
 - **3 Live Visual Modes (MangoWC + Quickshell synced)**
-  - **Default**: Floating rounded Dynamic Island (`border_radius=20`), soft shadows, smooth animations, opaque windows.
+  - **Default**: Floating rounded Dynamic Island, soft shadows, smooth animations, opaque windows.
   - **Simple Mode** (*everything square*): Flat, 28px full-width square top bar (`SimpleBar`), `0px` border radius everywhere, zero gaps, no blur/shadows/animations, and crisp `2px` square focus borders.
-  - **Blur Mode** (*frosted glass*): Keeps the Dynamic Island with translucent glass surfaces, subtle borders, and top sheen while enabling rich 4-pass `scenefx` window blur, translucent windows (`focused_opacity=0.86`, `unfocused_opacity=0.76`), and unfocused dimming.
-- **Wayland Screenshots**: Area (`Super + =`) and fullscreen (`Super + Shift + =`) capture via `grim` + `slurp` + `wl-copy` with theme-matched selection colors and notifications.
+  - **Blur Mode** (*frosted glass*): Keeps the Dynamic Island with translucent glass surfaces, subtle borders, and top sheen while enabling rich `scenefx` window blur, translucent windows, and unfocused dimming.
+- **Wayland Screenshots & Screen Lock**: Area (`Super + =`) and fullscreen (`Super + Shift + =`) capture via `grim` + `slurp` + `wl-copy`, plus lock screen (`Super + Shift + L`) using `hyprlock` / `swaylock` / `waylock`.
 
 ---
 
@@ -24,11 +37,14 @@ A complete, reactive Wayland desktop built around **MangoWC** (`mangowm` + `scen
 
 ```text
 .
-├── install.sh                    # Backup-safe installer script (configs + bundled fonts)
+├── install.sh                    # Backup-safe installer script (configs + bundled fonts; preserves local.conf)
 ├── fonts/                        # Bundled JetBrains Mono & Symbols Nerd Font
 ├── config/
 │   ├── mango/                    # MangoWC config, mode.conf, theme.conf, autostart.sh
-│   ├── quickshell/               # Dynamic Island, SimpleBar, Theme engine & scripts
+│   ├── quickshell/               # ShellRoot, Theme & DeviceCaps singletons, JSON state
+│   │   ├── components/           # DynamicIsland, SimpleBar, QuickControls, SystemTrayStrip, PowerMenu, etc.
+│   │   ├── settings/             # Modular Settings app (Appearance, Audio, Display, Network, BT, Input, System)
+│   │   └── scripts/              # apply-mode.sh, apply-theme.sh, detect-hardware.sh, apply-local-setting.sh, lock.sh, etc.
 │   ├── matugen/                  # Matugen config & templates (QS, GTK3/4, Mango, Foot, Kitty)
 │   ├── foot/                     # Foot terminal config + synced colors
 │   ├── kitty/                    # Kitty terminal config + synced colors
@@ -44,7 +60,7 @@ A complete, reactive Wayland desktop built around **MangoWC** (`mangowm` + `scen
 
 ### 1. Install Dependencies
 
-Choose your distribution below to install **MangoWC**, **Quickshell**, **Matugen**, **awww** (or `swww`), fonts, and utilities.
+Choose your distribution below to install **MangoWC**, **Quickshell**, **Matugen**, **awww** (or `swww`), `wlr-randr`, and desktop utilities.
 
 ---
 
@@ -56,7 +72,7 @@ Requires an AUR helper such as `paru` or `yay`.
 # Official repositories
 sudo pacman -S --needed \
   mangowm matugen foot kitty \
-  grim slurp wl-clipboard brightnessctl libnotify \
+  wlr-randr grim slurp wl-clipboard brightnessctl libnotify \
   pipewire wireplumber pipewire-pulse \
   xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
   polkit-gnome python adw-gtk-theme \
@@ -65,7 +81,7 @@ sudo pacman -S --needed \
 
 # AUR packages (Quickshell + awww wallpaper daemon)
 yay -S --needed quickshell awww-git
-# Optional: catppuccin-cursors-mocha
+# Optional: swaylock (or hyprlock), pavucontrol, catppuccin-cursors-mocha
 ```
 
 > **Note:** If `mangowm` is not yet in your mirror's official repos, install `mangowm-git` from the AUR (`yay -S mangowm-git`).
@@ -83,12 +99,13 @@ sudo dnf copr enable -y scottames/awww
 # Install compositor, shell, and desktop utilities
 sudo dnf install -y \
   mangowc quickshell awww \
-  foot kitty grim slurp wl-clipboard brightnessctl libnotify \
+  foot kitty wlr-randr grim slurp wl-clipboard brightnessctl libnotify \
   pipewire pipewire-pulseaudio wireplumber \
   xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
   polkit-gnome python3 adw-gtk3-theme \
   jetbrains-mono-fonts \
   qt6-qtsvg qt6-qtimageformats qt6-qtmultimedia qt6-qt5compat
+# Optional: swaylock, pavucontrol
 
 # Install Matugen (via Cargo if not available in DNF/COPR)
 sudo dnf install -y cargo
@@ -102,7 +119,7 @@ cargo install matugen
 
 #### Gentoo
 
-Enable the **GURU** community overlay first (provides `mangowm`, `scenefx`, `quickshell`, `matugen`, and `awww`):
+Enable the **GURU** community overlay first (provides `mangowm`, `scenefx`, `quickshell`, `matugen`, `awww`, and `wlr-randr`):
 
 ```bash
 sudo emerge --ask --verbose app-eselect/eselect-repository
@@ -118,6 +135,7 @@ gui-wm/mangowm ~amd64
 gui-apps/quickshell ~amd64
 x11-misc/matugen ~amd64
 gui-apps/awww ~amd64
+gui-apps/wlr-randr ~amd64
 ```
 
 Install all packages:
@@ -128,6 +146,7 @@ sudo emerge --ask --verbose \
   gui-apps/quickshell \
   x11-misc/matugen \
   gui-apps/awww \
+  gui-apps/wlr-randr \
   gui-apps/foot \
   gui-apps/grim \
   gui-apps/slurp \
@@ -142,6 +161,7 @@ sudo emerge --ask --verbose \
   sys-apps/xdg-desktop-portal-gtk \
   gnome-extra/polkit-gnome \
   media-video/pipewire
+# Optional: gui-apps/swaylock, media-sound/pavucontrol
 ```
 
 > Ensure `dev-qt/qtsvg`, `dev-qt/qtimageformats`, and `dev-qt/qt5compat` are installed (usually pulled in by `gui-apps/quickshell`), and `pactl` is available (`media-sound/pulseaudio-daemon` or `media-libs/libpulse`).
@@ -154,21 +174,20 @@ sudo emerge --ask --verbose \
 git clone https://github.com/AIharthi/mango-quickshell-dots.git
 cd mango-quickshell-dots
 
-# Install user configs into ~/.config (automatically backs up existing configs)
+# Install user configs & fonts into ~/.config and ~/.local/share/fonts
+# (automatically backs up existing configs and preserves any existing ~/.config/mango/local.conf)
 ./install.sh
 
 # Or also install /usr/local/bin/mango-session and the display manager entry:
 ./install.sh --with-session
 ```
 
-### 3. Add Wallpapers & Customize
+### 3. Add Wallpapers & Per-Device Setup
 
 1. Place your wallpapers in `~/Pictures/Wallpapers/` (`.png`, `.jpg`, `.jpeg`, `.webp`).
 2. Open the Theme Switcher (`Super + Shift + T`), select **Dynamic (Matugen)** or **Presets**, and click any wallpaper to apply it live.
-3. Optional: edit `~/.config/mango/config.conf` to customize:
-   - Keyboard layouts (`xkb_rules_layout=us,ara`)
-   - Default browser (`SUPER+B` → `helium`) and editor (`SUPER+Z` → `zedit`)
-   - Cursor theme (`cursor_theme=catppuccin-mocha-dark-cursors`)
+3. Press `Super + S` to open **Settings** and configure per-device display resolution/scaling, keyboard layouts, touchpad/mouse options, audio defaults, or blur/gap tuning — per-device hardware rules are written cleanly to `~/.config/mango/local.conf`.
+4. Optional: edit `~/.config/mango/config.conf` if you want different default app binds (`SUPER+B` → `helium`, `SUPER+Z` → `zedit`) or cursor theme (`catppuccin-mocha-dark-cursors`).
 
 ---
 
@@ -179,7 +198,9 @@ cd mango-quickshell-dots
 | `Super + Return` | Open terminal (`foot`) |
 | `Super + Space` / `Super + A` | Toggle Quickshell App Launcher |
 | `Super + D` | Toggle Dynamic Island Hub |
+| `Super + S` | Toggle Built-in Settings App |
 | `Super + Shift + T` | Toggle Theme & Wallpaper Switcher |
+| `Super + Shift + L` | Lock screen (`hyprlock` / `swaylock` / `waylock`) |
 | `Super + =` / `Super + Shift + =` | Area / Fullscreen Screenshot |
 | `Super + Q` | Close focused window |
 | `Super + 1..9` | Switch to tag `1`–`9` |
@@ -191,14 +212,18 @@ cd mango-quickshell-dots
 | `Super + R` | Reload MangoWC config |
 | `Super + M` | Quit MangoWC |
 
-### CLI / IPC Mode Switching
-
-You can also switch visual modes from a terminal or custom keybinding:
+### CLI / IPC Controls
 
 ```bash
+# Visual Modes
 qs ipc call island setShellMode default
 qs ipc call island setShellMode simple
 qs ipc call island setShellMode blur
+
+# Settings Window
+qs ipc call island toggleSettings
+qs ipc call island openSettings audio   # appearance | audio | displays | network | bluetooth | input | system
+qs ipc call island closeSettings
 ```
 
 ---

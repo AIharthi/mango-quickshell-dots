@@ -72,6 +72,10 @@ done
 chmod +x "$CONFIG_DIR/mango/autostart.sh"
 chmod +x "$CONFIG_DIR/quickshell/scripts/"*.sh
 
+if [[ -f "$CONFIG_DIR/mango/local.conf" ]]; then
+    echo "==> Preserving existing per-device overrides in $CONFIG_DIR/mango/local.conf"
+fi
+
 echo "==> Installing bundled fonts (JetBrains Mono & Symbols Nerd Font)"
 FONT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fonts"
 mkdir -p "$FONT_DIR/JetBrainsMono" "$FONT_DIR/SymbolsNerdFont"
@@ -94,5 +98,6 @@ fi
 echo ""
 echo "Done! Next steps:"
 echo "  1. Drop wallpapers into ~/Pictures/Wallpapers/ for the Theme Switcher & Matugen."
-echo "  2. Edit ~/.config/mango/config.conf to adjust keyboard layout or app binds (browser/editor)."
-echo "  3. Log in to MangoWC (or run 'mmsg dispatch reload_config' if already in MangoWC)."
+echo "  2. Press Super+S anytime to open Settings (Audio, Displays, Input, Appearance, Power)."
+echo "  3. Per-device overrides are saved to ~/.config/mango/local.conf (or edit config.conf)."
+echo "  4. Log in to MangoWC (or run 'mmsg dispatch reload_config' if already in MangoWC)."

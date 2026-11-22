@@ -1,0 +1,9 @@
+{
+  "blurFocusedOpacity": 0.86,
+  "blurUnfocusedOpacity": 0.76,
+  "blurRadius": 8,
+  "blurPasses": 4,
+  "defaultRadius": 20,
+  "defaultGaps": 8,
+  "animations": true
+}

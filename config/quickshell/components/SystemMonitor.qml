@@ -120,7 +120,7 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 12
-        spacing: 10
+        spacing: DeviceCaps.hasBattery ? 7 : 10
 
         RowLayout {
             Layout.fillWidth: true
@@ -238,6 +238,58 @@ Rectangle {
                     radius: Theme.r(4)
                     width: parent.width * (Math.max(0, Math.min(100, root.ramPercent)) / 100.0)
                     color: root.ramPercent > 85 ? Theme.warning : Theme.secondary
+
+                    Behavior on width {
+                        enabled: !Theme.isSimple
+                        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                    }
+                }
+            }
+        }
+
+        // --- Hardware-Aware Battery (Laptops only) ---
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 4
+            visible: DeviceCaps.hasBattery
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    text: DeviceCaps.batteryIcon + "  Battery"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Text {
+                    text: DeviceCaps.batteryPercent + "% · " + DeviceCaps.batteryStatus
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: DeviceCaps.batteryLow
+                        ? Theme.error
+                        : (DeviceCaps.batteryCharging ? Theme.success : Theme.tertiary)
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 6
+                radius: Theme.r(3)
+                color: Theme.surfaceContainerHighest
+
+                Rectangle {
+                    height: parent.height
+                    radius: Theme.r(3)
+                    width: parent.width * (Math.max(0, Math.min(100, DeviceCaps.batteryPercent)) / 100.0)
+                    color: DeviceCaps.batteryLow
+                        ? Theme.error
+                        : (DeviceCaps.batteryCharging ? Theme.success : Theme.tertiary)
 
                     Behavior on width {
                         enabled: !Theme.isSimple

@@ -8,12 +8,16 @@ ColumnLayout {
     id: root
 
     property bool isOpen: false
+    property string screenName: ""
     property string activeTab: "overview"       // "overview" | "themes" | "launcher"
     property bool pinnedOpen: false
+    property bool powerMenuOpen: false
     property var player: null
 
     signal tabSelected(string tab)
     signal togglePinRequested()
+    signal togglePowerMenuRequested()
+    signal openSettingsRequested(string page)
     signal closeRequested()
     signal searchFocusChanged(bool focused)
     signal controlInteractionChanged(bool interacting)
@@ -124,11 +128,67 @@ ColumnLayout {
             }
         }
 
-        // Pin & Close Buttons
+        // Tray + Settings + Power + Pin & Close Buttons
         RowLayout {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             spacing: 6
+
+            SystemTrayStrip {
+                compact: false
+            }
+
+            Rectangle {
+                implicitWidth: 28
+                implicitHeight: 28
+                radius: Theme.r(14)
+                color: settingsArea.containsMouse ? Theme.hoverBg : Theme.cardBg
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.cardBorder
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰒓"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                    color: settingsArea.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+                }
+
+                MouseArea {
+                    id: settingsArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.openSettingsRequested("appearance")
+                }
+            }
+
+            Rectangle {
+                implicitWidth: 28
+                implicitHeight: 28
+                radius: Theme.r(14)
+                color: root.powerMenuOpen
+                    ? Theme.withAlpha(Theme.error, 0.22)
+                    : (powerArea.containsMouse ? Theme.hoverBg : Theme.cardBg)
+                border.width: Theme.cardBorderWidth
+                border.color: root.powerMenuOpen ? Theme.error : Theme.cardBorder
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰐥"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                    color: (root.powerMenuOpen || powerArea.containsMouse) ? Theme.error : Theme.fgSurfaceVariant
+                }
+
+                MouseArea {
+                    id: powerArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.togglePowerMenuRequested()
+                }
+            }
 
             Rectangle {
                 implicitWidth: 28
@@ -184,6 +244,13 @@ ColumnLayout {
                 }
             }
         }
+    }
+
+    // --- Collapsible Power Action Strip ---
+    PowerMenu {
+        Layout.fillWidth: true
+        visible: root.powerMenuOpen
+        onActionTriggered: root.closeRequested()
     }
 
     property string _prevTab: activeTab
@@ -250,7 +317,8 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: 152
+                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 196 : 152
+                    screenName: root.screenName
                     active: root.isOpen && root.activeTab === "overview"
                 }
 
@@ -258,9 +326,10 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: 152
+                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 196 : 152
                     active: root.isOpen && root.activeTab === "overview"
                     onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
+                    onOpenSettingsRequested: page => root.openSettingsRequested(page)
                 }
             }
         }

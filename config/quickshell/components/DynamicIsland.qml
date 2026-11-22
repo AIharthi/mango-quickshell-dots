@@ -8,11 +8,15 @@ Item {
 
     // --- Public API & Window Integration ---
     readonly property alias maskTarget: islandContainer
+    property string screenName: ""
     property string islandState: "collapsed"    // "collapsed" | "osd" | "notification" | "expanded"
     property string activeTab: "overview"       // "overview" | "themes" | "launcher"
     property bool pinnedOpen: false
+    property bool powerMenuOpen: false
     property bool launcherSearchFocused: false
     property bool interactiveControlActive: false
+
+    signal openSettingsRequested(string page)
 
     readonly property bool needsKeyboardFocus:
         (islandState === "expanded" && activeTab === "launcher") || launcherSearchFocused
@@ -58,6 +62,7 @@ Item {
         osdHideTimer.stop();
         notifHideTimer.stop();
         root.pinnedOpen = false;
+        root.powerMenuOpen = false;
         root.launcherSearchFocused = false;
         root.interactiveControlActive = false;
         root.islandState = "collapsed";
@@ -135,11 +140,14 @@ Item {
     }
 
     readonly property int expandedHeight: {
+        let h = 400;
         if (root.activeTab === "launcher")
-            return 456;
-        if (root.activeTab === "themes")
-            return 440;
-        return 400;
+            h = 456;
+        else if (root.activeTab === "themes")
+            h = 440;
+        else
+            h = DeviceCaps.hasExtraQuickControls ? 444 : 400;
+        return h + (root.powerMenuOpen ? 46 : 0);
     }
 
     readonly property int targetWidth: {
@@ -399,8 +407,10 @@ Item {
             sourceComponent: ExpandedDashboard {
                 anchors.fill: parent
                 isOpen: root.islandState === "expanded"
+                screenName: root.screenName
                 activeTab: root.activeTab
                 pinnedOpen: root.pinnedOpen
+                powerMenuOpen: root.powerMenuOpen
                 player: root.activePlayer
                 opacity: root.islandState === "expanded" ? 1.0 : 0.0
                 visible: opacity > 0.01
@@ -411,6 +421,8 @@ Item {
                         root.pinnedOpen = true;
                 }
                 onTogglePinRequested: root.pinnedOpen = !root.pinnedOpen
+                onTogglePowerMenuRequested: root.powerMenuOpen = !root.powerMenuOpen
+                onOpenSettingsRequested: page => root.openSettingsRequested(page)
                 onCloseRequested: root.collapse()
                 onSearchFocusChanged: focused => { root.launcherSearchFocused = focused; }
                 onControlInteractionChanged: interacting => {

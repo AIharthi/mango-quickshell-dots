@@ -1,0 +1,484 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
+import ".."
+
+ColumnLayout {
+    id: root
+    spacing: 12
+
+    property real outVolume: 0.5
+    property bool outMuted: false
+    property real inVolume: 0.5
+    property bool inMuted: false
+    property string defaultSink: ""
+    property string defaultSource: ""
+    property var sinks: []
+    property var sources: []
+
+    function refresh(): void {
+        if (!audioQueryProc.running)
+            audioQueryProc.running = true;
+    }
+
+    function setSinkVolume(ratio: real): void {
+        const c = Math.max(0.0, Math.min(1.0, ratio));
+        root.outVolume = c;
+        root.outMuted = c <= 0.001;
+        Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", Math.round(c * 100) + "%"]);
+    }
+
+    function setSourceVolume(ratio: real): void {
+        const c = Math.max(0.0, Math.min(1.0, ratio));
+        root.inVolume = c;
+        root.inMuted = c <= 0.001;
+        Quickshell.execDetached(["pactl", "set-source-volume", "@DEFAULT_SOURCE@", Math.round(c * 100) + "%"]);
+    }
+
+    function runAudioAction(cmd: list<string>): void {
+        if (actionProc.running)
+            return;
+        actionProc.command = cmd;
+        actionProc.running = true;
+    }
+
+    Component.onCompleted: refresh()
+
+    Process {
+        id: audioQueryProc
+        command: [
+            "python3", "-c",
+            "import json,re,subprocess\n" +
+            "def out(c):\n" +
+            "  try: return subprocess.check_output(c, stderr=subprocess.DEVNULL, text=True)\n" +
+            "  except Exception: return ''\n" +
+            "def pct(s):\n" +
+            "  m = re.search(r'(\\d+)%', s)\n" +
+            "  return int(m.group(1))/100.0 if m else 0.5\n" +
+            "sinks_raw = out(['pactl','--format=json','list','sinks'])\n" +
+            "srcs_raw = out(['pactl','--format=json','list','sources'])\n" +
+            "sinks = [{'name':x['name'],'desc':x.get('description') or x['name']} for x in (json.loads(sinks_raw) if sinks_raw else [])]\n" +
+            "sources = [{'name':x['name'],'desc':x.get('description') or x['name']} for x in (json.loads(srcs_raw) if srcs_raw else []) if not x['name'].endswith('.monitor')]\n" +
+            "sv = out(['pactl','get-sink-volume','@DEFAULT_SINK@'])\n" +
+            "sm = out(['pactl','get-sink-mute','@DEFAULT_SINK@'])\n" +
+            "iv = out(['pactl','get-source-volume','@DEFAULT_SOURCE@'])\n" +
+            "im = out(['pactl','get-source-mute','@DEFAULT_SOURCE@'])\n" +
+            "print(json.dumps({'defaultSink':out(['pactl','get-default-sink']).strip(),'defaultSource':out(['pactl','get-default-source']).strip(),'outVol':pct(sv),'outMuted':('yes' in sm),'inVol':pct(iv),'inMuted':('yes' in im),'sinks':sinks,'sources':sources}))"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    root.defaultSink = d.defaultSink || "";
+                    root.defaultSource = d.defaultSource || "";
+                    root.outVolume = Math.max(0.0, Math.min(1.0, Number(d.outVol || 0)));
+                    root.outMuted = !!d.outMuted;
+                    root.inVolume = Math.max(0.0, Math.min(1.0, Number(d.inVol || 0)));
+                    root.inMuted = !!d.inMuted;
+                    root.sinks = Array.isArray(d.sinks) ? d.sinks : [];
+                    root.sources = Array.isArray(d.sources) ? d.sources : [];
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: actionProc
+        onExited: refreshTimer.restart()
+    }
+
+    Timer {
+        id: refreshTimer
+        interval: 200
+        repeat: false
+        onTriggered: root.refresh()
+    }
+
+    // --- Toolbar ---
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 8
+
+        Item { Layout.fillWidth: true }
+
+        Rectangle {
+            implicitHeight: 28
+            implicitWidth: pavuRow.implicitWidth + 16
+            visible: DeviceCaps.hasPavucontrol
+            radius: Theme.r(10)
+            color: pavuMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
+            border.width: Theme.cardBorderWidth
+            border.color: Theme.cardBorder
+
+            RowLayout {
+                id: pavuRow
+                anchors.centerIn: parent
+                spacing: 6
+
+                Text {
+                    text: "󰋋"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                    color: Theme.secondary
+                }
+
+                Text {
+                    text: "Open Pavucontrol"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+            }
+
+            MouseArea {
+                id: pavuMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Quickshell.execDetached(["pavucontrol"])
+            }
+        }
+
+        Rectangle {
+            implicitHeight: 28
+            implicitWidth: refRow.implicitWidth + 16
+            radius: Theme.r(10)
+            color: refMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
+            border.width: Theme.cardBorderWidth
+            border.color: Theme.cardBorder
+
+            RowLayout {
+                id: refRow
+                anchors.centerIn: parent
+                spacing: 5
+
+                Text {
+                    text: "󰑐"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 12
+                    color: Theme.primary
+                }
+
+                Text {
+                    text: "Refresh"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+            }
+
+            MouseArea {
+                id: refMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.refresh()
+            }
+        }
+    }
+
+    // --- Output Volume & Devices ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: outCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: outCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            Text {
+                text: "OUTPUT (SPEAKERS & HEADPHONES)"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Rectangle {
+                    implicitWidth: 30
+                    implicitHeight: 30
+                    radius: Theme.r(15)
+                    color: outMuteMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.outMuted ? "󰝟" : "󰕾"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 15
+                        color: root.outMuted ? Theme.error : Theme.primary
+                    }
+
+                    MouseArea {
+                        id: outMuteMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.runAudioAction(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"])
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                    implicitHeight: 24
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width
+                        height: 8
+                        radius: Theme.r(4)
+                        color: Theme.surfaceContainerHighest
+
+                        Rectangle {
+                            height: parent.height
+                            width: parent.width * root.outVolume
+                            radius: Theme.r(4)
+                            color: root.outMuted ? Theme.outline : Theme.primary
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onPressed: mouse => root.setSinkVolume(mouse.x / width)
+                        onPositionChanged: mouse => {
+                            if (pressed)
+                                root.setSinkVolume(mouse.x / width);
+                        }
+                    }
+                }
+
+                Text {
+                    Layout.preferredWidth: 38
+                    horizontalAlignment: Text.AlignRight
+                    text: Math.round(root.outVolume * 100) + "%"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    font.weight: Font.Bold
+                    color: Theme.fgSurface
+                }
+            }
+
+            Repeater {
+                model: root.sinks
+
+                delegate: Rectangle {
+                    id: sinkRow
+                    required property var modelData
+                    readonly property bool isDefault: sinkRow.modelData.name === root.defaultSink
+
+                    Layout.fillWidth: true
+                    implicitHeight: 32
+                    radius: Theme.r(10)
+                    color: sinkRow.isDefault
+                        ? Theme.withAlpha(Theme.primary, 0.20)
+                        : (sinkMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                    border.width: sinkRow.isDefault ? 1 : Theme.cardBorderWidth
+                    border.color: sinkRow.isDefault ? Theme.primary : Theme.cardBorder
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 8
+
+                        Text {
+                            text: sinkRow.isDefault ? "󰄬" : "󰋋"
+                            font.family: Theme.iconFont
+                            font.pixelSize: 13
+                            color: sinkRow.isDefault ? Theme.primary : Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: sinkRow.modelData.desc
+                            elide: Text.ElideRight
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: sinkRow.isDefault ? Font.Bold : Font.Normal
+                            color: Theme.fgSurface
+                        }
+                    }
+
+                    MouseArea {
+                        id: sinkMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.runAudioAction(["pactl", "set-default-sink", sinkRow.modelData.name])
+                    }
+                }
+            }
+        }
+    }
+
+    // --- Input Volume & Microphones ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: inCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: inCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            Text {
+                text: "INPUT (MICROPHONES)"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Rectangle {
+                    implicitWidth: 30
+                    implicitHeight: 30
+                    radius: Theme.r(15)
+                    color: inMuteMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.inMuted ? "󰍭" : "󰍬"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 15
+                        color: root.inMuted ? Theme.error : Theme.secondary
+                    }
+
+                    MouseArea {
+                        id: inMuteMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.runAudioAction(["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "toggle"])
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                    implicitHeight: 24
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width
+                        height: 8
+                        radius: Theme.r(4)
+                        color: Theme.surfaceContainerHighest
+
+                        Rectangle {
+                            height: parent.height
+                            width: parent.width * root.inVolume
+                            radius: Theme.r(4)
+                            color: root.inMuted ? Theme.outline : Theme.secondary
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onPressed: mouse => root.setSourceVolume(mouse.x / width)
+                        onPositionChanged: mouse => {
+                            if (pressed)
+                                root.setSourceVolume(mouse.x / width);
+                        }
+                    }
+                }
+
+                Text {
+                    Layout.preferredWidth: 38
+                    horizontalAlignment: Text.AlignRight
+                    text: Math.round(root.inVolume * 100) + "%"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    font.weight: Font.Bold
+                    color: Theme.fgSurface
+                }
+            }
+
+            Repeater {
+                model: root.sources
+
+                delegate: Rectangle {
+                    id: srcRow
+                    required property var modelData
+                    readonly property bool isDefault: srcRow.modelData.name === root.defaultSource
+
+                    Layout.fillWidth: true
+                    implicitHeight: 32
+                    radius: Theme.r(10)
+                    color: srcRow.isDefault
+                        ? Theme.withAlpha(Theme.secondary, 0.20)
+                        : (srcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                    border.width: srcRow.isDefault ? 1 : Theme.cardBorderWidth
+                    border.color: srcRow.isDefault ? Theme.secondary : Theme.cardBorder
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 8
+
+                        Text {
+                            text: srcRow.isDefault ? "󰄬" : "󰍬"
+                            font.family: Theme.iconFont
+                            font.pixelSize: 13
+                            color: srcRow.isDefault ? Theme.secondary : Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: srcRow.modelData.desc
+                            elide: Text.ElideRight
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: srcRow.isDefault ? Font.Bold : Font.Normal
+                            color: Theme.fgSurface
+                        }
+                    }
+
+                    MouseArea {
+                        id: srcMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.runAudioAction(["pactl", "set-default-source", srcRow.modelData.name])
+                    }
+                }
+            }
+
+            Text {
+                visible: root.sources.length === 0
+                text: "No microphone input devices detected"
+                font.family: Theme.fontFamily
+                font.pixelSize: 11
+                color: Theme.fgSurfaceVariant
+            }
+        }
+    }
+}

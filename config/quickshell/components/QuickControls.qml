@@ -9,12 +9,21 @@ Rectangle {
 
     property bool active: false
     signal draggingChanged(bool dragging)
+    signal openSettingsRequested(string page)
 
     property real volumeLevel: 0.5
     property bool volumeMuted: false
 
     property real brightnessLevel: 0.8
     property bool brightnessSupported: false
+
+    property bool wifiEnabled: false
+    property string wifiSsid: "Offline"
+
+    property bool btEnabled: false
+    property string btDevice: "Off"
+
+    property string defaultSinkLabel: "Audio Output"
 
     onActiveChanged: {
         if (active)
@@ -26,11 +35,28 @@ Rectangle {
             refreshAll();
     }
 
+    function dbusHasOwnerCmd(serviceName: string): string {
+        return "dbus-send --system --dest=org.freedesktop.DBus --type=method_call --print-reply=literal /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:" + serviceName + " 2>/dev/null | grep -q true";
+    }
+
+    function runDbusGuardedToggle(serviceName: string, commandStr: string): void {
+        if (toggleCmdProc.running)
+            return;
+        toggleCmdProc.command = ["sh", "-c", dbusHasOwnerCmd(serviceName) + " && " + commandStr];
+        toggleCmdProc.running = true;
+    }
+
     function refreshAll(): void {
-        if (!volReadProc.running)
+        if (DeviceCaps.hasAudio && !volReadProc.running)
             volReadProc.running = true;
-        if (!brightReadProc.running)
+        if (DeviceCaps.hasBacklight && !brightReadProc.running)
             brightReadProc.running = true;
+        if (DeviceCaps.hasWifi && !wifiReadProc.running)
+            wifiReadProc.running = true;
+        if (DeviceCaps.hasBluetooth && !btReadProc.running)
+            btReadProc.running = true;
+        if (!DeviceCaps.hasExtraQuickControls && DeviceCaps.hasAudio && !sinkLabelProc.running)
+            sinkLabelProc.running = true;
     }
 
     function applyVolume(ratio: real): void {
@@ -50,7 +76,7 @@ Rectangle {
         Quickshell.execDetached(["brightnessctl", "set", pct + "%"]);
     }
 
-    // --- System Queries ---
+    // --- System Queries (gated on detected hardware) ---
     Process {
         id: volReadProc
         command: ["sh", "-c", "pactl get-sink-volume @DEFAULT_SINK@; pactl get-sink-mute @DEFAULT_SINK@"]
@@ -60,6 +86,21 @@ Rectangle {
                 if (match)
                     root.volumeLevel = Math.max(0.0, Math.min(1.0, parseInt(match[1], 10) / 100.0));
                 root.volumeMuted = text.indexOf("Mute: yes") !== -1 || root.volumeLevel <= 0.001;
+            }
+        }
+    }
+
+    Process {
+        id: sinkLabelProc
+        command: [
+            "sh", "-c",
+            "python3 -c 'import json,subprocess; d=subprocess.check_output([\"pactl\",\"get-default-sink\"],text=True).strip(); s=json.loads(subprocess.check_output([\"pactl\",\"--format=json\",\"list\",\"sinks\"],text=True)); print(next((x.get(\"description\") or x[\"name\"] for x in s if x[\"name\"]==d), \"Audio Output\"))' 2>/dev/null"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const s = (text || "").trim();
+                if (s.length > 0)
+                    root.defaultSinkLabel = s;
             }
         }
     }
@@ -88,10 +129,42 @@ Rectangle {
     }
 
     Process {
-        id: toggleCmdProc
-        onExited: exitCode => {
-            refreshDelayTimer.restart();
+        id: wifiReadProc
+        command: [
+            "sh", "-c",
+            "if ! " + root.dbusHasOwnerCmd("org.freedesktop.NetworkManager") + "; then echo 'disabled|'; exit 0; fi; radio=$(timeout 1 nmcli radio wifi </dev/null 2>/dev/null || echo disabled); ssid=$(timeout 1 nmcli -t -f ACTIVE,SSID dev wifi </dev/null 2>/dev/null | awk -F: '$1==\"yes\"{print $2; exit}'); echo \"$radio|$ssid\""
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.trim().split("|");
+                root.wifiEnabled = (parts[0] === "enabled");
+                root.wifiSsid = (parts.length > 1 && parts[1].length > 0)
+                    ? parts[1]
+                    : (root.wifiEnabled ? "Disconnected" : "Off");
+            }
         }
+    }
+
+    Process {
+        id: btReadProc
+        command: [
+            "sh", "-c",
+            "if ! " + root.dbusHasOwnerCmd("org.bluez") + "; then echo 'no|'; exit 0; fi; pwr=$(timeout 1 bluetoothctl show </dev/null 2>/dev/null | awk '/Powered:/{print $2; exit}'); dev=$(timeout 1 bluetoothctl devices Connected </dev/null 2>/dev/null | head -n1 | cut -d' ' -f3-); echo \"${pwr:-no}|$dev\""
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.trim().split("|");
+                root.btEnabled = (parts[0] === "yes");
+                root.btDevice = (parts.length > 1 && parts[1].length > 0)
+                    ? parts[1]
+                    : (root.btEnabled ? "On" : "Off");
+            }
+        }
+    }
+
+    Process {
+        id: toggleCmdProc
+        onExited: refreshDelayTimer.restart()
     }
 
     Timer {
@@ -109,14 +182,27 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 12
-        spacing: 9
+        spacing: 8
 
-        Text {
-            text: "󰒓  QUICK CONTROLS"
-            font.family: Theme.fontFamily
-            font.pixelSize: 10
-            font.weight: Font.Bold
-            color: Theme.fgSurfaceVariant
+        RowLayout {
+            Layout.fillWidth: true
+
+            Text {
+                text: "󰒓  QUICK CONTROLS"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Text {
+                text: DeviceCaps.deviceType === "laptop" ? "󰌢" : "󰍹"
+                font.family: Theme.iconFont
+                font.pixelSize: 12
+                color: Theme.fgSurfaceVariant
+            }
         }
 
         // --- Volume Slider ---
@@ -197,10 +283,11 @@ Rectangle {
             }
         }
 
-        // --- Brightness Slider ---
+        // --- Brightness Slider (shown only on devices with backlight) ---
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
+            visible: DeviceCaps.hasBacklight
             opacity: root.brightnessSupported ? 1.0 : 0.45
 
             Rectangle {
@@ -262,6 +349,172 @@ Rectangle {
                 font.pixelSize: 11
                 font.weight: Font.Bold
                 color: Theme.fgSurface
+            }
+        }
+
+        // --- Hardware-Aware Wi-Fi & Bluetooth Pills (only shown when hardware exists) ---
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+            visible: DeviceCaps.hasWifi || DeviceCaps.hasBluetooth
+
+            // Wi-Fi Pill
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 34
+                visible: DeviceCaps.hasWifi
+                radius: Theme.r(12)
+                color: root.wifiEnabled
+                    ? Theme.withAlpha(Theme.primary, 0.22)
+                    : (wifiArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                border.width: Theme.cardBorderWidth
+                border.color: root.wifiEnabled ? Theme.primary : Theme.cardBorder
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 6
+
+                    Text {
+                        text: root.wifiEnabled ? "󰤨" : "󰤭"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 15
+                        color: root.wifiEnabled ? Theme.primary : Theme.fgSurfaceVariant
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.wifiSsid
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
+                    }
+                }
+
+                MouseArea {
+                    id: wifiArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton) {
+                            root.openSettingsRequested("network");
+                        } else {
+                            const target = root.wifiEnabled ? "off" : "on";
+                            root.runDbusGuardedToggle("org.freedesktop.NetworkManager", "timeout 2 nmcli radio wifi " + target + " </dev/null");
+                        }
+                    }
+                }
+            }
+
+            // Bluetooth Pill
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 34
+                visible: DeviceCaps.hasBluetooth
+                radius: Theme.r(12)
+                color: root.btEnabled
+                    ? Theme.withAlpha(Theme.secondary, 0.22)
+                    : (btArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                border.width: Theme.cardBorderWidth
+                border.color: root.btEnabled ? Theme.secondary : Theme.cardBorder
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 6
+
+                    Text {
+                        text: root.btEnabled ? "󰂯" : "󰂲"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 15
+                        color: root.btEnabled ? Theme.secondary : Theme.fgSurfaceVariant
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.btDevice
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
+                    }
+                }
+
+                MouseArea {
+                    id: btArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton) {
+                            root.openSettingsRequested("bluetooth");
+                        } else {
+                            const target = root.btEnabled ? "off" : "on";
+                            root.runDbusGuardedToggle("org.bluez", "timeout 2 bluetoothctl power " + target + " </dev/null");
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Desktop Audio & Settings Shortcut (shown when no backlight/wifi/bt clutter exists) ---
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 32
+            visible: !DeviceCaps.hasExtraQuickControls
+            radius: Theme.r(11)
+            color: audioSettingsArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
+            border.width: Theme.cardBorderWidth
+            border.color: Theme.cardBorder
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 8
+
+                Text {
+                    text: "󰋋"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 14
+                    color: Theme.secondary
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.defaultSinkLabel
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    font.weight: Font.Medium
+                    color: Theme.fgSurface
+                }
+
+                Text {
+                    text: "󰒓"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                    color: Theme.fgSurfaceVariant
+                }
+            }
+
+            MouseArea {
+                id: audioSettingsArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.openSettingsRequested("audio")
             }
         }
 
