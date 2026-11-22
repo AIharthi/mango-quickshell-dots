@@ -60,12 +60,16 @@ Rectangle {
             sinkLabelProc.running = true;
     }
 
+    property int _pendingVolPct: -1
+    property int _pendingBrightPct: -1
+
     function applyVolume(ratio: real): void {
         const clamped = Math.max(0.0, Math.min(1.0, ratio));
         root.volumeLevel = clamped;
         root.volumeMuted = clamped <= 0.001;
-        const pct = Math.round(clamped * 100);
-        Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", pct + "%"]);
+        root._pendingVolPct = Math.round(clamped * 100);
+        if (!volApplyTimer.running)
+            volApplyTimer.start();
     }
 
     function applyBrightness(ratio: real): void {
@@ -73,8 +77,35 @@ Rectangle {
             return;
         const clamped = Math.max(0.05, Math.min(1.0, ratio));
         root.brightnessLevel = clamped;
-        const pct = Math.round(clamped * 100);
-        Quickshell.execDetached(["brightnessctl", "set", pct + "%"]);
+        root._pendingBrightPct = Math.round(clamped * 100);
+        if (!brightApplyTimer.running)
+            brightApplyTimer.start();
+    }
+
+    Timer {
+        id: volApplyTimer
+        interval: 35
+        repeat: false
+        onTriggered: {
+            if (root._pendingVolPct >= 0) {
+                const pct = root._pendingVolPct;
+                root._pendingVolPct = -1;
+                Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", pct + "%"]);
+            }
+        }
+    }
+
+    Timer {
+        id: brightApplyTimer
+        interval: 35
+        repeat: false
+        onTriggered: {
+            if (root._pendingBrightPct >= 0) {
+                const pct = root._pendingBrightPct;
+                root._pendingBrightPct = -1;
+                Quickshell.execDetached(["brightnessctl", "set", pct + "%"]);
+            }
+        }
     }
 
     // --- System Queries (gated on detected hardware) ---
@@ -95,7 +126,7 @@ Rectangle {
         id: sinkLabelProc
         command: [
             "sh", "-c",
-            "python3 -c 'import json,subprocess; d=subprocess.check_output([\"pactl\",\"get-default-sink\"],text=True).strip(); s=json.loads(subprocess.check_output([\"pactl\",\"--format=json\",\"list\",\"sinks\"],text=True)); print(next((x.get(\"description\") or x[\"name\"] for x in s if x[\"name\"]==d), \"Audio Output\"))' 2>/dev/null"
+            "def=$(pactl get-default-sink 2>/dev/null); pactl list sinks 2>/dev/null | awk -v d=\"$def\" 'BEGIN{m=0} /^[[:space:]]*Name:/{m=($2==d)} m && /^[[:space:]]*Description:/{sub(/^[[:space:]]*Description:[[:space:]]*/,\"\"); print; exit}'"
         ]
         stdout: StdioCollector {
             onStreamFinished: {

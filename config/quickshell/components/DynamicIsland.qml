@@ -267,23 +267,21 @@ Item {
         Behavior on width {
             enabled: !Theme.reducedMotion
             NumberAnimation {
-                duration: 320
-                easing.type: Easing.OutBack
-                easing.overshoot: 0.42
+                duration: 180
+                easing.type: Easing.OutCubic
             }
         }
         Behavior on height {
             enabled: !Theme.reducedMotion
             NumberAnimation {
-                duration: 320
-                easing.type: Easing.OutBack
-                easing.overshoot: 0.42
+                duration: 180
+                easing.type: Easing.OutCubic
             }
         }
         Behavior on radius {
             enabled: !Theme.reducedMotion
             NumberAnimation {
-                duration: 260
+                duration: 160
                 easing.type: Easing.OutCubic
             }
         }
@@ -361,7 +359,7 @@ Item {
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion
-                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: 110; easing.type: Easing.OutCubic }
             }
         }
 
@@ -383,11 +381,12 @@ Item {
             }
 
             Behavior on opacity {
-                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                enabled: !Theme.reducedMotion
+                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
             }
         }
 
-        // 3. Expanded Interactive Dashboard Hub (lazy-loaded on demand, unloaded after collapse)
+        // 3. Expanded Interactive Dashboard Hub (lazy-loaded on demand, kept warm 60s)
         property bool _expandedLoaded: false
 
         Connections {
@@ -404,13 +403,11 @@ Item {
 
         Timer {
             id: expandedUnloadTimer
-            interval: 400
+            interval: 60000
             repeat: false
             onTriggered: {
-                if (root.islandState !== "expanded") {
+                if (root.islandState !== "expanded")
                     islandContainer._expandedLoaded = false;
-                    gc();
-                }
             }
         }
 
@@ -454,7 +451,8 @@ Item {
                 }
 
                 Behavior on opacity {
-                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 130; easing.type: Easing.OutCubic }
                 }
             }
         }

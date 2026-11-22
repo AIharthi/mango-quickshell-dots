@@ -132,11 +132,11 @@ ColumnLayout {
         }
     }
 
-    function fuzzyScore(text: string, q: string): int {
-        if (!q || q.length === 0)
+    function fuzzyScore(hay: string, needle: string): int {
+        if (!needle || needle.length === 0)
             return 1;
-        const hay = (text || "").toLowerCase();
-        const needle = q.toLowerCase();
+        if (!hay || hay.length === 0)
+            return 0;
 
         if (hay === needle)
             return 1000;
@@ -159,31 +159,48 @@ ColumnLayout {
         return (qi === needle.length) ? Math.max(10, 250 - gaps) : 0;
     }
 
-    readonly property var filteredApps: {
+    readonly property var visibleApps: {
         const all = DesktopEntries.applications.values;
         if (!all)
             return [];
-
-        const q = root.query.trim();
-        const scored = [];
+        const items = [];
         for (let i = 0; i < all.length; i++) {
             const app = all[i];
             if (root.isAppHidden(app))
                 continue;
-
-            if (q.length === 0) {
-                scored.push({ entry: app, score: 1 });
-                continue;
-            }
-
-            const nameScore = fuzzyScore(app.name, q) * 3;
-            const genericScore = fuzzyScore(app.genericName, q) * 2;
-            const commentScore = fuzzyScore(app.comment, q);
             const kwText = app.keywords ? app.keywords.join(" ") : "";
-            const kwScore = fuzzyScore(kwText, q);
+            items.push({
+                entry: app,
+                nameL: (app.name || "").toLowerCase(),
+                genericL: (app.genericName || "").toLowerCase(),
+                commentL: (app.comment || "").toLowerCase(),
+                kwL: kwText.toLowerCase()
+            });
+        }
+        items.sort((a, b) => a.nameL.localeCompare(b.nameL));
+        return items;
+    }
+
+    readonly property var filteredApps: {
+        const list = root.visibleApps;
+        const q = root.query.trim().toLowerCase();
+        if (q.length === 0) {
+            const plain = [];
+            for (let k = 0; k < Math.min(60, list.length); k++)
+                plain.push(list[k].entry);
+            return plain;
+        }
+
+        const scored = [];
+        for (let i = 0; i < list.length; i++) {
+            const item = list[i];
+            const nameScore = fuzzyScore(item.nameL, q) * 3;
+            const genericScore = fuzzyScore(item.genericL, q) * 2;
+            const commentScore = fuzzyScore(item.commentL, q);
+            const kwScore = fuzzyScore(item.kwL, q);
             const best = Math.max(nameScore, genericScore, commentScore, kwScore);
             if (best > 0)
-                scored.push({ entry: app, score: best });
+                scored.push({ entry: item.entry, score: best });
         }
 
         scored.sort((a, b) => {

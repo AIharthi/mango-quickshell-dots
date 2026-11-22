@@ -58,13 +58,11 @@ ShellRoot {
 
     Timer {
         id: settingsUnloadTimer
-        interval: Theme.isSimple ? 10 : 250
+        interval: Theme.reducedMotion ? 10 : 150
         repeat: false
         onTriggered: {
-            if (!root.settingsOpen) {
+            if (!root.settingsOpen)
                 root._settingsLoaded = false;
-                gc();
-            }
         }
     }
 

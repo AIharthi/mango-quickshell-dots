@@ -55,8 +55,12 @@ ColumnLayout {
     function loadCursorSettings(): void {
         if (!cursorReadProc.running)
             cursorReadProc.running = true;
-        if (!fontListProc.running)
+        if (ShellState.cachedMonospaceFonts.length > 0 && ShellState.cachedAllFonts.length > 0) {
+            root.monospaceFonts = ShellState.cachedMonospaceFonts;
+            root.allFonts = ShellState.cachedAllFonts;
+        } else if (!fontListProc.running) {
             fontListProc.running = true;
+        }
         if (!gtkReadProc.running)
             gtkReadProc.running = true;
     }
@@ -119,10 +123,14 @@ ColumnLayout {
                     return;
                 try {
                     const d = JSON.parse(raw);
-                    if (Array.isArray(d.monospace) && d.monospace.length > 0)
+                    if (Array.isArray(d.monospace) && d.monospace.length > 0) {
                         root.monospaceFonts = d.monospace;
-                    if (Array.isArray(d.families) && d.families.length > 0)
+                        ShellState.cachedMonospaceFonts = d.monospace;
+                    }
+                    if (Array.isArray(d.families) && d.families.length > 0) {
                         root.allFonts = d.families;
+                        ShellState.cachedAllFonts = d.families;
+                    }
                 } catch (err) {}
             }
         }

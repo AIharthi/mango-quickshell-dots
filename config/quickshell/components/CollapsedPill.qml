@@ -490,11 +490,11 @@ RowLayout {
 
         Behavior on implicitWidth {
             enabled: !Theme.reducedMotion
-            NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 170; easing.type: Easing.OutCubic }
         }
         Behavior on opacity {
             enabled: !Theme.reducedMotion
-            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 130; easing.type: Easing.OutCubic }
         }
 
         RowLayout {
@@ -524,7 +524,7 @@ RowLayout {
                     to: 360
                     duration: 12000
                     loops: Animation.Infinite
-                    running: root.isPlaying && root.visible && ShellState.pillSpinArt && !Theme.reducedMotion
+                    running: root.active && root.isPlaying && root.visible && artImage.visible && ShellState.pillSpinArt && !Theme.reducedMotion
                 }
 
                 Image {
@@ -580,7 +580,7 @@ RowLayout {
                         color: Theme.primary
 
                         SequentialAnimation on height {
-                            running: root.isPlaying && root.visible
+                            running: root.active && root.isPlaying && root.visible && ShellState.pillShowEqualizer && !Theme.reducedMotion
                             loops: Animation.Infinite
                             NumberAnimation {
                                 to: eqBar.modelData.maxH

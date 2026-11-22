@@ -182,8 +182,11 @@ ColumnLayout {
     function loadWallpaperColors(): void {
         if (Theme.wallpaperPath.length === 0)
             return;
-        wpColorsProc.command = [Quickshell.shellPath("scripts/manage-themes.sh"), "wallpaper-colors", Theme.wallpaperPath];
-        wpColorsProc.running = true;
+        if (ShellState.cachedExtractedWpPath === Theme.wallpaperPath && ShellState.cachedExtractedColors.length > 0) {
+            root.extractedColors = ShellState.cachedExtractedColors;
+            return;
+        }
+        wpColorsDelayTimer.restart();
     }
 
     function loadCustomThemes(): void {
@@ -276,14 +279,29 @@ ColumnLayout {
         }
     }
 
+    Timer {
+        id: wpColorsDelayTimer
+        interval: 180
+        repeat: false
+        onTriggered: {
+            if (Theme.wallpaperPath.length === 0 || wpColorsProc.running)
+                return;
+            wpColorsProc.command = [Quickshell.shellPath("scripts/manage-themes.sh"), "wallpaper-colors", Theme.wallpaperPath];
+            wpColorsProc.running = true;
+        }
+    }
+
     Process {
         id: wpColorsProc
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
                     const d = JSON.parse((text || "").trim());
-                    if (Array.isArray(d.colors))
+                    if (Array.isArray(d.colors)) {
                         root.extractedColors = d.colors;
+                        ShellState.cachedExtractedWpPath = Theme.wallpaperPath;
+                        ShellState.cachedExtractedColors = d.colors;
+                    }
                 } catch (err) {}
             }
         }
@@ -1272,6 +1290,7 @@ ColumnLayout {
                                 anchors.fill: parent
                                 source: "file://" + wpTile.modelData.path
                                 asynchronous: true
+                                cache: true
                                 fillMode: Image.PreserveAspectCrop
                                 sourceSize.width: 240
                                 sourceSize.height: 135

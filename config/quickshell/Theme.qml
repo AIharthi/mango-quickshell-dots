@@ -24,9 +24,9 @@ Singleton {
 
     property real blurFocusedOpacity: 0.86
     property real blurUnfocusedOpacity: 0.76
-    property int blurRadius: 8
-    property int blurPasses: 4
-    property real blurSaturation: 1.25
+    property int blurRadius: 5
+    property int blurPasses: 2
+    property real blurSaturation: 1.20
     property real blurBrightness: 0.90
     property int defaultRadius: 20
     property int defaultGaps: 8
@@ -35,16 +35,16 @@ Singleton {
     property bool wmAnimations: true
     property string animTypeOpen: "zoom"
     property string animTypeClose: "slide"
-    property int animDuration: 300
+    property int animDuration: 180
     property int tagAnimDirection: 1
     property bool blurLayer: true
     property bool blurOptimized: true
-    property real blurNoise: 0.02
+    property real blurNoise: 0.01
     property real blurContrast: 0.95
     property bool layerShadows: false
     property bool shadowOnlyFloating: false
-    property int shadowsSize: 14
-    property int shadowsBlur: 20
+    property int shadowsSize: 10
+    property int shadowsBlur: 14
     property bool layerAnimations: true
     property bool animFadeIn: true
     property bool animFadeOut: true
@@ -73,9 +73,9 @@ Singleton {
     readonly property string fontFamily: ShellState.uiFontFamily.length > 0 ? ShellState.uiFontFamily : "JetBrains Mono"
     readonly property string iconFont: "Symbols Nerd Font"
     readonly property bool reducedMotion: isSimple || ShellState.reducedMotion
-    readonly property int animFast: reducedMotion ? 0 : 160
-    readonly property int animNormal: reducedMotion ? 0 : 260
-    readonly property int animSlow: reducedMotion ? 0 : 380
+    readonly property int animFast: reducedMotion ? 0 : 110
+    readonly property int animNormal: reducedMotion ? 0 : 170
+    readonly property int animSlow: reducedMotion ? 0 : 230
 
     // --- Reactive Material You / Preset Color Palette ---
     property bool isDark: true
@@ -203,35 +203,35 @@ Singleton {
     readonly property color activeBg: withAlpha(primary, 0.22)
 
     // Smooth color transitions across the entire shell on live reload
-    Behavior on primary { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on fgPrimary { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on primaryContainer { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on fgPrimaryContainer { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on secondary { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on fgSecondary { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on secondaryContainer { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on fgSecondaryContainer { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on tertiary { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on fgTertiary { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on background { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on fgBackground { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on surface { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on surfaceDim { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on surfaceBright { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainerLowest { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainerLow { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainer { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainerHigh { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainerHighest { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on fgSurface { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on fgSurfaceVariant { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on outline { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on outlineVariant { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on error { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on fgError { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on success { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on warning { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
-    Behavior on info { ColorAnimation { duration: 280; easing.type: Easing.OutCubic } }
+    Behavior on primary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgPrimary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on primaryContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgPrimaryContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on secondary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgSecondary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on secondaryContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgSecondaryContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on tertiary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgTertiary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on background { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgBackground { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surface { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceDim { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceBright { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainerLowest { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainerLow { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainerHigh { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainerHighest { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgSurface { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgSurfaceVariant { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on outline { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on outlineVariant { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on error { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgError { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on success { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on warning { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on info { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
     function withAlpha(col: color, alpha: real): color {
         return Qt.rgba(col.r, col.g, col.b, alpha);

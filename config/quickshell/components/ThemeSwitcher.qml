@@ -343,7 +343,7 @@ ColumnLayout {
                             source: wallDelegate.fileUrl
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
-                            cache: false
+                            cache: true
                             sourceSize: Qt.size(240, 140)
                         }
 

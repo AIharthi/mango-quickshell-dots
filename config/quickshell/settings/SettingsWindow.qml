@@ -161,8 +161,8 @@ PanelWindow {
             opacity: root.shown ? 1.0 : 0.0
 
             Behavior on opacity {
-                enabled: !Theme.isSimple
-                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                enabled: !Theme.reducedMotion
+                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
             }
 
             MouseArea {
@@ -176,7 +176,6 @@ PanelWindow {
         Rectangle {
             id: dialog
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: root.shown ? 0 : (Theme.isSimple ? 0 : 14)
             width: Math.min(parent.width - 40, 940)
             height: Math.min(parent.height - 40, 640)
             radius: Theme.r(22)
@@ -186,23 +185,15 @@ PanelWindow {
             clip: true
 
             opacity: root.shown ? 1.0 : 0.0
-            scale: root.shown ? 1.0 : (Theme.isSimple ? 1.0 : 0.93)
+            scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
 
             Behavior on opacity {
-                enabled: !Theme.isSimple
-                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                enabled: !Theme.reducedMotion
+                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
             }
             Behavior on scale {
-                enabled: !Theme.isSimple
-                NumberAnimation {
-                    duration: 240
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 0.45
-                }
-            }
-            Behavior on anchors.verticalCenterOffset {
-                enabled: !Theme.isSimple
-                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                enabled: !Theme.reducedMotion
+                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
             }
 
             // Eat clicks inside dialog so backdrop MouseArea does not close it
@@ -487,8 +478,8 @@ PanelWindow {
                                     border.color: Theme.primary
 
                                     Behavior on y {
-                                        enabled: !Theme.isSimple
-                                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                                        enabled: !Theme.reducedMotion
+                                        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
                                     }
                                 }
 
@@ -867,34 +858,22 @@ PanelWindow {
                                 width: scrollFlick.width
                                 source: root.pageSource
 
-                                ParallelAnimation {
+                                NumberAnimation {
                                     id: pageEnterAnim
-                                    NumberAnimation {
-                                        target: pageLoader
-                                        property: "opacity"
-                                        from: 0.0
-                                        to: 1.0
-                                        duration: 180
-                                        easing.type: Easing.OutCubic
-                                    }
-                                    NumberAnimation {
-                                        target: pageLoader
-                                        property: "y"
-                                        from: 10
-                                        to: 0
-                                        duration: 200
-                                        easing.type: Easing.OutCubic
-                                    }
+                                    target: pageLoader
+                                    property: "opacity"
+                                    from: 0.0
+                                    to: 1.0
+                                    duration: 110
+                                    easing.type: Easing.OutCubic
                                 }
 
                                 onLoaded: {
                                     scrollFlick.contentY = 0;
-                                    if (!Theme.reducedMotion) {
+                                    if (!Theme.reducedMotion)
                                         pageEnterAnim.restart();
-                                    } else {
+                                    else
                                         pageLoader.opacity = 1.0;
-                                        pageLoader.y = 0;
-                                    }
                                 }
                             }
                         }

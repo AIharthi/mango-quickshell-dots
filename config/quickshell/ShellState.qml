@@ -34,8 +34,8 @@ Singleton {
 
     // --- Shell, Island, Bar & Accessibility ---
     property bool islandHoverExpand: true
-    property int islandHoverDelayMs: 220
-    property int islandCollapseDelayMs: 700
+    property int islandHoverDelayMs: 120
+    property int islandCollapseDelayMs: 450
     property bool pillShowMedia: true
     property bool pillSpinArt: true
     property bool pillShowEqualizer: true
@@ -90,6 +90,12 @@ Singleton {
     property bool barShowTray: false
     property bool barShowQuickIcons: false
     property bool barShowBattery: true
+
+    // --- Session Caches (avoid repeated slow subprocess lookups) ---
+    property var cachedMonospaceFonts: []
+    property var cachedAllFonts: []
+    property string cachedExtractedWpPath: ""
+    property var cachedExtractedColors: []
 
     // --- Session Notification History ---
     property var notificationHistory: []
