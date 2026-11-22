@@ -152,9 +152,14 @@ Item {
         return h + (root.powerMenuOpen ? 46 : 0);
     }
 
+    readonly property int notchPad: (!Theme.isSimple && ShellState.islandStyle === "notch") ? 14 : 0
+
     readonly property int targetWidth: {
-        if (root.islandState === "collapsed")
+        if (root.islandState === "collapsed") {
+            if (ShellState.islandStyle === "bar")
+                return Math.max(320, Math.round(root.width) - ShellState.islandTopMargin * 2);
             return Math.max(114, Math.min(430, Math.round(collapsedPill.implicitWidth) + 32));
+        }
         if (root.islandState === "osd")
             return 320;
         if (root.islandState === "notification")
@@ -164,24 +169,24 @@ Item {
 
     readonly property int targetHeight: {
         if (root.islandState === "collapsed")
-            return 34;
+            return ShellState.pillHeight + root.notchPad;
         if (root.islandState === "osd")
-            return 56;
+            return 56 + root.notchPad;
         if (root.islandState === "notification")
-            return Math.max(78, Math.min(148, Math.round(osdOverlay.notificationHeight) + 20));
-        return root.expandedHeight;
+            return Math.max(78, Math.min(148, Math.round(osdOverlay.notificationHeight) + 20)) + root.notchPad;
+        return root.expandedHeight + root.notchPad;
     }
 
     readonly property int targetRadius: {
         if (Theme.isSimple)
             return 0;
         if (root.islandState === "collapsed")
-            return 17;
-        if (root.islandState === "osd")
-            return 24;
-        if (root.islandState === "notification")
-            return 24;
-        return 26;
+            return ShellState.islandStyle === "bar"
+                ? Math.round(Theme.r(12))
+                : Math.round(Theme.r(Math.round(ShellState.pillHeight / 2) + 1));
+        if (root.islandState === "osd" || root.islandState === "notification")
+            return Math.round(Theme.r(24));
+        return Math.round(Theme.r(26));
     }
 
     Connections {
@@ -244,7 +249,9 @@ Item {
         readonly property bool hiddenInSimple: Theme.isSimple && root.islandState === "collapsed"
 
         anchors.top: parent.top
-        anchors.topMargin: Theme.isSimple ? 32 : 6
+        anchors.topMargin: Theme.isSimple
+            ? (ShellState.simpleBarPosition === "bottom" ? 8 : (ShellState.simpleBarHeight + 4))
+            : (root.notchPad > 0 ? -root.notchPad : ShellState.islandTopMargin)
         anchors.horizontalCenter: parent.horizontalCenter
 
         width: hiddenInSimple ? 0 : root.targetWidth
@@ -258,7 +265,7 @@ Item {
         border.color: Theme.islandBorder
 
         Behavior on width {
-            enabled: !Theme.isSimple
+            enabled: !Theme.reducedMotion
             NumberAnimation {
                 duration: 320
                 easing.type: Easing.OutBack
@@ -266,7 +273,7 @@ Item {
             }
         }
         Behavior on height {
-            enabled: !Theme.isSimple
+            enabled: !Theme.reducedMotion
             NumberAnimation {
                 duration: 320
                 easing.type: Easing.OutBack
@@ -274,21 +281,21 @@ Item {
             }
         }
         Behavior on radius {
-            enabled: !Theme.isSimple
+            enabled: !Theme.reducedMotion
             NumberAnimation {
                 duration: 260
                 easing.type: Easing.OutCubic
             }
         }
 
-        // Subtle glass specular top sheen in Blur Mode
+        // Subtle glass specular top sheen in Blur / Glass / Glow mode
         Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
             height: Math.min(parent.height, 44)
             radius: parent.radius
-            visible: Theme.isBlur
+            visible: Theme.showGlassSheen
             gradient: Gradient {
                 GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.35) }
                 GradientStop { position: 1.0; color: "transparent" }
@@ -338,12 +345,13 @@ Item {
         CollapsedPill {
             id: collapsedPill
             anchors.centerIn: parent
+            anchors.verticalCenterOffset: Math.round(root.notchPad / 2)
             player: root.activePlayer
             opacity: (!Theme.isSimple && root.islandState === "collapsed") ? 1.0 : 0.0
             visible: opacity > 0.01
 
             Behavior on opacity {
-                enabled: !Theme.isSimple
+                enabled: !Theme.reducedMotion
                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
             }
         }
@@ -353,6 +361,7 @@ Item {
             id: osdOverlay
             anchors.fill: parent
             anchors.margins: 10
+            anchors.topMargin: 10 + root.notchPad
             mode: root.islandState === "notification" ? "notification" : "osd"
             active: root.islandState === "osd" || root.islandState === "notification"
             opacity: active ? 1.0 : 0.0
@@ -399,7 +408,7 @@ Item {
         Loader {
             id: expandedLoader
             anchors.top: parent.top
-            anchors.topMargin: 14
+            anchors.topMargin: 14 + root.notchPad
             anchors.horizontalCenter: parent.horizontalCenter
             width: root.expandedWidth - 28
             height: root.expandedHeight - 28

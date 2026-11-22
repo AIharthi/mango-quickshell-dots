@@ -26,7 +26,8 @@ PanelWindow {
 
     readonly property var navItems: {
         const items = [
-            { id: "appearance", label: "Appearance",    icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, Matugen, GTK, fonts, cursor & blur" },
+            { id: "appearance", label: "Appearance",    icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, surfaces, island shape, fonts, cursor, GTK & blur" },
+            { id: "themes",     label: "Themes & Colors",icon: "󰌁", source: "ThemesPage.qml",       sub: "Vibes, 16 presets, Matugen, seed hex, custom themes & wallpapers" },
             { id: "shell",      label: "Shell & Bar",   icon: "󰕮", source: "ShellPage.qml",         sub: "Dynamic Island, Simple Bar, screenshots & motion" },
             { id: "windows",    label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Tiling layouts, per-tag rules & window rules" }
         ];
@@ -51,8 +52,15 @@ PanelWindow {
     }
 
     readonly property var searchIndex: [
-        { label: "Shell Modes & Blur",         pageId: "appearance",    keywords: "mode simple blur glass opacity radius border shadow fade dim" },
-        { label: "Matugen & Wallpaper Engine", pageId: "appearance",    keywords: "theme dark light matugen scheme tonal expressive contrast wallpaper transition fps" },
+        { label: "One-Click Aesthetic Vibes",  pageId: "themes",        keywords: "vibe aurora glass minimal square oled stealth neon cyber cozy paper full dock bar gruvbox dracula notch" },
+        { label: "16 Curated Theme Presets",   pageId: "themes",        keywords: "preset catppuccin tokyo night gruvbox nord rose pine dracula everforest kanagawa solarized one dark ayu oxocarbon synthwave oled sakura cyberpunk dark light" },
+        { label: "Seed Accent Color Generator",pageId: "themes",        keywords: "seed accent hex rgb material you color generator solid wallpaper" },
+        { label: "Wallpaper Studio & Matugen", pageId: "themes",        keywords: "wallpaper random solid dominant source color matugen extraction lightness prefer contrast tonal expressive vibrant monochrome rainbow" },
+        { label: "Live Palette & Custom Themes",pageId: "themes",       keywords: "custom theme palette slot primary secondary surface outline error export import json save" },
+        { label: "MangoWC Border & Shadow Colors",pageId: "themes",     keywords: "focus color border color colored shadow tint shadow opacity dim strength mango theme" },
+        { label: "Shell Modes & Surface Finish",pageId: "appearance",   keywords: "mode simple blur surface style default glass frosted oled flat tinted panel opacity card opacity roundness border glow width" },
+        { label: "Dynamic Island Shape & Scale",pageId: "appearance",   keywords: "island style floating pill top notch full-width bar pill height top margin ui text font scale" },
+        { label: "Wallpaper Transitions",      pageId: "appearance",    keywords: "wallpaper transition effect speed duration resize fps grow wipe fade wave outer awww swww" },
         { label: "GTK & Icon Theme",           pageId: "appearance",    keywords: "gtk icon theme hinting antialiasing rgba cursor blink text scale" },
         { label: "UI & Terminal Font",         pageId: "appearance",    keywords: "font typography family size jetbrains mono foot kitty gtk" },
         { label: "Cursor Theme & Size",        pageId: "appearance",    keywords: "cursor pointer size theme hide" },
@@ -195,7 +203,7 @@ PanelWindow {
                 anchors.top: parent.top
                 height: 48
                 radius: parent.radius
-                visible: Theme.isBlur
+                visible: Theme.showGlassSheen
                 gradient: Gradient {
                     GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(1, 1, 1, 0.30) }
                     GradientStop { position: 1.0; color: "transparent" }

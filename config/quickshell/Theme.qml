@@ -7,9 +7,11 @@ Singleton {
     id: root
 
     // --- Theme State (synced via theme-state.json) ---
-    property string themeMode: "preset"          // "preset" | "dynamic"
+    property string themeMode: "preset"          // "preset" | "dynamic" | "accent" | "custom"
     property string colorScheme: "dark"          // "dark" | "light"
     property string presetName: "catppuccin-mocha"
+    property string accentColor: "#cba6f7"
+    property string customTheme: ""
     property string wallpaperPath: Quickshell.env("HOME") + "/Pictures/Wallpapers/aurora_evening.jpg"
     property string lastError: ""
     readonly property bool applyingTheme: applyProcess.running
@@ -49,10 +51,22 @@ Singleton {
     property bool dimEnable: false
 
     readonly property var availablePresets: [
-        { id: "catppuccin-mocha", label: "Catppuccin", swatch: "#cba6f7", bg: "#1e1e2e" },
-        { id: "tokyo-night",      label: "Tokyo Night", swatch: "#7aa2f7", bg: "#1a1b26" },
-        { id: "gruvbox",          label: "Gruvbox",     swatch: "#fabd2f", bg: "#282828" },
-        { id: "nord",             label: "Nord",        swatch: "#88c0d0", bg: "#2e3440" }
+        { id: "catppuccin-mocha", label: "Catppuccin",  swatch: "#cba6f7", secondary: "#89b4fa", bg: "#1e1e2e" },
+        { id: "tokyo-night",      label: "Tokyo Night", swatch: "#7aa2f7", secondary: "#bb9af7", bg: "#1a1b26" },
+        { id: "gruvbox",          label: "Gruvbox",     swatch: "#fabd2f", secondary: "#83a598", bg: "#282828" },
+        { id: "nord",             label: "Nord",        swatch: "#88c0d0", secondary: "#81a1c1", bg: "#2e3440" },
+        { id: "rose-pine",        label: "Rose Pine",   swatch: "#ebbcba", secondary: "#c4a7e7", bg: "#1f1d2e" },
+        { id: "dracula",          label: "Dracula",     swatch: "#bd93f9", secondary: "#ff79c6", bg: "#282a36" },
+        { id: "everforest",       label: "Everforest",  swatch: "#a7c080", secondary: "#83c092", bg: "#2d353b" },
+        { id: "kanagawa",         label: "Kanagawa",    swatch: "#7e9cd8", secondary: "#957fb8", bg: "#1f1f28" },
+        { id: "solarized",        label: "Solarized",   swatch: "#268bd2", secondary: "#2aa198", bg: "#002b36" },
+        { id: "one-dark",         label: "One Dark",    swatch: "#61afef", secondary: "#c678dd", bg: "#282c34" },
+        { id: "ayu",              label: "Ayu Mirage",  swatch: "#ffcc66", secondary: "#73d0ff", bg: "#1f2430" },
+        { id: "oxocarbon",        label: "Oxocarbon",   swatch: "#3ddbd9", secondary: "#ff7eb6", bg: "#161616" },
+        { id: "synthwave",        label: "Synthwave",   swatch: "#ff7edb", secondary: "#36f9f6", bg: "#262335" },
+        { id: "oled-black",       label: "OLED Pitch",  swatch: "#82aaff", secondary: "#c792ea", bg: "#050507" },
+        { id: "sakura",           label: "Sakura",      swatch: "#f28fad", secondary: "#c9a0dc", bg: "#231b22" },
+        { id: "cyberpunk",        label: "Cyberpunk",   swatch: "#00f0ff", secondary: "#fcee09", bg: "#121220" }
     ]
 
     // --- Typography & Design Tokens ---
@@ -105,43 +119,86 @@ Singleton {
     property color info: "#89dceb"
     property color shadow: "#000000"
 
-    // Derived Dynamic Island / Simple / Blur surface tokens
-    readonly property color notchBg: isSimple
-        ? surfaceContainerLowest
-        : (isBlur
-            ? (isDark
-                ? withAlpha(surfaceContainerLowest, 0.72)
-                : withAlpha(surface, 0.78))
-            : (isDark
-                ? Qt.tint("#060609", withAlpha(surfaceContainerLowest, 0.25))
-                : Qt.rgba(surface.r, surface.g, surface.b, 0.96)))
+    // Derived Dynamic Island / Simple / Blur / Surface-Style tokens
+    readonly property bool showGlassSheen: !isSimple && (isBlur || ShellState.surfaceStyle === "glass" || ShellState.borderStyle === "glow")
+    readonly property color notchBg: {
+        if (isSimple || ShellState.surfaceStyle === "flat")
+            return withAlpha(surfaceContainerLowest, ShellState.shellOpacity);
+        if (ShellState.surfaceStyle === "oled")
+            return withAlpha("#000000", Math.max(0.88, ShellState.shellOpacity));
+        if (ShellState.surfaceStyle === "tinted")
+            return withAlpha(primaryContainer, Math.min(0.95, ShellState.shellOpacity * 0.88));
+        if (isBlur || ShellState.surfaceStyle === "glass")
+            return isDark
+                ? withAlpha(surfaceContainerLowest, Math.min(0.86, ShellState.shellOpacity * 0.82))
+                : withAlpha(surface, Math.min(0.90, ShellState.shellOpacity * 0.86));
+        return isDark
+            ? withAlpha(Qt.tint("#060609", withAlpha(surfaceContainerLowest, 0.25)), ShellState.shellOpacity)
+            : withAlpha(surface, ShellState.shellOpacity);
+    }
     readonly property color islandBg: notchBg
-    readonly property color islandBorder: ShellState.highContrast
-        ? primary
-        : (isSimple
-            ? outlineVariant
-            : (isBlur
-                ? (isDark ? withAlpha(fgSurface, 0.16) : withAlpha(outline, 0.28))
-                : "transparent"))
-    readonly property int islandBorderWidth: (isSimple || isBlur || ShellState.highContrast) ? 1 : 0
-    readonly property color cardBg: isSimple
-        ? surfaceContainerLow
-        : (isBlur
-            ? (isDark ? withAlpha(surfaceContainerHigh, 0.32) : withAlpha(surfaceContainerHigh, 0.52))
-            : (isDark ? withAlpha(surfaceContainerHigh, 0.42) : withAlpha(surfaceContainerHigh, 0.68)))
-    readonly property color subCardBg: isSimple
-        ? surfaceContainer
-        : (isBlur
-            ? (isDark ? withAlpha(surfaceContainerHighest, 0.26) : withAlpha(surfaceContainer, 0.65))
-            : (isDark ? withAlpha(surfaceContainerHighest, 0.36) : withAlpha(surfaceContainer, 0.85)))
-    readonly property color cardBorder: ShellState.highContrast
-        ? outline
-        : (isSimple
-            ? outlineVariant
-            : (isBlur
-                ? (isDark ? withAlpha(fgSurface, 0.10) : withAlpha(outline, 0.20))
-                : "transparent"))
-    readonly property int cardBorderWidth: (isSimple || isBlur || ShellState.highContrast) ? 1 : 0
+    readonly property color islandBorder: {
+        if (ShellState.highContrast || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow")
+            return primary;
+        if (ShellState.borderStyle === "none")
+            return "transparent";
+        if (isSimple)
+            return outlineVariant;
+        if (isBlur || ShellState.surfaceStyle === "glass")
+            return isDark ? withAlpha(fgSurface, 0.18) : withAlpha(outline, 0.30);
+        return withAlpha(outlineVariant, 0.70);
+    }
+    readonly property int islandBorderWidth: {
+        if (ShellState.highContrast)
+            return Math.max(1, ShellState.uiBorderWidth);
+        if (ShellState.borderStyle === "none")
+            return 0;
+        if (isSimple)
+            return Math.max(1, ShellState.uiBorderWidth);
+        if (isBlur || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow" || ShellState.surfaceStyle !== "default")
+            return ShellState.uiBorderWidth;
+        return 0;
+    }
+    readonly property color cardBg: {
+        if (isSimple)
+            return surfaceContainerLow;
+        if (ShellState.surfaceStyle === "oled")
+            return withAlpha("#0a0a0f", Math.max(0.75, ShellState.cardOpacity));
+        if (ShellState.surfaceStyle === "tinted")
+            return withAlpha(surfaceContainerHigh, ShellState.cardOpacity * 0.85);
+        return isDark
+            ? withAlpha(surfaceContainerHigh, ShellState.cardOpacity)
+            : withAlpha(surfaceContainerHigh, Math.min(1.0, ShellState.cardOpacity + 0.22));
+    }
+    readonly property color subCardBg: {
+        if (isSimple)
+            return surfaceContainer;
+        if (ShellState.surfaceStyle === "oled")
+            return withAlpha("#12121a", Math.max(0.70, ShellState.cardOpacity));
+        return isDark
+            ? withAlpha(surfaceContainerHighest, Math.max(0.20, ShellState.cardOpacity * 0.78))
+            : withAlpha(surfaceContainer, Math.min(1.0, ShellState.cardOpacity + 0.35));
+    }
+    readonly property color cardBorder: {
+        if (ShellState.highContrast)
+            return outline;
+        if (ShellState.borderStyle === "none")
+            return "transparent";
+        if (ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow")
+            return withAlpha(primary, 0.55);
+        if (isSimple)
+            return outlineVariant;
+        return isDark ? withAlpha(fgSurface, 0.12) : withAlpha(outline, 0.22);
+    }
+    readonly property int cardBorderWidth: {
+        if (ShellState.highContrast)
+            return Math.max(1, ShellState.uiBorderWidth);
+        if (ShellState.borderStyle === "none")
+            return 0;
+        if (isSimple || isBlur || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow" || ShellState.surfaceStyle !== "default")
+            return ShellState.uiBorderWidth;
+        return 0;
+    }
     readonly property color hoverBg: withAlpha(primary, 0.14)
     readonly property color activeBg: withAlpha(primary, 0.22)
 
@@ -181,7 +238,11 @@ Singleton {
     }
 
     function r(val: real): real {
-        return root.isSimple ? 0 : val;
+        return root.isSimple ? 0 : Math.round(val * ShellState.uiRadiusScale);
+    }
+
+    function fs(px: real): int {
+        return Math.max(8, Math.round(px * ShellState.uiFontScale));
     }
 
     function applyColorsJson(raw: string): void {
@@ -239,6 +300,10 @@ Singleton {
                 root.colorScheme = st.scheme;
             if (typeof st.preset === "string")
                 root.presetName = st.preset;
+            if (typeof st.accent === "string")
+                root.accentColor = st.accent;
+            if (typeof st.customTheme === "string")
+                root.customTheme = st.customTheme;
             if (typeof st.wallpaper === "string")
                 root.wallpaperPath = st.wallpaper;
         } catch (err) {
@@ -435,7 +500,10 @@ Singleton {
 
     function applyWallpaperWithCurrentMode(wallpaper: string): void {
         root.wallpaperPath = wallpaper;
-        _runApplyScript(["--mode", root.themeMode, "--scheme", root.colorScheme, "--preset", root.presetName, "--wallpaper", wallpaper]);
+        const args = ["--mode", root.themeMode, "--scheme", root.colorScheme, "--preset", root.presetName, "--accent", root.accentColor, "--wallpaper", wallpaper];
+        if (root.customTheme.length > 0)
+            args.push("--custom", root.customTheme);
+        _runApplyScript(args);
     }
 
     function applyPreset(presetId: string): void {
@@ -444,11 +512,39 @@ Singleton {
         _runApplyScript(["--mode", "preset", "--scheme", root.colorScheme, "--preset", presetId, "--no-wallpaper"]);
     }
 
+    function applyAccentColor(hex: string): void {
+        root.themeMode = "accent";
+        root.accentColor = hex;
+        ShellState.setPref("accentSeedColor", hex);
+        _runApplyScript(["--mode", "accent", "--accent", hex, "--scheme", root.colorScheme, "--no-wallpaper"]);
+    }
+
+    function applyCustomTheme(slug: string): void {
+        root.themeMode = "custom";
+        root.customTheme = slug;
+        _runApplyScript(["--mode", "custom", "--custom", slug, "--no-wallpaper"]);
+    }
+
+    function applyVibe(vibeId: string): void {
+        Quickshell.execDetached([Quickshell.shellPath("scripts/manage-themes.sh"), "apply-vibe", vibeId]);
+    }
+
+    function randomWallpaper(): void {
+        Quickshell.execDetached([Quickshell.shellPath("scripts/manage-themes.sh"), "random-wallpaper"]);
+    }
+
     function setScheme(scheme: string): void {
         if (scheme !== "dark" && scheme !== "light")
             return;
         root.colorScheme = scheme;
-        _runApplyScript(["--mode", root.themeMode, "--scheme", scheme, "--preset", root.presetName, "--wallpaper", root.wallpaperPath, "--no-wallpaper"]);
+        const args = [
+            "--mode", root.themeMode, "--scheme", scheme,
+            "--preset", root.presetName, "--accent", root.accentColor,
+            "--wallpaper", root.wallpaperPath, "--no-wallpaper"
+        ];
+        if (root.customTheme.length > 0)
+            args.push("--custom", root.customTheme);
+        _runApplyScript(args);
     }
 
     function toggleScheme(): void {
@@ -456,10 +552,17 @@ Singleton {
     }
 
     function setMode(mode: string): void {
-        if (mode !== "dynamic" && mode !== "preset")
+        if (mode !== "dynamic" && mode !== "preset" && mode !== "accent" && mode !== "custom")
             return;
         root.themeMode = mode;
-        _runApplyScript(["--mode", mode, "--scheme", root.colorScheme, "--preset", root.presetName, "--wallpaper", root.wallpaperPath, "--no-wallpaper"]);
+        const args = [
+            "--mode", mode, "--scheme", root.colorScheme,
+            "--preset", root.presetName, "--accent", root.accentColor,
+            "--wallpaper", root.wallpaperPath, "--no-wallpaper"
+        ];
+        if (root.customTheme.length > 0)
+            args.push("--custom", root.customTheme);
+        _runApplyScript(args);
     }
 
     FileView {

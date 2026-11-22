@@ -105,6 +105,28 @@ def default_prefs():
         "screenshotCopyClipboard": True,
         "screenshotNotify": True,
         "screenshotDelay": 0,
+        "surfaceStyle": "default",
+        "shellOpacity": 0.92,
+        "cardOpacity": 0.50,
+        "uiRadiusScale": 1.0,
+        "borderStyle": "subtle",
+        "uiBorderWidth": 1,
+        "uiFontScale": 1.0,
+        "islandStyle": "pill",
+        "islandTopMargin": 6,
+        "pillHeight": 32,
+        "matugenSourceIndex": 0,
+        "matugenPrefer": "saturation",
+        "matugenLightnessDark": 0.0,
+        "matugenLightnessLight": 0.0,
+        "wallpaperDir": "~/Pictures/Wallpapers",
+        "accentSeedColor": "#cba6f7",
+        "solidWallpaperColor": "#1e1e2e",
+        "mangoFocusColor": "",
+        "mangoBorderColor": "",
+        "mangoShadowTint": False,
+        "mangoShadowAlpha": 0.80,
+        "mangoDimAlpha": 0.27,
     }
 
 
@@ -256,6 +278,37 @@ def cmd_prefs_set():
         prefs[key] = round(max(0.1, min(3.0, float(prefs[key]))), 2)
     elif key == "screenshotDelay":
         prefs[key] = max(0, min(10, int(prefs[key])))
+    elif key == "shellOpacity":
+        prefs[key] = round(max(0.40, min(1.00, float(prefs[key]))), 2)
+    elif key == "cardOpacity":
+        prefs[key] = round(max(0.15, min(1.00, float(prefs[key]))), 2)
+    elif key == "uiRadiusScale":
+        prefs[key] = round(max(0.0, min(1.6, float(prefs[key]))), 2)
+    elif key == "uiBorderWidth":
+        prefs[key] = max(0, min(3, int(prefs[key])))
+    elif key == "uiFontScale":
+        prefs[key] = round(max(0.85, min(1.25, float(prefs[key]))), 2)
+    elif key == "islandTopMargin":
+        prefs[key] = max(0, min(20, int(prefs[key])))
+    elif key == "pillHeight":
+        prefs[key] = max(26, min(40, int(prefs[key])))
+    elif key == "matugenSourceIndex":
+        prefs[key] = max(0, min(4, int(prefs[key])))
+    elif key in ("matugenLightnessDark", "matugenLightnessLight"):
+        prefs[key] = round(max(-0.50, min(0.30, float(prefs[key]))), 2)
+    elif key == "mangoShadowAlpha":
+        prefs[key] = round(max(0.0, min(1.0, float(prefs[key]))), 2)
+    elif key == "mangoDimAlpha":
+        prefs[key] = round(max(0.0, min(0.75, float(prefs[key]))), 2)
+    elif key == "surfaceStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("default", "glass", "oled", "flat", "tinted") else "default"
+    elif key == "borderStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("none", "subtle", "accent", "glow") else "subtle"
+    elif key == "islandStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("pill", "notch", "bar") else "pill"
 
     if shutil.which("gsettings"):
         if key == "clock24h":

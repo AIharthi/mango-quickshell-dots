@@ -99,6 +99,6 @@ fi
 echo ""
 echo "Done! Next steps:"
 echo "  1. Drop wallpapers into ~/Pictures/Wallpapers/ for the Theme Switcher & Matugen."
-echo "  2. Press Super+S anytime to open Settings (15 categories: Appearance, Shell, Windows, Audio, Displays, Network, Bluetooth, Input, Terminals, Notifications, Apps, Shortcuts, Privacy, Monitor, System)."
+echo "  2. Press Super+S anytime to open Settings (16 categories: Appearance, Themes & Colors, Shell, Windows, Audio, Displays, Network, Bluetooth, Input, Terminals, Notifications, Apps, Shortcuts, Privacy, Monitor, System)."
 echo "  3. Per-device overrides are saved to ~/.config/mango/local.conf and preferences to ~/.config/quickshell/shell-prefs.json."
 echo "  4. Log in to MangoWC (or run 'mmsg dispatch reload_config' if already in MangoWC)."

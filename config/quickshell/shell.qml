@@ -149,7 +149,7 @@ ShellRoot {
                 }
 
                 // Fixed 40px exclusive zone in Default/Blur modes; 0 in Simple Mode (SimpleBar owns the 28px zone).
-                exclusiveZone: Theme.isSimple ? 0 : 40
+                exclusiveZone: Theme.isSimple ? 0 : (ShellState.pillHeight + (ShellState.islandStyle === "notch" ? 2 : ShellState.islandTopMargin + 2))
                 exclusionMode: ExclusionMode.Normal
                 implicitHeight: 540
                 color: "transparent"
@@ -252,6 +252,26 @@ ShellRoot {
 
         function clearClipboard(): void {
             Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "clear-clipboard"]);
+        }
+
+        function randomWallpaper(): void {
+            Theme.randomWallpaper();
+        }
+
+        function applyVibe(vibeId: string): void {
+            Theme.applyVibe(vibeId);
+        }
+
+        function applyAccent(hex: string): void {
+            Theme.applyAccentColor(hex);
+        }
+
+        function applyPreset(presetId: string): void {
+            Theme.applyPreset(presetId);
+        }
+
+        function toggleDarkLight(): void {
+            Theme.toggleScheme();
         }
     }
 }

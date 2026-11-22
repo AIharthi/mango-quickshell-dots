@@ -55,6 +55,30 @@ Singleton {
     property bool screenshotNotify: true
     property int screenshotDelay: 0
 
+    // --- Surface, Shape, Island Layout & Advanced Theming ---
+    property string surfaceStyle: "default"      // "default" | "glass" | "oled" | "flat" | "tinted"
+    property real shellOpacity: 0.92
+    property real cardOpacity: 0.50
+    property real uiRadiusScale: 1.0
+    property string borderStyle: "subtle"        // "none" | "subtle" | "accent" | "glow"
+    property int uiBorderWidth: 1
+    property real uiFontScale: 1.0
+    property string islandStyle: "pill"          // "pill" | "notch" | "bar"
+    property int islandTopMargin: 6
+    property int pillHeight: 32
+    property int matugenSourceIndex: 0
+    property string matugenPrefer: "saturation"
+    property real matugenLightnessDark: 0.0
+    property real matugenLightnessLight: 0.0
+    property string wallpaperDir: "~/Pictures/Wallpapers"
+    property string accentSeedColor: "#cba6f7"
+    property string solidWallpaperColor: "#1e1e2e"
+    property string mangoFocusColor: ""
+    property string mangoBorderColor: ""
+    property bool mangoShadowTint: false
+    property real mangoShadowAlpha: 0.80
+    property real mangoDimAlpha: 0.27
+
     // --- Session Notification History ---
     property var notificationHistory: []
     property int unreadCount: 0
@@ -112,6 +136,28 @@ Singleton {
             if (d.screenshotCopyClipboard !== undefined) root.screenshotCopyClipboard = !!d.screenshotCopyClipboard;
             if (d.screenshotNotify !== undefined) root.screenshotNotify = !!d.screenshotNotify;
             if (d.screenshotDelay !== undefined) root.screenshotDelay = Math.max(0, Math.min(10, Number(d.screenshotDelay)));
+            if (d.surfaceStyle !== undefined && String(d.surfaceStyle).length > 0) root.surfaceStyle = String(d.surfaceStyle);
+            if (d.shellOpacity !== undefined) root.shellOpacity = Math.max(0.40, Math.min(1.0, Number(d.shellOpacity)));
+            if (d.cardOpacity !== undefined) root.cardOpacity = Math.max(0.15, Math.min(1.0, Number(d.cardOpacity)));
+            if (d.uiRadiusScale !== undefined) root.uiRadiusScale = Math.max(0.0, Math.min(1.6, Number(d.uiRadiusScale)));
+            if (d.borderStyle !== undefined && String(d.borderStyle).length > 0) root.borderStyle = String(d.borderStyle);
+            if (d.uiBorderWidth !== undefined) root.uiBorderWidth = Math.max(0, Math.min(3, Number(d.uiBorderWidth)));
+            if (d.uiFontScale !== undefined) root.uiFontScale = Math.max(0.85, Math.min(1.25, Number(d.uiFontScale)));
+            if (d.islandStyle !== undefined && String(d.islandStyle).length > 0) root.islandStyle = String(d.islandStyle);
+            if (d.islandTopMargin !== undefined) root.islandTopMargin = Math.max(0, Math.min(20, Number(d.islandTopMargin)));
+            if (d.pillHeight !== undefined) root.pillHeight = Math.max(26, Math.min(40, Number(d.pillHeight)));
+            if (d.matugenSourceIndex !== undefined) root.matugenSourceIndex = Math.max(0, Math.min(4, Number(d.matugenSourceIndex)));
+            if (d.matugenPrefer !== undefined && String(d.matugenPrefer).length > 0) root.matugenPrefer = String(d.matugenPrefer);
+            if (d.matugenLightnessDark !== undefined) root.matugenLightnessDark = Math.max(-0.5, Math.min(0.3, Number(d.matugenLightnessDark)));
+            if (d.matugenLightnessLight !== undefined) root.matugenLightnessLight = Math.max(-0.3, Math.min(0.3, Number(d.matugenLightnessLight)));
+            if (d.wallpaperDir !== undefined && String(d.wallpaperDir).length > 0) root.wallpaperDir = String(d.wallpaperDir);
+            if (d.accentSeedColor !== undefined && String(d.accentSeedColor).length > 0) root.accentSeedColor = String(d.accentSeedColor);
+            if (d.solidWallpaperColor !== undefined && String(d.solidWallpaperColor).length > 0) root.solidWallpaperColor = String(d.solidWallpaperColor);
+            if (d.mangoFocusColor !== undefined) root.mangoFocusColor = String(d.mangoFocusColor);
+            if (d.mangoBorderColor !== undefined) root.mangoBorderColor = String(d.mangoBorderColor);
+            if (d.mangoShadowTint !== undefined) root.mangoShadowTint = !!d.mangoShadowTint;
+            if (d.mangoShadowAlpha !== undefined) root.mangoShadowAlpha = Math.max(0.0, Math.min(1.0, Number(d.mangoShadowAlpha)));
+            if (d.mangoDimAlpha !== undefined) root.mangoDimAlpha = Math.max(0.0, Math.min(0.75, Number(d.mangoDimAlpha)));
             root.lastError = "";
         } catch (err) {
             prefsRetryTimer.restart();
@@ -162,6 +208,28 @@ Singleton {
         else if (key === "screenshotCopyClipboard") root.screenshotCopyClipboard = !!value;
         else if (key === "screenshotNotify") root.screenshotNotify = !!value;
         else if (key === "screenshotDelay") root.screenshotDelay = Math.max(0, Math.min(10, Number(value)));
+        else if (key === "surfaceStyle") root.surfaceStyle = String(value);
+        else if (key === "shellOpacity") root.shellOpacity = Math.max(0.40, Math.min(1.0, Number(value)));
+        else if (key === "cardOpacity") root.cardOpacity = Math.max(0.15, Math.min(1.0, Number(value)));
+        else if (key === "uiRadiusScale") root.uiRadiusScale = Math.max(0.0, Math.min(1.6, Number(value)));
+        else if (key === "borderStyle") root.borderStyle = String(value);
+        else if (key === "uiBorderWidth") root.uiBorderWidth = Math.max(0, Math.min(3, Number(value)));
+        else if (key === "uiFontScale") root.uiFontScale = Math.max(0.85, Math.min(1.25, Number(value)));
+        else if (key === "islandStyle") root.islandStyle = String(value);
+        else if (key === "islandTopMargin") root.islandTopMargin = Math.max(0, Math.min(20, Number(value)));
+        else if (key === "pillHeight") root.pillHeight = Math.max(26, Math.min(40, Number(value)));
+        else if (key === "matugenSourceIndex") root.matugenSourceIndex = Math.max(0, Math.min(4, Number(value)));
+        else if (key === "matugenPrefer") root.matugenPrefer = String(value);
+        else if (key === "matugenLightnessDark") root.matugenLightnessDark = Math.max(-0.5, Math.min(0.3, Number(value)));
+        else if (key === "matugenLightnessLight") root.matugenLightnessLight = Math.max(-0.3, Math.min(0.3, Number(value)));
+        else if (key === "wallpaperDir") root.wallpaperDir = String(value);
+        else if (key === "accentSeedColor") root.accentSeedColor = String(value);
+        else if (key === "solidWallpaperColor") root.solidWallpaperColor = String(value);
+        else if (key === "mangoFocusColor") root.mangoFocusColor = String(value);
+        else if (key === "mangoBorderColor") root.mangoBorderColor = String(value);
+        else if (key === "mangoShadowTint") root.mangoShadowTint = !!value;
+        else if (key === "mangoShadowAlpha") root.mangoShadowAlpha = Math.max(0.0, Math.min(1.0, Number(value)));
+        else if (key === "mangoDimAlpha") root.mangoDimAlpha = Math.max(0.0, Math.min(0.75, Number(value)));
 
         Quickshell.execDetached([
             Quickshell.shellPath("scripts/manage-settings.sh"),

@@ -22,12 +22,14 @@ DEFAULT_MODE="preset"
 DEFAULT_SCHEME="dark"
 DEFAULT_PRESET="catppuccin-mocha"
 DEFAULT_WALLPAPER="$HOME/Pictures/Wallpapers/aurora_evening.jpg"
+DEFAULT_ACCENT="#cba6f7"
+DEFAULT_CUSTOM=""
 
 if [[ -f "$STATE_JSON" ]] && command -v python3 >/dev/null 2>&1; then
-    read -r DEFAULT_MODE DEFAULT_SCHEME DEFAULT_PRESET DEFAULT_WALLPAPER < <(
-        python3 - "$STATE_JSON" "$DEFAULT_MODE" "$DEFAULT_SCHEME" "$DEFAULT_PRESET" "$DEFAULT_WALLPAPER" <<'PY'
+    IFS=$'\t' read -r DEFAULT_MODE DEFAULT_SCHEME DEFAULT_PRESET DEFAULT_WALLPAPER DEFAULT_ACCENT DEFAULT_CUSTOM < <(
+        python3 - "$STATE_JSON" "$DEFAULT_MODE" "$DEFAULT_SCHEME" "$DEFAULT_PRESET" "$DEFAULT_WALLPAPER" "$DEFAULT_ACCENT" "$DEFAULT_CUSTOM" <<'PY'
 import json, sys
-path, d_mode, d_scheme, d_preset, d_wall = sys.argv[1:6]
+path, d_mode, d_scheme, d_preset, d_wall, d_acc, d_cust = sys.argv[1:8]
 try:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -36,9 +38,12 @@ try:
         data.get("scheme", d_scheme),
         data.get("preset", d_preset),
         data.get("wallpaper", d_wall),
+        data.get("accent", d_acc) or d_acc,
+        data.get("customTheme", d_cust) or "",
+        sep="\t",
     )
 except Exception:
-    print(d_mode, d_scheme, d_preset, d_wall)
+    print(d_mode, d_scheme, d_preset, d_wall, d_acc, d_cust, sep="\t")
 PY
     )
 fi
@@ -47,6 +52,8 @@ MODE="$DEFAULT_MODE"
 SCHEME="$DEFAULT_SCHEME"
 PRESET="$DEFAULT_PRESET"
 WALLPAPER="$DEFAULT_WALLPAPER"
+ACCENT="$DEFAULT_ACCENT"
+CUSTOM_THEME="$DEFAULT_CUSTOM"
 SET_WALLPAPER=1
 INIT_ONLY=0
 
@@ -64,6 +71,14 @@ while [[ $# -gt 0 ]]; do
             PRESET="${2:?Missing value for --preset}"
             shift 2
             ;;
+        --accent)
+            ACCENT="${2:?Missing value for --accent}"
+            shift 2
+            ;;
+        --custom)
+            CUSTOM_THEME="${2-}"
+            shift 2
+            ;;
         --wallpaper)
             WALLPAPER="${2:?Missing value for --wallpaper}"
             shift 2
@@ -79,9 +94,11 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             cat <<'EOF'
 Usage: apply-theme.sh [OPTIONS]
-  --mode <dynamic|preset>
+  --mode <dynamic|preset|accent|custom>
   --scheme <dark|light>
-  --preset <catppuccin-mocha|tokyo-night|gruvbox|nord>
+  --preset <preset-id>
+  --accent <#RRGGBB>
+  --custom <slug>
   --wallpaper <path>
   --no-wallpaper
   --init
@@ -95,8 +112,8 @@ EOF
     esac
 done
 
-if [[ "$MODE" != "dynamic" && "$MODE" != "preset" ]]; then
-    echo "Invalid mode: $MODE (expected dynamic or preset)" >&2
+if [[ "$MODE" != "dynamic" && "$MODE" != "preset" && "$MODE" != "accent" && "$MODE" != "custom" ]]; then
+    echo "Invalid mode: $MODE (expected dynamic, preset, accent, or custom)" >&2
     exit 1
 fi
 if [[ "$SCHEME" != "dark" && "$SCHEME" != "light" ]]; then
@@ -795,9 +812,9 @@ reload_wm_and_terminals() {
 }
 
 write_theme_state() {
-    python3 - "$STATE_JSON" "$MODE" "$SCHEME" "$PRESET" "$WALLPAPER" <<'PY'
+    python3 - "$STATE_JSON" "$MODE" "$SCHEME" "$PRESET" "$WALLPAPER" "$ACCENT" "$CUSTOM_THEME" <<'PY'
 import json, os, sys
-target, mode, scheme, preset, wallpaper = sys.argv[1:6]
+target, mode, scheme, preset, wallpaper, accent, custom_theme = sys.argv[1:8]
 tmp = f"{target}.tmp.{os.getpid()}"
 with open(tmp, "w", encoding="utf-8") as f:
     json.dump({
@@ -805,6 +822,8 @@ with open(tmp, "w", encoding="utf-8") as f:
         "scheme": scheme,
         "preset": preset,
         "wallpaper": wallpaper,
+        "accent": accent,
+        "customTheme": custom_theme,
     }, f, indent=2)
     f.write("\n")
 os.replace(tmp, target)
@@ -818,6 +837,32 @@ if [[ "$SET_WALLPAPER" -eq 1 && -n "$WALLPAPER" ]]; then
     apply_wallpaper "$WALLPAPER"
 fi
 
+MAT_TYPE="scheme-tonal-spot"
+MAT_CONTRAST="0.00"
+MAT_SRC_IDX="0"
+MAT_PREFER="saturation"
+MAT_LDARK="0.00"
+MAT_LLIGHT="0.00"
+PREFS_FILE="$QUICKSHELL_DIR/shell-prefs.json"
+if [[ -f "$PREFS_FILE" ]] && command -v python3 >/dev/null 2>&1; then
+    read -r MAT_TYPE MAT_CONTRAST MAT_SRC_IDX MAT_PREFER MAT_LDARK MAT_LLIGHT < <(
+        python3 - "$PREFS_FILE" <<'PY' 2>/dev/null || echo "scheme-tonal-spot 0.00 0 saturation 0.00 0.00"
+import json, sys
+try:
+    d = json.load(open(sys.argv[1], "r", encoding="utf-8"))
+    t = str(d.get("matugenType", "scheme-tonal-spot")).strip() or "scheme-tonal-spot"
+    c = max(-1.0, min(1.0, float(d.get("matugenContrast", 0.0))))
+    s = max(0, min(4, int(d.get("matugenSourceIndex", 0))))
+    p = str(d.get("matugenPrefer", "saturation")).strip() or "saturation"
+    ld = max(-0.8, min(0.8, float(d.get("matugenLightnessDark", 0.0))))
+    ll = max(-0.8, min(0.8, float(d.get("matugenLightnessLight", 0.0))))
+    print(t, f"{c:.2f}", s, p, f"{ld:.2f}", f"{ll:.2f}")
+except Exception:
+    print("scheme-tonal-spot 0.00 0 saturation 0.00 0.00")
+PY
+    )
+fi
+
 if [[ "$MODE" == "dynamic" ]]; then
     if ! command -v matugen >/dev/null 2>&1; then
         echo "Error: matugen is not installed. Switch to Preset Mode or install matugen." >&2
@@ -827,24 +872,29 @@ if [[ "$MODE" == "dynamic" ]]; then
         echo "Error: wallpaper not found: $WALLPAPER" >&2
         exit 3
     fi
-    local mat_type="scheme-tonal-spot" mat_contrast="0.0"
-    local prefs_file="$QUICKSHELL_DIR/shell-prefs.json"
-    if [[ -f "$prefs_file" ]]; then
-        read -r mat_type mat_contrast < <(
-            python3 - "$prefs_file" <<'PY' 2>/dev/null || echo "scheme-tonal-spot 0.0"
-import json, sys
-try:
-    d = json.load(open(sys.argv[1], "r", encoding="utf-8"))
-    t = str(d.get("matugenType", "scheme-tonal-spot")).strip() or "scheme-tonal-spot"
-    c = max(-1.0, min(1.0, float(d.get("matugenContrast", 0.0))))
-    print(t, f"{c:.2f}")
-except Exception:
-    print("scheme-tonal-spot 0.0")
-PY
-        )
-    fi
-    matugen image "$WALLPAPER" -m "$SCHEME" -t "$mat_type" --contrast "$mat_contrast" -q 2>/dev/null \
+    matugen image "$WALLPAPER" -m "$SCHEME" -t "$MAT_TYPE" --contrast "$MAT_CONTRAST" \
+        --source-color-index "$MAT_SRC_IDX" --prefer "$MAT_PREFER" \
+        --lightness-dark "$MAT_LDARK" --lightness-light "$MAT_LLIGHT" -q 2>/dev/null \
+        || matugen image "$WALLPAPER" -m "$SCHEME" -t "$MAT_TYPE" --contrast "$MAT_CONTRAST" -q 2>/dev/null \
         || matugen image "$WALLPAPER" -m "$SCHEME" -q
+elif [[ "$MODE" == "accent" ]]; then
+    if ! command -v matugen >/dev/null 2>&1; then
+        echo "Error: matugen is not installed." >&2
+        exit 2
+    fi
+    matugen color hex "$ACCENT" -m "$SCHEME" -t "$MAT_TYPE" --contrast "$MAT_CONTRAST" \
+        --lightness-dark "$MAT_LDARK" --lightness-light "$MAT_LLIGHT" -q 2>/dev/null \
+        || matugen color hex "$ACCENT" -m "$SCHEME" -q
+elif [[ "$MODE" == "custom" ]]; then
+    if [[ -n "$CUSTOM_THEME" && -f "$QUICKSHELL_DIR/custom-themes/${CUSTOM_THEME}.json" && -x "$QUICKSHELL_DIR/scripts/manage-themes.sh" ]]; then
+        "$QUICKSHELL_DIR/scripts/manage-themes.sh" custom-apply "$CUSTOM_THEME" --no-reload >/dev/null
+    elif [[ -f "$COLORS_JSON" ]]; then
+        :
+    elif [[ -x "$QUICKSHELL_DIR/scripts/manage-themes.sh" ]]; then
+        "$QUICKSHELL_DIR/scripts/manage-themes.sh" render-preset "$PRESET" "$SCHEME"
+    fi
+elif [[ -x "$QUICKSHELL_DIR/scripts/manage-themes.sh" ]]; then
+    "$QUICKSHELL_DIR/scripts/manage-themes.sh" render-preset "$PRESET" "$SCHEME"
 else
     load_preset_palette "$PRESET" "$SCHEME"
     write_colors_json
@@ -852,6 +902,10 @@ else
     write_gtk_css "$GTK4_DIR/gtk.css" "gtk4"
     write_mango_theme
     write_terminal_configs
+fi
+
+if [[ -x "$QUICKSHELL_DIR/scripts/manage-themes.sh" ]]; then
+    "$QUICKSHELL_DIR/scripts/manage-themes.sh" apply-mango-overrides >/dev/null 2>&1 || true
 fi
 
 apply_gtk_settings

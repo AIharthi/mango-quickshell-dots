@@ -12,8 +12,9 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
     - **Laptops** automatically surface live **Battery % / charging status** (in the Dynamic Island pill, Simple Bar, and System Monitor), **Backlight brightness**, **Wi-Fi**, **Bluetooth**, and **Touchpad** settings.
   - **Multi-Monitor Support**: Wraps `PanelWindow`s in Quickshell `Variants` over `Quickshell.screens`, syncing per-monitor MangoWC tags across all connected displays.
   - **Per-Device MangoWC Overrides (`~/.config/mango/local.conf`)**: Included via `source_optional=~/.config/mango/local.conf` (ignored by Git and preserved across `./install.sh` re-runs), so every machine can pull the same dotfiles while keeping its own monitor rules, keyboard layout, and touchpad settings.
-- **Built-in Quickshell Settings App (`Super + S`)** *(15 hardware-aware categories with live sidebar search, smooth transitions & persistent per-device config)*
-  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), presets or dynamic **Matugen** mode, Dark/Light scheme, **Matugen & Wallpaper Engine** (scheme type, contrast, `awww`/`swww` transition/FPS/duration/scaling), **Typography & System Font** (synced across Quickshell, GTK, Foot & Kitty), **GTK, Icons & Font Rendering** (icon theme, hinting, antialiasing, text scale, cursor blink), **Cursor Theme & Size**, and full MangoWC compositor effects (`dim_enable`, layer blur, shadow size/blur, fade in/out).
+- **Built-in Quickshell Settings App (`Super + S`)** *(16 hardware-aware categories with live sidebar search, smooth transitions & persistent per-device config)*
+  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), Dark/Light scheme, **Shell Surface Finish & Transparency** (`Default` / `Frosted Glass` / `OLED Black` / `Flat Minimal` / `Accent Tinted`, panel/card opacity sliders, corner roundness scale `Sharp`–`Pill`, border accent styles `None` / `Subtle` / `Accent` / `Glow`, border width), **Dynamic Island Shape & Text Scale** (`Floating Pill`, `Top Notch`, `Full-Width Bar`, pill height, top margin, `85%`–`120%` UI text scale), `awww`/`swww` wallpaper transitions, **Typography & System Font** (synced across Quickshell, GTK, Foot & Kitty), **GTK, Icons & Font Rendering**, **Cursor Theme & Size**, and full MangoWC compositor effects.
+  - **Themes & Colors Studio**: Full appearance customization hub with **8 One-Click Aesthetic Vibes** (*Aurora Glass*, *Minimal Square*, *OLED Stealth*, *Neon Cyber*, *Cozy Paper*, *Full Dock Bar*, *Warm Gruvbox*, *Dracula Notch*), **16 Curated Dark/Light Presets** (*Catppuccin*, *Tokyo Night*, *Gruvbox*, *Nord*, *Rose Pine*, *Dracula*, *Everforest*, *Kanagawa*, *Solarized*, *One Dark*, *Ayu Mirage*, *Oxocarbon*, *Synthwave*, *OLED Pitch*, *Sakura*, *Cyberpunk*), **Seed Accent Color Generator** (`matugen color hex` + RGB channel mixer), **Wallpaper Studio** (folder picker, thumbnail gallery, Random shuffle, Solid color backdrop clear, **Extracted Dominant Source Color** picker, all 10 Matugen scheme algorithms, `--prefer`, contrast, dark/light surface lightness), **Live 10-Slot Palette Editor & Custom Theme Manager** (save, apply, export & import JSON themes), and **MangoWC Window Color & Shadow Overrides** (focused/unfocused border hex overrides, **Accent-Colored Window Shadows**, shadow opacity & dim strength).
   - **Shell & Bar**: Dynamic Island hover/collapse delays, compact pill media/spin/equalizer toggles, OSD toggle & duration, Simple Bar thickness/position (`Top` / `Bottom`)/layout/date toggles, Screenshot directory/delay/clipboard/notify preferences, and global Reduced Motion / High-Contrast accessibility options.
   - **Windows**: Focus follows mouse (`sloppy_focus`), cursor warp, border drag resize hitbox, Scroller/Master/Dwindle/Monocle options, cross-monitor/tag focus, Overview gaps & Hot Corners (`hotarea`), Allow Fullscreen Tearing, **Per-Tag Default Layouts (Tags 1–9)** (`tag_rule`), and a live `mango -p`-validated **Custom Window Rules** (`window_rule`) builder.
   - **Audio**: Output & mic sliders (with optional **150% Over-Amplification** boost), mute toggles, live default sink/source switching, **Speaker Left/Right/Stereo Channel Test**, **Application Mixer** (per-stream volume & mute), **Hardware Audio Card Profiles**, and `pavucontrol`.
@@ -31,7 +32,7 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
   - Compact top pill showing time, optional battery indicator, and collapsible Spotify/MPRIS mini-player with spinning album art and equalizer bars.
   - Hover or press `Super + D` to open the **Hub**: MPRIS Media Card, live CPU/RAM (+ optional Battery) System Monitor, interactive MangoWC Tags (`1`–`9`) + layout switcher, hardware-aware Quick Controls, **System Tray** (`StatusNotifierItem`), and collapsible **Power Menu** (Lock, Suspend, Logout, Reboot, Poweroff with confirmation).
   - Built-in **Fuzzy App Launcher** (`Super + Space` / `Super + A`) with desktop entry filtering (`hidden-apps.json`).
-  - Built-in **Theme & Wallpaper Switcher** (`Super + Shift + T`): live **Matugen** Material You extraction from `~/Pictures/Wallpapers`, 4 built-in presets (*Catppuccin Mocha*, *Tokyo Night*, *Gruvbox*, *Nord*), and instant Dark/Light switching synced across Quickshell, MangoWC, GTK 3/4, Foot, and Kitty.
+  - Built-in **Theme & Wallpaper Switcher** (`Super + Shift + T`): live **Matugen** Material You extraction from `~/Pictures/Wallpapers`, **16 Dark/Light presets**, **Seed Accent** quick swatches, **Random** wallpaper button, direct link to the **Themes & Colors Studio**, and instant Dark/Light switching synced across Quickshell, MangoWC, GTK 3/4, Foot, and Kitty.
   - Integrated **OSD** (volume, mute, brightness) and **Notification Server** with action buttons and critical urgency accents.
 - **3 Live Visual Modes (MangoWC + Quickshell synced)**
   - **Default**: Floating rounded Dynamic Island, soft shadows, smooth animations, opaque windows.
@@ -51,8 +52,8 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 │   ├── mango/                    # MangoWC config, mode.conf, theme.conf, autostart.sh
 │   ├── quickshell/               # ShellRoot, Theme, DeviceCaps & ShellState singletons, JSON state
 │   │   ├── components/           # DynamicIsland, SimpleBar, QuickControls, SystemTrayStrip, PowerMenu, etc.
-│   │   ├── settings/             # Modular Settings app (15 pages: Appearance, Shell, Windows .. Monitor, System)
-│   │   └── scripts/              # apply-mode.sh, apply-theme.sh, manage-settings.sh, manage-system.sh, launch-app.sh, etc.
+│   │   ├── settings/             # Modular Settings app (16 pages: Appearance, Themes & Colors, Shell, Windows .. Monitor, System)
+│   │   └── scripts/              # apply-mode.sh, apply-theme.sh, manage-themes.sh, manage-settings.sh, manage-system.sh, launch-app.sh, etc.
 │   ├── matugen/                  # Matugen config & templates (QS, GTK3/4, Mango, Foot, Kitty)
 │   ├── foot/                     # Foot terminal config + synced colors
 │   ├── kitty/                    # Kitty terminal config + synced colors
@@ -224,14 +225,19 @@ cd mango-quickshell-dots
 ### CLI / IPC Controls
 
 ```bash
-# Visual Modes
+# Visual Modes & Live Theming IPC
 qs ipc call island setShellMode default
 qs ipc call island setShellMode simple
 qs ipc call island setShellMode blur
+qs ipc call island applyVibe aurora-glass    # aurora-glass | minimal-square | oled-stealth | neon-cyber | cozy-paper | full-dock-bar | warm-gruvbox | dracula-notch
+qs ipc call island applyPreset tokyo-night
+qs ipc call island applyAccent "#ff6b6b"
+qs ipc call island randomWallpaper
+qs ipc call island toggleDarkLight
 
 # Settings Window & Toggles
 qs ipc call island toggleSettings
-qs ipc call island openSettings audio   # appearance | shell | windows | audio | displays | network | bluetooth | input | terminals | notifications | apps | shortcuts | privacy | monitor | system
+qs ipc call island openSettings themes    # appearance | themes | shell | windows | audio | displays | network | bluetooth | input | terminals | notifications | apps | shortcuts | privacy | monitor | system
 qs ipc call island closeSettings
 qs ipc call island toggleDnd
 qs ipc call island toggleKeepAwake

@@ -467,6 +467,7 @@ ColumnLayout {
 
             sourceComponent: ThemeSwitcher {
                 active: root.isOpen && root.activeTab === "themes"
+                onOpenSettingsRequested: page => root.openSettingsRequested(page)
             }
         }
 

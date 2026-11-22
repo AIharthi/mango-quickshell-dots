@@ -10,18 +10,19 @@ ColumnLayout {
     id: root
 
     property bool active: false
-    spacing: 10
+    signal openSettingsRequested(string page)
+    spacing: 8
 
-    // --- Mode, Dark/Light & Preset Controls Bar ---
+    // --- Mode, Dark/Light, Random & Studio Controls Bar ---
     RowLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: 6
 
-        // Dynamic (Matugen) vs Preset Mode Switch
+        // Dynamic / Presets / Accent Mode Switch
         Rectangle {
-            implicitHeight: 32
+            implicitHeight: 30
             implicitWidth: modeRow.implicitWidth + 6
-            radius: Theme.r(16)
+            radius: Theme.r(15)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
             border.color: Theme.cardBorder
@@ -33,8 +34,9 @@ ColumnLayout {
 
                 Repeater {
                     model: [
-                        { id: "dynamic", label: "Dynamic (Matugen)", icon: "󰚰" },
-                        { id: "preset",  label: "Presets",           icon: "󰏘" }
+                        { id: "dynamic", label: "Matugen", icon: "󰚰" },
+                        { id: "preset",  label: "Presets", icon: "󰏘" },
+                        { id: "accent",  label: "Seed",    icon: "󰌁" }
                     ]
 
                     delegate: Rectangle {
@@ -42,9 +44,9 @@ ColumnLayout {
                         required property var modelData
                         readonly property bool selected: Theme.themeMode === modeBtn.modelData.id
 
-                        implicitHeight: 26
-                        implicitWidth: modeContent.implicitWidth + 16
-                        radius: Theme.r(13)
+                        implicitHeight: 24
+                        implicitWidth: modeContent.implicitWidth + 12
+                        radius: Theme.r(12)
                         color: modeBtn.selected
                             ? Theme.primary
                             : (modeMouse.containsMouse ? Theme.hoverBg : "transparent")
@@ -52,18 +54,18 @@ ColumnLayout {
                         RowLayout {
                             id: modeContent
                             anchors.centerIn: parent
-                            spacing: 5
+                            spacing: 4
 
                             Text {
                                 text: modeBtn.modelData.icon
                                 font.family: Theme.iconFont
-                                font.pixelSize: 12
+                                font.pixelSize: 11
                                 color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
                             }
                             Text {
                                 text: modeBtn.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: 10
                                 font.weight: modeBtn.selected ? Font.Bold : Font.Medium
                                 color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
                             }
@@ -81,24 +83,80 @@ ColumnLayout {
             }
         }
 
+        // Random Wallpaper Button
+        Rectangle {
+            implicitHeight: 30
+            implicitWidth: rndLbl.implicitWidth + 14
+            radius: Theme.r(15)
+            color: rndMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
+            border.width: Theme.cardBorderWidth
+            border.color: Theme.cardBorder
+
+            Text {
+                id: rndLbl
+                anchors.centerIn: parent
+                text: "󰒝 Random"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.secondary
+            }
+
+            MouseArea {
+                id: rndMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Theme.randomWallpaper()
+            }
+        }
+
+        // Studio Button
+        Rectangle {
+            implicitHeight: 30
+            implicitWidth: stuLbl.implicitWidth + 14
+            radius: Theme.r(15)
+            color: stuMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
+            border.width: Theme.cardBorderWidth
+            border.color: Theme.cardBorder
+
+            Text {
+                id: stuLbl
+                anchors.centerIn: parent
+                text: "Studio →"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.primary
+            }
+
+            MouseArea {
+                id: stuMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.openSettingsRequested("themes")
+            }
+        }
+
         Item { Layout.fillWidth: true }
 
         // Status / Error Indicator
         Text {
             visible: Theme.applyingTheme || Theme.lastError.length > 0
-            Layout.maximumWidth: 210
+            Layout.maximumWidth: 110
             elide: Text.ElideRight
-            text: Theme.applyingTheme ? "Applying palette..." : Theme.lastError
+            text: Theme.applyingTheme ? "Applying..." : Theme.lastError
             font.family: Theme.fontFamily
-            font.pixelSize: 10
+            font.pixelSize: 9
             color: Theme.applyingTheme ? Theme.primary : Theme.error
         }
 
         // Dark / Light Scheme Toggle
         Rectangle {
-            implicitHeight: 32
-            implicitWidth: schemeRow.implicitWidth + 20
-            radius: Theme.r(16)
+            implicitHeight: 30
+            implicitWidth: schemeRow.implicitWidth + 16
+            radius: Theme.r(15)
             color: schemeArea.containsMouse ? Theme.hoverBg : Theme.cardBg
             border.width: Theme.cardBorderWidth
             border.color: Theme.cardBorder
@@ -106,19 +164,19 @@ ColumnLayout {
             RowLayout {
                 id: schemeRow
                 anchors.centerIn: parent
-                spacing: 6
+                spacing: 5
 
                 Text {
                     text: Theme.colorScheme === "dark" ? "󰖔" : "󰖙"
                     font.family: Theme.iconFont
-                    font.pixelSize: 14
+                    font.pixelSize: 13
                     color: Theme.primary
                 }
 
                 Text {
                     text: Theme.colorScheme === "dark" ? "Dark" : "Light"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: 10
                     font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
@@ -134,55 +192,96 @@ ColumnLayout {
         }
     }
 
-    // --- 4 Preset Theme Chips ---
-    RowLayout {
+    // --- 16 Presets Compact Wrap Row (Scrollable 2-row height) OR Quick Accent Swatches ---
+    Flickable {
+        visible: Theme.themeMode !== "accent"
         Layout.fillWidth: true
-        spacing: 8
+        implicitHeight: 62
+        contentWidth: width
+        contentHeight: presetFlow.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
 
-        Repeater {
-            model: Theme.availablePresets
+        Flow {
+            id: presetFlow
+            width: parent.width
+            spacing: 6
 
-            delegate: Rectangle {
-                id: presetChip
-                required property var modelData
-                readonly property bool isSelected: Theme.themeMode === "preset" && Theme.presetName === presetChip.modelData.id
+            Repeater {
+                model: Theme.availablePresets
 
-                Layout.fillWidth: true
-                Layout.preferredHeight: 34
-                radius: Theme.r(12)
-                color: presetChip.isSelected
-                    ? Theme.activeBg
-                    : (presetMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                border.width: Theme.cardBorderWidth
-                border.color: presetChip.isSelected ? Theme.primary : Theme.cardBorder
+                delegate: Rectangle {
+                    id: presetChip
+                    required property var modelData
+                    readonly property bool isSelected: Theme.themeMode === "preset" && Theme.presetName === presetChip.modelData.id
 
-                RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 7
+                    implicitHeight: 27
+                    implicitWidth: presetChipRow.implicitWidth + 14
+                    radius: Theme.r(9)
+                    color: presetChip.isSelected
+                        ? Theme.activeBg
+                        : (presetMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
+                    border.width: presetChip.isSelected ? 1 : Theme.cardBorderWidth
+                    border.color: presetChip.isSelected ? Theme.primary : Theme.cardBorder
 
-                    Rectangle {
-                        implicitWidth: 12
-                        implicitHeight: 12
-                        radius: Theme.r(6)
-                        color: presetChip.modelData.swatch
-                        border.width: 0
+                    RowLayout {
+                        id: presetChipRow
+                        anchors.centerIn: parent
+                        spacing: 5
+
+                        Rectangle {
+                            implicitWidth: 10
+                            implicitHeight: 10
+                            radius: Theme.r(5)
+                            color: presetChip.modelData.swatch
+                        }
+
+                        Text {
+                            text: presetChip.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: presetChip.isSelected ? Font.Bold : Font.Medium
+                            color: presetChip.isSelected ? Theme.primary : Theme.fgSurface
+                        }
                     }
 
-                    Text {
-                        text: presetChip.modelData.label
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                        font.weight: presetChip.isSelected ? Font.Bold : Font.Medium
-                        color: presetChip.isSelected ? Theme.primary : Theme.fgSurface
+                    MouseArea {
+                        id: presetMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Theme.applyPreset(presetChip.modelData.id)
                     }
                 }
+            }
+        }
+    }
+
+    // Quick Seed Accent Color Swatches (shown in Seed mode)
+    Flow {
+        visible: Theme.themeMode === "accent"
+        Layout.fillWidth: true
+        spacing: 6
+
+        Repeater {
+            model: ["#cba6f7", "#89b4fa", "#7aa2f7", "#9ece6a", "#fabd2f", "#fe8019", "#f38ba8", "#ff7eb6", "#00f0ff", "#ebbcba", "#268bd2", "#a7c080"]
+
+            delegate: Rectangle {
+                id: accChip
+                required property string modelData
+                readonly property bool isSelected: Theme.accentColor.toLowerCase() === accChip.modelData.toLowerCase()
+                implicitHeight: 26
+                implicitWidth: 40
+                radius: Theme.r(8)
+                color: accChip.modelData
+                border.width: accChip.isSelected ? 2 : 0
+                border.color: Theme.fgSurface
 
                 MouseArea {
-                    id: presetMouse
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Theme.applyPreset(presetChip.modelData.id)
+                    onClicked: Theme.applyAccentColor(accChip.modelData)
                 }
             }
         }

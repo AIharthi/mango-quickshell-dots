@@ -147,12 +147,55 @@ ColumnLayout {
             anchors.margins: 12
             spacing: 10
 
-            Text {
-                text: "VISUAL MODE (QUICKSHELL + MANGOWC)"
-                font.family: Theme.fontFamily
-                font.pixelSize: 10
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    text: "VISUAL MODE (QUICKSHELL + MANGOWC)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: schemeLbl.implicitWidth + 18
+                    radius: Theme.r(12)
+                    color: schemeBtnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+                    scale: schemeBtnMouse.pressed ? 0.96 : 1.0
+
+                    Behavior on color {
+                        enabled: !Theme.reducedMotion
+                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on scale {
+                        enabled: !Theme.reducedMotion
+                        NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                    }
+
+                    Text {
+                        id: schemeLbl
+                        anchors.centerIn: parent
+                        text: Theme.colorScheme === "dark" ? "󰖔  Dark" : "󰖙  Light"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        id: schemeBtnMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Theme.toggleScheme()
+                    }
+                }
             }
 
             RowLayout {
@@ -247,183 +290,367 @@ ColumnLayout {
         }
     }
 
-    // --- 2. Palette & Color Scheme ---
+    // --- 2. Shell Surface Finish & Transparency ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: themeCol.implicitHeight + 24
+        implicitHeight: surfCol.implicitHeight + 24
         radius: Theme.r(16)
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth
         border.color: Theme.cardBorder
 
         ColumnLayout {
-            id: themeCol
+            id: surfCol
             anchors.fill: parent
             anchors.margins: 12
             spacing: 10
 
+            Text {
+                text: "SHELL SURFACE FINISH & TRANSPARENCY"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            // Surface Material Style
             RowLayout {
                 Layout.fillWidth: true
+                spacing: 6
 
                 Text {
-                    text: "THEME & PALETTE"
+                    Layout.preferredWidth: 112
+                    text: "Surface Finish"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
                 }
 
-                Item { Layout.fillWidth: true }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 5
 
-                Rectangle {
-                    implicitHeight: 24
-                    implicitWidth: schemeLbl.implicitWidth + 18
-                    radius: Theme.r(12)
-                    color: schemeBtnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-                    scale: schemeBtnMouse.pressed ? 0.96 : 1.0
+                    Repeater {
+                        model: [
+                            { id: "default", label: "Default" },
+                            { id: "glass",   label: "Frosted Glass" },
+                            { id: "oled",    label: "OLED Black" },
+                            { id: "flat",    label: "Flat Minimal" },
+                            { id: "tinted",  label: "Accent Tinted" }
+                        ]
 
-                    Behavior on color {
-                        enabled: !Theme.isSimple
-                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                    }
-                    Behavior on scale {
-                        enabled: !Theme.isSimple
-                        NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-                    }
+                        delegate: Rectangle {
+                            id: surfChip
+                            required property var modelData
+                            readonly property bool selected: ShellState.surfaceStyle === surfChip.modelData.id
 
-                    Text {
-                        id: schemeLbl
-                        anchors.centerIn: parent
-                        text: (Theme.colorScheme === "dark" ? "󰖔  Dark" : "󰖙  Light")
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        font.weight: Font.Bold
-                        color: Theme.primary
-                    }
+                            implicitHeight: 26
+                            implicitWidth: surfChipLbl.implicitWidth + 14
+                            radius: Theme.r(8)
+                            color: surfChip.selected
+                                ? Theme.withAlpha(Theme.primary, 0.22)
+                                : (surfChipMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                            border.width: surfChip.selected ? 1 : Theme.cardBorderWidth
+                            border.color: surfChip.selected ? Theme.primary : Theme.cardBorder
 
-                    MouseArea {
-                        id: schemeBtnMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Theme.toggleScheme()
+                            Text {
+                                id: surfChipLbl
+                                anchors.centerIn: parent
+                                text: surfChip.modelData.label
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                font.weight: surfChip.selected ? Font.Bold : Font.Medium
+                                color: surfChip.selected ? Theme.primary : Theme.fgSurface
+                            }
+
+                            MouseArea {
+                                id: surfChipMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: ShellState.setPref("surfaceStyle", surfChip.modelData.id)
+                            }
+                        }
                     }
                 }
             }
 
+            StepControl {
+                label: "Panel & Island Opacity"
+                displayValue: Math.round(ShellState.shellOpacity * 100) + "%"
+                onDecremented: ShellState.setPref("shellOpacity", Number(Math.max(0.40, ShellState.shellOpacity - 0.04).toFixed(2)))
+                onIncremented: ShellState.setPref("shellOpacity", Number(Math.min(1.00, ShellState.shellOpacity + 0.04).toFixed(2)))
+            }
+
+            StepControl {
+                label: "Card Background Opacity"
+                displayValue: Math.round(ShellState.cardOpacity * 100) + "%"
+                onDecremented: ShellState.setPref("cardOpacity", Number(Math.max(0.15, ShellState.cardOpacity - 0.05).toFixed(2)))
+                onIncremented: ShellState.setPref("cardOpacity", Number(Math.min(1.00, ShellState.cardOpacity + 0.05).toFixed(2)))
+            }
+
+            // Corner Roundness Scale
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 6
+                opacity: Theme.isSimple ? 0.5 : 1.0
+
+                Text {
+                    Layout.preferredWidth: 112
+                    text: "Corner Roundness"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
 
                 Repeater {
                     model: [
-                        { id: "dynamic", label: "Dynamic (Matugen)" },
-                        { id: "preset",  label: "Preset Palette" }
+                        { val: 0.0, label: "Sharp" },
+                        { val: 0.5, label: "Subtle" },
+                        { val: 1.0, label: "Balanced" },
+                        { val: 1.4, label: "Pill" }
                     ]
 
                     delegate: Rectangle {
-                        id: palModeBtn
+                        id: radChip
                         required property var modelData
-                        readonly property bool selected: Theme.themeMode === palModeBtn.modelData.id
+                        readonly property bool selected: Math.abs(ShellState.uiRadiusScale - radChip.modelData.val) < 0.08
 
                         Layout.fillWidth: true
-                        implicitHeight: 30
-                        radius: Theme.r(10)
-                        color: palModeBtn.selected
-                            ? Theme.primary
-                            : (palModeMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: Theme.cardBorderWidth
-                        border.color: palModeBtn.selected ? Theme.primary : Theme.cardBorder
-                        scale: palModeMouse.pressed ? 0.97 : 1.0
-
-                        Behavior on color {
-                            enabled: !Theme.isSimple
-                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                        }
-                        Behavior on scale {
-                            enabled: !Theme.isSimple
-                            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-                        }
+                        implicitHeight: 26
+                        radius: Theme.r(8)
+                        color: radChip.selected
+                            ? Theme.withAlpha(Theme.secondary, 0.22)
+                            : (radChipMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: radChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: radChip.selected ? Theme.secondary : Theme.cardBorder
 
                         Text {
                             anchors.centerIn: parent
-                            text: palModeBtn.modelData.label
+                            text: radChip.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                            font.weight: palModeBtn.selected ? Font.Bold : Font.Medium
-                            color: palModeBtn.selected ? Theme.fgPrimary : Theme.fgSurface
+                            font.pixelSize: 10
+                            font.weight: radChip.selected ? Font.Bold : Font.Medium
+                            color: radChip.selected ? Theme.secondary : Theme.fgSurface
                         }
 
                         MouseArea {
-                            id: palModeMouse
+                            id: radChipMouse
                             anchors.fill: parent
+                            enabled: !Theme.isSimple
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: Theme.setMode(palModeBtn.modelData.id)
+                            onClicked: ShellState.setPref("uiRadiusScale", radChip.modelData.val)
                         }
                     }
                 }
             }
 
+            // Border Style
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 112
+                    text: "Border Style"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
 
                 Repeater {
-                    model: Theme.availablePresets
+                    model: [
+                        { id: "none",   label: "None" },
+                        { id: "subtle", label: "Subtle" },
+                        { id: "accent", label: "Accent" },
+                        { id: "glow",   label: "Glow" }
+                    ]
 
                     delegate: Rectangle {
-                        id: presetBtn
+                        id: brdChip
                         required property var modelData
-                        readonly property bool selected: Theme.themeMode === "preset" && Theme.presetName === presetBtn.modelData.id
+                        readonly property bool selected: ShellState.borderStyle === brdChip.modelData.id
 
                         Layout.fillWidth: true
-                        implicitHeight: 30
-                        radius: Theme.r(10)
-                        color: presetBtn.selected
-                            ? Theme.activeBg
-                            : (presetBtnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: presetBtn.selected ? 1 : Theme.cardBorderWidth
-                        border.color: presetBtn.selected ? Theme.primary : Theme.cardBorder
-                        scale: presetBtnMouse.pressed ? 0.97 : 1.0
+                        implicitHeight: 26
+                        radius: Theme.r(8)
+                        color: brdChip.selected
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (brdChipMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: brdChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: brdChip.selected ? Theme.primary : Theme.cardBorder
 
-                        Behavior on color {
-                            enabled: !Theme.isSimple
-                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                        }
-                        Behavior on scale {
-                            enabled: !Theme.isSimple
-                            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-                        }
-
-                        RowLayout {
+                        Text {
                             anchors.centerIn: parent
-                            spacing: 6
-
-                            Rectangle {
-                                implicitWidth: 10
-                                implicitHeight: 10
-                                radius: Theme.r(5)
-                                color: presetBtn.modelData.swatch
-                            }
-
-                            Text {
-                                text: presetBtn.modelData.label
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 10
-                                font.weight: presetBtn.selected ? Font.Bold : Font.Medium
-                                color: presetBtn.selected ? Theme.primary : Theme.fgSurface
-                            }
+                            text: brdChip.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: brdChip.selected ? Font.Bold : Font.Medium
+                            color: brdChip.selected ? Theme.primary : Theme.fgSurface
                         }
 
                         MouseArea {
-                            id: presetBtnMouse
+                            id: brdChipMouse
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: Theme.applyPreset(presetBtn.modelData.id)
+                            onClicked: ShellState.setPref("borderStyle", brdChip.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "UI Border Width"
+                displayValue: ShellState.uiBorderWidth + " px"
+                controlEnabled: ShellState.borderStyle !== "none"
+                onDecremented: ShellState.setPref("uiBorderWidth", Math.max(0, ShellState.uiBorderWidth - 1))
+                onIncremented: ShellState.setPref("uiBorderWidth", Math.min(3, ShellState.uiBorderWidth + 1))
+            }
+        }
+    }
+
+    // --- 3. Dynamic Island Shape & UI Text Scale ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: shapeCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: shapeCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            Text {
+                text: "DYNAMIC ISLAND SHAPE & TEXT SCALE"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            // Island Layout Style
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                opacity: Theme.isSimple ? 0.5 : 1.0
+
+                Text {
+                    Layout.preferredWidth: 112
+                    text: "Island Style"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "pill",  label: "Floating Pill" },
+                        { id: "notch", label: "Top Notch" },
+                        { id: "bar",   label: "Full-Width Bar" }
+                    ]
+
+                    delegate: Rectangle {
+                        id: islChip
+                        required property var modelData
+                        readonly property bool selected: ShellState.islandStyle === islChip.modelData.id
+
+                        Layout.fillWidth: true
+                        implicitHeight: 28
+                        radius: Theme.r(8)
+                        color: islChip.selected
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (islChipMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: islChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: islChip.selected ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: islChip.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: islChip.selected ? Font.Bold : Font.Medium
+                            color: islChip.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: islChipMouse
+                            anchors.fill: parent
+                            enabled: !Theme.isSimple
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("islandStyle", islChip.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "Compact Pill Height"
+                displayValue: ShellState.pillHeight + " px"
+                controlEnabled: !Theme.isSimple
+                onDecremented: ShellState.setPref("pillHeight", Math.max(26, ShellState.pillHeight - 2))
+                onIncremented: ShellState.setPref("pillHeight", Math.min(40, ShellState.pillHeight + 2))
+            }
+
+            StepControl {
+                label: "Island Top Margin"
+                displayValue: ShellState.islandTopMargin + " px"
+                controlEnabled: !Theme.isSimple && ShellState.islandStyle === "pill"
+                onDecremented: ShellState.setPref("islandTopMargin", Math.max(0, ShellState.islandTopMargin - 2))
+                onIncremented: ShellState.setPref("islandTopMargin", Math.min(20, ShellState.islandTopMargin + 2))
+            }
+
+            // Shell UI Text Scale
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 112
+                    text: "Shell UI Text Scale"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [0.85, 0.95, 1.0, 1.1, 1.2]
+
+                    delegate: Rectangle {
+                        id: fsScaleChip
+                        required property real modelData
+                        readonly property bool selected: Math.abs(ShellState.uiFontScale - fsScaleChip.modelData) < 0.03
+
+                        Layout.fillWidth: true
+                        implicitHeight: 26
+                        radius: Theme.r(8)
+                        color: fsScaleChip.selected
+                            ? Theme.withAlpha(Theme.secondary, 0.22)
+                            : (fsScaleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: fsScaleChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: fsScaleChip.selected ? Theme.secondary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: Math.round(fsScaleChip.modelData * 100) + "%"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: fsScaleChip.selected ? Font.Bold : Font.Medium
+                            color: fsScaleChip.selected ? Theme.secondary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: fsScaleMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("uiFontScale", fsScaleChip.modelData)
                         }
                     }
                 }
@@ -1431,7 +1658,7 @@ ColumnLayout {
         }
     }
 
-    // --- 5. Matugen & Wallpaper Engine ---
+    // --- 5. Wallpaper Transitions (awww / swww) ---
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: wpCol.implicitHeight + 24
@@ -1452,7 +1679,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "MATUGEN & WALLPAPER ENGINE (AWWW / SWWW)"
+                    text: "WALLPAPER TRANSITIONS (AWWW / SWWW)"
                     font.family: Theme.fontFamily
                     font.pixelSize: 10
                     font.weight: Font.Bold
@@ -1483,62 +1710,6 @@ ColumnLayout {
                         onClicked: Theme.applyWallpaperWithCurrentMode(Theme.wallpaperPath)
                     }
                 }
-            }
-
-            Text {
-                text: "Matugen Color Scheme Type"
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                color: Theme.fgSurface
-            }
-
-            Flow {
-                Layout.fillWidth: true
-                spacing: 5
-
-                Repeater {
-                    model: ["scheme-tonal-spot", "scheme-vibrant", "scheme-expressive", "scheme-fidelity", "scheme-content", "scheme-neutral", "scheme-monochrome", "scheme-rainbow"]
-
-                    delegate: Rectangle {
-                        id: matChip
-                        required property string modelData
-                        readonly property bool selected: ShellState.matugenType === matChip.modelData
-
-                        implicitHeight: 24
-                        implicitWidth: matTxt.implicitWidth + 12
-                        radius: Theme.r(7)
-                        color: matChip.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (matMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: matChip.selected ? 1 : Theme.cardBorderWidth
-                        border.color: matChip.selected ? Theme.primary : Theme.cardBorder
-
-                        Text {
-                            id: matTxt
-                            anchors.centerIn: parent
-                            text: matChip.modelData.replace("scheme-", "")
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 10
-                            font.weight: matChip.selected ? Font.Bold : Font.Medium
-                            color: matChip.selected ? Theme.primary : Theme.fgSurface
-                        }
-
-                        MouseArea {
-                            id: matMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: ShellState.setPref("matugenType", matChip.modelData)
-                        }
-                    }
-                }
-            }
-
-            StepControl {
-                label: "Matugen Palette Contrast"
-                displayValue: ShellState.matugenContrast.toFixed(1)
-                onDecremented: ShellState.setPref("matugenContrast", Number(Math.max(-1.0, ShellState.matugenContrast - 0.2).toFixed(1)))
-                onIncremented: ShellState.setPref("matugenContrast", Number(Math.min(1.0, ShellState.matugenContrast + 0.2).toFixed(1)))
             }
 
             RowLayout {
