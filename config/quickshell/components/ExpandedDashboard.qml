@@ -128,15 +128,11 @@ ColumnLayout {
             }
         }
 
-        // Tray + Settings + Power + Pin & Close Buttons
+        // Settings + Power + Pin & Close Buttons
         RowLayout {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             spacing: 6
-
-            SystemTrayStrip {
-                compact: false
-            }
 
             // Active-only status chips (click to turn off)
             Rectangle {
