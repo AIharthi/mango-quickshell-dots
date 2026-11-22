@@ -35,6 +35,18 @@ Singleton {
     property string animTypeClose: "slide"
     property int animDuration: 300
     property int tagAnimDirection: 1
+    property bool blurLayer: true
+    property bool blurOptimized: true
+    property real blurNoise: 0.02
+    property real blurContrast: 0.95
+    property bool layerShadows: false
+    property bool shadowOnlyFloating: false
+    property int shadowsSize: 14
+    property int shadowsBlur: 20
+    property bool layerAnimations: true
+    property bool animFadeIn: true
+    property bool animFadeOut: true
+    property bool dimEnable: false
 
     readonly property var availablePresets: [
         { id: "catppuccin-mocha", label: "Catppuccin", swatch: "#cba6f7", bg: "#1e1e2e" },
@@ -46,9 +58,10 @@ Singleton {
     // --- Typography & Design Tokens ---
     readonly property string fontFamily: ShellState.uiFontFamily.length > 0 ? ShellState.uiFontFamily : "JetBrains Mono"
     readonly property string iconFont: "Symbols Nerd Font"
-    readonly property int animFast: isSimple ? 0 : 160
-    readonly property int animNormal: isSimple ? 0 : 260
-    readonly property int animSlow: isSimple ? 0 : 380
+    readonly property bool reducedMotion: isSimple || ShellState.reducedMotion
+    readonly property int animFast: reducedMotion ? 0 : 160
+    readonly property int animNormal: reducedMotion ? 0 : 260
+    readonly property int animSlow: reducedMotion ? 0 : 380
 
     // --- Reactive Material You / Preset Color Palette ---
     property bool isDark: true
@@ -103,12 +116,14 @@ Singleton {
                 ? Qt.tint("#060609", withAlpha(surfaceContainerLowest, 0.25))
                 : Qt.rgba(surface.r, surface.g, surface.b, 0.96)))
     readonly property color islandBg: notchBg
-    readonly property color islandBorder: isSimple
-        ? outlineVariant
-        : (isBlur
-            ? (isDark ? withAlpha(fgSurface, 0.16) : withAlpha(outline, 0.28))
-            : "transparent")
-    readonly property int islandBorderWidth: (isSimple || isBlur) ? 1 : 0
+    readonly property color islandBorder: ShellState.highContrast
+        ? primary
+        : (isSimple
+            ? outlineVariant
+            : (isBlur
+                ? (isDark ? withAlpha(fgSurface, 0.16) : withAlpha(outline, 0.28))
+                : "transparent"))
+    readonly property int islandBorderWidth: (isSimple || isBlur || ShellState.highContrast) ? 1 : 0
     readonly property color cardBg: isSimple
         ? surfaceContainerLow
         : (isBlur
@@ -119,12 +134,14 @@ Singleton {
         : (isBlur
             ? (isDark ? withAlpha(surfaceContainerHighest, 0.26) : withAlpha(surfaceContainer, 0.65))
             : (isDark ? withAlpha(surfaceContainerHighest, 0.36) : withAlpha(surfaceContainer, 0.85)))
-    readonly property color cardBorder: isSimple
-        ? outlineVariant
-        : (isBlur
-            ? (isDark ? withAlpha(fgSurface, 0.10) : withAlpha(outline, 0.20))
-            : "transparent")
-    readonly property int cardBorderWidth: (isSimple || isBlur) ? 1 : 0
+    readonly property color cardBorder: ShellState.highContrast
+        ? outline
+        : (isSimple
+            ? outlineVariant
+            : (isBlur
+                ? (isDark ? withAlpha(fgSurface, 0.10) : withAlpha(outline, 0.20))
+                : "transparent"))
+    readonly property int cardBorderWidth: (isSimple || isBlur || ShellState.highContrast) ? 1 : 0
     readonly property color hoverBg: withAlpha(primary, 0.14)
     readonly property color activeBg: withAlpha(primary, 0.22)
 
@@ -276,6 +293,30 @@ Singleton {
                 root.animDuration = Math.round(p.animationDuration);
             if (typeof p.tagAnimationDirection === "number")
                 root.tagAnimDirection = Math.round(p.tagAnimationDirection);
+            if (typeof p.blurLayer === "boolean")
+                root.blurLayer = p.blurLayer;
+            if (typeof p.blurOptimized === "boolean")
+                root.blurOptimized = p.blurOptimized;
+            if (typeof p.blurNoise === "number")
+                root.blurNoise = p.blurNoise;
+            if (typeof p.blurContrast === "number")
+                root.blurContrast = p.blurContrast;
+            if (typeof p.layerShadows === "boolean")
+                root.layerShadows = p.layerShadows;
+            if (typeof p.shadowOnlyFloating === "boolean")
+                root.shadowOnlyFloating = p.shadowOnlyFloating;
+            if (typeof p.shadowsSize === "number")
+                root.shadowsSize = Math.round(p.shadowsSize);
+            if (typeof p.shadowsBlur === "number")
+                root.shadowsBlur = Math.round(p.shadowsBlur);
+            if (typeof p.layerAnimations === "boolean")
+                root.layerAnimations = p.layerAnimations;
+            if (typeof p.animFadeIn === "boolean")
+                root.animFadeIn = p.animFadeIn;
+            if (typeof p.animFadeOut === "boolean")
+                root.animFadeOut = p.animFadeOut;
+            if (typeof p.dimEnable === "boolean")
+                root.dimEnable = p.dimEnable;
         } catch (err) {
             prefsRetryTimer.restart();
         }
@@ -338,6 +379,30 @@ Singleton {
             root.animDuration = Math.round(Number(val));
         else if (key === "tagAnimationDirection")
             root.tagAnimDirection = Math.round(Number(val));
+        else if (key === "blurLayer")
+            root.blurLayer = !!val;
+        else if (key === "blurOptimized")
+            root.blurOptimized = !!val;
+        else if (key === "blurNoise")
+            root.blurNoise = Number(val);
+        else if (key === "blurContrast")
+            root.blurContrast = Number(val);
+        else if (key === "layerShadows")
+            root.layerShadows = !!val;
+        else if (key === "shadowOnlyFloating")
+            root.shadowOnlyFloating = !!val;
+        else if (key === "shadowsSize")
+            root.shadowsSize = Math.round(Number(val));
+        else if (key === "shadowsBlur")
+            root.shadowsBlur = Math.round(Number(val));
+        else if (key === "layerAnimations")
+            root.layerAnimations = !!val;
+        else if (key === "animFadeIn")
+            root.animFadeIn = !!val;
+        else if (key === "animFadeOut")
+            root.animFadeOut = !!val;
+        else if (key === "dimEnable")
+            root.dimEnable = !!val;
         _runModeScript(["--update-pref", key, String(val)]);
     }
 

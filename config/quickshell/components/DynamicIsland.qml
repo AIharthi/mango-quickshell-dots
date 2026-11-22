@@ -107,6 +107,8 @@ Item {
             osdOverlay.refreshOsdValue(osdType);
             return;
         }
+        if (!ShellState.osdEnabled)
+            return;
         hoverCollapseTimer.stop();
         notifHideTimer.stop();
         osdOverlay.showOsd(osdType);
@@ -195,10 +197,10 @@ Item {
     // --- Timers ---
     Timer {
         id: hoverExpandTimer
-        interval: 100
+        interval: ShellState.islandHoverDelayMs
         repeat: false
         onTriggered: {
-            if (!Theme.isSimple && hoverHandler.hovered && (root.islandState === "collapsed" || root.islandState === "osd")) {
+            if (!Theme.isSimple && ShellState.islandHoverExpand && hoverHandler.hovered && (root.islandState === "collapsed" || root.islandState === "osd")) {
                 root.expandTo("overview", false);
             }
         }
@@ -206,7 +208,7 @@ Item {
 
     Timer {
         id: hoverCollapseTimer
-        interval: 280
+        interval: ShellState.islandCollapseDelayMs
         repeat: false
         onTriggered: {
             if (!hoverHandler.hovered && !root.pinnedOpen && !root.interactiveControlActive
@@ -218,7 +220,7 @@ Item {
 
     Timer {
         id: osdHideTimer
-        interval: 1800
+        interval: ShellState.osdTimeoutMs
         repeat: false
         onTriggered: {
             if (root.islandState === "osd")
@@ -309,7 +311,7 @@ Item {
             onHoveredChanged: {
                 if (hovered) {
                     hoverCollapseTimer.stop();
-                    if (!Theme.isSimple && (root.islandState === "collapsed" || root.islandState === "osd")) {
+                    if (!Theme.isSimple && ShellState.islandHoverExpand && (root.islandState === "collapsed" || root.islandState === "osd")) {
                         hoverExpandTimer.restart();
                     } else if (root.islandState === "notification") {
                         notifHideTimer.stop();

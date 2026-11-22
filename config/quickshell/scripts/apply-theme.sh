@@ -137,11 +137,31 @@ apply_wallpaper() {
         fi
     fi
 
+    local wp_trans="grow" wp_fps="60" wp_dur="0.85" wp_resize="crop"
+    local prefs_file="$QUICKSHELL_DIR/shell-prefs.json"
+    if [[ -f "$prefs_file" ]]; then
+        read -r wp_trans wp_fps wp_dur wp_resize < <(
+            python3 - "$prefs_file" <<'PY' 2>/dev/null || echo "grow 60 0.85 crop"
+import json, sys
+try:
+    d = json.load(open(sys.argv[1], "r", encoding="utf-8"))
+    tr = str(d.get("wallpaperTransition", "grow")).strip() or "grow"
+    fps = max(24, min(240, int(d.get("wallpaperFps", 60))))
+    dur = max(0.1, min(3.0, float(d.get("wallpaperDuration", 0.85))))
+    rz = str(d.get("wallpaperResize", "crop")).strip() or "crop"
+    print(tr, fps, f"{dur:.2f}", rz)
+except Exception:
+    print("grow 60 0.85 crop")
+PY
+        )
+    fi
+
     "$wp_cmd" img "$img" \
-        --transition-type grow \
+        --transition-type "$wp_trans" \
         --transition-pos 0.5,0.05 \
-        --transition-fps 60 \
-        --transition-duration 0.85 \
+        --transition-fps "$wp_fps" \
+        --transition-duration "$wp_dur" \
+        --resize "$wp_resize" \
         >/dev/null 2>&1 || true
 }
 
@@ -661,23 +681,27 @@ apply_gtk_settings() {
     done
 
     local font_name="JetBrains Mono 10"
+    local icon_theme="Adwaita"
     local prefs_file="$HOME/.config/quickshell/shell-prefs.json"
     if [[ -f "$prefs_file" ]]; then
-        local parsed_font
-        parsed_font=$(python3 - "$prefs_file" <<'PY' 2>/dev/null || true
+        local parsed_font parsed_icon
+        IFS=$'\t' read -r parsed_icon parsed_font < <(python3 - "$prefs_file" <<'PY' 2>/dev/null || true
 import json, sys
 try:
     with open(sys.argv[1], "r", encoding="utf-8") as f:
         d = json.load(f)
+    ic = str(d.get("iconTheme", "Adwaita")).strip() or "Adwaita"
     fam = str(d.get("uiFontFamily", "")).strip()
     sz = int(d.get("uiFontSize", 10))
-    if fam:
-        print(f"{fam} {sz}")
+    print(f"{ic}\t{fam} {sz}" if fam else f"{ic}\tJetBrains Mono 10")
 except Exception:
     pass
 PY
 )
-        if [[ -n "$parsed_font" ]]; then
+        if [[ -n "${parsed_icon:-}" ]]; then
+            icon_theme="$parsed_icon"
+        fi
+        if [[ -n "${parsed_font:-}" ]]; then
             font_name="$parsed_font"
         fi
     fi
@@ -687,7 +711,7 @@ PY
 [Settings]
 gtk-application-prefer-dark-theme=${prefer_dark}
 gtk-theme-name=${theme_name}
-gtk-icon-theme-name=Adwaita
+gtk-icon-theme-name=${icon_theme}
 gtk-font-name=${font_name}
 gtk-cursor-theme-name=${cursor_theme}
 gtk-cursor-theme-size=${cursor_size}
@@ -704,6 +728,7 @@ EOF
         # Momentary value change forces running GTK3/GTK4 apps & xdg-desktop-portal to reload gtk.css live
         gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface cursor-size "$cursor_size" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface icon-theme "$icon_theme" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface font-name "$font_name" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface gtk-theme "$pulse_theme" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface color-scheme "default" 2>/dev/null || true
@@ -802,7 +827,24 @@ if [[ "$MODE" == "dynamic" ]]; then
         echo "Error: wallpaper not found: $WALLPAPER" >&2
         exit 3
     fi
-    matugen image "$WALLPAPER" -m "$SCHEME" -q
+    local mat_type="scheme-tonal-spot" mat_contrast="0.0"
+    local prefs_file="$QUICKSHELL_DIR/shell-prefs.json"
+    if [[ -f "$prefs_file" ]]; then
+        read -r mat_type mat_contrast < <(
+            python3 - "$prefs_file" <<'PY' 2>/dev/null || echo "scheme-tonal-spot 0.0"
+import json, sys
+try:
+    d = json.load(open(sys.argv[1], "r", encoding="utf-8"))
+    t = str(d.get("matugenType", "scheme-tonal-spot")).strip() or "scheme-tonal-spot"
+    c = max(-1.0, min(1.0, float(d.get("matugenContrast", 0.0))))
+    print(t, f"{c:.2f}")
+except Exception:
+    print("scheme-tonal-spot 0.0")
+PY
+        )
+    fi
+    matugen image "$WALLPAPER" -m "$SCHEME" -t "$mat_type" --contrast "$mat_contrast" -q 2>/dev/null \
+        || matugen image "$WALLPAPER" -m "$SCHEME" -q
 else
     load_preset_palette "$PRESET" "$SCHEME"
     write_colors_json

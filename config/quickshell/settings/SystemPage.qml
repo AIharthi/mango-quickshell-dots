@@ -23,12 +23,21 @@ ColumnLayout {
     property string timezoneStr: ""
     property var powerProfiles: ({ hasPowerProfiles: false, active: "", available: [] })
     property var disks: []
+    property var userInfo: ({ user: "", fullName: "", uid: 1000, shell: "", home: "", groups: [], lang: "", sessionType: "", desktop: "" })
+    property string backupStatus: ""
 
     function loadOverrides(): void {
         if (!localProc.running)
             localProc.running = true;
         if (!sysInfoProc.running)
             sysInfoProc.running = true;
+        if (!userProc.running)
+            userProc.running = true;
+    }
+
+    function exportBackup(): void {
+        if (!backupProc.running)
+            backupProc.running = true;
     }
 
     function resetOverrides(): void {
@@ -109,6 +118,33 @@ ColumnLayout {
         id: resetProc
         command: [Quickshell.shellPath("scripts/apply-local-setting.sh"), "reset"]
         onExited: root.loadOverrides()
+    }
+
+    Process {
+        id: userProc
+        command: [Quickshell.shellPath("scripts/manage-system.sh"), "user-info"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    if (d && d.user) root.userInfo = d;
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: backupProc
+        command: [Quickshell.shellPath("scripts/manage-system.sh"), "backup-settings"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    if (d && d.path)
+                        root.backupStatus = "Saved backup: " + d.path + " (" + d.sizeKb + " KB)";
+                } catch (err) {}
+            }
+        }
     }
 
     // --- 1. Device & Hardware Summary ---
@@ -605,7 +641,11 @@ ColumnLayout {
                         { label: "Night Light", ok: DeviceCaps.hasNightLight },
                         { label: "Power Prof.", ok: DeviceCaps.hasPowerProfiles },
                         { label: "XDG MIME",    ok: DeviceCaps.hasXdgMime },
-                        { label: "Idle Inhib.", ok: true }
+                        { label: "Idle Inhib.", ok: true },
+                        { label: "Network",     ok: DeviceCaps.hasNetwork },
+                        { label: "NMCLI",       ok: DeviceCaps.hasNmcli },
+                        { label: "DDC/CI",      ok: DeviceCaps.hasDdcutil },
+                        { label: "Clipboard",   ok: DeviceCaps.hasClipboard }
                     ]
 
                     delegate: Rectangle {
@@ -876,6 +916,106 @@ ColumnLayout {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.resetOverrides()
                 }
+            }
+        }
+    }
+
+    // --- 7. User Account & Settings Backup ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: acctCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: acctCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 8
+
+            Text {
+                text: "USER ACCOUNT, BACKUP & RESET"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        text: (root.userInfo.user || "user") + " (UID " + root.userInfo.uid + ") · " + (root.userInfo.shell || "/bin/sh")
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        font.weight: Font.Bold
+                        color: Theme.fgSurface
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: "Session: " + (root.userInfo.desktop || "mango") + " (" + (root.userInfo.sessionType || "wayland") + ") · Locale: " + (root.userInfo.lang || "C.UTF-8")
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        color: Theme.fgSurfaceVariant
+                    }
+
+                    Text {
+                        visible: (root.userInfo.groups || []).length > 0
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: "Groups: " + (root.userInfo.groups || []).join(", ")
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 9
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 28
+                    implicitWidth: bkpLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: bkpMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+
+                    Text { id: bkpLbl; anchors.centerIn: parent; text: "Export Backup"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgPrimary }
+                    MouseArea { id: bkpMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.exportBackup() }
+                }
+
+                Rectangle {
+                    implicitHeight: 28
+                    implicitWidth: rstPrefLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: rstPrefMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.22) : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text { id: rstPrefLbl; anchors.centerIn: parent; text: "Reset Shell Prefs"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: rstPrefMouse.containsMouse ? Theme.warning : Theme.fgSurface }
+                    MouseArea {
+                        id: rstPrefMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            ShellState.resetPrefs();
+                            root.backupStatus = "shell-prefs.json reset to defaults";
+                        }
+                    }
+                }
+            }
+
+            Text {
+                visible: root.backupStatus.length > 0
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                text: root.backupStatus
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                color: Theme.success
             }
         }
     }

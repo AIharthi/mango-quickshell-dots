@@ -26,47 +26,56 @@ PanelWindow {
 
     readonly property var navItems: {
         const items = [
-            { id: "appearance", label: "Appearance",    icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, palette, fonts, cursor & animations" },
-            { id: "windows",    label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Tiling layouts, focus behavior & snapping" }
+            { id: "appearance", label: "Appearance",    icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, Matugen, GTK, fonts, cursor & blur" },
+            { id: "shell",      label: "Shell & Bar",   icon: "󰕮", source: "ShellPage.qml",         sub: "Dynamic Island, Simple Bar, screenshots & motion" },
+            { id: "windows",    label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Tiling layouts, per-tag rules & window rules" }
         ];
         if (DeviceCaps.hasAudio)
-            items.push({ id: "audio", label: "Audio", icon: "󰋋", source: "AudioPage.qml", sub: "Output sinks, microphones & per-app mixer" });
+            items.push({ id: "audio", label: "Audio", icon: "󰋋", source: "AudioPage.qml", sub: "Volume, card profiles, per-app mixer & test" });
         if (DeviceCaps.hasWlrRandr)
-            items.push({ id: "displays", label: "Displays", icon: "󰍹", source: "DisplayPage.qml", sub: "Resolution, rotation, VRR & scaling" });
-        if (DeviceCaps.hasWifi)
-            items.push({ id: "network", label: "Network", icon: "󰤨", source: "NetworkPage.qml", sub: "Wi-Fi radio & nearby networks" });
+            items.push({ id: "displays", label: "Displays", icon: "󰍹", source: "DisplayPage.qml", sub: "Resolution, layout, rotation, VRR & brightness" });
+        if (DeviceCaps.hasNetwork || DeviceCaps.hasWifi)
+            items.push({ id: "network", label: "Network", icon: "󰤨", source: "NetworkPage.qml", sub: "Interfaces, IP/DNS & Wi-Fi connections" });
         if (DeviceCaps.hasBluetooth)
             items.push({ id: "bluetooth", label: "Bluetooth", icon: "󰂯", source: "BluetoothPage.qml", sub: "Adapter power & paired devices" });
-        items.push({ id: "input",         label: "Input",         icon: "󰌌", source: "InputPage.qml",         sub: "Keyboard layouts, pointer speed & trackpad" });
-        items.push({ id: "notifications", label: "Notifications", icon: "󰂚", source: "NotificationsPage.qml", sub: "Do Not Disturb, popup duration & history" });
-        items.push({ id: "apps",          label: "Apps & Startup",icon: "󰀻", source: "AppsPage.qml",          sub: "Default apps, launchers & autostart entries" });
-        items.push({ id: "shortcuts",     label: "Shortcuts",     icon: "󰌌", source: "ShortcutsPage.qml",     sub: "MangoWC keybindings & mouse actions" });
-        items.push({ id: "system",        label: "System",        icon: "󰋼", source: "SystemPage.qml",        sub: "Clock, keep-awake, hardware, storage & local.conf" });
+        items.push({ id: "input", label: "Input", icon: "󰌌", source: "InputPage.qml", sub: "Keyboard, pointer speed, scroll & touchpad" });
+        if (DeviceCaps.hasFoot || DeviceCaps.hasKitty)
+            items.push({ id: "terminals", label: "Terminals", icon: "󰆍", source: "TerminalPage.qml", sub: "Foot & Kitty opacity, padding, cursor & scrollback" });
+        items.push({ id: "notifications", label: "Notifications", icon: "󰂚", source: "NotificationsPage.qml", sub: "Do Not Disturb, alerts, duration & history" });
+        items.push({ id: "apps",          label: "Apps & Startup",icon: "󰀻", source: "AppsPage.qml",          sub: "Default apps, hidden launcher apps, env & startup" });
+        items.push({ id: "shortcuts",     label: "Shortcuts",     icon: "󰌌", source: "ShortcutsPage.qml",     sub: "View, filter & add MangoWC shortcuts" });
+        items.push({ id: "privacy",       label: "Privacy",       icon: "󰌾", source: "PrivacyPage.qml",       sub: "Clipboard, history tracking, camera, mic & lock" });
+        items.push({ id: "monitor",       label: "Monitor",       icon: "󰍛", source: "MonitorPage.qml",       sub: "Temperatures, running processes & services" });
+        items.push({ id: "system",        label: "System",        icon: "󰋼", source: "SystemPage.qml",        sub: "User, clock, storage, backup & local.conf" });
         return items;
     }
 
     readonly property var searchIndex: [
-        { label: "Shell Modes & Blur",      pageId: "appearance",    keywords: "mode simple blur glass opacity radius border" },
-        { label: "Colors & Wallpaper",      pageId: "appearance",    keywords: "theme dark light matugen preset catppuccin tokyo gruvbox nord wallpaper" },
-        { label: "UI & Terminal Font",      pageId: "appearance",    keywords: "font typography family size jetbrains mono foot kitty gtk" },
-        { label: "Cursor Theme & Size",     pageId: "appearance",    keywords: "cursor pointer size theme hide" },
-        { label: "Window Animations",       pageId: "appearance",    keywords: "animation slide zoom duration direction" },
-        { label: "Tiling & Master Ratio",   pageId: "windows",       keywords: "tiling scroller master gaps snap floating focus warp" },
-        { label: "Output & Input Volume",   pageId: "audio",         keywords: "audio sound volume mute speaker headphone microphone sink" },
-        { label: "Per-App Volume Mixer",    pageId: "audio",         keywords: "app application mixer stream sink-input firefox mpv spotify" },
-        { label: "Resolution & Refresh",    pageId: "displays",      keywords: "display monitor screen resolution hz refresh scale" },
-        { label: "Rotation & VRR",          pageId: "displays",      keywords: "rotate rotation portrait landscape 90 180 270 vrr adaptive sync" },
-        { label: "Night Light",             pageId: "displays",      keywords: "night light warmth temperature blue filter kelvin" },
-        { label: "Wi-Fi & Networks",        pageId: "network",       keywords: "wifi wireless network ssid password internet" },
-        { label: "Bluetooth Devices",       pageId: "bluetooth",     keywords: "bluetooth pair connect audio device" },
-        { label: "Keyboard & Pointer",      pageId: "input",         keywords: "keyboard layout repeat rate delay mouse sensitivity accel touchpad scroll" },
-        { label: "Do Not Disturb & History",pageId: "notifications", keywords: "notification dnd do not disturb popup duration history clear test" },
-        { label: "Default Applications",    pageId: "apps",          keywords: "default browser terminal editor file manager xdg-mime app" },
-        { label: "Startup Applications",    pageId: "apps",          keywords: "startup autostart exec_once login boot" },
-        { label: "Keyboard Shortcuts",      pageId: "shortcuts",     keywords: "shortcut keybind hotkeys super mod mousebind" },
-        { label: "Clock, Date & Timezone",  pageId: "system",        keywords: "clock 24h 12h am pm seconds date format timezone time" },
-        { label: "Keep Awake & Power",      pageId: "system",        keywords: "sleep idle inhibitor keep awake power profile shutdown reboot logout" },
-        { label: "About Hardware & Storage",pageId: "system",        keywords: "cpu gpu memory ram disk storage uptime distro kernel reset" }
+        { label: "Shell Modes & Blur",         pageId: "appearance",    keywords: "mode simple blur glass opacity radius border shadow fade dim" },
+        { label: "Matugen & Wallpaper Engine", pageId: "appearance",    keywords: "theme dark light matugen scheme tonal expressive contrast wallpaper transition fps" },
+        { label: "GTK & Icon Theme",           pageId: "appearance",    keywords: "gtk icon theme hinting antialiasing rgba cursor blink text scale" },
+        { label: "UI & Terminal Font",         pageId: "appearance",    keywords: "font typography family size jetbrains mono foot kitty gtk" },
+        { label: "Cursor Theme & Size",        pageId: "appearance",    keywords: "cursor pointer size theme hide" },
+        { label: "Dynamic Island & Pill",      pageId: "shell",         keywords: "island hover delay collapse media spin equalizer osd pill" },
+        { label: "Simple Bar & Screenshots",   pageId: "shell",         keywords: "bar height top bottom layout screenshot grim slurp clipboard delay" },
+        { label: "Accessibility & Motion",     pageId: "shell",         keywords: "reduced motion animations high contrast borders a11y" },
+        { label: "Tiling, Hotarea & Overview", pageId: "windows",       keywords: "tiling scroller master gaps snap floating focus warp monocle hotarea tearing overview" },
+        { label: "Per-Tag & Window Rules",     pageId: "windows",       keywords: "tag_rule window_rule workspace default layout floating rule app_id" },
+        { label: "Output, Mic & 150% Boost",   pageId: "audio",         keywords: "audio sound volume mute speaker headphone microphone sink over amplification boost" },
+        { label: "Card Profiles & Speaker Test",pageId: "audio",        keywords: "card profile hdmi analog left right stereo speaker test" },
+        { label: "Per-App Volume Mixer",       pageId: "audio",         keywords: "app application mixer stream sink-input firefox mpv spotify" },
+        { label: "Resolution, Position & VRR", pageId: "displays",      keywords: "display monitor screen resolution hz refresh scale rotate 90 180 270 vrr left right above below" },
+        { label: "Brightness & Night Light",   pageId: "displays",      keywords: "backlight ddcutil brightness night light warmth kelvin" },
+        { label: "Ethernet, IP, DNS & Wi-Fi",  pageId: "network",       keywords: "network ethernet ip gateway dns nmcli wifi wireless ssid password" },
+        { label: "Bluetooth Devices",          pageId: "bluetooth",     keywords: "bluetooth pair connect audio device" },
+        { label: "Keyboard, Mouse & Touchpad", pageId: "input",         keywords: "keyboard model layout repeat sandbox mouse left handed middle click scroll touchpad" },
+        { label: "Foot & Kitty Settings",      pageId: "terminals",     keywords: "terminal foot kitty opacity alpha padding cursor blink scrollback" },
+        { label: "DND, Critical & Sounds",     pageId: "notifications", keywords: "notification dnd do not disturb critical sound history clear test" },
+        { label: "Defaults, Hidden Apps & Env",pageId: "apps",          keywords: "default browser terminal editor hidden apps launcher startup autostart exec_once env" },
+        { label: "Shortcuts & Custom Binds",   pageId: "shortcuts",     keywords: "shortcut keybind hotkeys super mod mousebind custom bind" },
+        { label: "Clipboard, Camera & Lock",   pageId: "privacy",       keywords: "privacy clipboard clear middle paste recent files camera microphone lock" },
+        { label: "Sensors, Processes & Init",  pageId: "monitor",       keywords: "temp temperature cpu gpu process pid kill openrc systemd services" },
+        { label: "User, Clock & Backup",       pageId: "system",        keywords: "user account clock 24h seconds date format keep awake disk storage backup export reset" }
     ]
 
     readonly property var searchMatches: {
@@ -146,8 +155,8 @@ PanelWindow {
             id: dialog
             anchors.centerIn: parent
             anchors.verticalCenterOffset: root.shown ? 0 : (Theme.isSimple ? 0 : 14)
-            width: Math.min(parent.width - 48, 880)
-            height: Math.min(parent.height - 48, 600)
+            width: Math.min(parent.width - 40, 940)
+            height: Math.min(parent.height - 40, 640)
             radius: Theme.r(22)
             color: Theme.notchBg
             border.width: Theme.islandBorderWidth
@@ -699,7 +708,7 @@ PanelWindow {
 
                                 onLoaded: {
                                     scrollFlick.contentY = 0;
-                                    if (!Theme.isSimple) {
+                                    if (!Theme.reducedMotion) {
                                         pageEnterAnim.restart();
                                     } else {
                                         pageLoader.opacity = 1.0;

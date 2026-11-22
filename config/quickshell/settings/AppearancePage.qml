@@ -18,12 +18,31 @@ ColumnLayout {
     property var allFonts: []
     property bool showAllFonts: false
     property string fontSearch: ""
+    property var gtkInfo: ({
+        iconTheme: ShellState.iconTheme,
+        availableIconThemes: ["Adwaita"],
+        fontHinting: "slight",
+        fontAntialiasing: "grayscale",
+        fontRgbaOrder: "rgb",
+        textScalingFactor: 1.0,
+        cursorBlink: true,
+        cursorBlinkTime: 1200
+    })
 
     function loadCursorSettings(): void {
         if (!cursorReadProc.running)
             cursorReadProc.running = true;
         if (!fontListProc.running)
             fontListProc.running = true;
+        if (!gtkReadProc.running)
+            gtkReadProc.running = true;
+    }
+
+    function setGtk(key: string, val: var): void {
+        if (gtkMutProc.running)
+            return;
+        gtkMutProc.command = [Quickshell.shellPath("scripts/manage-system.sh"), "gtk-set", key, String(val)];
+        gtkMutProc.running = true;
     }
 
     function setLocal(key: string, val: var): void {
@@ -81,6 +100,33 @@ ColumnLayout {
                         root.monospaceFonts = d.monospace;
                     if (Array.isArray(d.families) && d.families.length > 0)
                         root.allFonts = d.families;
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: gtkReadProc
+        command: [Quickshell.shellPath("scripts/manage-system.sh"), "gtk-get"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    if (d && d.iconTheme !== undefined)
+                        root.gtkInfo = d;
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: gtkMutProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    if (d && d.iconTheme !== undefined)
+                        root.gtkInfo = d;
                 } catch (err) {}
             }
         }
@@ -1241,6 +1287,598 @@ ColumnLayout {
                 accentColor: Theme.secondary
                 onDecremented: Theme.updateModePref("blurBrightness", Number(Math.max(0.65, Theme.blurBrightness - 0.05).toFixed(2)))
                 onIncremented: Theme.updateModePref("blurBrightness", Number(Math.min(1.15, Theme.blurBrightness + 0.05).toFixed(2)))
+            }
+
+            StepControl {
+                label: "Blur Noise"
+                displayValue: Theme.blurNoise.toFixed(3)
+                controlEnabled: !Theme.isSimple
+                accentColor: Theme.secondary
+                onDecremented: Theme.updateModePref("blurNoise", Number(Math.max(0.0, Theme.blurNoise - 0.005).toFixed(3)))
+                onIncremented: Theme.updateModePref("blurNoise", Number(Math.min(0.10, Theme.blurNoise + 0.005).toFixed(3)))
+            }
+
+            StepControl {
+                label: "Blur Contrast"
+                displayValue: Theme.blurContrast.toFixed(2)
+                controlEnabled: !Theme.isSimple
+                accentColor: Theme.secondary
+                onDecremented: Theme.updateModePref("blurContrast", Number(Math.max(0.70, Theme.blurContrast - 0.05).toFixed(2)))
+                onIncremented: Theme.updateModePref("blurContrast", Number(Math.min(1.30, Theme.blurContrast + 0.05).toFixed(2)))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                opacity: Theme.isSimple ? 0.5 : 1.0
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Blur Layer Surfaces & Optimized Dual Kawase"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: Theme.blurLayer
+                    onToggled: Theme.updateModePref("blurLayer", !Theme.blurLayer)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                opacity: Theme.isSimple ? 0.5 : 1.0
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Blur Cache Optimization (blur_optimized)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: Theme.blurOptimized
+                    onToggled: Theme.updateModePref("blurOptimized", !Theme.blurOptimized)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                opacity: Theme.isSimple ? 0.5 : 1.0
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Dim Unfocused Windows (dim_enable)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: Theme.dimEnable
+                    onToggled: Theme.updateModePref("dimEnable", !Theme.dimEnable)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                opacity: (!Theme.isSimple && Theme.wmShadows) ? 1.0 : 0.45
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Layer Drop Shadows & Floating-Only Shadows"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: Theme.layerShadows
+                    onToggled: Theme.updateModePref("layerShadows", !Theme.layerShadows)
+                }
+
+                ToggleSwitch {
+                    checked: Theme.shadowOnlyFloating
+                    activeColor: Theme.secondary
+                    onToggled: Theme.updateModePref("shadowOnlyFloating", !Theme.shadowOnlyFloating)
+                }
+            }
+
+            StepControl {
+                label: "Shadow Spread Size"
+                displayValue: Theme.shadowsSize + " px"
+                controlEnabled: !Theme.isSimple && Theme.wmShadows
+                onDecremented: Theme.updateModePref("shadowsSize", Math.max(2, Theme.shadowsSize - 2))
+                onIncremented: Theme.updateModePref("shadowsSize", Math.min(40, Theme.shadowsSize + 2))
+            }
+
+            StepControl {
+                label: "Shadow Softness (Blur)"
+                displayValue: Theme.shadowsBlur + " px"
+                controlEnabled: !Theme.isSimple && Theme.wmShadows
+                onDecremented: Theme.updateModePref("shadowsBlur", Math.max(2, Theme.shadowsBlur - 2))
+                onIncremented: Theme.updateModePref("shadowsBlur", Math.min(48, Theme.shadowsBlur + 2))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                opacity: (!Theme.isSimple && Theme.wmAnimations) ? 1.0 : 0.45
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Layer Animations & Fade In/Out"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: Theme.layerAnimations
+                    onToggled: Theme.updateModePref("layerAnimations", !Theme.layerAnimations)
+                }
+
+                ToggleSwitch {
+                    checked: Theme.animFadeIn && Theme.animFadeOut
+                    activeColor: Theme.secondary
+                    onToggled: {
+                        const next = !(Theme.animFadeIn && Theme.animFadeOut);
+                        Theme.updateModePref("animFadeIn", next);
+                        Theme.updateModePref("animFadeOut", next);
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 5. Matugen & Wallpaper Engine ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: wpCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: wpCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "MATUGEN & WALLPAPER ENGINE (AWWW / SWWW)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: reapLbl.implicitWidth + 12
+                    radius: Theme.r(7)
+                    color: reapMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+
+                    Text {
+                        id: reapLbl
+                        anchors.centerIn: parent
+                        text: "Re-apply Now"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.fgPrimary
+                    }
+
+                    MouseArea {
+                        id: reapMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Theme.applyWallpaperWithCurrentMode(Theme.wallpaperPath)
+                    }
+                }
+            }
+
+            Text {
+                text: "Matugen Color Scheme Type"
+                font.family: Theme.fontFamily
+                font.pixelSize: 11
+                color: Theme.fgSurface
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 5
+
+                Repeater {
+                    model: ["scheme-tonal-spot", "scheme-vibrant", "scheme-expressive", "scheme-fidelity", "scheme-content", "scheme-neutral", "scheme-monochrome", "scheme-rainbow"]
+
+                    delegate: Rectangle {
+                        id: matChip
+                        required property string modelData
+                        readonly property bool selected: ShellState.matugenType === matChip.modelData
+
+                        implicitHeight: 24
+                        implicitWidth: matTxt.implicitWidth + 12
+                        radius: Theme.r(7)
+                        color: matChip.selected
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (matMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: matChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: matChip.selected ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            id: matTxt
+                            anchors.centerIn: parent
+                            text: matChip.modelData.replace("scheme-", "")
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: matChip.selected ? Font.Bold : Font.Medium
+                            color: matChip.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: matMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("matugenType", matChip.modelData)
+                        }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "Matugen Palette Contrast"
+                displayValue: ShellState.matugenContrast.toFixed(1)
+                onDecremented: ShellState.setPref("matugenContrast", Number(Math.max(-1.0, ShellState.matugenContrast - 0.2).toFixed(1)))
+                onIncremented: ShellState.setPref("matugenContrast", Number(Math.min(1.0, ShellState.matugenContrast + 0.2).toFixed(1)))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 120
+                    text: "Transition Effect"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 5
+
+                    Repeater {
+                        model: ["grow", "wipe", "fade", "wave", "outer", "simple", "none"]
+
+                        delegate: Rectangle {
+                            id: trChip
+                            required property string modelData
+                            readonly property bool selected: ShellState.wallpaperTransition === trChip.modelData
+
+                            implicitHeight: 24
+                            implicitWidth: trTxt.implicitWidth + 12
+                            radius: Theme.r(7)
+                            color: trChip.selected
+                                ? Theme.withAlpha(Theme.secondary, 0.22)
+                                : (trMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                            border.width: trChip.selected ? 1 : Theme.cardBorderWidth
+                            border.color: trChip.selected ? Theme.secondary : Theme.cardBorder
+
+                            Text {
+                                id: trTxt
+                                anchors.centerIn: parent
+                                text: trChip.modelData
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                font.weight: trChip.selected ? Font.Bold : Font.Medium
+                                color: trChip.selected ? Theme.secondary : Theme.fgSurface
+                            }
+
+                            MouseArea {
+                                id: trMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: ShellState.setPref("wallpaperTransition", trChip.modelData)
+                            }
+                        }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "Wallpaper Transition Speed"
+                displayValue: ShellState.wallpaperDuration.toFixed(2) + " s"
+                onDecremented: ShellState.setPref("wallpaperDuration", Number(Math.max(0.10, ShellState.wallpaperDuration - 0.15).toFixed(2)))
+                onIncremented: ShellState.setPref("wallpaperDuration", Number(Math.min(2.50, ShellState.wallpaperDuration + 0.15).toFixed(2)))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Wallpaper Scaling & FPS"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: ["crop", "fit", "no"]
+
+                    delegate: Rectangle {
+                        id: rzChip
+                        required property string modelData
+                        readonly property bool selected: ShellState.wallpaperResize === rzChip.modelData
+
+                        implicitHeight: 24
+                        implicitWidth: rzTxt.implicitWidth + 10
+                        radius: Theme.r(7)
+                        color: rzChip.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
+                        border.width: rzChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: rzChip.selected ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            id: rzTxt
+                            anchors.centerIn: parent
+                            text: rzChip.modelData
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: rzChip.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("wallpaperResize", rzChip.modelData)
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: [30, 60, 120, 144]
+
+                    delegate: Rectangle {
+                        id: fpsChip
+                        required property int modelData
+                        readonly property bool selected: ShellState.wallpaperFps === fpsChip.modelData
+
+                        implicitHeight: 24
+                        implicitWidth: fpsTxt.implicitWidth + 10
+                        radius: Theme.r(7)
+                        color: fpsChip.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
+                        border.width: fpsChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: fpsChip.selected ? Theme.secondary : Theme.cardBorder
+
+                        Text {
+                            id: fpsTxt
+                            anchors.centerIn: parent
+                            text: fpsChip.modelData + "fps"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: fpsChip.selected ? Theme.secondary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("wallpaperFps", fpsChip.modelData)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 6. GTK, Icons & Font Rendering ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: gtkCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: gtkCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            Text {
+                text: "GTK ICON THEME & FONT RENDERING"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            Text {
+                text: "Icon Theme (" + String(root.gtkInfo.iconTheme || "Adwaita") + ")"
+                font.family: Theme.fontFamily
+                font.pixelSize: 11
+                color: Theme.fgSurface
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Repeater {
+                    model: root.gtkInfo.availableIconThemes || ["Adwaita"]
+
+                    delegate: Rectangle {
+                        id: icChip
+                        required property string modelData
+                        readonly property bool selected: root.gtkInfo.iconTheme === icChip.modelData
+
+                        implicitHeight: 26
+                        implicitWidth: icTxt.implicitWidth + 14
+                        radius: Theme.r(8)
+                        color: icChip.selected
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (icMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: icChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: icChip.selected ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            id: icTxt
+                            anchors.centerIn: parent
+                            text: icChip.modelData
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: icChip.selected ? Font.Bold : Font.Medium
+                            color: icChip.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: icMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.setGtk("icon-theme", icChip.modelData)
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Font Hinting"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: ["none", "slight", "medium", "full"]
+
+                    delegate: Rectangle {
+                        id: hntChip
+                        required property string modelData
+                        readonly property bool selected: root.gtkInfo.fontHinting === hntChip.modelData
+
+                        implicitHeight: 24
+                        implicitWidth: hntTxt.implicitWidth + 12
+                        radius: Theme.r(7)
+                        color: hntChip.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
+                        border.width: hntChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: hntChip.selected ? Theme.secondary : Theme.cardBorder
+
+                        Text {
+                            id: hntTxt
+                            anchors.centerIn: parent
+                            text: hntChip.modelData
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: hntChip.selected ? Theme.secondary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.setGtk("font-hinting", hntChip.modelData)
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Antialiasing & Subpixel"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: ["none", "grayscale", "rgba"]
+
+                    delegate: Rectangle {
+                        id: aaChip
+                        required property string modelData
+                        readonly property bool selected: root.gtkInfo.fontAntialiasing === aaChip.modelData
+
+                        implicitHeight: 24
+                        implicitWidth: aaTxt.implicitWidth + 10
+                        radius: Theme.r(7)
+                        color: aaChip.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
+                        border.width: aaChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: aaChip.selected ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            id: aaTxt
+                            anchors.centerIn: parent
+                            text: aaChip.modelData
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: aaChip.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.setGtk("font-antialiasing", aaChip.modelData)
+                        }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "GTK UI Text Scale Factor"
+                displayValue: Number(root.gtkInfo.textScalingFactor || 1.0).toFixed(2) + "x"
+                onDecremented: root.setGtk("text-scaling-factor", Math.max(0.80, Number(root.gtkInfo.textScalingFactor || 1.0) - 0.05).toFixed(2))
+                onIncremented: root.setGtk("text-scaling-factor", Math.min(1.60, Number(root.gtkInfo.textScalingFactor || 1.0) + 0.05).toFixed(2))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Text Cursor Blinking (GTK)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: !!root.gtkInfo.cursorBlink
+                    onToggled: root.setGtk("cursor-blink", !root.gtkInfo.cursorBlink)
+                }
+            }
+
+            StepControl {
+                label: "Text Cursor Blink Interval"
+                displayValue: Number(root.gtkInfo.cursorBlinkTime || 1200) + " ms"
+                controlEnabled: !!root.gtkInfo.cursorBlink
+                onDecremented: root.setGtk("cursor-blink-time", Math.max(400, Number(root.gtkInfo.cursorBlinkTime || 1200) - 200))
+                onIncremented: root.setGtk("cursor-blink-time", Math.min(2400, Number(root.gtkInfo.cursorBlinkTime || 1200) + 200))
             }
         }
     }

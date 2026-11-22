@@ -155,6 +155,93 @@ ColumnLayout {
                 }
             }
 
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Allow Critical / Urgent Alerts During DND"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.dndAllowCritical
+                    onToggled: ShellState.setPref("dndAllowCritical", !ShellState.dndAllowCritical)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Play Desktop Sound on Notification"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.notifSoundEnabled
+                    onToggled: ShellState.setPref("notifSoundEnabled", !ShellState.notifSoundEnabled)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Session History Capacity"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                RowLayout {
+                    spacing: 5
+
+                    Repeater {
+                        model: [20, 40, 100]
+
+                        delegate: Rectangle {
+                            id: hCapPill
+                            required property int modelData
+                            readonly property bool selected: ShellState.notifMaxHistory === hCapPill.modelData
+
+                            implicitHeight: 24
+                            implicitWidth: hCapTxt.implicitWidth + 12
+                            radius: Theme.r(7)
+                            color: hCapPill.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
+                            border.width: hCapPill.selected ? 1 : Theme.cardBorderWidth
+                            border.color: hCapPill.selected ? Theme.secondary : Theme.cardBorder
+
+                            Text {
+                                id: hCapTxt
+                                anchors.centerIn: parent
+                                text: String(hCapPill.modelData)
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                font.weight: hCapPill.selected ? Font.Bold : Font.Medium
+                                color: hCapPill.selected ? Theme.secondary : Theme.fgSurface
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: ShellState.setPref("notifMaxHistory", hCapPill.modelData)
+                            }
+                        }
+                    }
+                }
+            }
+
             // Test notification button
             RowLayout {
                 Layout.fillWidth: true

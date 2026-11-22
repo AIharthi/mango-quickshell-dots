@@ -74,6 +74,17 @@ has_audio = shutil.which("pactl") is not None
 has_pavucontrol = shutil.which("pavucontrol") is not None
 has_power_profiles = shutil.which("powerprofilesctl") is not None
 has_xdg_mime = shutil.which("xdg-mime") is not None
+has_network = any(
+    os.path.basename(p) != "lo" for p in glob.glob("/sys/class/net/*")
+)
+has_nmcli = shutil.which("nmcli") is not None
+has_ddcutil = shutil.which("ddcutil") is not None
+has_openrc = shutil.which("rc-status") is not None
+has_systemd = (shutil.which("systemctl") is not None) and os.path.isdir("/run/systemd/system")
+has_clipboard = shutil.which("wl-copy") is not None
+has_speaker_test = (shutil.which("speaker-test") is not None) or (shutil.which("paplay") is not None)
+has_foot = (shutil.which("foot") is not None) or os.path.exists(os.path.expanduser("~/.config/foot/foot.ini"))
+has_kitty = (shutil.which("kitty") is not None) or os.path.exists(os.path.expanduser("~/.config/kitty/kitty.conf"))
 
 night_light_cmd = ""
 for candidate in ("hyprsunset", "wlsunset", "gammastep"):
@@ -113,6 +124,15 @@ payload = {
     "hasNightLight": has_night_light,
     "hasPowerProfiles": has_power_profiles,
     "hasXdgMime": has_xdg_mime,
+    "hasNetwork": has_network,
+    "hasNmcli": has_nmcli,
+    "hasDdcutil": has_ddcutil,
+    "hasOpenRc": has_openrc,
+    "hasSystemd": has_systemd,
+    "hasClipboard": has_clipboard,
+    "hasSpeakerTest": has_speaker_test,
+    "hasFoot": has_foot,
+    "hasKitty": has_kitty,
     "lockerCmd": locker_cmd,
     "hasLocker": has_locker,
     "deviceType": device_type,

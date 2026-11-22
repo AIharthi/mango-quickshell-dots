@@ -170,6 +170,7 @@ Rectangle {
 
         // Crisp 1px separator
         Rectangle {
+            visible: ShellState.simpleBarShowLayout
             width: 1
             height: parent.height
             color: Theme.outlineVariant
@@ -177,6 +178,7 @@ Rectangle {
 
         // Flat Layout Switcher
         Rectangle {
+            visible: ShellState.simpleBarShowLayout
             width: layoutTxt.implicitWidth + 14
             height: parent.height
             radius: 0
@@ -216,6 +218,7 @@ Rectangle {
         }
 
         Text {
+            visible: ShellState.simpleBarShowDate
             text: ShellState.formatDate(clock.date)
             font.family: Theme.fontFamily
             font.pixelSize: 11

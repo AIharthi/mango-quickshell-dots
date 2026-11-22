@@ -14,7 +14,18 @@ ColumnLayout {
     property var selectedScaleByOutput: ({})
     property var selectedTransformByOutput: ({})
     property var selectedVrrByOutput: ({})
+    property var selectedPosByOutput: ({})
+    property int brightnessPct: 80
     property string statusMsg: ""
+
+    readonly property int enabledCount: {
+        let c = 0;
+        for (let i = 0; i < root.outputs.length; i++) {
+            if (root.outputs[i].enabled)
+                c++;
+        }
+        return c;
+    }
 
     readonly property var rotationOptions: [
         { label: "0° Normal",  wlr: "normal", rr: 0 },
@@ -33,6 +44,16 @@ ColumnLayout {
     function refresh(): void {
         if (!randrProc.running)
             randrProc.running = true;
+        if ((DeviceCaps.hasBacklight || DeviceCaps.hasDdcutil) && !brightReadProc.running)
+            brightReadProc.running = true;
+    }
+
+    function otherOutputFor(outName: string): string {
+        for (let i = 0; i < root.outputs.length; i++) {
+            if (root.outputs[i].name !== outName)
+                return root.outputs[i].name;
+        }
+        return "";
     }
 
     function setSelectedMode(outName: string, modeObj: var): void {
@@ -59,22 +80,54 @@ ColumnLayout {
         root.selectedVrrByOutput = next;
     }
 
+    function setSelectedPos(outName: string, posVal: string): void {
+        const next = Object.assign({}, root.selectedPosByOutput);
+        next[outName] = posVal;
+        root.selectedPosByOutput = next;
+    }
+
+    function toggleOutputEnabled(outName: string, currentlyEnabled: bool): void {
+        if (currentlyEnabled && root.enabledCount <= 1) {
+            root.statusMsg = "Cannot disable the only active display";
+            return;
+        }
+        root.statusMsg = (currentlyEnabled ? "Disabling " : "Enabling ") + outName + "...";
+        applyProc.command = ["wlr-randr", "--output", outName, currentlyEnabled ? "--off" : "--on"];
+        applyProc.running = true;
+    }
+
+    function setBrightness(pct: int): void {
+        const clamped = Math.max(5, Math.min(100, pct));
+        root.brightnessPct = clamped;
+        if (DeviceCaps.hasBacklight)
+            Quickshell.execDetached(["brightnessctl", "set", clamped + "%"]);
+        else if (DeviceCaps.hasDdcutil)
+            Quickshell.execDetached(["ddcutil", "setvcp", "10", String(clamped)]);
+    }
+
     function applyLive(outName: string): void {
         const m = root.selectedModeByOutput[outName];
         const s = root.selectedScaleByOutput[outName] || 1.0;
         const tr = root.selectedTransformByOutput[outName] || "normal";
         const vrr = !!root.selectedVrrByOutput[outName];
+        const pos = root.selectedPosByOutput[outName] || "auto";
+        const other = root.otherOutputFor(outName);
         if (!m)
             return;
         const modeArg = m.width + "x" + m.height + "@" + m.refreshStr + "Hz";
         root.statusMsg = "Applying " + outName + " (" + modeArg + " @ " + s + "x, " + tr + ")...";
-        applyProc.command = [
+        const cmd = [
             "wlr-randr", "--output", outName,
             "--mode", modeArg,
             "--scale", String(s),
             "--transform", tr,
             "--adaptive-sync", vrr ? "enabled" : "disabled"
         ];
+        if (pos !== "auto" && other.length > 0) {
+            cmd.push("--" + pos);
+            cmd.push(other);
+        }
+        applyProc.command = cmd;
         applyProc.running = true;
     }
 
@@ -181,6 +234,29 @@ ColumnLayout {
     Process {
         id: applyProc
         onExited: refreshDelay.restart()
+    }
+
+    Process {
+        id: brightReadProc
+        command: [
+            "python3", "-c",
+            "import re,shutil,subprocess\n" +
+            "if shutil.which('brightnessctl'):\n" +
+            "  out = subprocess.check_output(['brightnessctl','-m'], text=True, stderr=subprocess.DEVNULL)\n" +
+            "  m = re.search(r',(\\d+)%,', out)\n" +
+            "  if m: print(m.group(1))\n" +
+            "elif shutil.which('ddcutil'):\n" +
+            "  out = subprocess.check_output(['ddcutil','getvcp','10','--terse'], text=True, stderr=subprocess.DEVNULL)\n" +
+            "  parts = out.strip().split()\n" +
+            "  if len(parts) >= 4: print(parts[3])"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const v = parseInt((text || "").trim(), 10);
+                if (!isNaN(v))
+                    root.brightnessPct = Math.max(5, Math.min(100, v));
+            }
+        }
     }
 
     Timer {
@@ -305,10 +381,14 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        implicitHeight: 20
-                        implicitWidth: stateTxt.implicitWidth + 12
+                        implicitHeight: 22
+                        implicitWidth: stateTxt.implicitWidth + 14
                         radius: Theme.r(8)
-                        color: outCard.modelData.enabled ? Theme.withAlpha(Theme.success, 0.20) : Theme.subCardBg
+                        color: stateMouse.containsMouse
+                            ? Theme.hoverBg
+                            : (outCard.modelData.enabled ? Theme.withAlpha(Theme.success, 0.20) : Theme.subCardBg)
+                        border.width: Theme.cardBorderWidth
+                        border.color: outCard.modelData.enabled ? Theme.withAlpha(Theme.success, 0.45) : Theme.cardBorder
 
                         Text {
                             id: stateTxt
@@ -318,6 +398,14 @@ ColumnLayout {
                             font.pixelSize: 9
                             font.weight: Font.Bold
                             color: outCard.modelData.enabled ? Theme.success : Theme.fgSurfaceVariant
+                        }
+
+                        MouseArea {
+                            id: stateMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.toggleOutputEnabled(outCard.modelData.name, !!outCard.modelData.enabled)
                         }
                     }
                 }
@@ -492,6 +580,67 @@ ColumnLayout {
                     }
                 }
 
+                // Multi-Monitor Relative Position (when > 1 display connected)
+                ColumnLayout {
+                    visible: root.outputs.length > 1
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Text {
+                        text: "MULTI-MONITOR POSITION (" + (root.otherOutputFor(outCard.modelData.name) || "other") + ")"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.fgSurfaceVariant
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: [
+                                { id: "auto",     label: "Auto" },
+                                { id: "left-of",  label: "Left of" },
+                                { id: "right-of", label: "Right of" },
+                                { id: "above",    label: "Above" },
+                                { id: "below",    label: "Below" }
+                            ]
+
+                            delegate: Rectangle {
+                                id: mPosPill
+                                required property var modelData
+                                readonly property string curPos: root.selectedPosByOutput[outCard.modelData.name] || "auto"
+                                readonly property bool selected: mPosPill.curPos === mPosPill.modelData.id
+
+                                implicitHeight: 24
+                                implicitWidth: mPosTxt.implicitWidth + 14
+                                radius: Theme.r(7)
+                                color: mPosPill.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
+                                border.width: mPosPill.selected ? 1 : Theme.cardBorderWidth
+                                border.color: mPosPill.selected ? Theme.secondary : Theme.cardBorder
+
+                                Text {
+                                    id: mPosTxt
+                                    anchors.centerIn: parent
+                                    text: mPosPill.modelData.label
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 10
+                                    font.weight: mPosPill.selected ? Font.Bold : Font.Medium
+                                    color: mPosPill.selected ? Theme.secondary : Theme.fgSurface
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.setSelectedPos(outCard.modelData.name, mPosPill.modelData.id)
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Adaptive Sync (VRR)
                 RowLayout {
                     Layout.fillWidth: true
@@ -596,6 +745,76 @@ ColumnLayout {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: root.savePersistent(outCard.modelData.name)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- Conditional Brightness Card (Backlight or DDC/CI monitor control) ---
+    Rectangle {
+        visible: DeviceCaps.hasBacklight || DeviceCaps.hasDdcutil
+        Layout.fillWidth: true
+        implicitHeight: brtCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: brtCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            Text {
+                text: "DISPLAY BRIGHTNESS (" + (DeviceCaps.hasBacklight ? "BACKLIGHT" : "DDC/CI") + ")"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            StepControl {
+                label: "Screen Luminance"
+                displayValue: root.brightnessPct + "%"
+                onDecremented: root.setBrightness(root.brightnessPct - 10)
+                onIncremented: root.setBrightness(root.brightnessPct + 10)
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Repeater {
+                    model: [25, 50, 75, 100]
+
+                    delegate: Rectangle {
+                        id: brtPill
+                        required property int modelData
+                        readonly property bool selected: Math.abs(root.brightnessPct - brtPill.modelData) < 5
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: brtPill.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
+                        border.width: brtPill.selected ? 1 : Theme.cardBorderWidth
+                        border.color: brtPill.selected ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: brtPill.modelData + "%"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: brtPill.selected ? Font.Bold : Font.Medium
+                            color: brtPill.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.setBrightness(brtPill.modelData)
                         }
                     }
                 }

@@ -21,6 +21,15 @@ Singleton {
     property string nightLightCmd: ""
     property bool hasPowerProfiles: false
     property bool hasXdgMime: false
+    property bool hasNetwork: true
+    property bool hasNmcli: false
+    property bool hasDdcutil: false
+    property bool hasOpenRc: false
+    property bool hasSystemd: false
+    property bool hasClipboard: false
+    property bool hasSpeakerTest: false
+    property bool hasFoot: false
+    property bool hasKitty: false
     property bool hasLocker: false
     property string lockerCmd: ""
     property string deviceType: "desktop"       // "desktop" | "laptop"
@@ -103,6 +112,15 @@ Singleton {
                     root.nightLightCmd = data.nightLightCmd || "";
                     root.hasPowerProfiles = !!data.hasPowerProfiles;
                     root.hasXdgMime = !!data.hasXdgMime;
+                    root.hasNetwork = (data.hasNetwork !== undefined) ? !!data.hasNetwork : true;
+                    root.hasNmcli = !!data.hasNmcli;
+                    root.hasDdcutil = !!data.hasDdcutil;
+                    root.hasOpenRc = !!data.hasOpenRc;
+                    root.hasSystemd = !!data.hasSystemd;
+                    root.hasClipboard = !!data.hasClipboard;
+                    root.hasSpeakerTest = !!data.hasSpeakerTest;
+                    root.hasFoot = !!data.hasFoot;
+                    root.hasKitty = !!data.hasKitty;
                     root.hasLocker = !!data.hasLocker;
                     root.lockerCmd = data.lockerCmd || "";
                     root.deviceType = data.deviceType || "desktop";

@@ -13,5 +13,17 @@
   "animationTypeOpen": "zoom",
   "animationTypeClose": "slide",
   "animationDuration": 300,
-  "tagAnimationDirection": 1
+  "tagAnimationDirection": 1,
+  "blurLayer": true,
+  "blurOptimized": true,
+  "blurNoise": 0.02,
+  "blurContrast": 0.95,
+  "layerShadows": false,
+  "shadowOnlyFloating": false,
+  "shadowsSize": 14,
+  "shadowsBlur": 20,
+  "layerAnimations": true,
+  "animFadeIn": true,
+  "animFadeOut": true,
+  "dimEnable": false
 }

@@ -62,6 +62,48 @@ ALLOWED_KEYS = {
     "snap_distance": "int",
     "drag_tile_to_tile": "bool",
     "scroller_default_proportion": "float",
+    "default_master_count": "int",
+    "center_master_overspread": "bool",
+    "monocle_no_border": "bool",
+    "monocle_no_gap": "bool",
+    "monocle_no_radius": "bool",
+    "no_border_when_single": "bool",
+    "no_radius_when_single": "bool",
+    "enable_border_resize": "bool",
+    "border_resize_size": "int",
+    "dwindle_smart_split": "bool",
+    "dwindle_smart_resize": "bool",
+    "scroller_focus_center": "bool",
+    "scroller_prefer_center": "bool",
+    "scroller_prefer_overspread": "bool",
+    "scroller_default_proportion_single": "float",
+    "focus_cross_monitor": "bool",
+    "focus_cross_tag": "bool",
+    "exchange_cross_monitor": "bool",
+    "scratchpad_cross_monitor": "bool",
+    "tag_carousel": "bool",
+    "enable_hotarea": "bool",
+    "hotarea_size": "int",
+    "hotarea_corner": "int",
+    "hotarea_disable_on_fullscreen": "bool",
+    "overview_gap_inner": "int",
+    "overview_gap_outer": "int",
+    "allow_tearing": "bool",
+    "dim_enable": "bool",
+    "disable_middle_paste": "bool",
+    "xkb_rules_model": "str",
+    "mouse_left_handed": "bool",
+    "mouse_middle_button_emulation": "bool",
+    "axis_scroll_factor": "float",
+    "mouse_scroll_method": "int",
+    "trackpad_left_handed": "bool",
+    "trackpad_middle_button_emulation": "bool",
+    "trackpad_scroll_factor": "float",
+    "trackpad_click_method": "int",
+    "trackpad_scroll_method": "int",
+    "tap_and_drag": "bool",
+    "drag_lock": "bool",
+    "swipe_min_threshold": "int",
 }
 
 DEFAULTS = {
@@ -93,6 +135,48 @@ DEFAULTS = {
     "snap_distance": 24,
     "drag_tile_to_tile": True,
     "scroller_default_proportion": 0.8,
+    "default_master_count": 1,
+    "center_master_overspread": False,
+    "monocle_no_border": False,
+    "monocle_no_gap": False,
+    "monocle_no_radius": False,
+    "no_border_when_single": True,
+    "no_radius_when_single": False,
+    "enable_border_resize": True,
+    "border_resize_size": 8,
+    "dwindle_smart_split": True,
+    "dwindle_smart_resize": False,
+    "scroller_focus_center": False,
+    "scroller_prefer_center": False,
+    "scroller_prefer_overspread": False,
+    "scroller_default_proportion_single": 1.0,
+    "focus_cross_monitor": False,
+    "focus_cross_tag": False,
+    "exchange_cross_monitor": True,
+    "scratchpad_cross_monitor": False,
+    "tag_carousel": True,
+    "enable_hotarea": False,
+    "hotarea_size": 10,
+    "hotarea_corner": 1,
+    "hotarea_disable_on_fullscreen": True,
+    "overview_gap_inner": 5,
+    "overview_gap_outer": 30,
+    "allow_tearing": False,
+    "dim_enable": False,
+    "disable_middle_paste": False,
+    "xkb_rules_model": "pc105",
+    "mouse_left_handed": False,
+    "mouse_middle_button_emulation": False,
+    "axis_scroll_factor": 1.0,
+    "mouse_scroll_method": 0,
+    "trackpad_left_handed": False,
+    "trackpad_middle_button_emulation": False,
+    "trackpad_scroll_factor": 1.0,
+    "trackpad_click_method": 2,
+    "trackpad_scroll_method": 1,
+    "tap_and_drag": True,
+    "drag_lock": False,
+    "swipe_min_threshold": 1,
 }
 
 HEADER = "# Per-device MangoWC overrides (auto-managed by Quickshell Settings; untracked in git)\n"
@@ -228,6 +312,26 @@ def normalize_write_val(key: str, raw_val: str) -> str:
             v = 1 if v == 1 else 2
         elif key == "snap_distance":
             v = max(4, min(64, v))
+        elif key == "default_master_count":
+            v = max(1, min(5, v))
+        elif key == "border_resize_size":
+            v = max(2, min(24, v))
+        elif key == "hotarea_size":
+            v = max(4, min(40, v))
+        elif key == "hotarea_corner":
+            v = max(1, min(4, v))
+        elif key == "overview_gap_inner":
+            v = max(0, min(40, v))
+        elif key == "overview_gap_outer":
+            v = max(0, min(60, v))
+        elif key == "mouse_scroll_method":
+            v = max(0, min(3, v))
+        elif key == "trackpad_click_method":
+            v = max(0, min(2, v))
+        elif key == "trackpad_scroll_method":
+            v = max(0, min(3, v))
+        elif key == "swipe_min_threshold":
+            v = max(1, min(10, v))
         return str(v)
     if kind == "float":
         v = round(float(raw_val), 2)
@@ -235,8 +339,10 @@ def normalize_write_val(key: str, raw_val: str) -> str:
             v = max(-1.0, min(1.0, v))
         elif key == "default_master_factor":
             v = max(0.35, min(0.80, v))
-        elif key == "scroller_default_proportion":
+        elif key in ("scroller_default_proportion", "scroller_default_proportion_single"):
             v = max(0.30, min(1.0, v))
+        elif key in ("axis_scroll_factor", "trackpad_scroll_factor"):
+            v = max(0.20, min(4.0, v))
         return f"{v:.2f}"
     if kind == "bool":
         return "1" if str(raw_val).strip().lower() in ("1", "true", "yes", "on") else "0"
@@ -253,6 +359,79 @@ def read_lines(path: str) -> list[str]:
     if not lines:
         return [HEADER]
     return lines
+
+def validate_and_write_local(content: str) -> None:
+    had_local = os.path.isfile(local_conf)
+    old_content = ""
+    if had_local:
+        with open(local_conf, "r", encoding="utf-8", errors="ignore") as f:
+            old_content = f.read()
+    atomic_write(local_conf, content)
+    if shutil.which("mango"):
+        res = subprocess.run(["mango", "-p"], capture_output=True, text=True)
+        if res.returncode != 0:
+            if had_local:
+                atomic_write(local_conf, old_content)
+            elif os.path.exists(local_conf):
+                os.remove(local_conf)
+            err = (res.stdout + "\n" + res.stderr).strip() or "MangoWC rejected rule"
+            sys.stderr.write(err + "\n")
+            sys.exit(2)
+
+def get_tag_rules() -> dict:
+    rules = {str(i): "tile" for i in range(1, 10)}
+    pat = re.compile(r"^\s*tag_rule\s*=\s*.*?\bid:([1-9])\b.*?\blayout_name:([A-Za-z0-9_]+)")
+    for path in (base_conf, local_conf):
+        if not os.path.isfile(path):
+            continue
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                m = pat.match(line)
+                if m:
+                    rules[m.group(1)] = m.group(2)
+    return rules
+
+def get_window_rules() -> list[str]:
+    rules = []
+    if os.path.isfile(local_conf):
+        with open(local_conf, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                s = line.strip()
+                if s.startswith("window_rule="):
+                    rules.append(s.split("=", 1)[1].strip())
+    return rules
+
+def get_envs() -> list[dict]:
+    envs = []
+    if os.path.isfile(local_conf):
+        with open(local_conf, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                s = line.strip()
+                if s.startswith("env="):
+                    body = s.split("=", 1)[1].strip()
+                    if "," in body:
+                        k, v = body.split(",", 1)
+                        envs.append({"key": k.strip(), "value": v.strip()})
+    return envs
+
+def get_custom_binds() -> list[dict]:
+    binds = []
+    if os.path.isfile(local_conf):
+        with open(local_conf, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                s = line.strip()
+                if s.startswith("bind="):
+                    body = s.split("=", 1)[1]
+                    parts = [p.strip() for p in body.split(",", 3)]
+                    if len(parts) >= 3:
+                        binds.append({
+                            "mods": parts[0],
+                            "key": parts[1],
+                            "action": parts[2],
+                            "arg": parts[3] if len(parts) > 3 else "",
+                            "raw": s,
+                        })
+    return binds
 
 if cmd == "get":
     merged = merged_settings()
@@ -328,6 +507,141 @@ elif cmd == "set-monitor":
         new_lines.append(rule_line)
     atomic_write(local_conf, "".join(new_lines))
     reload_mango()
+
+elif cmd == "tag-rules-get":
+    print(json.dumps(get_tag_rules(), separators=(",", ":")))
+
+elif cmd == "tag-rule-set":
+    if len(args) < 2:
+        sys.exit("Usage: apply-local-setting.sh tag-rule-set <1..9> <layout_name>")
+    tag_id = str(int(args[0]))
+    layout = args[1].strip()
+    if tag_id not in [str(i) for i in range(1, 10)]:
+        sys.exit("Tag ID must be 1..9")
+    valid_layouts = ("tile", "scroller", "grid", "monocle", "deck", "center_tile", "right_tile", "vertical_tile", "vertical_scroller", "dwindle")
+    if layout not in valid_layouts:
+        sys.exit(f"Invalid layout: {layout}")
+    rule_line = f"tag_rule=id:{tag_id},layout_name:{layout}\n"
+    lines = read_lines(local_conf)
+    new_lines = []
+    replaced = False
+    tag_re = re.compile(rf"^\s*tag_rule\s*=.*\bid:{tag_id}\b")
+    for line in lines:
+        if tag_re.match(line):
+            if not replaced:
+                new_lines.append(rule_line)
+                replaced = True
+        else:
+            new_lines.append(line)
+    if not replaced:
+        if new_lines and not new_lines[-1].endswith("\n"):
+            new_lines[-1] += "\n"
+        new_lines.append(rule_line)
+    validate_and_write_local("".join(new_lines))
+    reload_mango()
+    print(json.dumps(get_tag_rules(), separators=(",", ":")))
+
+elif cmd == "window-rules-get":
+    print(json.dumps({"rules": get_window_rules()}, separators=(",", ":")))
+
+elif cmd == "window-rule-add":
+    if len(args) < 1:
+        sys.exit("Usage: apply-local-setting.sh window-rule-add <rule_spec>")
+    spec = " ".join(args).strip()
+    if not spec or "\n" in spec or spec.startswith("window_rule="):
+        spec = spec.replace("window_rule=", "", 1).strip()
+    if not spec or "\n" in spec:
+        sys.exit("Invalid window rule spec")
+    lines = read_lines(local_conf)
+    target_line = f"window_rule={spec}\n"
+    if not any(line.strip() == f"window_rule={spec}" for line in lines):
+        if lines and not lines[-1].endswith("\n"):
+            lines[-1] += "\n"
+        lines.append(target_line)
+        validate_and_write_local("".join(lines))
+        reload_mango()
+    print(json.dumps({"rules": get_window_rules()}, separators=(",", ":")))
+
+elif cmd == "window-rule-remove":
+    if len(args) < 1:
+        sys.exit("Usage: apply-local-setting.sh window-rule-remove <rule_spec>")
+    spec = " ".join(args).strip()
+    lines = read_lines(local_conf)
+    kept = [line for line in lines if line.strip() != f"window_rule={spec}"]
+    atomic_write(local_conf, "".join(kept))
+    reload_mango()
+    print(json.dumps({"rules": get_window_rules()}, separators=(",", ":")))
+
+elif cmd == "env-list":
+    print(json.dumps({"envs": get_envs()}, separators=(",", ":")))
+
+elif cmd == "env-add":
+    if len(args) < 2:
+        sys.exit("Usage: apply-local-setting.sh env-add <KEY> <VALUE>")
+    k = re.sub(r"[^A-Za-z0-9_]", "", args[0].strip())
+    v = " ".join(args[1:]).strip()
+    if not k or not v or "\n" in v:
+        sys.exit("Invalid env key or value")
+    env_line = f"env={k},{v}\n"
+    lines = read_lines(local_conf)
+    new_lines = []
+    replaced = False
+    env_re = re.compile(rf"^\s*env\s*=\s*{re.escape(k)},")
+    for line in lines:
+        if env_re.match(line):
+            if not replaced:
+                new_lines.append(env_line)
+                replaced = True
+        else:
+            new_lines.append(line)
+    if not replaced:
+        if new_lines and not new_lines[-1].endswith("\n"):
+            new_lines[-1] += "\n"
+        new_lines.append(env_line)
+    validate_and_write_local("".join(new_lines))
+    reload_mango()
+    print(json.dumps({"envs": get_envs()}, separators=(",", ":")))
+
+elif cmd == "env-remove":
+    if len(args) < 1:
+        sys.exit("Usage: apply-local-setting.sh env-remove <KEY>")
+    k = args[0].strip()
+    lines = read_lines(local_conf)
+    env_re = re.compile(rf"^\s*env\s*=\s*{re.escape(k)},")
+    kept = [line for line in lines if not env_re.match(line)]
+    atomic_write(local_conf, "".join(kept))
+    reload_mango()
+    print(json.dumps({"envs": get_envs()}, separators=(",", ":")))
+
+elif cmd == "bind-list":
+    print(json.dumps({"customBinds": get_custom_binds()}, separators=(",", ":")))
+
+elif cmd == "bind-add":
+    if len(args) < 3:
+        sys.exit("Usage: apply-local-setting.sh bind-add <mods> <key> <action> [arg]")
+    mods, bkey, action = args[0].strip(), args[1].strip(), args[2].strip()
+    arg = " ".join(args[3:]).strip() if len(args) > 3 else ""
+    if not mods or not bkey or not action or "\n" in (mods + bkey + action + arg):
+        sys.exit("Invalid bind specification")
+    bind_line = f"bind={mods},{bkey},{action},{arg}\n" if arg else f"bind={mods},{bkey},{action}\n"
+    lines = read_lines(local_conf)
+    if not any(line.strip() == bind_line.strip() for line in lines):
+        if lines and not lines[-1].endswith("\n"):
+            lines[-1] += "\n"
+        lines.append(bind_line)
+        validate_and_write_local("".join(lines))
+        reload_mango()
+    print(json.dumps({"customBinds": get_custom_binds()}, separators=(",", ":")))
+
+elif cmd == "bind-remove":
+    if len(args) < 1:
+        sys.exit("Usage: apply-local-setting.sh bind-remove <raw_line>")
+    raw_target = " ".join(args).strip()
+    lines = read_lines(local_conf)
+    kept = [line for line in lines if line.strip() != raw_target]
+    atomic_write(local_conf, "".join(kept))
+    reload_mango()
+    print(json.dumps({"customBinds": get_custom_binds()}, separators=(",", ":")))
 
 elif cmd == "reset":
     atomic_write(local_conf, HEADER)

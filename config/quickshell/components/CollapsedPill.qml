@@ -10,7 +10,8 @@ RowLayout {
 
     property var player: null
 
-    readonly property bool hasMedia: root.player !== null
+    readonly property bool hasMedia: ShellState.pillShowMedia
+        && root.player !== null
         && (root.player.isPlaying || (root.player.trackTitle && root.player.trackTitle.length > 0))
     readonly property bool isPlaying: root.player !== null && root.player.isPlaying
     readonly property string artUrl: (root.player && root.player.trackArtUrl) ? root.player.trackArtUrl : ""
@@ -143,7 +144,7 @@ RowLayout {
                     to: 360
                     duration: 12000
                     loops: Animation.Infinite
-                    running: root.isPlaying && root.visible
+                    running: root.isPlaying && root.visible && ShellState.pillSpinArt && !Theme.reducedMotion
                 }
 
                 Image {
@@ -184,7 +185,7 @@ RowLayout {
             Row {
                 Layout.alignment: Qt.AlignVCenter
                 spacing: 2
-                visible: root.isPlaying
+                visible: root.isPlaying && ShellState.pillShowEqualizer && !Theme.reducedMotion
 
                 Repeater {
                     model: [

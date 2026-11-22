@@ -81,8 +81,16 @@ ShellRoot {
         onNotification: notification => {
             notification.tracked = true;
             ShellState.recordNotification(notification);
-            if (!ShellState.dnd)
+            const allowBanner = !ShellState.dnd || (ShellState.dndAllowCritical && Number(notification.urgency || 0) === 2);
+            if (allowBanner) {
                 root.forEachIsland(isl => isl.showNotification(notification));
+                if (ShellState.notifSoundEnabled && !ShellState.dnd) {
+                    Quickshell.execDetached([
+                        "sh", "-c",
+                        "for s in /usr/share/sounds/freedesktop/stereo/message-new-instant.oga /usr/share/sounds/freedesktop/stereo/message.oga /usr/share/sounds/freedesktop/stereo/bell.oga; do [ -f \"$s\" ] && { command -v paplay >/dev/null && paplay \"$s\" || command -v pw-play >/dev/null && pw-play \"$s\"; } && break; done"
+                    ]);
+                }
+            }
         }
     }
 
@@ -104,14 +112,15 @@ ShellRoot {
                     screen: screenScope.modelData
 
                     anchors {
-                        top: true
+                        top: ShellState.simpleBarPosition !== "bottom"
+                        bottom: ShellState.simpleBarPosition === "bottom"
                         left: true
                         right: true
                     }
 
-                    exclusiveZone: 28
+                    exclusiveZone: ShellState.simpleBarHeight
                     exclusionMode: ExclusionMode.Normal
-                    implicitHeight: 28
+                    implicitHeight: ShellState.simpleBarHeight
                     color: "transparent"
 
                     WlrLayershell.layer: WlrLayer.Top
@@ -239,6 +248,10 @@ ShellRoot {
 
         function toggleKeepAwake(): void {
             ShellState.toggleKeepAwake();
+        }
+
+        function clearClipboard(): void {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "clear-clipboard"]);
         }
     }
 }

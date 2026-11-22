@@ -11,6 +11,7 @@ ColumnLayout {
 
     property string kbLayout: "us,ara"
     property string kbOptions: "grp:alt_shift_toggle"
+    property string kbModel: "pc105"
     property bool numlockOn: false
     property int repeatRate: 30
     property int repeatDelay: 450
@@ -18,6 +19,10 @@ ColumnLayout {
     property int mouseAccelProfile: 2
     property real mouseAccelSpeed: 0.0
     property bool mouseNaturalScroll: false
+    property bool mouseLeftHanded: false
+    property bool mouseMiddleEmu: false
+    property real axisScrollFactor: 1.0
+    property int mouseScrollMethod: 0
 
     property bool tapToClick: true
     property bool trackpadNaturalScroll: false
@@ -25,6 +30,14 @@ ColumnLayout {
     property bool disableTrackpad: false
     property int trackpadAccelProfile: 2
     property real trackpadAccelSpeed: 0.0
+    property bool trackpadLeftHanded: false
+    property bool trackpadMiddleEmu: false
+    property real trackpadScrollFactor: 1.0
+    property int trackpadClickMethod: 2
+    property int trackpadScrollMethod: 1
+    property bool tapAndDrag: true
+    property bool dragLock: false
+    property int swipeMinThreshold: 1
 
     function loadSettings(): void {
         if (!readProc.running)
@@ -32,34 +45,33 @@ ColumnLayout {
     }
 
     function setSetting(key: string, val: var): void {
-        if (key === "xkb_rules_layout")
-            root.kbLayout = String(val);
-        else if (key === "xkb_rules_options")
-            root.kbOptions = String(val);
-        else if (key === "numlock_on")
-            root.numlockOn = !!val;
-        else if (key === "repeat_rate")
-            root.repeatRate = Number(val);
-        else if (key === "repeat_delay")
-            root.repeatDelay = Number(val);
-        else if (key === "mouse_accel_profile")
-            root.mouseAccelProfile = Number(val);
-        else if (key === "mouse_accel_speed")
-            root.mouseAccelSpeed = Number(val);
-        else if (key === "mouse_natural_scrolling")
-            root.mouseNaturalScroll = !!val;
-        else if (key === "tap_to_click")
-            root.tapToClick = !!val;
-        else if (key === "trackpad_natural_scrolling")
-            root.trackpadNaturalScroll = !!val;
-        else if (key === "trackpad_disable_while_typing")
-            root.disableWhileTyping = !!val;
-        else if (key === "disable_trackpad")
-            root.disableTrackpad = !!val;
-        else if (key === "trackpad_accel_profile")
-            root.trackpadAccelProfile = Number(val);
-        else if (key === "trackpad_accel_speed")
-            root.trackpadAccelSpeed = Number(val);
+        if (key === "xkb_rules_layout") root.kbLayout = String(val);
+        else if (key === "xkb_rules_options") root.kbOptions = String(val);
+        else if (key === "xkb_rules_model") root.kbModel = String(val);
+        else if (key === "numlock_on") root.numlockOn = !!val;
+        else if (key === "repeat_rate") root.repeatRate = Number(val);
+        else if (key === "repeat_delay") root.repeatDelay = Number(val);
+        else if (key === "mouse_accel_profile") root.mouseAccelProfile = Number(val);
+        else if (key === "mouse_accel_speed") root.mouseAccelSpeed = Number(val);
+        else if (key === "mouse_natural_scrolling") root.mouseNaturalScroll = !!val;
+        else if (key === "mouse_left_handed") root.mouseLeftHanded = !!val;
+        else if (key === "mouse_middle_button_emulation") root.mouseMiddleEmu = !!val;
+        else if (key === "axis_scroll_factor") root.axisScrollFactor = Number(val);
+        else if (key === "mouse_scroll_method") root.mouseScrollMethod = Number(val);
+        else if (key === "tap_to_click") root.tapToClick = !!val;
+        else if (key === "trackpad_natural_scrolling") root.trackpadNaturalScroll = !!val;
+        else if (key === "trackpad_disable_while_typing") root.disableWhileTyping = !!val;
+        else if (key === "disable_trackpad") root.disableTrackpad = !!val;
+        else if (key === "trackpad_accel_profile") root.trackpadAccelProfile = Number(val);
+        else if (key === "trackpad_accel_speed") root.trackpadAccelSpeed = Number(val);
+        else if (key === "trackpad_left_handed") root.trackpadLeftHanded = !!val;
+        else if (key === "trackpad_middle_button_emulation") root.trackpadMiddleEmu = !!val;
+        else if (key === "trackpad_scroll_factor") root.trackpadScrollFactor = Number(val);
+        else if (key === "trackpad_click_method") root.trackpadClickMethod = Number(val);
+        else if (key === "trackpad_scroll_method") root.trackpadScrollMethod = Number(val);
+        else if (key === "tap_and_drag") root.tapAndDrag = !!val;
+        else if (key === "drag_lock") root.dragLock = !!val;
+        else if (key === "swipe_min_threshold") root.swipeMinThreshold = Number(val);
 
         const outVal = (typeof val === "boolean") ? (val ? "1" : "0") : String(val);
         Quickshell.execDetached([Quickshell.shellPath("scripts/apply-local-setting.sh"), "set", key, outVal]);
@@ -107,6 +119,19 @@ ColumnLayout {
                         root.trackpadAccelProfile = d.trackpad_accel_profile;
                     if (typeof d.trackpad_accel_speed === "number")
                         root.trackpadAccelSpeed = d.trackpad_accel_speed;
+                    if (typeof d.xkb_rules_model === "string") root.kbModel = d.xkb_rules_model;
+                    if (typeof d.mouse_left_handed === "boolean") root.mouseLeftHanded = d.mouse_left_handed;
+                    if (typeof d.mouse_middle_button_emulation === "boolean") root.mouseMiddleEmu = d.mouse_middle_button_emulation;
+                    if (typeof d.axis_scroll_factor === "number") root.axisScrollFactor = d.axis_scroll_factor;
+                    if (typeof d.mouse_scroll_method === "number") root.mouseScrollMethod = d.mouse_scroll_method;
+                    if (typeof d.trackpad_left_handed === "boolean") root.trackpadLeftHanded = d.trackpad_left_handed;
+                    if (typeof d.trackpad_middle_button_emulation === "boolean") root.trackpadMiddleEmu = d.trackpad_middle_button_emulation;
+                    if (typeof d.trackpad_scroll_factor === "number") root.trackpadScrollFactor = d.trackpad_scroll_factor;
+                    if (typeof d.trackpad_click_method === "number") root.trackpadClickMethod = d.trackpad_click_method;
+                    if (typeof d.trackpad_scroll_method === "number") root.trackpadScrollMethod = d.trackpad_scroll_method;
+                    if (typeof d.tap_and_drag === "boolean") root.tapAndDrag = d.tap_and_drag;
+                    if (typeof d.drag_lock === "boolean") root.dragLock = d.drag_lock;
+                    if (typeof d.swipe_min_threshold === "number") root.swipeMinThreshold = d.swipe_min_threshold;
                 } catch (err) {}
             }
         }
@@ -456,6 +481,87 @@ ColumnLayout {
                     onToggled: root.setSetting("numlock_on", !root.numlockOn)
                 }
             }
+
+            // Keyboard Model
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 115
+                    text: "Keyboard Model"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: ["pc104", "pc105", "macbook79"]
+
+                    delegate: Rectangle {
+                        id: modChip
+                        required property string modelData
+                        readonly property bool selected: root.kbModel === modChip.modelData
+
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: modChip.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
+                        border.width: modChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: modChip.selected ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: modChip.modelData
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: modChip.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.setSetting("xkb_rules_model", modChip.modelData)
+                        }
+                    }
+                }
+            }
+
+            // Live Key Repeat & Layout Test Box
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 30
+                radius: Theme.r(8)
+                color: Theme.subCardBg
+                border.width: kbTestIn.activeFocus ? 1 : Theme.cardBorderWidth
+                border.color: kbTestIn.activeFocus ? Theme.primary : Theme.cardBorder
+
+                Item {
+                    anchors.fill: parent
+                    anchors.leftMargin: 9
+                    anchors.rightMargin: 9
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Type here to test key repeat rate, delay & layout switching..."
+                        visible: kbTestIn.text.length === 0
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        color: Theme.fgSurfaceVariant
+                    }
+
+                    TextInput {
+                        id: kbTestIn
+                        anchors.fill: parent
+                        verticalAlignment: TextInput.AlignVCenter
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        color: Theme.fgSurface
+                        clip: true
+                    }
+                }
+            }
         }
     }
 
@@ -578,6 +684,53 @@ ColumnLayout {
                 ToggleSwitch {
                     checked: root.mouseNaturalScroll
                     onToggled: root.setSetting("mouse_natural_scrolling", !root.mouseNaturalScroll)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Text { Layout.fillWidth: true; text: "Left-Handed Mouse Buttons"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: root.mouseLeftHanded; onToggled: root.setSetting("mouse_left_handed", !root.mouseLeftHanded) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Text { Layout.fillWidth: true; text: "Middle-Button Emulation (Left + Right Click)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: root.mouseMiddleEmu; onToggled: root.setSetting("mouse_middle_button_emulation", !root.mouseMiddleEmu) }
+            }
+
+            StepControl {
+                label: "Mouse Wheel Scroll Factor"
+                displayValue: root.axisScrollFactor.toFixed(1) + "x"
+                onDecremented: root.setSetting("axis_scroll_factor", Number(Math.max(0.2, root.axisScrollFactor - 0.2).toFixed(1)))
+                onIncremented: root.setSetting("axis_scroll_factor", Number(Math.min(4.0, root.axisScrollFactor + 0.2).toFixed(1)))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text { Layout.preferredWidth: 115; text: "Scroll Method"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+
+                Repeater {
+                    model: [
+                        { label: "Wheel", val: 0 },
+                        { label: "Button Drag", val: 3 }
+                    ]
+
+                    delegate: Rectangle {
+                        id: mScrBtn
+                        required property var modelData
+                        readonly property bool selected: root.mouseScrollMethod === mScrBtn.modelData.val
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: mScrBtn.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
+                        border.width: mScrBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.color: mScrBtn.selected ? Theme.primary : Theme.cardBorder
+                        Text { anchors.centerIn: parent; text: mScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; color: mScrBtn.selected ? Theme.primary : Theme.fgSurface }
+                        MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("mouse_scroll_method", mScrBtn.modelData.val) }
+                    }
                 }
             }
         }
@@ -703,6 +856,77 @@ ColumnLayout {
                 accentColor: Theme.secondary
                 onDecremented: root.setSetting("trackpad_accel_speed", Number(Math.max(-1.0, root.trackpadAccelSpeed - 0.1).toFixed(1)))
                 onIncremented: root.setSetting("trackpad_accel_speed", Number(Math.min(1.0, root.trackpadAccelSpeed + 0.1).toFixed(1)))
+            }
+
+            Repeater {
+                model: [
+                    { key: "tap_and_drag",                      label: "Tap and Drag",              val: root.tapAndDrag },
+                    { key: "drag_lock",                         label: "Drag Lock",                 val: root.dragLock },
+                    { key: "trackpad_left_handed",              label: "Left-Handed Touchpad",      val: root.trackpadLeftHanded },
+                    { key: "trackpad_middle_button_emulation",  label: "Emulate Middle Click",      val: root.trackpadMiddleEmu }
+                ]
+
+                delegate: RowLayout {
+                    id: tpExtRow
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Text { Layout.fillWidth: true; text: tpExtRow.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                    ToggleSwitch { checked: tpExtRow.modelData.val; activeColor: Theme.secondary; onToggled: root.setSetting(tpExtRow.modelData.key, !tpExtRow.modelData.val) }
+                }
+            }
+
+            StepControl {
+                label: "Touchpad Scroll Speed"
+                displayValue: root.trackpadScrollFactor.toFixed(1) + "x"
+                accentColor: Theme.secondary
+                onDecremented: root.setSetting("trackpad_scroll_factor", Number(Math.max(0.2, root.trackpadScrollFactor - 0.2).toFixed(1)))
+                onIncremented: root.setSetting("trackpad_scroll_factor", Number(Math.min(4.0, root.trackpadScrollFactor + 0.2).toFixed(1)))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                Text { Layout.preferredWidth: 115; text: "Click Method"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Repeater {
+                    model: [{ label: "Button Areas", val: 1 }, { label: "Clickfinger", val: 2 }]
+                    delegate: Rectangle {
+                        id: tpClkBtn
+                        required property var modelData
+                        readonly property bool selected: root.trackpadClickMethod === tpClkBtn.modelData.val
+                        Layout.fillWidth: true; implicitHeight: 24; radius: Theme.r(7)
+                        color: tpClkBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
+                        border.width: tpClkBtn.selected ? 1 : Theme.cardBorderWidth; border.color: tpClkBtn.selected ? Theme.secondary : Theme.cardBorder
+                        Text { anchors.centerIn: parent; text: tpClkBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; color: tpClkBtn.selected ? Theme.secondary : Theme.fgSurface }
+                        MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("trackpad_click_method", tpClkBtn.modelData.val) }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                Text { Layout.preferredWidth: 115; text: "Scroll Gesture"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Repeater {
+                    model: [{ label: "Two-Finger", val: 1 }, { label: "Edge", val: 2 }]
+                    delegate: Rectangle {
+                        id: tpScrBtn
+                        required property var modelData
+                        readonly property bool selected: root.trackpadScrollMethod === tpScrBtn.modelData.val
+                        Layout.fillWidth: true; implicitHeight: 24; radius: Theme.r(7)
+                        color: tpScrBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
+                        border.width: tpScrBtn.selected ? 1 : Theme.cardBorderWidth; border.color: tpScrBtn.selected ? Theme.secondary : Theme.cardBorder
+                        Text { anchors.centerIn: parent; text: tpScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; color: tpScrBtn.selected ? Theme.secondary : Theme.fgSurface }
+                        MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("trackpad_scroll_method", tpScrBtn.modelData.val) }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "Swipe Threshold"
+                displayValue: String(root.swipeMinThreshold)
+                accentColor: Theme.secondary
+                onDecremented: root.setSetting("swipe_min_threshold", Math.max(1, root.swipeMinThreshold - 1))
+                onIncremented: root.setSetting("swipe_min_threshold", Math.min(10, root.swipeMinThreshold + 1))
             }
         }
     }

@@ -14,6 +14,10 @@ ColumnLayout {
     property var mimeDefaults: ({})
     property var startupUserItems: []
     property var startupBuiltinItems: []
+    property var hiddenIds: []
+    property var hiddenPrefixes: []
+    property var envVars: []
+    property string envStatus: ""
 
     readonly property var quickRoles: [
         { role: "terminal", key: "defaultTerminal",    label: "Terminal",     bindHint: "SUPER + Return", icon: "󰆍" },
@@ -42,6 +46,49 @@ ColumnLayout {
             defaultsProc.running = true;
         if (!startupProc.running)
             startupProc.running = true;
+        if (!hiddenGetProc.running)
+            hiddenGetProc.running = true;
+        if (!envListProc.running)
+            envListProc.running = true;
+    }
+
+    function addHidden(kind: string, val: string): void {
+        const clean = (val || "").trim();
+        if (clean.length === 0 || hiddenMutProc.running)
+            return;
+        hiddenMutProc.command = [Quickshell.shellPath("scripts/manage-settings.sh"), "hidden-apps-add", kind, clean];
+        hiddenMutProc.running = true;
+    }
+
+    function removeHidden(kind: string, val: string): void {
+        if (hiddenMutProc.running)
+            return;
+        hiddenMutProc.command = [Quickshell.shellPath("scripts/manage-settings.sh"), "hidden-apps-remove", kind, val];
+        hiddenMutProc.running = true;
+    }
+
+    function addEnv(k: string, v: string): void {
+        const ck = (k || "").trim();
+        const cv = (v || "").trim();
+        if (ck.length === 0 || cv.length === 0 || envMutProc.running)
+            return;
+        envMutProc.command = [Quickshell.shellPath("scripts/apply-local-setting.sh"), "env-add", ck, cv];
+        envMutProc.running = true;
+    }
+
+    function removeEnv(k: string): void {
+        if (envMutProc.running)
+            return;
+        envMutProc.command = [Quickshell.shellPath("scripts/apply-local-setting.sh"), "env-remove", k];
+        envMutProc.running = true;
+    }
+
+    function applyHiddenPayload(raw: string): void {
+        try {
+            const d = JSON.parse((raw || "").trim());
+            root.hiddenIds = Array.isArray(d.hiddenIds) ? d.hiddenIds : [];
+            root.hiddenPrefixes = Array.isArray(d.hiddenNamePrefixes) ? d.hiddenNamePrefixes : [];
+        } catch (err) {}
     }
 
     function setMimeDefault(mime: string, desktopId: string): void {
@@ -121,6 +168,47 @@ ColumnLayout {
         id: startupMutProc
         stdout: StdioCollector {
             onStreamFinished: root.applyStartupPayload(text)
+        }
+    }
+
+    Process {
+        id: hiddenGetProc
+        command: [Quickshell.shellPath("scripts/manage-settings.sh"), "hidden-apps-get"]
+        stdout: StdioCollector {
+            onStreamFinished: root.applyHiddenPayload(text)
+        }
+    }
+
+    Process {
+        id: hiddenMutProc
+        stdout: StdioCollector {
+            onStreamFinished: root.applyHiddenPayload(text)
+        }
+    }
+
+    Process {
+        id: envListProc
+        command: [Quickshell.shellPath("scripts/apply-local-setting.sh"), "env-list"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    root.envVars = Array.isArray(d.envs) ? d.envs : [];
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: envMutProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    root.envVars = Array.isArray(d.envs) ? d.envs : [];
+                    root.envStatus = "Environment saved & verified with mango -p";
+                } catch (err) {}
+            }
         }
     }
 
@@ -695,6 +783,275 @@ ColumnLayout {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // --- 4. App Launcher Visibility (hidden-apps.json) ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: hidCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: hidCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            Text {
+                text: "APP LAUNCHER VISIBILITY (HIDDEN-APPS.JSON)"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: Theme.subCardBg
+                    border.width: hideIn.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.color: hideIn.activeFocus ? Theme.primary : Theme.cardBorder
+
+                    Item {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Desktop ID or name prefix to hide (e.g. qdbusviewer)..."
+                            visible: hideIn.text.length === 0
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        TextInput {
+                            id: hideIn
+                            anchors.fill: parent
+                            verticalAlignment: TextInput.AlignVCenter
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: Theme.fgSurface
+                            clip: true
+                        }
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 28
+                    implicitWidth: hidIdLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: hidIdMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+
+                    Text { id: hidIdLbl; anchors.centerIn: parent; text: "Hide ID"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgPrimary }
+                    MouseArea { id: hidIdMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.addHidden("id", hideIn.text); hideIn.text = ""; } }
+                }
+
+                Rectangle {
+                    implicitHeight: 28
+                    implicitWidth: hidPfLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: hidPfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text { id: hidPfLbl; anchors.centerIn: parent; text: "Hide Prefix"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.secondary }
+                    MouseArea { id: hidPfMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.addHidden("prefix", hideIn.text); hideIn.text = ""; } }
+                }
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 5
+
+                Repeater {
+                    model: root.hiddenIds
+
+                    delegate: Rectangle {
+                        id: hidTag
+                        required property string modelData
+                        implicitHeight: 22
+                        implicitWidth: hidTagRow.implicitWidth + 12
+                        radius: Theme.r(6)
+                        color: Theme.subCardBg
+                        border.width: Theme.cardBorderWidth
+                        border.color: Theme.cardBorder
+
+                        RowLayout {
+                            id: hidTagRow
+                            anchors.centerIn: parent
+                            spacing: 5
+
+                            Text { text: hidTag.modelData; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurface }
+                            Text { text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: 9; color: Theme.error }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.removeHidden("id", hidTag.modelData)
+                        }
+                    }
+                }
+            }
+
+            Flow {
+                visible: root.hiddenPrefixes.length > 0
+                Layout.fillWidth: true
+                spacing: 5
+
+                Repeater {
+                    model: root.hiddenPrefixes
+
+                    delegate: Rectangle {
+                        id: pfTag
+                        required property string modelData
+                        implicitHeight: 22
+                        implicitWidth: pfTagRow.implicitWidth + 12
+                        radius: Theme.r(6)
+                        color: Theme.withAlpha(Theme.secondary, 0.14)
+                        border.width: Theme.cardBorderWidth
+                        border.color: Theme.withAlpha(Theme.secondary, 0.4)
+
+                        RowLayout {
+                            id: pfTagRow
+                            anchors.centerIn: parent
+                            spacing: 5
+
+                            Text { text: "prefix:" + pfTag.modelData; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.secondary }
+                            Text { text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: 9; color: Theme.error }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.removeHidden("prefix", pfTag.modelData)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 5. Session Environment Variables (env= in local.conf) ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: envCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: envCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 8
+
+            RowLayout {
+                Layout.fillWidth: true
+                Text { Layout.fillWidth: true; text: "SESSION ENVIRONMENT VARIABLES (env= IN local.conf)"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
+                Text { visible: root.envStatus.length > 0; text: root.envStatus; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.success }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Rectangle {
+                    Layout.preferredWidth: 160
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: Theme.subCardBg
+                    border.width: envKeyIn.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.color: envKeyIn.activeFocus ? Theme.primary : Theme.cardBorder
+
+                    Item {
+                        anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: "VARIABLE"; visible: envKeyIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
+                        TextInput { id: envKeyIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface; clip: true }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: Theme.subCardBg
+                    border.width: envValIn.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.color: envValIn.activeFocus ? Theme.primary : Theme.cardBorder
+
+                    Item {
+                        anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Value (e.g. wayland)"; visible: envValIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
+                        TextInput { id: envValIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface; clip: true }
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 28
+                    implicitWidth: addEnvLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: addEnvMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+                    Text { id: addEnvLbl; anchors.centerIn: parent; text: "Add Env"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgPrimary }
+                    MouseArea {
+                        id: addEnvMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.addEnv(envKeyIn.text, envValIn.text);
+                            envKeyIn.text = "";
+                            envValIn.text = "";
+                        }
+                    }
+                }
+            }
+
+            Repeater {
+                model: root.envVars
+
+                delegate: Rectangle {
+                    id: envRow
+                    required property var modelData
+                    Layout.fillWidth: true
+                    implicitHeight: 30
+                    radius: Theme.r(8)
+                    color: Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    RowLayout {
+                        anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 6; spacing: 8
+                        Text { text: envRow.modelData.key; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.secondary }
+                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "= " + envRow.modelData.value; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+
+                        Rectangle {
+                            implicitWidth: 20; implicitHeight: 20; radius: Theme.r(5)
+                            color: delEnvMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : "transparent"
+                            Text { anchors.centerIn: parent; text: "󰆴"; font.family: Theme.iconFont; font.pixelSize: 11; color: delEnvMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant }
+                            MouseArea { id: delEnvMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.removeEnv(envRow.modelData.key) }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                visible: root.envVars.length === 0
+                text: "No custom environment variables defined in local.conf"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                color: Theme.fgSurfaceVariant
             }
         }
     }

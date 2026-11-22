@@ -10,10 +10,10 @@ MANGO_CONF="$HOME/.config/mango/config.conf"
 AUTOSTART_SH="$HOME/.config/mango/autostart.sh"
 
 case "$CMD" in
-    prefs-get|prefs-set|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light)
+    prefs-get|prefs-set|prefs-reset|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
         ;;
     *)
-        echo "Usage: manage-settings.sh <prefs-get|prefs-set|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light> [args...]" >&2
+        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-reset|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
         exit 1
         ;;
 esac
@@ -63,19 +63,48 @@ def detect_first(candidates, fallback):
 def default_prefs():
     return {
         "dnd": False,
+        "dndAllowCritical": True,
+        "notifSoundEnabled": False,
         "notifTimeoutMs": 4500,
+        "notifMaxHistory": 40,
         "clock24h": True,
         "clockShowSeconds": False,
         "dateFormat": "ddd d MMM",
         "keepAwake": False,
         "uiFontFamily": "JetBrains Mono",
         "uiFontSize": 10,
+        "iconTheme": "Adwaita",
+        "matugenType": "scheme-tonal-spot",
+        "matugenContrast": 0.0,
+        "wallpaperTransition": "grow",
+        "wallpaperFps": 60,
+        "wallpaperDuration": 0.85,
+        "wallpaperResize": "crop",
         "nightLightEnabled": False,
         "nightLightTemp": 4500,
         "defaultTerminal": detect_first(["foot", "kitty", "alacritty", "wezterm", "ghostty", "konsole"], "foot"),
         "defaultBrowser": detect_first(["helium", "firefox", "librewolf", "chromium", "google-chrome", "brave"], "firefox"),
         "defaultEditor": detect_first(["zedit", "zed", "code", "codium", "kate", "mousepad"], "zedit"),
         "defaultFileManager": detect_first(["thunar", "dolphin", "nautilus", "nemo", "pcmanfm-qt", "pcmanfm"], "thunar"),
+        "islandHoverExpand": True,
+        "islandHoverDelayMs": 220,
+        "islandCollapseDelayMs": 700,
+        "pillShowMedia": True,
+        "pillSpinArt": True,
+        "pillShowEqualizer": True,
+        "osdEnabled": True,
+        "osdTimeoutMs": 1800,
+        "simpleBarHeight": 28,
+        "simpleBarPosition": "top",
+        "simpleBarShowLayout": True,
+        "simpleBarShowDate": True,
+        "reducedMotion": False,
+        "highContrast": False,
+        "audioOverAmp": False,
+        "screenshotDir": "~/Pictures/Screenshots",
+        "screenshotCopyClipboard": True,
+        "screenshotNotify": True,
+        "screenshotDelay": 0,
     }
 
 
@@ -203,11 +232,45 @@ def cmd_prefs_set():
     prefs[key] = coerce_value(key, raw_val, prefs[key])
     if key == "notifTimeoutMs":
         prefs[key] = max(1500, min(15000, int(prefs[key])))
+    elif key == "notifMaxHistory":
+        prefs[key] = max(10, min(200, int(prefs[key])))
     elif key == "uiFontSize":
         prefs[key] = max(8, min(18, int(prefs[key])))
     elif key == "nightLightTemp":
         prefs[key] = max(2500, min(6500, int(prefs[key])))
+    elif key == "islandHoverDelayMs":
+        prefs[key] = max(50, min(1500, int(prefs[key])))
+    elif key == "islandCollapseDelayMs":
+        prefs[key] = max(200, min(4000, int(prefs[key])))
+    elif key == "osdTimeoutMs":
+        prefs[key] = max(800, min(6000, int(prefs[key])))
+    elif key == "simpleBarHeight":
+        prefs[key] = max(22, min(44, int(prefs[key])))
+    elif key == "simpleBarPosition":
+        prefs[key] = "bottom" if str(prefs[key]).strip().lower() == "bottom" else "top"
+    elif key == "matugenContrast":
+        prefs[key] = round(max(-1.0, min(1.0, float(prefs[key]))), 2)
+    elif key == "wallpaperFps":
+        prefs[key] = max(24, min(240, int(prefs[key])))
+    elif key == "wallpaperDuration":
+        prefs[key] = round(max(0.1, min(3.0, float(prefs[key]))), 2)
+    elif key == "screenshotDelay":
+        prefs[key] = max(0, min(10, int(prefs[key])))
+
+    if shutil.which("gsettings"):
+        if key == "clock24h":
+            subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "clock-format", "24h" if prefs[key] else "12h"], stderr=subprocess.DEVNULL)
+        elif key == "reducedMotion":
+            subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "enable-animations", "false" if prefs[key] else "true"], stderr=subprocess.DEVNULL)
+        elif key == "highContrast":
+            subprocess.run(["gsettings", "set", "org.gnome.desktop.a11y.interface", "high-contrast", "true" if prefs[key] else "false"], stderr=subprocess.DEVNULL)
+
     print(json.dumps(save_prefs(prefs)))
+
+
+def cmd_prefs_reset():
+    defaults = default_prefs()
+    print(json.dumps(save_prefs(defaults)))
 
 
 def cmd_set_font():
@@ -713,9 +776,67 @@ def cmd_night_light():
     print(json.dumps(prefs))
 
 
+def load_hidden_apps_payload():
+    hidden_path = os.path.join(os.path.dirname(prefs_path), "hidden-apps.json")
+    data = {"hiddenIds": [], "hiddenNamePrefixes": []}
+    if os.path.exists(hidden_path):
+        try:
+            with open(hidden_path, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+            if isinstance(raw, dict):
+                data["hiddenIds"] = [str(x) for x in raw.get("hiddenIds", []) if str(x).strip()]
+                data["hiddenNamePrefixes"] = [str(x) for x in raw.get("hiddenNamePrefixes", []) if str(x).strip()]
+        except Exception:
+            pass
+    installed = []
+    for a in scan_desktop_apps():
+        base_id = a["id"][:-8] if a["id"].endswith(".desktop") else a["id"]
+        installed.append({"id": base_id, "name": a["name"]})
+    data["installedApps"] = installed
+    return hidden_path, data
+
+
+def cmd_hidden_apps_get():
+    _, payload = load_hidden_apps_payload()
+    print(json.dumps(payload))
+
+
+def cmd_hidden_apps_add():
+    if len(args) < 2:
+        sys.exit("Usage: manage-settings.sh hidden-apps-add <id|prefix> <value>")
+    kind, val = args[0].strip().lower(), " ".join(args[1:]).strip()
+    if not val:
+        sys.exit("Empty value")
+    hidden_path, payload = load_hidden_apps_payload()
+    target_key = "hiddenNamePrefixes" if kind == "prefix" else "hiddenIds"
+    lst = list(payload[target_key])
+    if val not in lst:
+        lst.append(val)
+    to_save = {"hiddenIds": payload["hiddenIds"], "hiddenNamePrefixes": payload["hiddenNamePrefixes"]}
+    to_save[target_key] = lst
+    atomic_write_text(hidden_path, json.dumps(to_save, indent=2) + "\n")
+    _, refreshed = load_hidden_apps_payload()
+    print(json.dumps(refreshed))
+
+
+def cmd_hidden_apps_remove():
+    if len(args) < 2:
+        sys.exit("Usage: manage-settings.sh hidden-apps-remove <id|prefix> <value>")
+    kind, val = args[0].strip().lower(), " ".join(args[1:]).strip()
+    hidden_path, payload = load_hidden_apps_payload()
+    target_key = "hiddenNamePrefixes" if kind == "prefix" else "hiddenIds"
+    lst = [x for x in payload[target_key] if x != val]
+    to_save = {"hiddenIds": payload["hiddenIds"], "hiddenNamePrefixes": payload["hiddenNamePrefixes"]}
+    to_save[target_key] = lst
+    atomic_write_text(hidden_path, json.dumps(to_save, indent=2) + "\n")
+    _, refreshed = load_hidden_apps_payload()
+    print(json.dumps(refreshed))
+
+
 DISPATCH = {
     "prefs-get": cmd_prefs_get,
     "prefs-set": cmd_prefs_set,
+    "prefs-reset": cmd_prefs_reset,
     "set-font": cmd_set_font,
     "list-fonts": cmd_list_fonts,
     "defaults-get": cmd_defaults_get,
@@ -726,6 +847,9 @@ DISPATCH = {
     "keybinds-list": cmd_keybinds_list,
     "system-info": cmd_system_info,
     "night-light": cmd_night_light,
+    "hidden-apps-get": cmd_hidden_apps_get,
+    "hidden-apps-add": cmd_hidden_apps_add,
+    "hidden-apps-remove": cmd_hidden_apps_remove,
 }
 
 DISPATCH[cmd]()

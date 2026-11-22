@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Io
 import ".."
 
@@ -13,10 +14,28 @@ ColumnLayout {
     property string statusMsg: ""
     property string pendingSsid: ""
     property var networks: []
+    property var interfaces: []
+    property string gateway: ""
+    property var dnsList: []
+    property bool hasNmcli: DeviceCaps.hasNmcli
+    property var connections: []
 
     function refresh(): void {
-        if (!wifiListProc.running)
+        if (!netInfoProc.running)
+            netInfoProc.running = true;
+        if (DeviceCaps.hasWifi && !wifiListProc.running)
             wifiListProc.running = true;
+    }
+
+    function nmAction(act: string, conn: string, extraArg: string): void {
+        if (netActProc.running)
+            return;
+        root.busy = true;
+        const args = [Quickshell.shellPath("scripts/manage-system.sh"), "network-action", act, conn];
+        if (extraArg && extraArg.length > 0)
+            args.push(extraArg);
+        netActProc.command = args;
+        netActProc.running = true;
     }
 
     function toggleWifi(): void {
@@ -148,6 +167,39 @@ ColumnLayout {
         }
     }
 
+    Process {
+        id: netInfoProc
+        command: [Quickshell.shellPath("scripts/manage-system.sh"), "network-info"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    root.interfaces = Array.isArray(d.interfaces) ? d.interfaces : [];
+                    root.gateway = d.gateway || "";
+                    root.dnsList = Array.isArray(d.dns) ? d.dns : [];
+                    root.hasNmcli = !!d.hasNmcli;
+                    root.connections = Array.isArray(d.connections) ? d.connections : [];
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: netActProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.busy = false;
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    root.interfaces = Array.isArray(d.interfaces) ? d.interfaces : [];
+                    root.gateway = d.gateway || "";
+                    root.dnsList = Array.isArray(d.dns) ? d.dns : [];
+                    root.connections = Array.isArray(d.connections) ? d.connections : [];
+                } catch (err) {}
+            }
+        }
+    }
+
     Timer {
         id: refreshTimer
         interval: 400
@@ -155,8 +207,306 @@ ColumnLayout {
         onTriggered: root.refresh()
     }
 
-    // --- Wi-Fi Radio & Scan Header ---
+    // --- 1. Network Interfaces, IP, Gateway & DNS (Ethernet + Wi-Fi) ---
     Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: ifaceCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: ifaceCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "NETWORK INTERFACES, IP & DNS"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: netRefLbl.implicitWidth + 12
+                    radius: Theme.r(7)
+                    color: netRefMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: netRefLbl
+                        anchors.centerIn: parent
+                        text: "Refresh"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        id: netRefMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.refresh()
+                    }
+                }
+            }
+
+            Repeater {
+                model: root.interfaces
+
+                delegate: Rectangle {
+                    id: ifRow
+                    required property var modelData
+                    readonly property bool isUp: String(ifRow.modelData.state || "").toUpperCase() === "UP"
+
+                    Layout.fillWidth: true
+                    implicitHeight: ifInner.implicitHeight + 14
+                    radius: Theme.r(11)
+                    color: Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    ColumnLayout {
+                        id: ifInner
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 4
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: ifRow.modelData.kind === "wifi" ? "󰤨" : "󰈀"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 14
+                                color: ifRow.isUp ? Theme.success : Theme.fgSurfaceVariant
+                            }
+
+                            Text {
+                                text: ifRow.modelData.name
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                                color: Theme.fgSurface
+                            }
+
+                            Text {
+                                visible: (ifRow.modelData.speed || "").length > 0
+                                text: ifRow.modelData.speed
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                color: Theme.secondary
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: "RX " + ifRow.modelData.rxMb + "MB · TX " + ifRow.modelData.txMb + "MB"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 9
+                                color: Theme.fgSurfaceVariant
+                            }
+
+                            Rectangle {
+                                implicitHeight: 18
+                                implicitWidth: stLbl.implicitWidth + 10
+                                radius: Theme.r(5)
+                                color: ifRow.isUp ? Theme.withAlpha(Theme.success, 0.20) : Theme.cardBg
+
+                                Text {
+                                    id: stLbl
+                                    anchors.centerIn: parent
+                                    text: ifRow.modelData.state
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 9
+                                    font.weight: Font.Bold
+                                    color: ifRow.isUp ? Theme.success : Theme.fgSurfaceVariant
+                                }
+                            }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: "IP: " + ((ifRow.modelData.addrs && ifRow.modelData.addrs.length > 0) ? ifRow.modelData.addrs.join(" · ") : "Unassigned")
+                                + (ifRow.modelData.mac ? ("   MAC: " + ifRow.modelData.mac) : "")
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: Theme.fgSurfaceVariant
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                Text {
+                    text: "Gateway: " + (root.gateway.length > 0 ? root.gateway : "None")
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    color: Theme.fgSurface
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: "DNS: " + (root.dnsList.length > 0 ? root.dnsList.join(", ") : "Automatic")
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    color: Theme.primary
+                }
+            }
+        }
+    }
+
+    // --- 2. NetworkManager Profiles & Quick DNS Presets (when NM profiles exist) ---
+    Rectangle {
+        visible: root.hasNmcli && root.connections.length > 0
+        Layout.fillWidth: true
+        implicitHeight: nmCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: nmCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 8
+
+            Text {
+                text: "NETWORKMANAGER PROFILES & DNS PRESETS"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            Repeater {
+                model: root.connections
+
+                delegate: Rectangle {
+                    id: nmConnRow
+                    required property var modelData
+                    Layout.fillWidth: true
+                    implicitHeight: nmConnInner.implicitHeight + 14
+                    radius: Theme.r(10)
+                    color: Theme.subCardBg
+                    border.width: nmConnRow.modelData.active ? 1 : Theme.cardBorderWidth
+                    border.color: nmConnRow.modelData.active ? Theme.primary : Theme.cardBorder
+
+                    ColumnLayout {
+                        id: nmConnInner
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 6
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: nmConnRow.modelData.name + " (" + nmConnRow.modelData.type + ")"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                                color: Theme.fgSurface
+                            }
+
+                            Rectangle {
+                                implicitHeight: 22
+                                implicitWidth: nmTogLbl.implicitWidth + 12
+                                radius: Theme.r(6)
+                                color: Theme.cardBg
+                                border.width: Theme.cardBorderWidth
+                                border.color: Theme.cardBorder
+
+                                Text {
+                                    id: nmTogLbl
+                                    anchors.centerIn: parent
+                                    text: nmConnRow.modelData.active ? "Disconnect" : "Connect"
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 9
+                                    font.weight: Font.Bold
+                                    color: nmConnRow.modelData.active ? Theme.warning : Theme.primary
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.nmAction(nmConnRow.modelData.active ? "down" : "up", nmConnRow.modelData.name, "")
+                                }
+                            }
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: 5
+
+                            Repeater {
+                                model: [
+                                    { label: "DNS: Auto",       val: "auto" },
+                                    { label: "Cloudflare",      val: "1.1.1.1 1.0.0.1" },
+                                    { label: "Google",          val: "8.8.8.8 8.8.4.4" },
+                                    { label: "Quad9",           val: "9.9.9.9 149.112.112.112" }
+                                ]
+
+                                delegate: Rectangle {
+                                    id: dnsChip
+                                    required property var modelData
+                                    implicitHeight: 20
+                                    implicitWidth: dnsTxt.implicitWidth + 10
+                                    radius: Theme.r(6)
+                                    color: dnsMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
+                                    border.width: Theme.cardBorderWidth
+                                    border.color: Theme.cardBorder
+
+                                    Text {
+                                        id: dnsTxt
+                                        anchors.centerIn: parent
+                                        text: dnsChip.modelData.label
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: 9
+                                        color: Theme.fgSurfaceVariant
+                                    }
+
+                                    MouseArea {
+                                        id: dnsMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.nmAction("dns", nmConnRow.modelData.name, dnsChip.modelData.val)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 3. Wi-Fi Radio & Scan Header (shown only when Wi-Fi hardware exists) ---
+    Rectangle {
+        visible: DeviceCaps.hasWifi
         Layout.fillWidth: true
         implicitHeight: 48
         radius: Theme.r(14)
@@ -235,7 +585,7 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: 46
-        visible: root.pendingSsid.length > 0
+        visible: DeviceCaps.hasWifi && root.pendingSsid.length > 0
         radius: Theme.r(12)
         color: Theme.cardBg
         border.width: 1
@@ -320,7 +670,7 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: netCol.implicitHeight + 24
-        visible: root.wifiEnabled
+        visible: DeviceCaps.hasWifi && root.wifiEnabled
         radius: Theme.r(16)
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth

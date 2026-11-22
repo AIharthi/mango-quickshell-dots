@@ -12,17 +12,21 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
     - **Laptops** automatically surface live **Battery % / charging status** (in the Dynamic Island pill, Simple Bar, and System Monitor), **Backlight brightness**, **Wi-Fi**, **Bluetooth**, and **Touchpad** settings.
   - **Multi-Monitor Support**: Wraps `PanelWindow`s in Quickshell `Variants` over `Quickshell.screens`, syncing per-monitor MangoWC tags across all connected displays.
   - **Per-Device MangoWC Overrides (`~/.config/mango/local.conf`)**: Included via `source_optional=~/.config/mango/local.conf` (ignored by Git and preserved across `./install.sh` re-runs), so every machine can pull the same dotfiles while keeping its own monitor rules, keyboard layout, and touchpad settings.
-- **Built-in Quickshell Settings App (`Super + S`)** *(with live sidebar search, smooth open/close, sliding indicator, toggle & page transitions)*
-  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), theme presets or dynamic Matugen mode, Dark/Light scheme, **Typography & System Font** selector & point size (synced across Quickshell, GTK 3/4, `gsettings`, Foot, and Kitty), **Cursor Theme & Size** (`20`–`48px` + auto-hide idle/typing, synced across MangoWC, GTK 3/4, `~/.icons/default`, and `gsettings`), MangoWC animation styles/speeds (`zoom`/`slide`/`fade`/`none`), shadows, border width, blur parameters, corner radius, and gaps.
-  - **Windows**: Focus follows mouse (`sloppy_focus`), cursor warp (`warp_cursor`), focus on activate, new-as-master, master area ratio, smart gaps, drag-to-swap, scroller column proportion, and floating magnetic snapping (`~/.config/mango/local.conf`).
-  - **Audio**: Output & microphone volume sliders, mute toggles, live default sink/source switching, **Application Volume Mixer** (per-stream volume & mute via `pactl --format=json list sink-inputs`), and quick launch for `pavucontrol`.
-  - **Displays**: Inspect connected outputs (`wlr-randr`), switch resolution, refresh rate, fractional scaling, **Orientation / Rotation** (`0°`–`270°`), and **Adaptive Sync (VRR)** live or persist `monitor_rule` to `~/.config/mango/local.conf`, plus conditional **Night Light** *(when `hyprsunset`/`wlsunset`/`gammastep` is installed)*.
-  - **Network & Bluetooth** *(shown only when hardware exists)*: Wi-Fi radio toggle, scanning, and network connect (with inline password prompt); Bluetooth power toggle, scanning, and device connect/disconnect.
-  - **Input**: Per-device keyboard layouts (`xkb_rules_layout`), switch shortcut (`xkb_rules_options`), repeat rate/delay, NumLock on startup, mouse/trackpad acceleration profile (`Flat` / `Adaptive`) & pointer speed, natural scrolling, and touchpad controls *(touchpad section shown only when a touchpad is detected)*.
-  - **Notifications**: **Do Not Disturb** toggle (`󰂛` active badge in bar & island), popup auto-hide duration (`2.5s`–`10s`), **Test Notification** trigger, and scrollable session **Notification History** with individual dismiss and Clear All.
-  - **Apps & Startup**: Configure **Quick-Launch Keybind Apps** (`Super + Return` / `B` / `Z` via `launch-app.sh`), system **XDG Default Apps** (`xdg-mime` for Web, Files, Text, Images, Video), and **Startup Applications** (`exec_once` in `~/.config/mango/local.conf` alongside built-in `autostart.sh` services).
-  - **Shortcuts**: Searchable, categorized **MangoWC Keybindings & Mouse Actions** viewer parsed directly from your live compositor config.
-  - **System**: CPU, GPU, RAM, uptime, **Disk Storage** usage bars, **Date & Time** format (`24h`/`12h`, seconds, date pattern, timezone), **Keep Screen Awake** (`Wayland IdleInhibitor`), conditional **Power Profiles** (`powerprofilesctl`), detected hardware capability badges, embedded **Power Menu**, and MangoWC reload / `local.conf` reset.
+- **Built-in Quickshell Settings App (`Super + S`)** *(15 hardware-aware categories with live sidebar search, smooth transitions & persistent per-device config)*
+  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), presets or dynamic **Matugen** mode, Dark/Light scheme, **Matugen & Wallpaper Engine** (scheme type, contrast, `awww`/`swww` transition/FPS/duration/scaling), **Typography & System Font** (synced across Quickshell, GTK, Foot & Kitty), **GTK, Icons & Font Rendering** (icon theme, hinting, antialiasing, text scale, cursor blink), **Cursor Theme & Size**, and full MangoWC compositor effects (`dim_enable`, layer blur, shadow size/blur, fade in/out).
+  - **Shell & Bar**: Dynamic Island hover/collapse delays, compact pill media/spin/equalizer toggles, OSD toggle & duration, Simple Bar thickness/position (`Top` / `Bottom`)/layout/date toggles, Screenshot directory/delay/clipboard/notify preferences, and global Reduced Motion / High-Contrast accessibility options.
+  - **Windows**: Focus follows mouse (`sloppy_focus`), cursor warp, border drag resize hitbox, Scroller/Master/Dwindle/Monocle options, cross-monitor/tag focus, Overview gaps & Hot Corners (`hotarea`), Allow Fullscreen Tearing, **Per-Tag Default Layouts (Tags 1–9)** (`tag_rule`), and a live `mango -p`-validated **Custom Window Rules** (`window_rule`) builder.
+  - **Audio**: Output & mic sliders (with optional **150% Over-Amplification** boost), mute toggles, live default sink/source switching, **Speaker Left/Right/Stereo Channel Test**, **Application Mixer** (per-stream volume & mute), **Hardware Audio Card Profiles**, and `pavucontrol`.
+  - **Displays**: Connected outputs (`wlr-randr`), enable/disable output toggle, resolution, refresh rate, fractional scaling, **Multi-Monitor Relative Positioning**, **Orientation / Rotation** (`0°`–`270°`), **Adaptive Sync (VRR)**, persistent `monitor_rule` export, conditional **Brightness** (`brightnessctl` / `ddcutil`), and conditional **Night Light** (`hyprsunset`/`wlsunset`/`gammastep`).
+  - **Network & Bluetooth**: Always-on **Network Interfaces, IP, Gateway & DNS** status (`ip` / `/sys/class/net`), **NetworkManager Profiles & Quick DNS Presets** (Auto / Cloudflare / Google / Quad9), plus hardware-gated **Wi-Fi** scanning/connect and **Bluetooth** device pairing.
+  - **Input**: Per-device keyboard hardware model (`pc104`/`pc105`/`macbook79`), layouts (`xkb_rules_layout`), switch shortcuts, repeat rate/delay + **Live Key Repeat & Layout Test Sandbox**, NumLock, extended Mouse & **Touchpad** gestures/click/scroll/speed controls.
+  - **Terminals**: Native Foot (`foot.ini`) & Kitty (`kitty.conf`) editors for opacity, padding, cursor shape/blink, scrollback lines, and confirm close (gated on installed terminals).
+  - **Notifications**: **Do Not Disturb**, Allow Critical Alerts in DND, popup duration, desktop sound alerts, history capacity, Test Notification, and dismissible session Notification History.
+  - **Apps & Startup**: Configure **Quick-Launch Keybind Apps** (`Super + Return` / `B` / `Z` via `launch-app.sh`), system **XDG Default Apps** (`xdg-mime`), `exec_once` **Startup Applications**, **App Launcher Visibility** (`hidden-apps.json`), and **Session Environment Variables** (`env=` in `local.conf`).
+  - **Shortcuts**: Searchable, categorized **MangoWC Shortcuts** viewer plus inline `mango -p`-validated **Custom Shortcut Builder** (`bind=` in `local.conf`).
+  - **Privacy**: One-click **Clear Wayland Clipboard**, middle-click primary paste sync, recent files history toggle & wipe, portal identity privacy, camera/mic hardware portal disables (+ mic mute sync), and quick Wayland screen lock.
+  - **Monitor**: Live `/sys/class/hwmon` thermal sensors (4s refresh), live top **Processes** (`CPU %` / `RAM MB` sort, filter, SIGTERM/SIGKILL), and **OpenRC / systemd Services** inspector.
+  - **System**: CPU, GPU, RAM, uptime, **Disk Storage** usage bars, **Date & Time** format + timezone, **Keep Screen Awake** (`Wayland IdleInhibitor`), conditional **Power Profiles**, detected hardware capability matrix, User Account readout, Power Menu, **Export Backup (`.tar.gz`)**, and reset controls.
 - **Morphing Dynamic Island (`Quickshell`)**
   - Compact top pill showing time, optional battery indicator, and collapsible Spotify/MPRIS mini-player with spinning album art and equalizer bars.
   - Hover or press `Super + D` to open the **Hub**: MPRIS Media Card, live CPU/RAM (+ optional Battery) System Monitor, interactive MangoWC Tags (`1`–`9`) + layout switcher, hardware-aware Quick Controls, **System Tray** (`StatusNotifierItem`), and collapsible **Power Menu** (Lock, Suspend, Logout, Reboot, Poweroff with confirmation).
@@ -47,8 +51,8 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 │   ├── mango/                    # MangoWC config, mode.conf, theme.conf, autostart.sh
 │   ├── quickshell/               # ShellRoot, Theme, DeviceCaps & ShellState singletons, JSON state
 │   │   ├── components/           # DynamicIsland, SimpleBar, QuickControls, SystemTrayStrip, PowerMenu, etc.
-│   │   ├── settings/             # Modular Settings app (11 pages: Appearance .. Shortcuts, System)
-│   │   └── scripts/              # apply-mode.sh, apply-theme.sh, manage-settings.sh, launch-app.sh, detect-hardware.sh, etc.
+│   │   ├── settings/             # Modular Settings app (15 pages: Appearance, Shell, Windows .. Monitor, System)
+│   │   └── scripts/              # apply-mode.sh, apply-theme.sh, manage-settings.sh, manage-system.sh, launch-app.sh, etc.
 │   ├── matugen/                  # Matugen config & templates (QS, GTK3/4, Mango, Foot, Kitty)
 │   ├── foot/                     # Foot terminal config + synced colors
 │   ├── kitty/                    # Kitty terminal config + synced colors
@@ -227,10 +231,11 @@ qs ipc call island setShellMode blur
 
 # Settings Window & Toggles
 qs ipc call island toggleSettings
-qs ipc call island openSettings audio   # appearance | windows | audio | displays | network | bluetooth | input | notifications | apps | shortcuts | system
+qs ipc call island openSettings audio   # appearance | shell | windows | audio | displays | network | bluetooth | input | terminals | notifications | apps | shortcuts | privacy | monitor | system
 qs ipc call island closeSettings
 qs ipc call island toggleDnd
 qs ipc call island toggleKeepAwake
+qs ipc call island clearClipboard
 ```
 
 ---

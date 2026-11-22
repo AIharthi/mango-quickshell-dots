@@ -19,17 +19,45 @@ ColumnLayout {
     property var sinks: []
     property var sources: []
     property var sinkInputs: []
+    property var audioCards: []
+    property string testStatus: ""
+    readonly property real maxOutVolume: ShellState.audioOverAmp ? 1.5 : 1.0
 
     function refresh(): void {
         if (!audioQueryProc.running)
             audioQueryProc.running = true;
+        if (!cardsQueryProc.running)
+            cardsQueryProc.running = true;
     }
 
     function setSinkVolume(ratio: real): void {
-        const c = Math.max(0.0, Math.min(1.0, ratio));
+        const cap = root.maxOutVolume;
+        const c = Math.max(0.0, Math.min(cap, ratio));
         root.outVolume = c;
         root.outMuted = c <= 0.001;
         Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", Math.round(c * 100) + "%"]);
+    }
+
+    function toggleOverAmp(): void {
+        const nxt = !ShellState.audioOverAmp;
+        ShellState.setPref("audioOverAmp", nxt);
+        if (!nxt && root.outVolume > 1.0)
+            root.setSinkVolume(1.0);
+    }
+
+    function setCardProfile(cardName: string, profileName: string): void {
+        if (cardMutProc.running)
+            return;
+        cardMutProc.command = [Quickshell.shellPath("scripts/manage-system.sh"), "audio-set-profile", cardName, profileName];
+        cardMutProc.running = true;
+    }
+
+    function testSpeaker(channel: string): void {
+        if (testAudioProc.running)
+            return;
+        root.testStatus = "Playing " + channel + " test tone...";
+        testAudioProc.command = [Quickshell.shellPath("scripts/manage-system.sh"), "audio-test", channel];
+        testAudioProc.running = true;
     }
 
     function setSourceVolume(ratio: real): void {
@@ -119,7 +147,7 @@ ColumnLayout {
                     const d = JSON.parse(raw);
                     root.defaultSink = d.defaultSink || "";
                     root.defaultSource = d.defaultSource || "";
-                    root.outVolume = Math.max(0.0, Math.min(1.0, Number(d.outVol || 0)));
+                    root.outVolume = Math.max(0.0, Math.min(1.5, Number(d.outVol || 0)));
                     root.outMuted = !!d.outMuted;
                     root.inVolume = Math.max(0.0, Math.min(1.0, Number(d.inVol || 0)));
                     root.inMuted = !!d.inMuted;
@@ -129,6 +157,37 @@ ColumnLayout {
                 } catch (err) {}
             }
         }
+    }
+
+    Process {
+        id: cardsQueryProc
+        command: [Quickshell.shellPath("scripts/manage-system.sh"), "audio-cards"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    root.audioCards = Array.isArray(d.cards) ? d.cards : [];
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: cardMutProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    root.audioCards = Array.isArray(d.cards) ? d.cards : [];
+                    refreshTimer.restart();
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: testAudioProc
+        onExited: root.testStatus = ""
     }
 
     Process {
@@ -291,9 +350,11 @@ ColumnLayout {
 
                         Rectangle {
                             height: parent.height
-                            width: parent.width * root.outVolume
+                            width: parent.width * Math.min(1.0, root.outVolume / root.maxOutVolume)
                             radius: Theme.r(4)
-                            color: root.outMuted ? Theme.outline : Theme.primary
+                            color: root.outMuted
+                                ? Theme.outline
+                                : (root.outVolume > 1.0 ? Theme.warning : Theme.primary)
 
                             Behavior on width {
                                 enabled: !root._dragging && !Theme.isSimple
@@ -307,11 +368,11 @@ ColumnLayout {
                         cursorShape: Qt.PointingHandCursor
                         onPressed: mouse => {
                             root._dragging = true;
-                            root.setSinkVolume(mouse.x / width);
+                            root.setSinkVolume((mouse.x / width) * root.maxOutVolume);
                         }
                         onPositionChanged: mouse => {
                             if (pressed)
-                                root.setSinkVolume(mouse.x / width);
+                                root.setSinkVolume((mouse.x / width) * root.maxOutVolume);
                         }
                         onReleased: root._dragging = false
                         onCanceled: root._dragging = false
@@ -319,13 +380,79 @@ ColumnLayout {
                 }
 
                 Text {
-                    Layout.preferredWidth: 38
+                    Layout.preferredWidth: 42
                     horizontalAlignment: Text.AlignRight
                     text: Math.round(root.outVolume * 100) + "%"
                     font.family: Theme.fontFamily
                     font.pixelSize: 11
                     font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    color: root.outVolume > 1.0 ? Theme.warning : Theme.fgSurface
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Over-Amplification (Allow up to 150% Boost)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    color: Theme.fgSurfaceVariant
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.audioOverAmp
+                    activeColor: Theme.warning
+                    onToggled: root.toggleOverAmp()
+                }
+            }
+
+            RowLayout {
+                visible: DeviceCaps.hasSpeakerTest
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.testStatus.length > 0 ? root.testStatus : "Speaker Channel Test"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    color: root.testStatus.length > 0 ? Theme.primary : Theme.fgSurfaceVariant
+                }
+
+                Repeater {
+                    model: ["left", "stereo", "right"]
+
+                    delegate: Rectangle {
+                        id: tstChip
+                        required property string modelData
+                        implicitHeight: 24
+                        implicitWidth: tstTxt.implicitWidth + 14
+                        radius: Theme.r(7)
+                        color: tstMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                        border.width: Theme.cardBorderWidth
+                        border.color: Theme.cardBorder
+
+                        Text {
+                            id: tstTxt
+                            anchors.centerIn: parent
+                            text: tstChip.modelData.charAt(0).toUpperCase() + tstChip.modelData.slice(1)
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: Font.Bold
+                            color: Theme.primary
+                        }
+
+                        MouseArea {
+                            id: tstMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.testSpeaker(tstChip.modelData)
+                        }
+                    }
                 }
             }
 
@@ -743,6 +870,106 @@ ColumnLayout {
                 font.family: Theme.fontFamily
                 font.pixelSize: 11
                 color: Theme.fgSurfaceVariant
+            }
+        }
+    }
+
+    // --- 4. Audio Hardware Card Profiles ---
+    Rectangle {
+        visible: root.audioCards.length > 0
+        Layout.fillWidth: true
+        implicitHeight: cardProfCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: cardProfCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            Text {
+                text: "HARDWARE AUDIO CARD PROFILES"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            Repeater {
+                model: root.audioCards
+
+                delegate: Rectangle {
+                    id: cardBox
+                    required property var modelData
+                    Layout.fillWidth: true
+                    implicitHeight: cardBoxCol.implicitHeight + 14
+                    radius: Theme.r(10)
+                    color: Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    ColumnLayout {
+                        id: cardBoxCol
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 6
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: cardBox.modelData.desc
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.Bold
+                            color: Theme.fgSurface
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: 5
+
+                            Repeater {
+                                model: cardBox.modelData.profiles || []
+
+                                delegate: Rectangle {
+                                    id: profChip
+                                    required property var modelData
+                                    readonly property bool selected: cardBox.modelData.activeProfile === profChip.modelData.name
+
+                                    implicitHeight: 22
+                                    implicitWidth: profTxt.implicitWidth + 12
+                                    radius: Theme.r(6)
+                                    color: profChip.selected
+                                        ? Theme.withAlpha(Theme.secondary, 0.22)
+                                        : (profMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
+                                    border.width: profChip.selected ? 1 : Theme.cardBorderWidth
+                                    border.color: profChip.selected ? Theme.secondary : Theme.cardBorder
+
+                                    Text {
+                                        id: profTxt
+                                        anchors.centerIn: parent
+                                        text: profChip.modelData.desc
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: 9
+                                        font.weight: profChip.selected ? Font.Bold : Font.Normal
+                                        color: profChip.selected ? Theme.secondary : Theme.fgSurface
+                                    }
+
+                                    MouseArea {
+                                        id: profMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.setCardProfile(cardBox.modelData.name, profChip.modelData.name)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
