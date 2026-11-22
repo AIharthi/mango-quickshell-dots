@@ -273,5 +273,17 @@ ShellRoot {
         function toggleDarkLight(): void {
             Theme.toggleScheme();
         }
+
+        function resetAppearance(): void {
+            ShellState.resetAppearance();
+        }
+
+        function resetBar(): void {
+            ShellState.resetBar();
+        }
+
+        function resetAllSettings(): void {
+            ShellState.resetAllSettings();
+        }
     }
 }

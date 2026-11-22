@@ -920,6 +920,35 @@ ColumnLayout {
         }
     }
 
+    property bool confirmResetApp: false
+    property bool confirmResetBar: false
+    property bool confirmFactoryAll: false
+
+    Timer {
+        id: sysConfirmTimer
+        interval: 4000
+        repeat: false
+        onTriggered: {
+            root.confirmResetApp = false;
+            root.confirmResetBar = false;
+            root.confirmFactoryAll = false;
+        }
+    }
+
+    Timer {
+        id: sysReloadTimer
+        interval: 700
+        repeat: false
+        onTriggered: root.loadOverrides()
+    }
+
+    function clearSysConfirms(): void {
+        root.confirmResetApp = false;
+        root.confirmResetBar = false;
+        root.confirmFactoryAll = false;
+        sysConfirmTimer.stop();
+    }
+
     // --- 7. User Account & Settings Backup ---
     Rectangle {
         Layout.fillWidth: true
@@ -988,21 +1017,124 @@ ColumnLayout {
                     Text { id: bkpLbl; anchors.centerIn: parent; text: "Export Backup"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgPrimary }
                     MouseArea { id: bkpMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.exportBackup() }
                 }
+            }
+
+            // Reset & Recovery Button Row
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
 
                 Rectangle {
+                    Layout.fillWidth: true
                     implicitHeight: 28
-                    implicitWidth: rstPrefLbl.implicitWidth + 14
                     radius: Theme.r(8)
-                    color: rstPrefMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.22) : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
+                    color: root.confirmResetApp
+                        ? Theme.warning
+                        : (rstSysAppMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg)
+                    border.width: 1
+                    border.color: root.confirmResetApp ? Theme.warning : Theme.cardBorder
 
-                    Text { id: rstPrefLbl; anchors.centerIn: parent; text: "Reset Shell Prefs"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: rstPrefMouse.containsMouse ? Theme.warning : Theme.fgSurface }
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.confirmResetApp ? "Confirm Appearance?" : "Reset Appearance"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: root.confirmResetApp ? Theme.fgPrimary : Theme.warning
+                    }
+
                     MouseArea {
-                        id: rstPrefMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        id: rstSysAppMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            ShellState.resetPrefs();
-                            root.backupStatus = "shell-prefs.json reset to defaults";
+                            if (!root.confirmResetApp) {
+                                root.clearSysConfirms();
+                                root.confirmResetApp = true;
+                                sysConfirmTimer.restart();
+                                return;
+                            }
+                            root.clearSysConfirms();
+                            ShellState.resetAppearance();
+                            root.backupStatus = "Appearance, theme, font & blur restored to defaults";
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: root.confirmResetBar
+                        ? Theme.secondary
+                        : (rstSysBarMouse.containsMouse ? Theme.withAlpha(Theme.secondary, 0.20) : Theme.subCardBg)
+                    border.width: 1
+                    border.color: root.confirmResetBar ? Theme.secondary : Theme.cardBorder
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.confirmResetBar ? "Confirm Bar Reset?" : "Reset Bar & Shell"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: root.confirmResetBar ? Theme.fgSecondary : Theme.secondary
+                    }
+
+                    MouseArea {
+                        id: rstSysBarMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (!root.confirmResetBar) {
+                                root.clearSysConfirms();
+                                root.confirmResetBar = true;
+                                sysConfirmTimer.restart();
+                                return;
+                            }
+                            root.clearSysConfirms();
+                            ShellState.resetBar();
+                            root.backupStatus = "Bar widgets & shell behavior restored to defaults";
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: root.confirmFactoryAll
+                        ? Theme.error
+                        : (rstFactoryMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg)
+                    border.width: 1
+                    border.color: root.confirmFactoryAll ? Theme.error : Theme.withAlpha(Theme.error, 0.45)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.confirmFactoryAll ? "Confirm Factory Reset?" : "Factory Reset All"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: root.confirmFactoryAll ? Theme.fgError : Theme.error
+                    }
+
+                    MouseArea {
+                        id: rstFactoryMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (!root.confirmFactoryAll) {
+                                root.clearSysConfirms();
+                                root.confirmFactoryAll = true;
+                                sysConfirmTimer.restart();
+                                return;
+                            }
+                            root.clearSysConfirms();
+                            ShellState.resetAllSettings();
+                            sysReloadTimer.restart();
+                            root.backupStatus = "Factory reset complete (shell-prefs + local.conf + theme)";
                         }
                     }
                 }

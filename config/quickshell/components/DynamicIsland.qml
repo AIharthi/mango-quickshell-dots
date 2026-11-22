@@ -158,7 +158,7 @@ Item {
         if (root.islandState === "collapsed") {
             if (ShellState.islandStyle === "bar")
                 return Math.max(320, Math.round(root.width) - ShellState.islandTopMargin * 2);
-            return Math.max(114, Math.min(430, Math.round(collapsedPill.implicitWidth) + 32));
+            return Math.max(114, Math.min(Math.round(root.width) - 32, Math.round(collapsedPill.implicitWidth) + 32));
         }
         if (root.islandState === "osd")
             return 320;
@@ -335,20 +335,29 @@ Item {
             }
         }
 
-        // Click on collapsed pill to expand immediately
-        TapHandler {
+        // Click background area of collapsed pill/bar to expand immediately
+        // (Placed behind CollapsedPill so interactive pill buttons consume their own clicks.)
+        MouseArea {
+            anchors.fill: parent
             enabled: !Theme.isSimple && root.islandState === "collapsed"
-            onTapped: root.expandTo("overview", false)
+            onClicked: root.expandTo("overview", false)
         }
 
-        // 1. Collapsed Compact Pill View (Default & Blur modes only)
+        // 1. Collapsed Compact Pill / Modular Bar View (Default & Blur modes only)
         CollapsedPill {
             id: collapsedPill
             anchors.centerIn: parent
             anchors.verticalCenterOffset: Math.round(root.notchPad / 2)
+            width: ShellState.islandStyle === "bar" ? Math.max(0, parent.width - 24) : implicitWidth
+            screenName: root.screenName
+            active: !Theme.isSimple && root.islandState === "collapsed"
+            barMode: ShellState.islandStyle === "bar"
             player: root.activePlayer
             opacity: (!Theme.isSimple && root.islandState === "collapsed") ? 1.0 : 0.0
             visible: opacity > 0.01
+
+            onLauncherClicked: root.toggleLauncher()
+            onSettingsClicked: root.openSettingsRequested("appearance")
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion

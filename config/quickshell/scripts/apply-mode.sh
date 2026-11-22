@@ -38,9 +38,8 @@ PY
     fi
 }
 
-ensure_prefs_json() {
-    if [[ ! -f "$PREFS_JSON" ]]; then
-        atomic_write "$PREFS_JSON" <<'EOF'
+write_default_prefs_json() {
+    atomic_write "$PREFS_JSON" <<'EOF'
 {
   "blurFocusedOpacity": 0.86,
   "blurUnfocusedOpacity": 0.76,
@@ -71,6 +70,11 @@ ensure_prefs_json() {
   "dimEnable": false
 }
 EOF
+}
+
+ensure_prefs_json() {
+    if [[ ! -f "$PREFS_JSON" ]]; then
+        write_default_prefs_json
     fi
 }
 
@@ -167,8 +171,7 @@ PY
 }
 
 reset_prefs() {
-    rm -f "$PREFS_JSON"
-    ensure_prefs_json
+    write_default_prefs_json
 }
 
 MODE=""

@@ -40,6 +40,14 @@ ColumnLayout {
     property string _pendingActionMsg: ""
     property string _lastActionCmd: ""
     property string _lastActionStderr: ""
+    property bool confirmResetTheme: false
+
+    Timer {
+        id: themeResetConfirmTimer
+        interval: 4000
+        repeat: false
+        onTriggered: root.confirmResetTheme = false
+    }
 
     readonly property var vibeModels: [
         { id: "aurora-glass",   title: "Aurora Glass",   desc: "Frosted blur · Catppuccin · pill",   c1: "#1e1e2e", c2: "#cba6f7", c3: "#89b4fa" },
@@ -523,6 +531,7 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
+                spacing: 6
 
                 Text {
                     text: "COLOR ENGINE & SCHEME"
@@ -533,6 +542,45 @@ ColumnLayout {
                 }
 
                 Item { Layout.fillWidth: true }
+
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: rstThmLbl.implicitWidth + 14
+                    radius: Theme.r(12)
+                    color: root.confirmResetTheme
+                        ? Theme.warning
+                        : (rstThmMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg)
+                    border.width: 1
+                    border.color: root.confirmResetTheme ? Theme.warning : Theme.cardBorder
+
+                    Text {
+                        id: rstThmLbl
+                        anchors.centerIn: parent
+                        text: root.confirmResetTheme ? "Confirm?" : "󰑐 Reset Theme & Colors"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: root.confirmResetTheme ? Theme.fgPrimary : Theme.warning
+                    }
+
+                    MouseArea {
+                        id: rstThmMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (!root.confirmResetTheme) {
+                                root.confirmResetTheme = true;
+                                themeResetConfirmTimer.restart();
+                                return;
+                            }
+                            root.confirmResetTheme = false;
+                            themeResetConfirmTimer.stop();
+                            ShellState.resetAppearance();
+                            root.showStatus("Restored default Catppuccin Mocha dark theme & appearance", false);
+                        }
+                    }
+                }
 
                 Rectangle {
                     implicitHeight: 24

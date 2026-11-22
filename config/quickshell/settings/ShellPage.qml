@@ -7,6 +7,281 @@ ColumnLayout {
     id: root
     spacing: 12
 
+    property bool confirmResetBar: false
+    property string barStatusMsg: ""
+
+    Timer {
+        id: barConfirmTimer
+        interval: 4000
+        repeat: false
+        onTriggered: root.confirmResetBar = false
+    }
+
+    Timer {
+        id: barStatusTimer
+        interval: 3500
+        repeat: false
+        onTriggered: root.barStatusMsg = ""
+    }
+
+    // --- Quick Recovery Row ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: resetBarRow.implicitHeight + 16
+        radius: Theme.r(12)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        RowLayout {
+            id: resetBarRow
+            anchors.fill: parent
+            anchors.margins: 8
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            spacing: 10
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 1
+
+                Text {
+                    text: root.barStatusMsg.length > 0 ? root.barStatusMsg : "Reset Bar Widgets, Dynamic Island & Simple Bar to defaults"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: root.barStatusMsg.length > 0 ? Font.Bold : Font.Normal
+                    color: root.barStatusMsg.length > 0 ? Theme.success : Theme.fgSurfaceVariant
+                    elide: Text.ElideRight
+                }
+            }
+
+            Rectangle {
+                implicitHeight: 26
+                implicitWidth: rstBarLbl.implicitWidth + 16
+                radius: Theme.r(8)
+                color: root.confirmResetBar
+                    ? Theme.warning
+                    : (rstBarMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg)
+                border.width: 1
+                border.color: root.confirmResetBar ? Theme.warning : Theme.cardBorder
+
+                Text {
+                    id: rstBarLbl
+                    anchors.centerIn: parent
+                    text: root.confirmResetBar ? "Confirm Reset?" : "󰑐 Reset Bar & Shell"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: root.confirmResetBar ? Theme.fgPrimary : Theme.warning
+                }
+
+                MouseArea {
+                    id: rstBarMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (!root.confirmResetBar) {
+                            root.confirmResetBar = true;
+                            barConfirmTimer.restart();
+                            return;
+                        }
+                        root.confirmResetBar = false;
+                        barConfirmTimer.stop();
+                        ShellState.resetBar();
+                        root.barStatusMsg = "Bar & Shell settings restored to defaults";
+                        barStatusTimer.restart();
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 0. Bar Widgets & Modules (Dynamic Island + Simple Bar) ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: widgetsCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: widgetsCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    text: "BAR WIDGETS & MODULES (ISLAND & BAR)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Text {
+                    text: "Add date, window title, tags, stats & more"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 9
+                    color: Theme.fgSurfaceVariant
+                }
+            }
+
+            // 1-Click Bar Presets
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 106
+                    text: "Bar Presets"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "minimal",  label: "Minimal Pill" },
+                        { id: "balanced", label: "Balanced Island" },
+                        { id: "full",     label: "Full Desktop Bar" }
+                    ]
+
+                    delegate: Rectangle {
+                        id: bpBtn
+                        required property var modelData
+                        readonly property bool active: (
+                            (bpBtn.modelData.id === "minimal"
+                                && ShellState.islandStyle === "pill"
+                                && !ShellState.barShowDate && !ShellState.barShowWindow && !ShellState.barShowWorkspaces && !ShellState.barShowSystem)
+                            || (bpBtn.modelData.id === "balanced"
+                                && ShellState.islandStyle === "pill"
+                                && ShellState.barShowDate && ShellState.barShowWindow && ShellState.barShowWorkspaces && !ShellState.barShowSystem)
+                            || (bpBtn.modelData.id === "full"
+                                && ShellState.islandStyle === "bar"
+                                && ShellState.barShowDate && ShellState.barShowWindow && ShellState.barShowWorkspaces && ShellState.barShowSystem)
+                        )
+
+                        Layout.fillWidth: true
+                        implicitHeight: 28
+                        radius: Theme.r(8)
+                        color: bpBtn.active
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (bpMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: bpBtn.active ? 1 : Theme.cardBorderWidth
+                        border.color: bpBtn.active ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: bpBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: bpBtn.active ? Font.Bold : Font.Medium
+                            color: bpBtn.active ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: bpMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                ShellState.applyBarPreset(bpBtn.modelData.id);
+                                root.barStatusMsg = "Applied preset: " + bpBtn.modelData.label;
+                                barStatusTimer.restart();
+                            }
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Date Next to Clock (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowDate; onToggled: ShellState.setPref("barShowDate", !ShellState.barShowDate) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Active Window Title"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowWindow; onToggled: ShellState.setPref("barShowWindow", !ShellState.barShowWindow) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Workspaces / Tags Strip (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowWorkspaces; onToggled: ShellState.setPref("barShowWorkspaces", !ShellState.barShowWorkspaces) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Window Layout Badge ([T]) (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowLayout; onToggled: ShellState.setPref("barShowLayout", !ShellState.barShowLayout) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Now-Playing Media Strip"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.pillShowMedia; onToggled: ShellState.setPref("pillShowMedia", !ShellState.pillShowMedia) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "CPU & RAM Usage"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowSystem; onToggled: ShellState.setPref("barShowSystem", !ShellState.barShowSystem) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                visible: DeviceCaps.hasAudio
+                Text { Layout.fillWidth: true; text: "Volume Indicator (Click Mute / Scroll ±5%)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowVolume; onToggled: ShellState.setPref("barShowVolume", !ShellState.barShowVolume) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Keyboard Layout Indicator (US / AR)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowKbLayout; onToggled: ShellState.setPref("barShowKbLayout", !ShellState.barShowKbLayout) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "System Tray Icons (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowTray; onToggled: ShellState.setPref("barShowTray", !ShellState.barShowTray) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "App Launcher & Settings Shortcut Icons"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowQuickIcons; onToggled: ShellState.setPref("barShowQuickIcons", !ShellState.barShowQuickIcons) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                visible: DeviceCaps.hasBattery
+                Text { Layout.fillWidth: true; text: "Battery Percentage"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowBattery; onToggled: ShellState.setPref("barShowBattery", !ShellState.barShowBattery) }
+            }
+        }
+    }
+
     // --- 1. Dynamic Island & Pill Behavior ---
     Rectangle {
         Layout.fillWidth: true
@@ -72,24 +347,6 @@ ColumnLayout {
                 displayValue: ShellState.islandCollapseDelayMs + " ms"
                 onDecremented: ShellState.setPref("islandCollapseDelayMs", Math.max(200, ShellState.islandCollapseDelayMs - 100))
                 onIncremented: ShellState.setPref("islandCollapseDelayMs", Math.min(4000, ShellState.islandCollapseDelayMs + 100))
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "Show Now-Playing MPRIS Strip in Pill"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    color: Theme.fgSurface
-                }
-
-                ToggleSwitch {
-                    checked: ShellState.pillShowMedia
-                    onToggled: ShellState.setPref("pillShowMedia", !ShellState.pillShowMedia)
-                }
             }
 
             RowLayout {

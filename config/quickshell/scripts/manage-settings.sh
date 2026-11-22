@@ -10,10 +10,10 @@ MANGO_CONF="$HOME/.config/mango/config.conf"
 AUTOSTART_SH="$HOME/.config/mango/autostart.sh"
 
 case "$CMD" in
-    prefs-get|prefs-set|prefs-reset|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
+    prefs-get|prefs-set|prefs-reset|reset-appearance|reset-bar|reset-all|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
         ;;
     *)
-        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-reset|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
+        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-reset|reset-appearance|reset-bar|reset-all|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
         exit 1
         ;;
 esac
@@ -98,6 +98,16 @@ def default_prefs():
         "simpleBarPosition": "top",
         "simpleBarShowLayout": True,
         "simpleBarShowDate": True,
+        "barShowDate": False,
+        "barShowWindow": False,
+        "barShowWorkspaces": False,
+        "barShowLayout": False,
+        "barShowSystem": False,
+        "barShowVolume": False,
+        "barShowKbLayout": False,
+        "barShowTray": False,
+        "barShowQuickIcons": False,
+        "barShowBattery": True,
         "reducedMotion": False,
         "highContrast": False,
         "audioOverAmp": False,
@@ -324,6 +334,131 @@ def cmd_prefs_set():
 def cmd_prefs_reset():
     defaults = default_prefs()
     print(json.dumps(save_prefs(defaults)))
+
+
+def strip_local_conf_keys(keys_to_strip):
+    if not os.path.isfile(local_conf_path):
+        return
+    try:
+        with open(local_conf_path, "r", encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+        out = []
+        changed = False
+        for line in lines:
+            s = line.strip()
+            matched = False
+            for k in keys_to_strip:
+                if s.startswith(f"{k}="):
+                    matched = True
+                    changed = True
+                    break
+            if not matched:
+                out.append(line)
+        if changed:
+            atomic_write_text(local_conf_path, "".join(out))
+    except Exception:
+        pass
+
+
+def reset_appearance_impl(prefs):
+    defaults = default_prefs()
+    appearance_keys = (
+        "uiFontFamily", "uiFontSize", "iconTheme",
+        "matugenType", "matugenContrast", "matugenSourceIndex", "matugenPrefer",
+        "matugenLightnessDark", "matugenLightnessLight",
+        "wallpaperTransition", "wallpaperFps", "wallpaperDuration", "wallpaperResize",
+        "surfaceStyle", "shellOpacity", "cardOpacity", "uiRadiusScale",
+        "borderStyle", "uiBorderWidth", "uiFontScale",
+        "islandStyle", "islandTopMargin", "pillHeight",
+        "accentSeedColor", "solidWallpaperColor",
+        "mangoFocusColor", "mangoBorderColor", "mangoShadowTint", "mangoShadowAlpha", "mangoDimAlpha",
+        "reducedMotion", "highContrast",
+    )
+    for k in appearance_keys:
+        if k in defaults:
+            prefs[k] = defaults[k]
+    save_prefs(prefs)
+
+    font_spec = "JetBrains Mono 10"
+    update_ini_font(os.path.expanduser("~/.config/gtk-3.0/settings.ini"), font_spec)
+    update_ini_font(os.path.expanduser("~/.config/gtk-4.0/settings.ini"), font_spec)
+    update_foot_font("JetBrains Mono", 10)
+    update_kitty_font("JetBrains Mono", 10)
+
+    if shutil.which("gsettings"):
+        gsettings_cmds = [
+            ["gsettings", "set", "org.gnome.desktop.interface", "font-name", font_spec],
+            ["gsettings", "set", "org.gnome.desktop.interface", "monospace-font-name", font_spec],
+            ["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", "Adwaita"],
+            ["gsettings", "set", "org.gnome.desktop.interface", "font-hinting", "slight"],
+            ["gsettings", "set", "org.gnome.desktop.interface", "font-antialiasing", "grayscale"],
+            ["gsettings", "set", "org.gnome.desktop.interface", "text-scaling-factor", "1.0"],
+            ["gsettings", "set", "org.gnome.desktop.interface", "cursor-blink", "true"],
+            ["gsettings", "set", "org.gnome.desktop.interface", "cursor-blink-time", "1200"],
+            ["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", "catppuccin-mocha-dark-cursors"],
+            ["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", "24"],
+            ["gsettings", "set", "org.gnome.desktop.interface", "enable-animations", "true"],
+            ["gsettings", "set", "org.gnome.desktop.a11y.interface", "high-contrast", "false"],
+        ]
+        for gc_cmd in gsettings_cmds:
+            subprocess.run(gc_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    strip_local_conf_keys(("cursor_theme", "cursor_size", "cursor_hide_timeout", "cursor_hide_on_keypress"))
+
+    scripts_dir = os.path.join(os.path.dirname(prefs_path), "scripts")
+    apply_mode_sh = os.path.join(scripts_dir, "apply-mode.sh")
+    apply_theme_sh = os.path.join(scripts_dir, "apply-theme.sh")
+    if os.path.isfile(apply_mode_sh):
+        subprocess.run([apply_mode_sh, "--reset-prefs"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run([apply_mode_sh, "default", "--no-reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if os.path.isfile(apply_theme_sh):
+        subprocess.run(
+            [apply_theme_sh, "--mode", "preset", "--preset", "catppuccin-mocha", "--scheme", "dark", "--no-wallpaper"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    return prefs
+
+
+def cmd_reset_appearance():
+    prefs = load_prefs(True)
+    reset_appearance_impl(prefs)
+    print(json.dumps(prefs))
+
+
+def cmd_reset_bar():
+    defaults = default_prefs()
+    prefs = load_prefs(True)
+    bar_keys = (
+        "islandHoverExpand", "islandHoverDelayMs", "islandCollapseDelayMs",
+        "pillShowMedia", "pillSpinArt", "pillShowEqualizer",
+        "osdEnabled", "osdTimeoutMs",
+        "simpleBarHeight", "simpleBarPosition", "simpleBarShowLayout", "simpleBarShowDate",
+        "barShowDate", "barShowWindow", "barShowWorkspaces", "barShowLayout",
+        "barShowSystem", "barShowVolume", "barShowKbLayout", "barShowTray",
+        "barShowQuickIcons", "barShowBattery",
+        "screenshotDir", "screenshotCopyClipboard", "screenshotNotify", "screenshotDelay",
+        "reducedMotion", "highContrast",
+    )
+    for k in bar_keys:
+        if k in defaults:
+            prefs[k] = defaults[k]
+    save_prefs(prefs)
+    if shutil.which("gsettings"):
+        subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "enable-animations", "true"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["gsettings", "set", "org.gnome.desktop.a11y.interface", "high-contrast", "false"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(json.dumps(prefs))
+
+
+def cmd_reset_all():
+    defaults = default_prefs()
+    scripts_dir = os.path.join(os.path.dirname(prefs_path), "scripts")
+    apply_local_sh = os.path.join(scripts_dir, "apply-local-setting.sh")
+    if os.path.isfile(apply_local_sh):
+        subprocess.run([apply_local_sh, "reset"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    reset_appearance_impl(defaults)
+    if shutil.which("gsettings"):
+        subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "clock-format", "24h"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(json.dumps(defaults))
 
 
 def cmd_set_font():
@@ -890,6 +1025,9 @@ DISPATCH = {
     "prefs-get": cmd_prefs_get,
     "prefs-set": cmd_prefs_set,
     "prefs-reset": cmd_prefs_reset,
+    "reset-appearance": cmd_reset_appearance,
+    "reset-bar": cmd_reset_bar,
+    "reset-all": cmd_reset_all,
     "set-font": cmd_set_font,
     "list-fonts": cmd_list_fonts,
     "defaults-get": cmd_defaults_get,

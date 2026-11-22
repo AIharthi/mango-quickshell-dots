@@ -17,11 +17,23 @@ PanelWindow {
     signal closeRequested()
 
     property string searchQuery: ""
+    property bool resetMenuOpen: false
+    property bool confirmFactoryReset: false
+
+    Timer {
+        id: drawerConfirmTimer
+        interval: 4000
+        repeat: false
+        onTriggered: root.confirmFactoryReset = false
+    }
 
     Component.onCompleted: Qt.callLater(() => { root._entered = true; })
     onIsOpenChanged: {
-        if (!isOpen)
+        if (!isOpen) {
             searchQuery = "";
+            resetMenuOpen = false;
+            confirmFactoryReset = false;
+        }
     }
 
     readonly property var navItems: {
@@ -65,8 +77,10 @@ PanelWindow {
         { label: "UI & Terminal Font",         pageId: "appearance",    keywords: "font typography family size jetbrains mono foot kitty gtk" },
         { label: "Cursor Theme & Size",        pageId: "appearance",    keywords: "cursor pointer size theme hide" },
         { label: "Dynamic Island & Pill",      pageId: "shell",         keywords: "island hover delay collapse media spin equalizer osd pill" },
+        { label: "Bar Widgets & Modules",      pageId: "shell",         keywords: "bar widgets modules date active window title workspaces tags layout cpu ram volume mute keyboard layout tray quick icons battery presets minimal balanced full" },
         { label: "Simple Bar & Screenshots",   pageId: "shell",         keywords: "bar height top bottom layout screenshot grim slurp clipboard delay" },
         { label: "Accessibility & Motion",     pageId: "shell",         keywords: "reduced motion animations high contrast borders a11y" },
+        { label: "Reset & Factory Recovery",   pageId: "system",        keywords: "reset restore undo default factory recovery reset appearance reset bar" },
         { label: "Tiling, Hotarea & Overview", pageId: "windows",       keywords: "tiling scroller master gaps snap floating focus warp monocle hotarea tearing overview" },
         { label: "Per-Tag & Window Rules",     pageId: "windows",       keywords: "tag_rule window_rule workspace default layout floating rule app_id" },
         { label: "Output, Mic & 150% Boost",   pageId: "audio",         keywords: "audio sound volume mute speaker headphone microphone sink over amplification boost" },
@@ -548,6 +562,165 @@ PanelWindow {
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: root.pageSelected(navBtn.modelData.id)
                                             }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Sidebar Reset Drawer (always accessible if a tweak goes wrong)
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: rstDrawerCol.implicitHeight + 10
+                            radius: Theme.r(9)
+                            color: Theme.subCardBg
+                            border.width: Theme.cardBorderWidth
+                            border.color: root.resetMenuOpen ? Theme.warning : Theme.cardBorder
+
+                            ColumnLayout {
+                                id: rstDrawerCol
+                                anchors.fill: parent
+                                anchors.margins: 5
+                                spacing: 4
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 24
+                                    radius: Theme.r(7)
+                                    color: rstToggleMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 6
+                                        anchors.rightMargin: 6
+                                        spacing: 6
+
+                                        Text {
+                                            text: "󰑐"
+                                            font.family: Theme.iconFont
+                                            font.pixelSize: 11
+                                            color: Theme.warning
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: "Reset Settings"
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: 10
+                                            font.weight: Font.Bold
+                                            color: Theme.fgSurface
+                                        }
+
+                                        Text {
+                                            text: root.resetMenuOpen ? "󰅃" : "󰅀"
+                                            font.family: Theme.iconFont
+                                            font.pixelSize: 11
+                                            color: Theme.fgSurfaceVariant
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: rstToggleMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.resetMenuOpen = !root.resetMenuOpen;
+                                            if (!root.resetMenuOpen)
+                                                root.confirmFactoryReset = false;
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    visible: root.resetMenuOpen
+                                    Layout.fillWidth: true
+                                    implicitHeight: 24
+                                    radius: Theme.r(6)
+                                    color: sbRstAppMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.cardBg
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "Appearance & Theme"
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: 9
+                                        font.weight: Font.Medium
+                                        color: Theme.warning
+                                    }
+
+                                    MouseArea {
+                                        id: sbRstAppMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            ShellState.resetAppearance();
+                                            root.resetMenuOpen = false;
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    visible: root.resetMenuOpen
+                                    Layout.fillWidth: true
+                                    implicitHeight: 24
+                                    radius: Theme.r(6)
+                                    color: sbRstBarMouse.containsMouse ? Theme.withAlpha(Theme.secondary, 0.20) : Theme.cardBg
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "Bar & Shell"
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: 9
+                                        font.weight: Font.Medium
+                                        color: Theme.secondary
+                                    }
+
+                                    MouseArea {
+                                        id: sbRstBarMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            ShellState.resetBar();
+                                            root.resetMenuOpen = false;
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    visible: root.resetMenuOpen
+                                    Layout.fillWidth: true
+                                    implicitHeight: 24
+                                    radius: Theme.r(6)
+                                    color: root.confirmFactoryReset
+                                        ? Theme.error
+                                        : (sbRstAllMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.20) : Theme.cardBg)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: root.confirmFactoryReset ? "Confirm Factory?" : "Factory Reset All"
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: 9
+                                        font.weight: Font.Bold
+                                        color: root.confirmFactoryReset ? Theme.fgError : Theme.error
+                                    }
+
+                                    MouseArea {
+                                        id: sbRstAllMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (!root.confirmFactoryReset) {
+                                                root.confirmFactoryReset = true;
+                                                drawerConfirmTimer.restart();
+                                                return;
+                                            }
+                                            root.confirmFactoryReset = false;
+                                            drawerConfirmTimer.stop();
+                                            ShellState.resetAllSettings();
+                                            root.resetMenuOpen = false;
                                         }
                                     }
                                 }

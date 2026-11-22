@@ -79,6 +79,18 @@ Singleton {
     property real mangoShadowAlpha: 0.80
     property real mangoDimAlpha: 0.27
 
+    // --- Modular Bar Widgets ---
+    property bool barShowDate: false
+    property bool barShowWindow: false
+    property bool barShowWorkspaces: false
+    property bool barShowLayout: false
+    property bool barShowSystem: false
+    property bool barShowVolume: false
+    property bool barShowKbLayout: false
+    property bool barShowTray: false
+    property bool barShowQuickIcons: false
+    property bool barShowBattery: true
+
     // --- Session Notification History ---
     property var notificationHistory: []
     property int unreadCount: 0
@@ -158,6 +170,16 @@ Singleton {
             if (d.mangoShadowTint !== undefined) root.mangoShadowTint = !!d.mangoShadowTint;
             if (d.mangoShadowAlpha !== undefined) root.mangoShadowAlpha = Math.max(0.0, Math.min(1.0, Number(d.mangoShadowAlpha)));
             if (d.mangoDimAlpha !== undefined) root.mangoDimAlpha = Math.max(0.0, Math.min(0.75, Number(d.mangoDimAlpha)));
+            if (d.barShowDate !== undefined) root.barShowDate = !!d.barShowDate;
+            if (d.barShowWindow !== undefined) root.barShowWindow = !!d.barShowWindow;
+            if (d.barShowWorkspaces !== undefined) root.barShowWorkspaces = !!d.barShowWorkspaces;
+            if (d.barShowLayout !== undefined) root.barShowLayout = !!d.barShowLayout;
+            if (d.barShowSystem !== undefined) root.barShowSystem = !!d.barShowSystem;
+            if (d.barShowVolume !== undefined) root.barShowVolume = !!d.barShowVolume;
+            if (d.barShowKbLayout !== undefined) root.barShowKbLayout = !!d.barShowKbLayout;
+            if (d.barShowTray !== undefined) root.barShowTray = !!d.barShowTray;
+            if (d.barShowQuickIcons !== undefined) root.barShowQuickIcons = !!d.barShowQuickIcons;
+            if (d.barShowBattery !== undefined) root.barShowBattery = !!d.barShowBattery;
             root.lastError = "";
         } catch (err) {
             prefsRetryTimer.restart();
@@ -230,6 +252,16 @@ Singleton {
         else if (key === "mangoShadowTint") root.mangoShadowTint = !!value;
         else if (key === "mangoShadowAlpha") root.mangoShadowAlpha = Math.max(0.0, Math.min(1.0, Number(value)));
         else if (key === "mangoDimAlpha") root.mangoDimAlpha = Math.max(0.0, Math.min(0.75, Number(value)));
+        else if (key === "barShowDate") root.barShowDate = !!value;
+        else if (key === "barShowWindow") root.barShowWindow = !!value;
+        else if (key === "barShowWorkspaces") root.barShowWorkspaces = !!value;
+        else if (key === "barShowLayout") root.barShowLayout = !!value;
+        else if (key === "barShowSystem") root.barShowSystem = !!value;
+        else if (key === "barShowVolume") root.barShowVolume = !!value;
+        else if (key === "barShowKbLayout") root.barShowKbLayout = !!value;
+        else if (key === "barShowTray") root.barShowTray = !!value;
+        else if (key === "barShowQuickIcons") root.barShowQuickIcons = !!value;
+        else if (key === "barShowBattery") root.barShowBattery = !!value;
 
         Quickshell.execDetached([
             Quickshell.shellPath("scripts/manage-settings.sh"),
@@ -240,6 +272,92 @@ Singleton {
     function resetPrefs(): void {
         if (!resetProc.running)
             resetProc.running = true;
+    }
+
+    function _runResetCmd(subcmd: string): void {
+        if (resetActionProc.running)
+            return;
+        resetActionProc.command = [Quickshell.shellPath("scripts/manage-settings.sh"), subcmd];
+        resetActionProc.running = true;
+    }
+
+    function resetAppearance(): void {
+        _runResetCmd("reset-appearance");
+    }
+
+    function resetBar(): void {
+        _runResetCmd("reset-bar");
+    }
+
+    function resetAllSettings(): void {
+        _runResetCmd("reset-all");
+    }
+
+    function applyBarPreset(preset: string): void {
+        let map = null;
+        if (preset === "minimal") {
+            map = {
+                islandStyle: "pill",
+                barShowDate: false,
+                barShowWindow: false,
+                barShowWorkspaces: false,
+                barShowLayout: false,
+                barShowSystem: false,
+                barShowVolume: false,
+                barShowKbLayout: false,
+                barShowTray: false,
+                barShowQuickIcons: false,
+                pillShowMedia: true
+            };
+        } else if (preset === "balanced") {
+            map = {
+                islandStyle: "pill",
+                barShowDate: true,
+                barShowWindow: true,
+                barShowWorkspaces: true,
+                barShowLayout: false,
+                barShowSystem: false,
+                barShowVolume: false,
+                barShowKbLayout: false,
+                barShowTray: false,
+                barShowQuickIcons: false,
+                pillShowMedia: true
+            };
+        } else if (preset === "full") {
+            map = {
+                islandStyle: "bar",
+                barShowDate: true,
+                barShowWindow: true,
+                barShowWorkspaces: true,
+                barShowLayout: true,
+                barShowSystem: true,
+                barShowVolume: DeviceCaps.hasAudio,
+                barShowKbLayout: false,
+                barShowTray: true,
+                barShowQuickIcons: true,
+                pillShowMedia: true
+            };
+        }
+        if (!map)
+            return;
+
+        const cmds = [];
+        for (const k in map) {
+            const v = map[k];
+            if (k === "islandStyle") root.islandStyle = String(v);
+            else if (k === "barShowDate") root.barShowDate = !!v;
+            else if (k === "barShowWindow") root.barShowWindow = !!v;
+            else if (k === "barShowWorkspaces") root.barShowWorkspaces = !!v;
+            else if (k === "barShowLayout") root.barShowLayout = !!v;
+            else if (k === "barShowSystem") root.barShowSystem = !!v;
+            else if (k === "barShowVolume") root.barShowVolume = !!v;
+            else if (k === "barShowKbLayout") root.barShowKbLayout = !!v;
+            else if (k === "barShowTray") root.barShowTray = !!v;
+            else if (k === "barShowQuickIcons") root.barShowQuickIcons = !!v;
+            else if (k === "pillShowMedia") root.pillShowMedia = !!v;
+            cmds.push('"$1" prefs-set ' + k + " " + String(v) + " >/dev/null");
+        }
+        Quickshell.execDetached(["sh", "-c", cmds.join(" && "), "_", Quickshell.shellPath("scripts/manage-settings.sh")]);
     }
 
     function setFont(family: string, size: int): void {
@@ -336,6 +454,14 @@ Singleton {
     Process {
         id: resetProc
         command: [Quickshell.shellPath("scripts/manage-settings.sh"), "prefs-reset"]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: root.applyPrefsJson(text)
+        }
+    }
+
+    Process {
+        id: resetActionProc
         running: false
         stdout: StdioCollector {
             onStreamFinished: root.applyPrefsJson(text)

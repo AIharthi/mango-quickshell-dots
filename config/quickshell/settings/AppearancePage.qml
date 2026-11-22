@@ -28,6 +28,29 @@ ColumnLayout {
         cursorBlink: true,
         cursorBlinkTime: 1200
     })
+    property bool confirmResetAppearance: false
+    property string resetStatusMsg: ""
+
+    Timer {
+        id: appResetConfirmTimer
+        interval: 4000
+        repeat: false
+        onTriggered: root.confirmResetAppearance = false
+    }
+
+    Timer {
+        id: appResetStatusTimer
+        interval: 3500
+        repeat: false
+        onTriggered: root.resetStatusMsg = ""
+    }
+
+    Timer {
+        id: appReloadTimer
+        interval: 600
+        repeat: false
+        onTriggered: root.loadCursorSettings()
+    }
 
     function loadCursorSettings(): void {
         if (!cursorReadProc.running)
@@ -128,6 +151,78 @@ ColumnLayout {
                     if (d && d.iconTheme !== undefined)
                         root.gtkInfo = d;
                 } catch (err) {}
+            }
+        }
+    }
+
+    // --- 0. Safe Recovery Row ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: appResetRow.implicitHeight + 16
+        radius: Theme.r(12)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        RowLayout {
+            id: appResetRow
+            anchors.fill: parent
+            anchors.margins: 8
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            spacing: 10
+
+            Text {
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                text: root.resetStatusMsg.length > 0
+                    ? root.resetStatusMsg
+                    : "Made a mistake? Restore Visual Mode, Surfaces, Island Shape, Theme, Font, Cursor & Blur to defaults"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: root.resetStatusMsg.length > 0 ? Font.Bold : Font.Normal
+                color: root.resetStatusMsg.length > 0 ? Theme.success : Theme.fgSurfaceVariant
+            }
+
+            Rectangle {
+                implicitHeight: 26
+                implicitWidth: rstAppLbl.implicitWidth + 16
+                radius: Theme.r(8)
+                color: root.confirmResetAppearance
+                    ? Theme.warning
+                    : (rstAppMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg)
+                border.width: 1
+                border.color: root.confirmResetAppearance ? Theme.warning : Theme.cardBorder
+
+                Text {
+                    id: rstAppLbl
+                    anchors.centerIn: parent
+                    text: root.confirmResetAppearance ? "Confirm Reset?" : "󰑐 Reset Appearance"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: root.confirmResetAppearance ? Theme.fgPrimary : Theme.warning
+                }
+
+                MouseArea {
+                    id: rstAppMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (!root.confirmResetAppearance) {
+                            root.confirmResetAppearance = true;
+                            appResetConfirmTimer.restart();
+                            return;
+                        }
+                        root.confirmResetAppearance = false;
+                        appResetConfirmTimer.stop();
+                        ShellState.resetAppearance();
+                        appReloadTimer.restart();
+                        root.resetStatusMsg = "Restored default Appearance, Theme, Font & Cursor";
+                        appResetStatusTimer.restart();
+                    }
+                }
             }
         }
     }
