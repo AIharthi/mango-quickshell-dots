@@ -185,13 +185,22 @@ Item {
         return h + (root.powerMenuOpen ? 46 : 0);
     }
 
-    readonly property int notchPad: (!Theme.isSimple && ShellState.islandStyle === "notch") ? 14 : 0
+    readonly property int notchPad: (!Theme.isSimple && ShellState.barUiStyle === "classic" && ShellState.islandStyle === "notch") ? 14 : 0
+    readonly property bool isSplitBar: !Theme.isSimple && ShellState.barUiStyle === "split"
+    readonly property bool isMenuBar: !Theme.isSimple && ShellState.barUiStyle === "menubar"
+    readonly property bool isApplePill: !Theme.isSimple && ShellState.barUiStyle === "apple"
+    readonly property bool splitCollapsed: isSplitBar && islandState === "collapsed"
+    readonly property bool menuCollapsed: isMenuBar && islandState === "collapsed"
 
     readonly property int targetWidth: {
         if (root.islandState === "collapsed") {
-            if (ShellState.islandStyle === "bar")
+            if (root.isMenuBar)
+                return Math.max(320, Math.round(root.width));
+            if (root.isSplitBar)
+                return Math.max(480, Math.round(root.width) - 24);
+            if (!root.isApplePill && ShellState.islandStyle === "bar")
                 return Math.max(320, Math.round(root.width) - ShellState.islandTopMargin * 2);
-            return Math.max(114, Math.min(Math.round(root.width) - 32, Math.round(collapsedPill.implicitWidth) + 32));
+            return Math.max(128, Math.min(Math.round(root.width) - 32, Math.round(collapsedPill.implicitWidth) + 28));
         }
         if (root.islandState === "osd")
             return 320;
@@ -201,8 +210,13 @@ Item {
     }
 
     readonly property int targetHeight: {
-        if (root.islandState === "collapsed")
+        if (root.islandState === "collapsed") {
+            if (root.isMenuBar)
+                return 28;
+            if (root.isSplitBar)
+                return ShellState.pillHeight;
             return ShellState.pillHeight + root.notchPad;
+        }
         if (root.islandState === "osd")
             return 56 + root.notchPad;
         if (root.islandState === "notification")
@@ -213,10 +227,13 @@ Item {
     readonly property int targetRadius: {
         if (Theme.isSimple)
             return 0;
-        if (root.islandState === "collapsed")
-            return ShellState.islandStyle === "bar"
-                ? Math.round(Theme.r(12))
-                : Math.round(Theme.r(Math.round(ShellState.pillHeight / 2) + 1));
+        if (root.islandState === "collapsed") {
+            if (root.isMenuBar || root.isSplitBar)
+                return 0;
+            if (!root.isApplePill && ShellState.islandStyle === "bar")
+                return Math.round(Theme.r(12));
+            return Math.round(Theme.r(Math.round(ShellState.pillHeight / 2) + 1));
+        }
         if (root.islandState === "osd" || root.islandState === "notification")
             return Math.round(Theme.r(24));
         return Math.round(Theme.r(26));
@@ -284,7 +301,7 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: Theme.isSimple
             ? (ShellState.simpleBarPosition === "bottom" ? 8 : (ShellState.simpleBarHeight + 4))
-            : (root.notchPad > 0 ? -root.notchPad : ShellState.islandTopMargin)
+            : (root.menuCollapsed ? 0 : (root.notchPad > 0 ? -root.notchPad : ShellState.islandTopMargin))
         anchors.horizontalCenter: parent.horizontalCenter
 
         width: hiddenInSimple ? 0 : root.targetWidth
@@ -293,8 +310,8 @@ Item {
         visible: !hiddenInSimple
         clip: true
 
-        color: Theme.notchBg
-        border.width: Theme.islandBorderWidth
+        color: root.splitCollapsed ? "transparent" : Theme.notchBg
+        border.width: root.splitCollapsed ? 0 : Theme.islandBorderWidth
         border.color: Theme.islandBorder
 
         Behavior on width {
@@ -326,7 +343,7 @@ Item {
             anchors.top: parent.top
             height: Math.min(parent.height, 48)
             radius: parent.radius
-            visible: Theme.showGlassSheen
+            visible: Theme.showGlassSheen && !root.splitCollapsed
             gradient: Gradient {
                 GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.11) : Qt.rgba(1, 1, 1, 0.40) }
                 GradientStop { position: 1.0; color: "transparent" }
@@ -348,7 +365,7 @@ Item {
             anchors.top: parent.top
             height: Math.min(parent.height, 56)
             radius: parent.radius
-            visible: Theme.showNeonAccentBar
+            visible: Theme.showNeonAccentBar && !root.splitCollapsed
             gradient: Gradient {
                 GradientStop { position: 0.0; color: Theme.withAlpha(Theme.primary, 0.14) }
                 GradientStop { position: 1.0; color: "transparent" }
@@ -374,7 +391,7 @@ Item {
             anchors.right: parent.right
             anchors.top: parent.top
             height: 3
-            visible: Theme.showRetroStripe
+            visible: Theme.showRetroStripe && !root.splitCollapsed
             color: Theme.primary
         }
 
@@ -384,7 +401,7 @@ Item {
             anchors.right: parent.right
             anchors.top: parent.top
             height: 1
-            visible: Theme.showOledRim
+            visible: Theme.showOledRim && !root.splitCollapsed
             color: Theme.withAlpha(Theme.primary, 0.35)
         }
 
@@ -425,23 +442,27 @@ Item {
         // (Placed behind CollapsedPill so interactive pill buttons consume their own clicks.)
         MouseArea {
             anchors.fill: parent
-            enabled: !Theme.isSimple && root.islandState === "collapsed"
+            enabled: !Theme.isSimple && !root.splitCollapsed && root.islandState === "collapsed"
             onClicked: root.expandTo("overview", false)
         }
 
-        // 1. Collapsed Compact Pill / Modular Bar View (Default & Blur modes only)
+        // 1. Collapsed Compact Pill / Split Islands / Sequoia Bar / Modular Bar
         CollapsedPill {
             id: collapsedPill
             anchors.centerIn: parent
             anchors.verticalCenterOffset: Math.round(root.notchPad / 2)
-            width: ShellState.islandStyle === "bar" ? Math.max(0, parent.width - 24) : implicitWidth
+            width: (root.isSplitBar || root.menuCollapsed || (!root.isApplePill && ShellState.islandStyle === "bar"))
+                ? Math.max(0, parent.width - (root.isSplitBar ? 0 : 24))
+                : implicitWidth
             screenName: root.screenName
             active: !Theme.isSimple && root.islandState === "collapsed"
-            barMode: ShellState.islandStyle === "bar"
+            barMode: root.isMenuBar || root.isSplitBar || (!root.isApplePill && ShellState.islandStyle === "bar")
+            barUiStyle: ShellState.barUiStyle
             player: root.activePlayer
             opacity: (!Theme.isSimple && root.islandState === "collapsed") ? 1.0 : 0.0
             visible: opacity > 0.01
 
+            onExpandRequested: root.expandTo("overview", true)
             onLauncherClicked: root.toggleLauncher()
             onSettingsClicked: root.openSettingsRequested("appearance")
             onFilesClicked: root.openFilesRequested("")

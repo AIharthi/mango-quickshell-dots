@@ -192,9 +192,9 @@ ColumnLayout {
         }
     }
 
-    // --- 16 Presets Compact Wrap Row (Scrollable 2-row height) OR Quick Accent Swatches ---
+    // --- 16 Presets Compact Wrap Row (shown in Presets mode) OR Quick Accent Swatches ---
     Flickable {
-        visible: Theme.themeMode !== "accent"
+        visible: Theme.themeMode === "preset"
         Layout.fillWidth: true
         implicitHeight: 62
         contentWidth: width

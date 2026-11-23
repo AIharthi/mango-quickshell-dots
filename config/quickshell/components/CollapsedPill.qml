@@ -6,19 +6,30 @@ import Quickshell.Io
 import Quickshell.Widgets
 import ".."
 
-RowLayout {
+Item {
     id: root
 
     property var player: null
     property string screenName: ""
     property bool active: true
     property bool barMode: false
+    property string barUiStyle: ShellState.barUiStyle
 
+    signal expandRequested()
     signal launcherClicked()
     signal settingsClicked()
     signal filesClicked()
     signal notificationsClicked()
     signal timerClicked()
+
+    implicitHeight: root.barUiStyle === "menubar" ? 24 : ShellState.pillHeight
+    implicitWidth: {
+        if (root.barUiStyle === "split" || root.barUiStyle === "menubar" || root.barMode)
+            return parent ? parent.width : 640;
+        if (root.barUiStyle === "apple")
+            return appleRow.implicitWidth;
+        return classicRow.implicitWidth;
+    }
 
     // --- Live Modular Widget State ---
     property string monitorName: ""
@@ -43,9 +54,22 @@ RowLayout {
     property bool volMuted: false
     property string kbLayoutShort: ""
 
+    readonly property int activeTagIndex: {
+        const arr = root.tagsModel || [];
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].is_active)
+                return arr[i].index;
+        }
+        return 1;
+    }
+
     readonly property var visibleTags: {
-        if (root.barMode)
+        if (root.barMode || root.barUiStyle === "split" || root.barUiStyle === "menubar") {
+            const occupiedOrActive = root.tagsModel.filter(t => t.is_active || t.is_urgent || t.client_count > 0);
+            if (root.barUiStyle === "split" || root.barUiStyle === "menubar")
+                return occupiedOrActive.length >= 4 ? occupiedOrActive : root.tagsModel.slice(0, Math.max(4, occupiedOrActive.length));
             return root.tagsModel;
+        }
         const filtered = root.tagsModel.filter(t => t.is_active || t.is_urgent || t.client_count > 0);
         return filtered.length > 0 ? filtered : root.tagsModel.slice(0, 4);
     }
@@ -65,9 +89,12 @@ RowLayout {
         return title || artist || (root.player.identity || "Playing");
     }
 
+    readonly property bool showSpacesEffective: ShellState.barShowWorkspaces || root.barUiStyle === "split" || root.barUiStyle === "menubar" || root.barUiStyle === "apple"
+    readonly property bool showWinEffective: ShellState.barShowWindow || root.barUiStyle === "menubar"
+    readonly property bool showVolEffective: DeviceCaps.hasAudio && (ShellState.barShowVolume || root.barUiStyle === "split" || root.barUiStyle === "menubar")
     readonly property bool hasBatteryChip: DeviceCaps.hasBattery && ShellState.barShowBattery
-    readonly property bool hasTrayChip: ShellState.barShowTray && trayStrip.hasItems
-    readonly property bool hasAnyModule: hasMedia
+    readonly property bool hasTrayChip: ShellState.barShowTray && trayStripClassic.hasItems
+    readonly property bool hasAnyClassicModule: hasMedia
         || hasBatteryChip
         || ShellState.dnd
         || ShellState.keepAwake
@@ -89,8 +116,6 @@ RowLayout {
         || (ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable)
         || ShellState.unreadCount > 0
         || barMode
-
-    spacing: hasAnyModule ? 8 : 0
 
     function parseTagsJson(raw: string): void {
         const trimmed = (raw || "").trim();
@@ -157,11 +182,10 @@ RowLayout {
                 return;
             }
             const paren = full.match(/\(([^)]+)\)/);
-            if (paren && paren[1]) {
+            if (paren && paren[1])
                 root.kbLayoutShort = paren[1].trim().slice(0, 3).toUpperCase();
-            } else {
+            else
                 root.kbLayoutShort = full.slice(0, 2).toUpperCase();
-            }
         } catch (err) {}
     }
 
@@ -204,16 +228,11 @@ RowLayout {
         const lines = raw.split("\n");
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            if (line.startsWith("MemTotal:"))
-                totalKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("MemAvailable:"))
-                availKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("MemFree:"))
-                freeKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("Buffers:"))
-                buffersKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("Cached:"))
-                cachedKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
+            if (line.startsWith("MemTotal:")) totalKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
+            else if (line.startsWith("MemAvailable:")) availKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
+            else if (line.startsWith("MemFree:")) freeKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
+            else if (line.startsWith("Buffers:")) buffersKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
+            else if (line.startsWith("Cached:")) cachedKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
         }
         if (totalKb <= 0)
             return;
@@ -234,7 +253,6 @@ RowLayout {
             root.volMuted = parts[1].toLowerCase().indexOf("yes") !== -1;
     }
 
-    // --- Lazy Streams & Timers (active only when widget is enabled) ---
     SystemClock {
         id: clock
         precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
@@ -243,28 +261,22 @@ RowLayout {
     Process {
         id: tagStream
         command: ["mmsg", "watch", "all-tags"]
-        running: root.active && (ShellState.barShowWorkspaces || ShellState.barShowLayout)
-        stdout: SplitParser {
-            onRead: line => root.parseTagsJson(line)
-        }
+        running: root.active && (root.showSpacesEffective || ShellState.barShowLayout)
+        stdout: SplitParser { onRead: line => root.parseTagsJson(line) }
     }
 
     Process {
         id: winStream
         command: ["mmsg", "watch", "focusing-client"]
-        running: root.active && ShellState.barShowWindow
-        stdout: SplitParser {
-            onRead: line => root.parseWinJson(line)
-        }
+        running: root.active && root.showWinEffective
+        stdout: SplitParser { onRead: line => root.parseWinJson(line) }
     }
 
     Process {
         id: kbStream
         command: ["mmsg", "watch", "keyboardlayout"]
         running: root.active && ShellState.barShowKbLayout
-        stdout: SplitParser {
-            onRead: line => root.parseKbJson(line)
-        }
+        stdout: SplitParser { onRead: line => root.parseKbJson(line) }
     }
 
     Process {
@@ -286,373 +298,176 @@ RowLayout {
         repeat: true
         running: root.active && ShellState.barShowSystem
         triggeredOnStart: true
-        onTriggered: {
-            if (!sysProc.running)
-                sysProc.running = true;
-        }
+        onTriggered: { if (!sysProc.running) sysProc.running = true; }
     }
 
     Process {
         id: volProc
         command: ["sh", "-c", "pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null; echo '---'; pactl get-sink-mute @DEFAULT_SINK@ 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: root.parseVolOut(text)
-        }
+        stdout: StdioCollector { onStreamFinished: root.parseVolOut(text) }
     }
 
     Timer {
         interval: 2500
         repeat: true
-        running: root.active && ShellState.barShowVolume && DeviceCaps.hasAudio
+        running: root.active && root.showVolEffective
         triggeredOnStart: true
-        onTriggered: {
-            if (!volProc.running)
-                volProc.running = true;
-        }
+        onTriggered: { if (!volProc.running) volProc.running = true; }
     }
 
     Timer {
         id: volRefreshTimer
         interval: 120
         repeat: false
-        onTriggered: {
-            if (!volProc.running)
-                volProc.running = true;
-        }
+        onTriggered: { if (!volProc.running) volProc.running = true; }
     }
 
-    // ==================== LEFT MODULES ====================
-    // Quick Launcher Icon
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowQuickIcons
-        implicitWidth: 22
-        implicitHeight: 22
-        radius: Theme.r(7)
-        color: launchBtnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-
-        Text {
-            anchors.centerIn: parent
-            text: "󰀻"
-            font.family: Theme.iconFont
-            font.pixelSize: 12
-            color: Theme.primary
-        }
-
-        MouseArea {
-            id: launchBtnMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.launcherClicked()
-        }
-    }
-
-    // Workspaces / Tags Strip
-    Row {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowWorkspaces
+    // ==================== REUSABLE COMPACT SUBCOMPONENTS ====================
+    component SpacesChipStrip : Row {
+        id: scStrip
+        property var model: root.visibleTags
         spacing: 3
 
         Repeater {
-            model: root.visibleTags
+            model: scStrip.model
 
             delegate: Rectangle {
-                id: pillTag
+                id: tgPill
                 required property var modelData
-                readonly property bool isActive: pillTag.modelData.is_active
-                readonly property bool isUrgent: pillTag.modelData.is_urgent
-                readonly property bool isOccupied: pillTag.modelData.client_count > 0
+                readonly property bool isActive: tgPill.modelData.is_active
+                readonly property bool isUrgent: tgPill.modelData.is_urgent
+                readonly property bool isOccupied: tgPill.modelData.client_count > 0
 
-                width: pillTag.isActive ? 20 : 18
+                width: tgPill.isActive ? 20 : 18
                 height: 18
-                radius: Theme.r(6)
+                radius: Theme.r(7)
                 color: {
-                    if (pillTag.isUrgent)
-                        return Theme.error;
-                    if (pillTag.isActive)
-                        return Theme.primary;
-                    if (pillTagMouse.containsMouse)
-                        return Theme.hoverBg;
-                    if (pillTag.isOccupied)
-                        return Theme.withAlpha(Theme.primary, 0.22);
+                    if (tgPill.isUrgent) return Theme.error;
+                    if (tgPill.isActive) return Theme.primary;
+                    if (tgMouse.containsMouse) return Theme.hoverBg;
+                    if (tgPill.isOccupied) return Theme.withAlpha(Theme.primary, 0.22);
                     return Theme.subCardBg;
                 }
 
                 Text {
                     anchors.centerIn: parent
-                    text: pillTag.modelData.index
+                    text: tgPill.modelData.index
                     font.family: Theme.fontFamily
                     font.pixelSize: 10
-                    font.weight: pillTag.isActive ? Font.Bold : Font.Medium
+                    font.weight: tgPill.isActive ? Font.Bold : Font.Medium
                     color: {
-                        if (pillTag.isUrgent)
-                            return Theme.fgError;
-                        if (pillTag.isActive)
-                            return Theme.fgPrimary;
-                        return pillTag.isOccupied ? Theme.fgSurface : Theme.fgSurfaceVariant;
+                        if (tgPill.isUrgent) return Theme.fgError;
+                        if (tgPill.isActive) return Theme.fgPrimary;
+                        return tgPill.isOccupied ? Theme.fgSurface : Theme.fgSurfaceVariant;
                     }
                 }
 
                 MouseArea {
-                    id: pillTagMouse
+                    id: tgMouse
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + pillTag.modelData.index + ",0"])
+                    onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + tgPill.modelData.index + ",0"])
                 }
             }
         }
     }
 
-    // Layout Badge ([T])
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowLayout
-        implicitHeight: 18
-        implicitWidth: layPillLbl.implicitWidth + 10
-        radius: Theme.r(6)
-        color: layPillMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+    component MediaMiniGroup : RowLayout {
+        id: mmg
+        property int maxTitleWidth: 165
+        spacing: 6
 
-        Text {
-            id: layPillLbl
-            anchors.centerIn: parent
-            text: "[" + root.currentLayout + "]"
-            font.family: Theme.fontFamily
-            font.pixelSize: 10
-            font.weight: Font.Bold
-            color: Theme.secondary
-        }
-
-        MouseArea {
-            id: layPillMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"])
-        }
-    }
-
-    // Active Window Title
-    RowLayout {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowWindow && root.activeWindowTitle.length > 0
-        spacing: 4
-
-        Text {
+        ClippingRectangle {
             Layout.alignment: Qt.AlignVCenter
-            text: "󰖯"
-            font.family: Theme.iconFont
-            font.pixelSize: 12
-            color: Theme.secondary
-        }
+            implicitWidth: 20
+            implicitHeight: 20
+            radius: Theme.r(10)
+            color: Theme.primaryContainer
+            contentUnderBorder: false
+            contentInsideBorder: true
 
-        Text {
-            Layout.alignment: Qt.AlignVCenter
-            Layout.maximumWidth: root.barMode ? 250 : 160
-            elide: Text.ElideRight
-            maximumLineCount: 1
-            text: root.activeWindowTitle
-            font.family: Theme.fontFamily
-            font.pixelSize: 11
-            font.weight: Font.Medium
-            color: Theme.fgSurfaceVariant
-        }
-    }
-
-    // Expand Left/Center Spacer when Full-Width Bar Mode is active
-    Item {
-        Layout.fillWidth: true
-        visible: root.barMode
-    }
-
-    // ==================== CENTER MODULES ====================
-    // Bold Clock
-    Text {
-        id: clockText
-        Layout.alignment: Qt.AlignVCenter
-        text: ShellState.formatTime(clock.date)
-        font.family: Theme.fontFamily
-        font.pixelSize: 13
-        font.weight: Font.Bold
-        color: Theme.fgSurface
-    }
-
-    // Date Chip next to Clock
-    Text {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowDate
-        text: ShellState.formatDate(clock.date)
-        font.family: Theme.fontFamily
-        font.pixelSize: 11
-        font.weight: Font.Medium
-        color: Theme.fgSurfaceVariant
-    }
-
-    // Collapsible Spotify / MPRIS Mini-Player
-    Item {
-        id: mediaSection
-        Layout.alignment: Qt.AlignVCenter
-        implicitWidth: root.hasMedia ? mediaRow.implicitWidth : 0
-        implicitHeight: 24
-        clip: true
-        opacity: root.hasMedia ? 1.0 : 0.0
-        visible: implicitWidth > 1
-
-        Behavior on implicitWidth {
-            enabled: !Theme.reducedMotion
-            NumberAnimation { duration: 170; easing.type: Easing.OutCubic }
-        }
-        Behavior on opacity {
-            enabled: !Theme.reducedMotion
-            NumberAnimation { duration: 130; easing.type: Easing.OutCubic }
-        }
-
-        RowLayout {
-            id: mediaRow
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 7
-
-            Rectangle {
-                Layout.alignment: Qt.AlignVCenter
-                implicitWidth: 4
-                implicitHeight: 4
-                radius: Theme.r(2)
-                color: root.isPlaying ? Theme.primary : Theme.outline
+            rotation: 0
+            RotationAnimation on rotation {
+                from: 0
+                to: 360
+                duration: 12000
+                loops: Animation.Infinite
+                running: root.active && root.isPlaying && root.visible && mmArtImg.visible && ShellState.pillSpinArt && !Theme.reducedMotion
             }
 
-            ClippingRectangle {
-                id: artClip
-                Layout.alignment: Qt.AlignVCenter
-                implicitWidth: 20
-                implicitHeight: 20
-                radius: Theme.r(10)
-                color: Theme.primaryContainer
-
-                rotation: 0
-                RotationAnimation on rotation {
-                    from: 0
-                    to: 360
-                    duration: 12000
-                    loops: Animation.Infinite
-                    running: root.active && root.isPlaying && root.visible && artImage.visible && ShellState.pillSpinArt && !Theme.reducedMotion
-                }
-
-                Image {
-                    id: artImage
-                    anchors.fill: parent
-                    source: root.artUrl
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    sourceSize: Qt.size(48, 48)
-                    visible: root.artUrl.length > 0 && status === Image.Ready
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: !artImage.visible
-                    text: "󰎈"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 11
-                    color: Theme.fgPrimaryContainer
-                }
+            Image {
+                id: mmArtImg
+                anchors.fill: parent
+                source: root.artUrl
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                sourceSize: Qt.size(48, 48)
+                visible: root.artUrl.length > 0 && status === Image.Ready
             }
 
             Text {
-                Layout.alignment: Qt.AlignVCenter
-                Layout.maximumWidth: root.barMode ? 210 : 175
-                text: root.mediaLabel
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                font.family: Theme.fontFamily
+                anchors.centerIn: parent
+                visible: !mmArtImg.visible
+                text: "󰎈"
+                font.family: Theme.iconFont
                 font.pixelSize: 11
-                font.weight: Font.Medium
-                color: root.isPlaying ? Theme.fgSurface : Theme.fgSurfaceVariant
+                color: Theme.fgPrimaryContainer
             }
+        }
 
-            Row {
-                Layout.alignment: Qt.AlignVCenter
-                spacing: 2
-                visible: root.isPlaying && ShellState.pillShowEqualizer && !Theme.reducedMotion
+        Text {
+            Layout.alignment: Qt.AlignVCenter
+            Layout.maximumWidth: mmg.maxTitleWidth
+            text: root.mediaLabel
+            elide: Text.ElideRight
+            maximumLineCount: 1
+            font.family: Theme.fontFamily
+            font.pixelSize: 11
+            font.weight: Font.Medium
+            color: root.isPlaying ? Theme.fgSurface : Theme.fgSurfaceVariant
+        }
 
-                Repeater {
-                    model: [
-                        { minH: 4, maxH: 13, dur: 420 },
-                        { minH: 6, maxH: 15, dur: 310 },
-                        { minH: 3, maxH: 11, dur: 480 }
-                    ]
-                    delegate: Rectangle {
-                        id: eqBar
-                        required property var modelData
-                        width: 2.5
-                        height: eqBar.modelData.minH
-                        radius: 1.25
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.primary
+        Row {
+            Layout.alignment: Qt.AlignVCenter
+            spacing: 2
+            visible: root.isPlaying && ShellState.pillShowEqualizer && !Theme.reducedMotion
 
-                        SequentialAnimation on height {
-                            running: root.active && root.isPlaying && root.visible && ShellState.pillShowEqualizer && !Theme.reducedMotion
-                            loops: Animation.Infinite
-                            NumberAnimation {
-                                to: eqBar.modelData.maxH
-                                duration: eqBar.modelData.dur
-                                easing.type: Easing.InOutSine
-                            }
-                            NumberAnimation {
-                                to: eqBar.modelData.minH
-                                duration: eqBar.modelData.dur
-                                easing.type: Easing.InOutSine
-                            }
-                        }
+            Repeater {
+                model: [
+                    { minH: 4, maxH: 13, dur: 420 },
+                    { minH: 6, maxH: 15, dur: 310 },
+                    { minH: 3, maxH: 11, dur: 480 }
+                ]
+                delegate: Rectangle {
+                    id: eqBarM
+                    required property var modelData
+                    width: 2.5
+                    height: eqBarM.modelData.minH
+                    radius: 1.25
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Theme.primary
+
+                    SequentialAnimation on height {
+                        running: root.active && root.isPlaying && root.visible && ShellState.pillShowEqualizer && !Theme.reducedMotion
+                        loops: Animation.Infinite
+                        NumberAnimation { to: eqBarM.modelData.maxH; duration: eqBarM.modelData.dur; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: eqBarM.modelData.minH; duration: eqBarM.modelData.dur; easing.type: Easing.InOutSine }
                     }
                 }
             }
         }
     }
 
-    // Expand Center/Right Spacer when Full-Width Bar Mode is active
-    Item {
-        Layout.fillWidth: true
-        visible: root.barMode
-    }
-
-    // ==================== RIGHT MODULES ====================
-    // CPU & RAM Usage
-    RowLayout {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowSystem
-        spacing: 5
-
-        Text {
-            Layout.alignment: Qt.AlignVCenter
-            text: "󰍛 " + Math.round(root.cpuPercent) + "%"
-            font.family: Theme.fontFamily
-            font.pixelSize: 10
-            font.weight: Font.DemiBold
-            color: root.cpuPercent > 85 ? Theme.error : Theme.primary
-        }
-
-        Text {
-            Layout.alignment: Qt.AlignVCenter
-            text: "󰘚 " + Math.round(root.ramPercent) + "%"
-            font.family: Theme.fontFamily
-            font.pixelSize: 10
-            font.weight: Font.DemiBold
-            color: root.ramPercent > 85 ? Theme.warning : Theme.secondary
-        }
-    }
-
-    // Interactive Volume Indicator (click to mute, scroll ±5%)
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowVolume && DeviceCaps.hasAudio
+    component VolumePillButton : Rectangle {
+        id: vpBtn
         implicitHeight: 20
-        implicitWidth: volRow.implicitWidth + 10
+        implicitWidth: vpRow.implicitWidth + 10
         radius: Theme.r(7)
-        color: volMouse.containsMouse ? Theme.hoverBg : "transparent"
+        color: vpMouse.containsMouse ? Theme.hoverBg : "transparent"
 
         RowLayout {
-            id: volRow
+            id: vpRow
             anchors.centerIn: parent
             spacing: 4
 
@@ -673,7 +488,7 @@ RowLayout {
         }
 
         MouseArea {
-            id: volMouse
+            id: vpMouse
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
@@ -689,401 +504,650 @@ RowLayout {
         }
     }
 
-    // Keyboard Layout Badge
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowKbLayout && root.kbLayoutShort.length > 0
-        implicitHeight: 18
-        implicitWidth: kbPillRow.implicitWidth + 8
-        radius: Theme.r(6)
-        color: Theme.subCardBg
+    component LiveActivityChips : RowLayout {
+        spacing: 5
+
+        // Live Game Mode Badge
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.gameModeActive
+            implicitHeight: 19
+            implicitWidth: gmPillRowC.implicitWidth + 10
+            radius: Theme.r(7)
+            color: Theme.withAlpha(Theme.tertiary, 0.22)
+            border.width: 1
+            border.color: Theme.tertiary
+
+            RowLayout {
+                id: gmPillRowC
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: 10; color: Theme.tertiary }
+                Text { text: "GAME"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.tertiary }
+            }
+
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleGameMode() }
+        }
+
+        // Live Stopwatch
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.stopwatchActive
+            implicitHeight: 19
+            implicitWidth: swPillRowC.implicitWidth + 10
+            radius: Theme.r(7)
+            color: Theme.withAlpha(Theme.secondary, 0.18)
+            border.width: 1
+            border.color: Theme.withAlpha(Theme.secondary, 0.55)
+
+            RowLayout {
+                id: swPillRowC
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: 10; color: Theme.secondary }
+                Text { text: ShellState.formatTimer(ShellState.stopwatchElapsedSec); font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.secondary }
+            }
+
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.timerClicked() }
+        }
+
+        // Opt-In Weather Pill
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable
+            implicitHeight: 19
+            implicitWidth: wPillRowC.implicitWidth + 8
+            radius: Theme.r(7)
+            color: wPillMouseC.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+            RowLayout {
+                id: wPillRowC
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: 10; color: Theme.primary }
+                Text { text: ShellState.weatherTemp; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.fgSurface }
+            }
+
+            MouseArea { id: wPillMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.notificationsClicked() }
+        }
+
+        // Live Recording Pill
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.recordingActive
+            implicitHeight: 19
+            implicitWidth: recRowC.implicitWidth + 10
+            radius: Theme.r(7)
+            color: Theme.withAlpha(Theme.error, 0.22)
+            border.width: 1
+            border.color: Theme.error
+
+            RowLayout {
+                id: recRowC
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: "󰑊"; font.family: Theme.iconFont; font.pixelSize: 9; color: Theme.error }
+                Text { text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec); font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.error }
+            }
+
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "stop"]) }
+        }
+
+        // Live Focus Timer
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.timerActive
+            implicitHeight: 19
+            implicitWidth: tmRowC.implicitWidth + 8
+            radius: Theme.r(7)
+            color: Theme.withAlpha(Theme.primary, 0.18)
+            border.width: 1
+            border.color: Theme.withAlpha(Theme.primary, 0.55)
+
+            RowLayout {
+                id: tmRowC
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: "󰔛"; font.family: Theme.iconFont; font.pixelSize: 10; color: Theme.primary }
+                Text { text: ShellState.formatTimer(ShellState.timerRemainingSec); font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.primary }
+            }
+
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.timerClicked() }
+        }
+
+        // Unread Notifications Pill
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.unreadCount > 0
+            implicitHeight: 19
+            implicitWidth: unrRowC.implicitWidth + 8
+            radius: Theme.r(7)
+            color: unrMouseC.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.secondary, 0.18)
+            border.width: 1
+            border.color: Theme.withAlpha(Theme.secondary, 0.45)
+
+            RowLayout {
+                id: unrRowC
+                anchors.centerIn: parent
+                spacing: 3
+                Text { text: "󰂚"; font.family: Theme.iconFont; font.pixelSize: 10; color: Theme.secondary }
+                Text { text: String(ShellState.unreadCount); font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.fgSurface }
+            }
+
+            MouseArea { id: unrMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.notificationsClicked() }
+        }
+
+        // Live File Manager Op Progress
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.fmOpActive
+            implicitHeight: 19
+            implicitWidth: fmRowC.implicitWidth + 8
+            radius: Theme.r(7)
+            color: Theme.withAlpha(Theme.primary, 0.22)
+            border.width: 1
+            border.color: Theme.primary
+
+            RowLayout {
+                id: fmRowC
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: 10; color: Theme.primary }
+                Text { text: Math.round(ShellState.fmOpProgress * 100) + "%"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.primary }
+            }
+
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.filesClicked() }
+        }
+    }
+
+    // ==================== BAR STYLE 1: APPLE DYNAMIC ISLAND CAPSULE ====================
+    RowLayout {
+        id: appleRow
+        anchors.centerIn: parent
+        visible: root.barUiStyle === "apple"
+        spacing: 8
+
+        // Left: Compact Active Space Dot Pill (when idle) or Spinning Media Cover
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: !root.hasMedia
+            implicitHeight: 18
+            implicitWidth: spDotRow.implicitWidth + 10
+            radius: Theme.r(9)
+            color: Theme.withAlpha(Theme.primary, 0.18)
+
+            RowLayout {
+                id: spDotRow
+                anchors.centerIn: parent
+                spacing: 4
+
+                Rectangle {
+                    implicitWidth: 5
+                    implicitHeight: 5
+                    radius: 2.5
+                    color: Theme.primary
+                }
+
+                Text {
+                    text: String(root.activeTagIndex)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 9
+                    font.weight: Font.Bold
+                    color: Theme.primary
+                }
+            }
+        }
+
+        // Bold Clock + Optional Date
+        Text {
+            Layout.alignment: Qt.AlignVCenter
+            text: ShellState.formatTime(clock.date)
+            font.family: Theme.fontFamily
+            font.pixelSize: 12
+            font.weight: Font.Bold
+            color: Theme.fgSurface
+        }
+
+        Text {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowDate
+            text: ShellState.formatDate(clock.date)
+            font.family: Theme.fontFamily
+            font.pixelSize: 10
+            font.weight: Font.Medium
+            color: Theme.fgSurfaceVariant
+        }
+
+        // Live Media Strip when playing
+        MediaMiniGroup {
+            visible: root.hasMedia
+            maxTitleWidth: 160
+        }
+
+        // Live Activity Badges (Timer, Rec, Game, Weather, Unread)
+        LiveActivityChips {
+            visible: ShellState.gameModeActive || ShellState.stopwatchActive || ShellState.recordingActive
+                || ShellState.timerActive || ShellState.unreadCount > 0 || ShellState.fmOpActive
+                || (ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable)
+        }
+
+        // Active Focus/Battery Indicators
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.warning }
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.tertiary }
 
         RowLayout {
-            id: kbPillRow
-            anchors.centerIn: parent
+            Layout.alignment: Qt.AlignVCenter
             spacing: 3
+            visible: root.hasBatteryChip
+            Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: 12; color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
+            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+        }
 
-            Text {
-                text: "󰌌"
-                font.family: Theme.iconFont
-                font.pixelSize: 10
-                color: Theme.secondary
-            }
-
-            Text {
-                text: root.kbLayoutShort
-                font.family: Theme.fontFamily
-                font.pixelSize: 9
-                font.weight: Font.Bold
-                color: Theme.fgSurface
-            }
+        // Subtle Idle Live Dot when minimal
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: !root.hasMedia && !root.hasBatteryChip && ShellState.unreadCount === 0
+            implicitWidth: 6
+            implicitHeight: 6
+            radius: 3
+            color: Theme.success
         }
     }
 
-    // Active-Only Status Badges (DND / Keep Awake)
-    Text {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.dnd
-        text: "󰂛"
-        font.family: Theme.iconFont
-        font.pixelSize: 12
-        color: Theme.warning
-    }
-
-    Text {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.keepAwake
-        text: "󰅶"
-        font.family: Theme.iconFont
-        font.pixelSize: 12
-        color: Theme.tertiary
-    }
-
-    // Hardware-Aware Battery Chip (Laptops only)
+    // ==================== BAR STYLE 2: SPLIT FLOATING ISLANDS (3 GLASS PODS) ====================
     RowLayout {
-        Layout.alignment: Qt.AlignVCenter
-        spacing: 4
-        visible: root.hasBatteryChip
+        id: splitRow
+        anchors.fill: parent
+        visible: root.barUiStyle === "split"
+        spacing: 8
 
-        Text {
-            text: DeviceCaps.batteryIcon
-            font.family: Theme.iconFont
-            font.pixelSize: 13
-            color: DeviceCaps.batteryLow
-                ? Theme.error
-                : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant)
+        // POD 1 (LEFT): Launcher + Workspaces + Layout
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            implicitHeight: ShellState.pillHeight
+            implicitWidth: podLeftRow.implicitWidth + 18
+            radius: Theme.r(Math.round(ShellState.pillHeight / 2))
+            color: Theme.notchBg
+            border.width: Theme.islandBorderWidth
+            border.color: Theme.islandBorder
 
-            Behavior on color {
-                enabled: !Theme.isSimple
-                ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
+            RowLayout {
+                id: podLeftRow
+                anchors.centerIn: parent
+                spacing: 7
+
+                Rectangle {
+                    implicitWidth: 20
+                    implicitHeight: 20
+                    radius: Theme.r(10)
+                    color: spLaunchMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+                    Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.primary }
+                    MouseArea { id: spLaunchMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.launcherClicked() }
+                }
+
+                SpacesChipStrip {}
+
+                Rectangle {
+                    implicitHeight: 18
+                    implicitWidth: spLayTxt.implicitWidth + 10
+                    radius: Theme.r(6)
+                    color: spLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+                    Text { id: spLayTxt; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.secondary }
+                    MouseArea { id: spLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
+                }
+
+                Text {
+                    visible: ShellState.barShowWindow && root.activeWindowTitle.length > 0
+                    Layout.maximumWidth: 150
+                    elide: Text.ElideRight
+                    text: root.activeWindowTitle
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    color: Theme.fgSurfaceVariant
+                }
             }
         }
 
+        Item { Layout.fillWidth: true }
+
+        // POD 2 (CENTER): Clock + Date + Dynamic Now Playing (click to expand Island)
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            implicitHeight: ShellState.pillHeight
+            implicitWidth: Math.max(120, podCenterRow.implicitWidth + 24)
+            radius: Theme.r(Math.round(ShellState.pillHeight / 2))
+            color: podCenterMouse.containsMouse ? Qt.lighter(Theme.notchBg, 1.06) : Theme.notchBg
+            border.width: Theme.islandBorderWidth
+            border.color: Theme.islandBorder
+
+            MouseArea {
+                id: podCenterMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.expandRequested()
+            }
+
+            RowLayout {
+                id: podCenterRow
+                anchors.centerIn: parent
+                spacing: 8
+
+                Text {
+                    text: ShellState.formatTime(clock.date)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 12
+                    font.weight: Font.Bold
+                    color: Theme.fgSurface
+                }
+
+                Text {
+                    visible: ShellState.barShowDate
+                    text: ShellState.formatDate(clock.date)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    color: Theme.fgSurfaceVariant
+                }
+
+                MediaMiniGroup {
+                    visible: root.hasMedia
+                    maxTitleWidth: 170
+                }
+            }
+        }
+
+        Item { Layout.fillWidth: true }
+
+        // POD 3 (RIGHT): Live Activities, Volume, Focus, Battery, Control Center
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            implicitHeight: ShellState.pillHeight
+            implicitWidth: podRightRow.implicitWidth + 18
+            radius: Theme.r(Math.round(ShellState.pillHeight / 2))
+            color: Theme.notchBg
+            border.width: Theme.islandBorderWidth
+            border.color: Theme.islandBorder
+
+            RowLayout {
+                id: podRightRow
+                anchors.centerIn: parent
+                spacing: 7
+
+                LiveActivityChips {}
+
+                VolumePillButton { visible: root.showVolEffective }
+
+                Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.warning }
+                Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.tertiary }
+
+                RowLayout {
+                    visible: root.hasBatteryChip
+                    spacing: 3
+                    Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: 12; color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
+                    Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+                }
+
+                Rectangle {
+                    implicitWidth: 20
+                    implicitHeight: 20
+                    radius: Theme.r(10)
+                    color: spNotifMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    Text { anchors.centerIn: parent; text: "󰂚"; font.family: Theme.iconFont; font.pixelSize: 11; color: ShellState.unreadCount > 0 ? Theme.secondary : Theme.fgSurfaceVariant }
+                    MouseArea { id: spNotifMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.notificationsClicked() }
+                }
+
+                Rectangle {
+                    implicitWidth: 20
+                    implicitHeight: 20
+                    radius: Theme.r(10)
+                    color: spCcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    Text { anchors.centerIn: parent; text: "󰕰"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.primary }
+                    MouseArea { id: spCcMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.expandRequested() }
+                }
+            }
+        }
+    }
+
+    // ==================== BAR STYLE 3: MACOS SEQUOIA TOP MENU BAR ====================
+    RowLayout {
+        id: menuRow
+        anchors.fill: parent
+        visible: root.barUiStyle === "menubar"
+        spacing: 10
+
+        // Apple/Launcher Menu Icon
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: 22
+            implicitHeight: 20
+            radius: Theme.r(6)
+            color: mbAppMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+            Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: 13; color: Theme.primary }
+            MouseArea { id: mbAppMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.launcherClicked() }
+        }
+
+        // Bold Active App / Window Title
         Text {
-            text: DeviceCaps.batteryPercent + "%"
+            Layout.alignment: Qt.AlignVCenter
+            Layout.maximumWidth: 210
+            elide: Text.ElideRight
+            text: root.activeWindowTitle.length > 0 ? root.activeWindowTitle : "MangoWC Desktop"
             font.family: Theme.fontFamily
             font.pixelSize: 11
-            font.weight: Font.DemiBold
-            color: DeviceCaps.batteryLow
-                ? Theme.error
-                : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant)
-
-            Behavior on color {
-                enabled: !Theme.isSimple
-                ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
-            }
+            font.weight: Font.Bold
+            color: Theme.fgSurface
         }
-    }
 
-    // Live Game Mode Badge (click to exit)
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.gameModeActive
-        implicitHeight: 20
-        implicitWidth: gmPillRow.implicitWidth + 10
-        radius: Theme.r(7)
-        color: Theme.withAlpha(Theme.tertiary, 0.22)
-        border.width: 1
-        border.color: Theme.tertiary
+        SpacesChipStrip {}
+
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            implicitHeight: 18
+            implicitWidth: mbLayTxt.implicitWidth + 8
+            radius: Theme.r(6)
+            color: mbLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+            Text { id: mbLayTxt; anchors.centerIn: parent; text: root.currentLayout; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.secondary }
+            MouseArea { id: mbLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
+        }
+
+        Item { Layout.fillWidth: true }
+
+        // Center Subtle Now-Playing Capsule when active
+        MediaMiniGroup {
+            visible: root.hasMedia
+            maxTitleWidth: 210
+        }
+
+        Item { Layout.fillWidth: true }
+
+        // Right macOS Status Menu Cluster
+        LiveActivityChips {}
+
+        VolumePillButton { visible: root.showVolEffective }
+
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.warning }
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.tertiary }
 
         RowLayout {
-            id: gmPillRow
-            anchors.centerIn: parent
-            spacing: 4
-            Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.tertiary }
-            Text {
-                text: "GAME"
-                font.family: Theme.fontFamily
-                font.pixelSize: 9
-                font.weight: Font.Bold
-                color: Theme.tertiary
-            }
+            Layout.alignment: Qt.AlignVCenter
+            visible: root.hasBatteryChip
+            spacing: 3
+            Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: 12; color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
+            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
         }
 
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: ShellState.toggleGameMode()
-        }
-    }
-
-    // Live Stopwatch Pill
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.stopwatchActive
-        implicitHeight: 20
-        implicitWidth: swPillRow.implicitWidth + 10
-        radius: Theme.r(7)
-        color: Theme.withAlpha(Theme.secondary, 0.18)
-        border.width: 1
-        border.color: Theme.withAlpha(Theme.secondary, 0.55)
-
-        RowLayout {
-            id: swPillRow
-            anchors.centerIn: parent
-            spacing: 4
-            Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.secondary }
-            Text {
-                text: ShellState.formatTimer(ShellState.stopwatchElapsedSec)
-                font.family: Theme.fontFamily
-                font.pixelSize: 9
-                font.weight: Font.Bold
-                color: Theme.secondary
-            }
+        // Control Center Toggle Icon
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: 20
+            implicitHeight: 20
+            radius: Theme.r(6)
+            color: mbCcMouse.containsMouse ? Theme.hoverBg : "transparent"
+            Text { anchors.centerIn: parent; text: "󰕰"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.fgSurface }
+            MouseArea { id: mbCcMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.expandRequested() }
         }
 
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.timerClicked()
-        }
-    }
+        // Notifications / Date + Clock Trigger
+        Item {
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: mbDateRow.implicitWidth
+            implicitHeight: 20
 
-    // Opt-In Weather Pill
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable
-        implicitHeight: 20
-        implicitWidth: wPillRow.implicitWidth + 10
-        radius: Theme.r(7)
-        color: wPillMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+            RowLayout {
+                id: mbDateRow
+                anchors.centerIn: parent
+                spacing: 6
 
-        RowLayout {
-            id: wPillRow
-            anchors.centerIn: parent
-            spacing: 4
-            Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.primary }
-            Text {
-                text: ShellState.weatherTemp
-                font.family: Theme.fontFamily
-                font.pixelSize: 9
-                font.weight: Font.Bold
-                color: Theme.fgSurface
-            }
-        }
+                Text {
+                    text: ShellState.formatDate(clock.date)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    color: Theme.fgSurfaceVariant
+                }
 
-        MouseArea {
-            id: wPillMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.notificationsClicked()
-        }
-    }
-
-    // Live Screen Recording Pill (click to stop)
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.recordingActive
-        implicitHeight: 20
-        implicitWidth: recRow.implicitWidth + 12
-        radius: Theme.r(7)
-        color: Theme.withAlpha(Theme.error, 0.22)
-        border.width: 1
-        border.color: Theme.error
-
-        RowLayout {
-            id: recRow
-            anchors.centerIn: parent
-            spacing: 4
-
-            Text {
-                text: "󰑊"
-                font.family: Theme.iconFont
-                font.pixelSize: 10
-                color: Theme.error
-
-                SequentialAnimation on opacity {
-                    running: ShellState.recordingActive && root.visible && !Theme.reducedMotion
-                    loops: Animation.Infinite
-                    NumberAnimation { to: 0.35; duration: 600 }
-                    NumberAnimation { to: 1.0; duration: 600 }
+                Text {
+                    text: ShellState.formatTime(clock.date)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    font.weight: Font.Bold
+                    color: Theme.fgSurface
                 }
             }
 
-            Text {
-                text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec)
-                font.family: Theme.fontFamily
-                font.pixelSize: 9
-                font.weight: Font.Bold
-                color: Theme.error
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.notificationsClicked()
             }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "stop"])
         }
     }
 
-    // Live Focus Timer Pill
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.timerActive
-        implicitHeight: 20
-        implicitWidth: timerPillRow.implicitWidth + 10
-        radius: Theme.r(7)
-        color: Theme.withAlpha(Theme.primary, 0.18)
-        border.width: 1
-        border.color: Theme.withAlpha(Theme.primary, 0.6)
+    // ==================== BAR STYLE 4: MODULAR CLASSIC PILL / FULL BAR ====================
+    RowLayout {
+        id: classicRow
+        anchors.fill: root.barMode ? parent : undefined
+        anchors.centerIn: root.barMode ? undefined : parent
+        visible: root.barUiStyle === "classic"
+        spacing: root.hasAnyClassicModule ? 8 : 0
+
+        // Launcher Quick Icon
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowQuickIcons
+            implicitWidth: 22; implicitHeight: 22; radius: Theme.r(7)
+            color: clLaunchMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+            Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.primary }
+            MouseArea { id: clLaunchMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.launcherClicked() }
+        }
+
+        SpacesChipStrip { visible: ShellState.barShowWorkspaces }
+
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowLayout
+            implicitHeight: 18; implicitWidth: clLayLbl.implicitWidth + 10; radius: Theme.r(6)
+            color: clLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+            Text { id: clLayLbl; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.secondary }
+            MouseArea { id: clLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
+        }
 
         RowLayout {
-            id: timerPillRow
-            anchors.centerIn: parent
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowWindow && root.activeWindowTitle.length > 0
             spacing: 4
-
+            Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.secondary }
             Text {
-                text: "󰔛"
-                font.family: Theme.iconFont
-                font.pixelSize: 11
-                color: Theme.primary
-            }
-            Text {
-                text: ShellState.formatTimer(ShellState.timerRemainingSec)
-                font.family: Theme.fontFamily
-                font.pixelSize: 9
-                font.weight: Font.Bold
-                color: Theme.primary
+                Layout.maximumWidth: root.barMode ? 250 : 160
+                elide: Text.ElideRight
+                text: root.activeWindowTitle
+                font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.Medium; color: Theme.fgSurfaceVariant
             }
         }
 
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.timerClicked()
-        }
-    }
-
-    // Unread Notifications Pill
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.unreadCount > 0
-        implicitHeight: 20
-        implicitWidth: unreadRow.implicitWidth + 10
-        radius: Theme.r(7)
-        color: notifPillMouse.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.secondary, 0.18)
-        border.width: 1
-        border.color: Theme.withAlpha(Theme.secondary, 0.45)
-
-        RowLayout {
-            id: unreadRow
-            anchors.centerIn: parent
-            spacing: 3
-
-            Text {
-                text: "󰂚"
-                font.family: Theme.iconFont
-                font.pixelSize: 10
-                color: Theme.secondary
-            }
-            Text {
-                text: String(ShellState.unreadCount)
-                font.family: Theme.fontFamily
-                font.pixelSize: 9
-                font.weight: Font.Bold
-                color: Theme.fgSurface
-            }
-        }
-
-        MouseArea {
-            id: notifPillMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.notificationsClicked()
-        }
-    }
-
-    // Live File Manager Operation Progress Pill (only during copy/move/compress/extract)
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.fmOpActive
-        implicitHeight: 20
-        implicitWidth: fmOpRow.implicitWidth + 10
-        radius: Theme.r(7)
-        color: Theme.withAlpha(Theme.primary, 0.22)
-        border.width: 1
-        border.color: Theme.primary
-
-        RowLayout {
-            id: fmOpRow
-            anchors.centerIn: parent
-            spacing: 4
-            Text { text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.primary }
-            Text {
-                text: Math.round(ShellState.fmOpProgress * 100) + "%"
-                font.family: Theme.fontFamily
-                font.pixelSize: 9
-                font.weight: Font.Bold
-                color: Theme.primary
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.filesClicked()
-        }
-    }
-
-    // Inline System Tray (when enabled & populated)
-    SystemTrayStrip {
-        id: trayStrip
-        Layout.alignment: Qt.AlignVCenter
-        visible: root.hasTrayChip
-        compact: true
-    }
-
-    // Quick Files Manager Icon
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowFiles || ShellState.barShowQuickIcons
-        implicitWidth: 22
-        implicitHeight: 22
-        radius: Theme.r(7)
-        color: filesBtnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+        Item { Layout.fillWidth: true; visible: root.barMode }
 
         Text {
-            anchors.centerIn: parent
-            text: "󰉋"
-            font.family: Theme.iconFont
-            font.pixelSize: 12
-            color: filesBtnMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+            Layout.alignment: Qt.AlignVCenter
+            text: ShellState.formatTime(clock.date)
+            font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; color: Theme.fgSurface
         }
-
-        MouseArea {
-            id: filesBtnMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.filesClicked()
-        }
-    }
-
-    // Quick Settings Icon
-    Rectangle {
-        Layout.alignment: Qt.AlignVCenter
-        visible: ShellState.barShowQuickIcons
-        implicitWidth: 22
-        implicitHeight: 22
-        radius: Theme.r(7)
-        color: gearBtnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
         Text {
-            anchors.centerIn: parent
-            text: "󰒓"
-            font.family: Theme.iconFont
-            font.pixelSize: 12
-            color: gearBtnMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowDate
+            text: ShellState.formatDate(clock.date)
+            font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.Medium; color: Theme.fgSurfaceVariant
         }
 
-        MouseArea {
-            id: gearBtnMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.settingsClicked()
+        MediaMiniGroup {
+            visible: root.hasMedia
+            maxTitleWidth: root.barMode ? 210 : 175
+        }
+
+        Item { Layout.fillWidth: true; visible: root.barMode }
+
+        RowLayout {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowSystem
+            spacing: 5
+            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
+            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
+        }
+
+        VolumePillButton { visible: ShellState.barShowVolume && DeviceCaps.hasAudio }
+
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowKbLayout && root.kbLayoutShort.length > 0
+            implicitHeight: 18; implicitWidth: kbPillRowCl.implicitWidth + 8; radius: Theme.r(6)
+            color: Theme.subCardBg
+            RowLayout {
+                id: kbPillRowCl
+                anchors.centerIn: parent; spacing: 3
+                Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: 10; color: Theme.secondary }
+                Text { text: root.kbLayoutShort; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.fgSurface }
+            }
+        }
+
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.warning }
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.tertiary }
+
+        RowLayout {
+            Layout.alignment: Qt.AlignVCenter
+            spacing: 4
+            visible: root.hasBatteryChip
+            Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: 13; color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
+            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
+        }
+
+        LiveActivityChips {}
+
+        SystemTrayStrip {
+            id: trayStripClassic
+            Layout.alignment: Qt.AlignVCenter
+            visible: root.hasTrayChip
+            compact: true
+        }
+
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowFiles || ShellState.barShowQuickIcons
+            implicitWidth: 22; implicitHeight: 22; radius: Theme.r(7)
+            color: filesBtnMouseCl.containsMouse ? Theme.hoverBg : Theme.subCardBg
+            Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: 12; color: filesBtnMouseCl.containsMouse ? Theme.primary : Theme.fgSurfaceVariant }
+            MouseArea { id: filesBtnMouseCl; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.filesClicked() }
+        }
+
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowQuickIcons
+            implicitWidth: 22; implicitHeight: 22; radius: Theme.r(7)
+            color: gearBtnMouseCl.containsMouse ? Theme.hoverBg : Theme.subCardBg
+            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: 12; color: gearBtnMouseCl.containsMouse ? Theme.primary : Theme.fgSurfaceVariant }
+            MouseArea { id: gearBtnMouseCl; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.settingsClicked() }
         }
     }
 }

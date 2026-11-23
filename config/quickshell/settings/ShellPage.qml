@@ -127,10 +127,198 @@ ColumnLayout {
                 Item { Layout.fillWidth: true }
 
                 Text {
-                    text: "Add date, window title, tags, stats & more"
+                    text: "Choose Bar UI, Hub Layout & modular widgets"
                     font.family: Theme.fontFamily
                     font.pixelSize: 9
                     color: Theme.fgSurfaceVariant
+                }
+            }
+
+            // Apple-Inspired Collapsed Top Bar / Island UI Styles
+            Text {
+                text: "TOP BAR / DYNAMIC ISLAND UI STYLE"
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                rowSpacing: 8
+                columnSpacing: 8
+
+                Repeater {
+                    model: ShellState.availableBarStyles
+
+                    delegate: Rectangle {
+                        id: barStyleCard
+                        required property var modelData
+                        readonly property bool selected: ShellState.barUiStyle === barStyleCard.modelData.id
+
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 62
+                        radius: Theme.r(12)
+                        color: barStyleCard.selected
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (barStyleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: barStyleCard.selected ? 1 : Theme.cardBorderWidth
+                        border.color: barStyleCard.selected ? Theme.primary : Theme.cardBorder
+                        scale: barStyleMouse.pressed ? 0.97 : 1.0
+
+                        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            spacing: 10
+
+                            Rectangle {
+                                implicitWidth: 34
+                                implicitHeight: 34
+                                radius: Theme.r(10)
+                                color: barStyleCard.selected ? Theme.primary : Theme.surfaceContainerHighest
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: barStyleCard.modelData.icon
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 15
+                                    color: barStyleCard.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
+                                    Text { text: barStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.Bold; color: barStyleCard.selected ? Theme.primary : Theme.fgSurface }
+                                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + barStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 2
+                                    wrapMode: Text.WordWrap
+                                    text: barStyleCard.modelData.desc
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 9
+                                    color: Theme.fgSurfaceVariant
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            id: barStyleMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                ShellState.setBarUiStyle(barStyleCard.modelData.id);
+                                root.barStatusMsg = "Top Bar UI: " + barStyleCard.modelData.label;
+                                barStatusTimer.restart();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Expanded Dynamic Island Hub UI Layouts
+            Text {
+                text: "EXPANDED HUB UI LAYOUT"
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                rowSpacing: 8
+                columnSpacing: 8
+
+                Repeater {
+                    model: ShellState.availableHubStyles
+
+                    delegate: Rectangle {
+                        id: hubStyleCard
+                        required property var modelData
+                        readonly property bool selected: ShellState.hubUiStyle === hubStyleCard.modelData.id
+
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 62
+                        radius: Theme.r(12)
+                        color: hubStyleCard.selected
+                            ? Theme.withAlpha(Theme.secondary, 0.22)
+                            : (hubStyleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: hubStyleCard.selected ? 1 : Theme.cardBorderWidth
+                        border.color: hubStyleCard.selected ? Theme.secondary : Theme.cardBorder
+                        scale: hubStyleMouse.pressed ? 0.97 : 1.0
+
+                        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            spacing: 10
+
+                            Rectangle {
+                                implicitWidth: 34
+                                implicitHeight: 34
+                                radius: Theme.r(10)
+                                color: hubStyleCard.selected ? Theme.secondary : Theme.surfaceContainerHighest
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: hubStyleCard.modelData.icon
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 15
+                                    color: hubStyleCard.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
+                                    Text { text: hubStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.Bold; color: hubStyleCard.selected ? Theme.secondary : Theme.fgSurface }
+                                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + hubStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 2
+                                    wrapMode: Text.WordWrap
+                                    text: hubStyleCard.modelData.desc
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 9
+                                    color: Theme.fgSurfaceVariant
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            id: hubStyleMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                ShellState.setHubUiStyle(hubStyleCard.modelData.id);
+                                root.barStatusMsg = "Hub UI Layout: " + hubStyleCard.modelData.label;
+                                barStatusTimer.restart();
+                            }
+                        }
+                    }
                 }
             }
 

@@ -84,6 +84,7 @@ PanelWindow {
         { label: "UI & Terminal Font",         pageId: "appearance",    keywords: "font typography family size jetbrains mono foot kitty gtk" },
         { label: "Cursor Theme & Size",        pageId: "appearance",    keywords: "cursor pointer size theme hide" },
         { label: "Dynamic Island & Pill",      pageId: "shell",         keywords: "island hover delay collapse media spin equalizer osd pill" },
+        { label: "Bar & Hub UI Designs",       pageId: "shell",         keywords: "bar ui style hub layout cupertino control center split islands sequoia menu bar stage cockpit bento apple capsule" },
         { label: "Bar Widgets & Modules",      pageId: "shell",         keywords: "bar widgets modules date active window title workspaces tags layout cpu ram volume mute keyboard layout tray quick icons files battery presets minimal balanced full" },
         { label: "Dynamic File Manager (Rust)",pageId: "shell",         keywords: "file manager files rust explorer miller columns dual pane grid preview customize bar icon" },
         { label: "Simple Bar & Screenshots",   pageId: "shell",         keywords: "bar height top bottom layout screenshot grim slurp clipboard delay screen record video weather slideshow" },

@@ -105,6 +105,22 @@ Singleton {
     property string islandStyle: "pill"          // "pill" | "notch" | "bar"
     property int islandTopMargin: 6
     property int pillHeight: 32
+    property string hubUiStyle: "cupertino"      // "cupertino" | "stage" | "cockpit" | "bento"
+    property string barUiStyle: "apple"          // "apple" | "split" | "menubar" | "classic"
+
+    readonly property var availableHubStyles: [
+        { id: "cupertino", label: "Cupertino", vibe: "macOS Control Center", desc: "2x2 connectivity platter, tactile capsule sliders, spaces strip & activity rings", icon: "󰕰" },
+        { id: "stage",     label: "Stage",     vibe: "Apple Music & Live Rings", desc: "Full-height album art stage centerpiece paired with live workspace & telemetry pods", icon: "󰓇" },
+        { id: "cockpit",   label: "Cockpit",   vibe: "Pro Telemetry Ribbon", desc: "Unified top media & workspace ribbon over dual waveform & control platters", icon: "󰍛" },
+        { id: "bento",     label: "Bento",     vibe: "Classic 2x2 Grid", desc: "Four balanced cards for Media, System Monitor, MangoWC Tags & Quick Controls", icon: "󰕮" }
+    ]
+
+    readonly property var availableBarStyles: [
+        { id: "apple",   label: "Dynamic Island", vibe: "iOS / macOS Capsule", desc: "Sleek centered capsule with spinning cover art, clock & live activity dot", icon: "󰀵" },
+        { id: "split",   label: "Split Islands",  vibe: "3 Floating Glass Pods", desc: "Three independent floating glass islands for Spaces, Clock/Media & Status", icon: "󰕰" },
+        { id: "menubar", label: "Sequoia Bar",    vibe: "macOS Top Menu Bar", desc: "Full-width translucent menu bar with active app title, spaces & control center", icon: "󰘔" },
+        { id: "classic", label: "Modular Pill",   vibe: "Custom Widget Bar", desc: "Customizable modular pill, top notch, or full-width desktop bar", icon: "󰕮" }
+    ]
     property int matugenSourceIndex: 0
     property string matugenPrefer: "saturation"
     property real matugenLightnessDark: 0.0
@@ -262,6 +278,16 @@ Singleton {
             if (d.islandStyle !== undefined && String(d.islandStyle).length > 0) root.islandStyle = String(d.islandStyle);
             if (d.islandTopMargin !== undefined) root.islandTopMargin = Math.max(0, Math.min(20, Number(d.islandTopMargin)));
             if (d.pillHeight !== undefined) root.pillHeight = Math.max(26, Math.min(40, Number(d.pillHeight)));
+            if (d.hubUiStyle !== undefined) {
+                const hs = String(d.hubUiStyle).toLowerCase();
+                if (hs === "cupertino" || hs === "stage" || hs === "cockpit" || hs === "bento")
+                    root.hubUiStyle = hs;
+            }
+            if (d.barUiStyle !== undefined) {
+                const bs = String(d.barUiStyle).toLowerCase();
+                if (bs === "apple" || bs === "split" || bs === "menubar" || bs === "classic")
+                    root.barUiStyle = bs;
+            }
             if (d.matugenSourceIndex !== undefined) root.matugenSourceIndex = Math.max(0, Math.min(4, Number(d.matugenSourceIndex)));
             if (d.matugenPrefer !== undefined && String(d.matugenPrefer).length > 0) root.matugenPrefer = String(d.matugenPrefer);
             if (d.matugenLightnessDark !== undefined) root.matugenLightnessDark = Math.max(-0.5, Math.min(0.3, Number(d.matugenLightnessDark)));
@@ -578,6 +604,32 @@ Singleton {
 
     function resetAllSettings(): void {
         _runResetCmd("reset-all");
+    }
+
+    function setHubUiStyle(style: string): void {
+        if (style !== "cupertino" && style !== "stage" && style !== "cockpit" && style !== "bento")
+            return;
+        root.hubUiStyle = style;
+        setPref("hubUiStyle", style);
+    }
+
+    function cycleHubUiStyle(): void {
+        const order = ["cupertino", "stage", "cockpit", "bento"];
+        const idx = order.indexOf(root.hubUiStyle);
+        setHubUiStyle(order[(idx + 1) % order.length]);
+    }
+
+    function setBarUiStyle(style: string): void {
+        if (style !== "apple" && style !== "split" && style !== "menubar" && style !== "classic")
+            return;
+        root.barUiStyle = style;
+        setPref("barUiStyle", style);
+    }
+
+    function cycleBarUiStyle(): void {
+        const order = ["apple", "split", "menubar", "classic"];
+        const idx = order.indexOf(root.barUiStyle);
+        setBarUiStyle(order[(idx + 1) % order.length]);
     }
 
     function applyBarPreset(preset: string): void {

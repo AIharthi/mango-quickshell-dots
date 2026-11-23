@@ -325,9 +325,17 @@ ShellRoot {
                 }
 
                 // Reserve top bar space cleanly: full-width/notch flush modes omit floating pill top margin
-                exclusiveZone: Theme.isSimple ? 0 : (ShellState.pillHeight + ((ShellState.islandStyle === "notch" || ShellState.islandStyle === "bar") ? 2 : ShellState.islandTopMargin + 2))
+                exclusiveZone: Theme.isSimple ? 0 : (
+                    ShellState.barUiStyle === "menubar" ? 28 : (
+                        ShellState.pillHeight + (
+                            (ShellState.barUiStyle === "classic" && (ShellState.islandStyle === "notch" || ShellState.islandStyle === "bar"))
+                                ? 2
+                                : ShellState.islandTopMargin + 2
+                        )
+                    )
+                )
                 exclusionMode: ExclusionMode.Normal
-                implicitHeight: 540
+                implicitHeight: 580
                 color: "transparent"
 
                 // Only the visible Dynamic Island pill (or active square dropdown in Simple Mode) intercepts mouse events.
@@ -515,6 +523,22 @@ ShellRoot {
 
         function cycleShellMode(): void {
             Theme.cycleShellMode();
+        }
+
+        function setHubUiStyle(style: string): void {
+            ShellState.setHubUiStyle(style);
+        }
+
+        function cycleHubUiStyle(): void {
+            ShellState.cycleHubUiStyle();
+        }
+
+        function setBarUiStyle(style: string): void {
+            ShellState.setBarUiStyle(style);
+        }
+
+        function cycleBarUiStyle(): void {
+            ShellState.cycleBarUiStyle();
         }
 
         function toggleSettings(): void {

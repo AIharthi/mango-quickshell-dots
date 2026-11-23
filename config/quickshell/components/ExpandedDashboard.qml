@@ -147,10 +147,69 @@ ColumnLayout {
 
         Item { Layout.fillWidth: true }
 
-        // Settings + Power + Pin & Close Buttons
+        // Hub Layout Switcher Pill + Active Status Chips + Settings/Power/Pin/Close
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
             spacing: 6
+
+            // Sleek Hub Layout Switcher Pill (LMB cycle, RMB -> Settings -> Shell)
+            Rectangle {
+                id: hubSwitchPill
+                implicitHeight: 28
+                implicitWidth: hubLayoutRow.implicitWidth + 14
+                radius: Theme.r(14)
+                color: hubSwitchMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.cardBorder
+                visible: root.activeTab === "overview"
+                scale: hubSwitchMouse.pressed ? 0.94 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                readonly property var curHubObj: {
+                    const arr = ShellState.availableHubStyles;
+                    for (let i = 0; i < arr.length; i++) {
+                        if (arr[i].id === ShellState.hubUiStyle)
+                            return arr[i];
+                    }
+                    return arr[0];
+                }
+
+                RowLayout {
+                    id: hubLayoutRow
+                    anchors.centerIn: parent
+                    spacing: 4
+
+                    Text {
+                        text: hubSwitchPill.curHubObj ? hubSwitchPill.curHubObj.icon : "󰕰"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 11
+                        color: Theme.primary
+                    }
+
+                    Text {
+                        text: hubSwitchPill.curHubObj ? hubSwitchPill.curHubObj.label : "Cupertino"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 9
+                        font.weight: Font.Bold
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                MouseArea {
+                    id: hubSwitchMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton)
+                            root.openSettingsRequested("shell");
+                        else
+                            ShellState.cycleHubUiStyle();
+                    }
+                }
+            }
 
             // Active-only status chips (click to turn off)
             Rectangle {
@@ -413,7 +472,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
 
-        // Tab 1: Overview Hub (Media + SysMon + MangoWC Tags + Quick Controls)
+        // Tab 1: Overview Hub (Bento Grid OR Apple Cupertino/Stage/Cockpit Layouts)
         Loader {
             id: overviewLoader
             anchors.fill: parent
@@ -425,46 +484,61 @@ ColumnLayout {
                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
             }
 
-            sourceComponent: GridLayout {
-                columns: 2
-                rowSpacing: 10
-                columnSpacing: 10
+            sourceComponent: Item {
+                GridLayout {
+                    anchors.fill: parent
+                    visible: ShellState.hubUiStyle === "bento"
+                    columns: 2
+                    rowSpacing: 10
+                    columnSpacing: 10
 
-                MediaCard {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: 1
-                    Layout.preferredHeight: 174
-                    player: root.player
-                    active: root.isOpen && root.activeTab === "overview"
-                    onSeekingChanged: seeking => root.controlInteractionChanged(seeking)
+                    MediaCard {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 1
+                        Layout.preferredHeight: 174
+                        player: root.player
+                        active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
+                        onSeekingChanged: seeking => root.controlInteractionChanged(seeking)
+                    }
+
+                    SystemMonitor {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 1
+                        Layout.preferredHeight: 174
+                        active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
+                    }
+
+                    MangoTags {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 1
+                        Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 208
+                        screenName: root.screenName
+                        active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
+                    }
+
+                    QuickControls {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 1
+                        Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 208
+                        active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
+                        onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
+                        onOpenSettingsRequested: page => root.openSettingsRequested(page)
+                    }
                 }
 
-                SystemMonitor {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: 1
-                    Layout.preferredHeight: 174
-                    active: root.isOpen && root.activeTab === "overview"
-                }
-
-                MangoTags {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: 1
-                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 208
+                HubLayoutModes {
+                    anchors.fill: parent
+                    visible: ShellState.hubUiStyle !== "bento"
+                    layoutMode: ShellState.hubUiStyle
+                    active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle !== "bento"
                     screenName: root.screenName
-                    active: root.isOpen && root.activeTab === "overview"
-                }
-
-                QuickControls {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: 1
-                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 208
-                    active: root.isOpen && root.activeTab === "overview"
-                    onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
+                    player: root.player
                     onOpenSettingsRequested: page => root.openSettingsRequested(page)
+                    onControlInteractionChanged: interacting => root.controlInteractionChanged(interacting)
                 }
             }
         }

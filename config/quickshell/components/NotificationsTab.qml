@@ -13,10 +13,11 @@ RowLayout {
 
     spacing: 10
 
-    // --- Calendar State ---
+    // --- Calendar & Left Column State ---
     property int viewYear: (new Date()).getFullYear()
     property int viewMonth: (new Date()).getMonth()    // 0..11
     property string timerMode: "timer"               // "timer" | "stopwatch"
+    property string bottomWidget: "timer"            // "timer" | "notes"
 
     readonly property var monthNames: [
         "January", "February", "March", "April", "May", "June",
@@ -261,9 +262,61 @@ RowLayout {
             }
         }
 
-        // --- Focus / Pomodoro Timer & Stopwatch Card ---
+        // --- 2-Segment Bottom Drawer Switcher (Focus & Timer | Scratchpad) ---
         Rectangle {
             Layout.fillWidth: true
+            implicitHeight: 28
+            radius: Theme.r(10)
+            color: Theme.cardBg
+            border.width: Theme.cardBorderWidth
+            border.color: Theme.cardBorder
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 3
+                spacing: 4
+
+                Repeater {
+                    model: [
+                        { id: "timer", label: "󰔛 Focus & Weather" },
+                        { id: "notes", label: "󰎞 Scratchpad" }
+                    ]
+
+                    delegate: Rectangle {
+                        id: bwTab
+                        required property var modelData
+                        readonly property bool sel: root.bottomWidget === bwTab.modelData.id
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        radius: Theme.r(7)
+                        color: bwTab.sel ? Theme.primary : (bwMouse.containsMouse ? Theme.hoverBg : "transparent")
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: bwTab.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: bwTab.sel ? Font.Bold : Font.Medium
+                            color: bwTab.sel ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                        }
+
+                        MouseArea {
+                            id: bwMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.bottomWidget = bwTab.modelData.id
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Focus / Pomodoro Timer & Stopwatch Card ---
+        Rectangle {
+            visible: root.bottomWidget === "timer"
+            Layout.fillWidth: true
+            Layout.fillHeight: !ShellState.weatherEnabled
             implicitHeight: timerCol.implicitHeight + 18
             radius: Theme.r(16)
             color: Theme.cardBg
@@ -537,7 +590,7 @@ RowLayout {
 
         // --- Opt-In Compact Weather Card ---
         Rectangle {
-            visible: ShellState.weatherEnabled
+            visible: root.bottomWidget === "timer" && ShellState.weatherEnabled
             Layout.fillWidth: true
             implicitHeight: wCol.implicitHeight + 16
             radius: Theme.r(16)
@@ -613,6 +666,7 @@ RowLayout {
 
         // --- Quick Scratchpad Card ---
         Rectangle {
+            visible: root.bottomWidget === "notes"
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: Theme.r(16)

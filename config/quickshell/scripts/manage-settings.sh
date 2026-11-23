@@ -170,6 +170,8 @@ def default_prefs():
         "islandStyle": "pill",
         "islandTopMargin": 6,
         "pillHeight": 32,
+        "hubUiStyle": "cupertino",
+        "barUiStyle": "apple",
         "matugenSourceIndex": 0,
         "matugenPrefer": "saturation",
         "matugenLightnessDark": 0.0,
@@ -358,6 +360,12 @@ def validate_and_apply_pref(prefs, key, raw_val):
         prefs[key] = max(0, min(20, int(prefs[key])))
     elif key == "pillHeight":
         prefs[key] = max(26, min(40, int(prefs[key])))
+    elif key == "hubUiStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("cupertino", "stage", "cockpit", "bento") else "cupertino"
+    elif key == "barUiStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("apple", "split", "menubar", "classic") else "apple"
     elif key == "matugenSourceIndex":
         prefs[key] = max(0, min(4, int(prefs[key])))
     elif key in ("matugenLightnessDark", "matugenLightnessLight"):
@@ -553,6 +561,7 @@ def cmd_reset_bar():
         "islandHoverExpand", "islandHoverDelayMs", "islandCollapseDelayMs",
         "pillShowMedia", "pillSpinArt", "pillShowEqualizer",
         "osdEnabled", "osdTimeoutMs",
+        "hubUiStyle", "barUiStyle",
         "simpleBarHeight", "simpleBarPosition", "simpleBarShowLayout", "simpleBarShowDate",
         "barShowDate", "barShowWindow", "barShowWorkspaces", "barShowLayout",
         "barShowSystem", "barShowVolume", "barShowKbLayout", "barShowTray",

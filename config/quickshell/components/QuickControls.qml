@@ -254,106 +254,120 @@ Rectangle {
             }
         }
 
-        // --- Volume Slider ---
+        // --- Apple Control Center Capsule Volume Slider ---
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
 
-            Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: Theme.r(14)
-                color: muteArea.containsMouse ? Theme.hoverBg : Theme.surfaceContainer
-
-                Text {
-                    anchors.centerIn: parent
-                    text: root.volumeMuted ? "󰝟" : "󰕾"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 14
-                    color: root.volumeMuted ? Theme.error : Theme.primary
-                }
-
-                MouseArea {
-                    id: muteArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        toggleCmdProc.command = ["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"];
-                        toggleCmdProc.running = true;
-                    }
-                }
-            }
-
             Item {
-                id: volSlider
+                id: volCapsule
                 Layout.fillWidth: true
-                implicitHeight: 22
+                implicitHeight: 34
 
                 Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width
-                    height: 8
-                    radius: Theme.r(4)
-                    color: Theme.surfaceContainerHighest
+                    anchors.fill: parent
+                    radius: Theme.r(17)
+                    color: Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+                    clip: true
 
                     Rectangle {
-                        height: parent.height
-                        width: parent.width * root.volumeLevel
-                        radius: Theme.r(4)
-                        color: root.volumeMuted ? Theme.outline : Theme.primary
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.left: parent.left
+                        width: Math.max(parent.height, parent.width * root.volumeLevel)
+                        radius: Theme.r(17)
+                        color: root.volumeMuted ? Theme.surfaceContainerHighest : Theme.primary
 
                         Behavior on width {
-                            enabled: !root._dragging && !Theme.isSimple
+                            enabled: !root._dragging && !Theme.reducedMotion
                             NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
                         }
                     }
-                }
 
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onPressed: mouse => {
-                        root._dragging = true;
-                        root.draggingChanged(true);
-                        root.applyVolume(mouse.x / width);
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 6
+
+                        Text {
+                            text: root.volumeMuted ? "󰝟" : (root.volumeLevel <= 0.45 ? "󰖀" : "󰕾")
+                            font.family: Theme.iconFont
+                            font.pixelSize: 15
+                            color: root.volumeMuted ? Theme.error : Theme.fgPrimary
+
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -6
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    toggleCmdProc.command = ["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"];
+                                    toggleCmdProc.running = true;
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: root.volumeMuted ? "Muted" : "Sound"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: Font.Bold
+                            color: root.volumeLevel > 0.25 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Text {
+                            text: Math.round(root.volumeLevel * 100) + "%"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: Font.Bold
+                            color: root.volumeLevel > 0.88 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface
+                        }
                     }
-                    onPositionChanged: mouse => {
-                        if (pressed)
-                            root.applyVolume(mouse.x / width);
-                    }
-                    onReleased: {
-                        root._dragging = false;
-                        root.draggingChanged(false);
-                    }
-                    onCanceled: {
-                        root._dragging = false;
-                        root.draggingChanged(false);
+
+                    MouseArea {
+                        anchors.fill: parent
+                        anchors.leftMargin: 32
+                        cursorShape: Qt.PointingHandCursor
+                        onPressed: mouse => {
+                            root._dragging = true;
+                            root.draggingChanged(true);
+                            root.applyVolume((mouse.x + 32) / volCapsule.width);
+                        }
+                        onPositionChanged: mouse => {
+                            if (pressed)
+                                root.applyVolume((mouse.x + 32) / volCapsule.width);
+                        }
+                        onReleased: {
+                            root._dragging = false;
+                            root.draggingChanged(false);
+                        }
+                        onCanceled: {
+                            root._dragging = false;
+                            root.draggingChanged(false);
+                        }
                     }
                 }
-            }
-
-            Text {
-                Layout.preferredWidth: 34
-                horizontalAlignment: Text.AlignRight
-                text: Math.round(root.volumeLevel * 100) + "%"
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                font.weight: Font.Bold
-                color: Theme.fgSurface
             }
 
             Rectangle {
-                implicitWidth: 26
-                implicitHeight: 26
-                radius: Theme.r(13)
-                color: micMuteArea.containsMouse ? Theme.hoverBg : Theme.surfaceContainer
+                implicitWidth: 34
+                implicitHeight: 34
+                radius: Theme.r(17)
+                color: root.micMuted
+                    ? Theme.withAlpha(Theme.error, 0.20)
+                    : (micMuteArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                border.width: root.micMuted ? 1 : Theme.cardBorderWidth
+                border.color: root.micMuted ? Theme.error : Theme.cardBorder
 
                 Text {
                     anchors.centerIn: parent
                     text: root.micMuted ? "󰍭" : "󰍬"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: 14
                     color: root.micMuted ? Theme.error : Theme.secondary
                 }
 
@@ -370,49 +384,65 @@ Rectangle {
             }
         }
 
-        // --- Brightness Slider (shown only on devices with backlight) ---
-        RowLayout {
+        // --- Apple Capsule Brightness Slider (laptops / external DDC) ---
+        Item {
+            id: brightCapsule
             Layout.fillWidth: true
-            spacing: 8
+            implicitHeight: 32
             visible: DeviceCaps.hasBacklight
             opacity: root.brightnessSupported ? 1.0 : 0.45
 
             Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: Theme.r(14)
-                color: Theme.surfaceContainer
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "󰃠"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 14
-                    color: Theme.warning
-                }
-            }
-
-            Item {
-                Layout.fillWidth: true
-                implicitHeight: 22
+                anchors.fill: parent
+                radius: Theme.r(16)
+                color: Theme.subCardBg
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.cardBorder
+                clip: true
 
                 Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width
-                    height: 8
-                    radius: Theme.r(4)
-                    color: Theme.surfaceContainerHighest
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    width: root.brightnessSupported ? Math.max(parent.height, parent.width * root.brightnessLevel) : parent.height
+                    radius: Theme.r(16)
+                    color: Theme.warning
 
-                    Rectangle {
-                        height: parent.height
-                        width: root.brightnessSupported ? (parent.width * root.brightnessLevel) : 0
-                        radius: Theme.r(4)
-                        color: Theme.warning
+                    Behavior on width {
+                        enabled: !root._dragging && !Theme.reducedMotion
+                        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                    }
+                }
 
-                        Behavior on width {
-                            enabled: !root._dragging && !Theme.isSimple
-                            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
-                        }
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    spacing: 6
+
+                    Text {
+                        text: "󰃠"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 14
+                        color: root.brightnessLevel > 0.15 ? Theme.fgPrimary : Theme.warning
+                    }
+
+                    Text {
+                        text: "Display"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: root.brightnessLevel > 0.25 ? Theme.fgPrimary : Theme.fgSurface
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    Text {
+                        text: root.brightnessSupported ? (Math.round(root.brightnessLevel * 100) + "%") : "N/A"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: root.brightnessLevel > 0.88 ? Theme.fgPrimary : Theme.fgSurface
                     }
                 }
 
@@ -423,11 +453,11 @@ Rectangle {
                     onPressed: mouse => {
                         root._dragging = true;
                         root.draggingChanged(true);
-                        root.applyBrightness(mouse.x / width);
+                        root.applyBrightness(mouse.x / brightCapsule.width);
                     }
                     onPositionChanged: mouse => {
                         if (pressed)
-                            root.applyBrightness(mouse.x / width);
+                            root.applyBrightness(mouse.x / brightCapsule.width);
                     }
                     onReleased: {
                         root._dragging = false;
@@ -438,16 +468,6 @@ Rectangle {
                         root.draggingChanged(false);
                     }
                 }
-            }
-
-            Text {
-                Layout.preferredWidth: 36
-                horizontalAlignment: Text.AlignRight
-                text: root.brightnessSupported ? (Math.round(root.brightnessLevel * 100) + "%") : "N/A"
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                font.weight: Font.Bold
-                color: Theme.fgSurface
             }
         }
 
@@ -671,27 +691,25 @@ Rectangle {
             }
         }
 
-        // --- Quick Desktop Actions Strip ---
+        // --- Decluttered 4-Pill Quick Actions Strip ---
         RowLayout {
             Layout.fillWidth: true
-            spacing: 5
+            spacing: 6
 
             Repeater {
                 model: [
-                    { id: "shot",  label: "Screenshot",   icon: "󰹑", active: false, accent: Theme.primary },
-                    { id: "pick",  label: "Color Picker", icon: "󰈊", active: false, accent: Theme.secondary },
-                    { id: "rec",   label: "Record",       icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
-                    { id: "game",  label: "Game Mode",    icon: "󰊴", active: ShellState.gameModeActive, accent: Theme.tertiary },
-                    { id: "wins",  label: "Windows",      icon: "󰖯", active: false, accent: Theme.primary },
-                    { id: "power", label: "Power",        icon: "󰐥", active: false, accent: Theme.error }
+                    { id: "shot",  label: "Capture", icon: "󰹑", active: false, accent: Theme.primary },
+                    { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
+                    { id: "game",  label: "Game",    icon: "󰊴", active: ShellState.gameModeActive, accent: Theme.tertiary },
+                    { id: "wins",  label: "Windows", icon: "󰖯", active: false, accent: Theme.secondary }
                 ]
 
                 delegate: Rectangle {
                     id: qaBtn
                     required property var modelData
                     Layout.fillWidth: true
-                    implicitHeight: 28
-                    radius: Theme.r(9)
+                    implicitHeight: 30
+                    radius: Theme.r(10)
                     color: qaBtn.modelData.active
                         ? Theme.withAlpha(qaBtn.modelData.accent, 0.24)
                         : (qaMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
@@ -701,12 +719,24 @@ Rectangle {
 
                     Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
-                    Text {
+                    RowLayout {
                         anchors.centerIn: parent
-                        text: qaBtn.modelData.icon
-                        font.family: Theme.iconFont
-                        font.pixelSize: 13
-                        color: (qaBtn.modelData.active || qaMouse.containsMouse) ? qaBtn.modelData.accent : Theme.fgSurfaceVariant
+                        spacing: 4
+
+                        Text {
+                            text: qaBtn.modelData.icon
+                            font.family: Theme.iconFont
+                            font.pixelSize: 12
+                            color: (qaBtn.modelData.active || qaMouse.containsMouse) ? qaBtn.modelData.accent : Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            text: qaBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: qaBtn.modelData.active ? Font.Bold : Font.DemiBold
+                            color: qaBtn.modelData.active ? qaBtn.modelData.accent : Theme.fgSurface
+                        }
                     }
 
                     MouseArea {
@@ -714,37 +744,28 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: root.hoveredActionLabel = qaBtn.modelData.label
-                        onExited: {
-                            if (root.hoveredActionLabel === qaBtn.modelData.label)
-                                root.hoveredActionLabel = "";
-                        }
                         onClicked: {
                             const aid = qaBtn.modelData.id;
                             if (aid === "shot") {
                                 Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--area"]);
-                            } else if (aid === "pick") {
-                                Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--color"]);
                             } else if (aid === "rec") {
                                 Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "toggle", "--area"]);
                             } else if (aid === "game") {
                                 ShellState.toggleGameMode();
                             } else if (aid === "wins") {
                                 Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleWindowSwitcher"]);
-                            } else if (aid === "power") {
-                                Quickshell.execDetached(["qs", "ipc", "call", "island", "togglePowerOverlay"]);
                             }
                         }
                     }
                 }
             }
 
-            // Night Light quick toggle (shown when wlsunset/hyprsunset/gammastep installed)
+            // Night Light compact icon (shown when wlsunset/hyprsunset/gammastep installed)
             Rectangle {
                 visible: DeviceCaps.hasNightLight
-                Layout.fillWidth: true
-                implicitHeight: 28
-                radius: Theme.r(9)
+                implicitWidth: 32
+                implicitHeight: 30
+                radius: Theme.r(10)
                 color: ShellState.nightLightEnabled
                     ? Theme.withAlpha(Theme.warning, 0.24)
                     : (nlMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
@@ -764,128 +785,76 @@ Rectangle {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onEntered: root.hoveredActionLabel = "Night Light"
-                    onExited: {
-                        if (root.hoveredActionLabel === "Night Light")
-                            root.hoveredActionLabel = "";
-                    }
                     onClicked: ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp)
                 }
             }
         }
 
-        // --- Tactile 7-Mode Visual Style Dock ---
-        ColumnLayout {
-            id: modeDockCol
+        // --- Clean Apple Visual Style Summary Pill (LMB -> Settings Appearance, RMB -> Cycle Mode) ---
+        Rectangle {
+            id: styleSummaryCard
             Layout.fillWidth: true
-            spacing: 4
+            implicitHeight: 34
+            radius: Theme.r(12)
+            color: styleSummaryMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+            border.width: Theme.cardBorderWidth
+            border.color: Theme.cardBorder
+            scale: styleSummaryMouse.pressed ? 0.97 : 1.0
 
-            property var hoveredMode: null
+            Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+            readonly property var curModeObj: {
+                const modes = Theme.availableModes;
+                for (let i = 0; i < modes.length; i++) {
+                    if (modes[i].id === Theme.shellMode)
+                        return modes[i];
+                }
+                return modes[0];
+            }
 
             RowLayout {
-                Layout.fillWidth: true
-                spacing: 6
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 8
 
                 Text {
-                    text: root.hoveredActionLabel.length > 0 ? "ACTION" : "STYLE"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 9
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    text: styleSummaryCard.curModeObj ? styleSummaryCard.curModeObj.icon : "󰏘"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 14
+                    color: Theme.primary
                 }
 
                 Text {
                     Layout.fillWidth: true
                     elide: Text.ElideRight
-                    text: {
-                        if (root.hoveredActionLabel.length > 0)
-                            return root.hoveredActionLabel;
-                        if (modeDockCol.hoveredMode)
-                            return modeDockCol.hoveredMode.label + " · " + modeDockCol.hoveredMode.vibe;
-                        const modes = Theme.availableModes;
-                        for (let i = 0; i < modes.length; i++) {
-                            if (modes[i].id === Theme.shellMode)
-                                return modes[i].label + " · " + modes[i].vibe;
-                        }
-                        return "Island · Balanced";
-                    }
+                    text: "Style: " + (styleSummaryCard.curModeObj ? styleSummaryCard.curModeObj.label : "Island")
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurface
+                }
+
+                Text {
+                    text: "Appearance →"
                     font.family: Theme.fontFamily
                     font.pixelSize: 9
-                    font.weight: Font.Bold
+                    font.weight: Font.DemiBold
                     color: Theme.primary
-                    horizontalAlignment: Text.AlignRight
                 }
             }
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 4
-
-                Repeater {
-                    model: Theme.availableModes
-
-                    delegate: Rectangle {
-                        id: modeTile
-                        required property var modelData
-                        readonly property bool isCurrent: Theme.shellMode === modeTile.modelData.id
-
-                        Layout.fillWidth: true
-                        implicitHeight: 34
-                        radius: Theme.r(10)
-                        color: modeTile.isCurrent
-                            ? Theme.withAlpha(Theme.primary, 0.24)
-                            : (modeTileMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: modeTile.isCurrent ? 1 : Theme.cardBorderWidth
-                        border.color: modeTile.isCurrent ? Theme.primary : Theme.cardBorder
-                        scale: modeTileMouse.pressed ? 0.93 : 1.0
-
-                        Behavior on color {
-                            enabled: !Theme.reducedMotion
-                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                        }
-                        Behavior on scale {
-                            enabled: !Theme.reducedMotion
-                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            anchors.verticalCenterOffset: modeTile.isCurrent ? -2 : 0
-                            text: modeTile.modelData.icon
-                            font.family: Theme.iconFont
-                            font.pixelSize: 14
-                            color: (modeTile.isCurrent || modeTileMouse.containsMouse) ? Theme.primary : Theme.fgSurfaceVariant
-                        }
-
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 4
-                            width: modeTile.isCurrent ? 12 : 0
-                            height: 2
-                            radius: Theme.r(1)
-                            color: Theme.primary
-                            visible: modeTile.isCurrent
-
-                            Behavior on width {
-                                enabled: !Theme.reducedMotion
-                                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
-                            }
-                        }
-
-                        MouseArea {
-                            id: modeTileMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onEntered: modeDockCol.hoveredMode = modeTile.modelData
-                            onExited: {
-                                if (modeDockCol.hoveredMode && modeDockCol.hoveredMode.id === modeTile.modelData.id)
-                                    modeDockCol.hoveredMode = null;
-                            }
-                            onClicked: Theme.setShellMode(modeTile.modelData.id)
-                        }
-                    }
+            MouseArea {
+                id: styleSummaryMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                cursorShape: Qt.PointingHandCursor
+                onClicked: mouse => {
+                    if (mouse.button === Qt.RightButton)
+                        Theme.cycleShellMode();
+                    else
+                        root.openSettingsRequested("appearance");
                 }
             }
         }

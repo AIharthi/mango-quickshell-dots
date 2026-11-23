@@ -135,7 +135,11 @@ qs ipc call island closeFiles
 qs ipc call island toggleFilesTab
 qs ipc call island resetFiles
 
-# Visual Modes (Island, Frosted, Cyber, Zen, Tactile, Obsidian, Simple) & Live Theming
+# Bar UI Styles, Hub Layouts & Visual Modes
+qs ipc call island setBarUiStyle <apple|split|menubar|classic>
+qs ipc call island cycleBarUiStyle
+qs ipc call island setHubUiStyle <cupertino|stage|cockpit|bento>
+qs ipc call island cycleHubUiStyle
 qs ipc call island setShellMode <default|blur|neon|minimal|retro|oled|simple>
 qs ipc call island toggleShellMode <blur|neon|minimal|retro|oled|simple>
 qs ipc call island cycleShellMode
