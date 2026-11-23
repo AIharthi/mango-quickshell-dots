@@ -24,7 +24,8 @@ mkdir -p "$CACHE_BASE"
 chmod 700 "$CACHE_BASE" 2>/dev/null || true
 
 py_store() {
-    python3 - "$HISTORY_FILE" "$MAX_ENTRIES" "$MAX_BYTES" "$@" <<'PY'
+    local py_code=""
+    IFS= read -r -d '' py_code <<'PY' || true
 import fcntl
 import json
 import os
@@ -148,6 +149,7 @@ with open(lock_path, "w", encoding="utf-8") as lock_fh:
         save_items(items)
         print(json.dumps(sort_items(items), ensure_ascii=False))
 PY
+    python3 -c "$py_code" "$HISTORY_FILE" "$MAX_ENTRIES" "$MAX_BYTES" "$@"
 }
 
 is_sensitive_client_focused() {

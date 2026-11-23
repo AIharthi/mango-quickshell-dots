@@ -75,7 +75,7 @@ if [[ "$MODE" == "--color" ]]; then
     elif command -v grim >/dev/null 2>&1 && command -v slurp >/dev/null 2>&1; then
         PT=$(slurp -p -b "#00000044" -c "$SEL_BORDER" 2>/dev/null) || exit 0
         [[ -n "$PT" ]] || exit 0
-        PICKED=$(grim -g "$PT" -t ppm - 2>/dev/null | python3 - <<'PY' 2>/dev/null || true
+        PICKED=$(grim -g "$PT" -t ppm - 2>/dev/null | python3 -c '
 import sys
 data = sys.stdin.buffer.read()
 i = 0
@@ -100,8 +100,7 @@ if len(tokens) >= 4 and tokens[0] == "P6" and i < n:
     rgb = data[i:i + 3]
     if len(rgb) == 3:
         print(f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}")
-PY
-)
+' 2>/dev/null || true)
     else
         notify_msg "Color Picker Failed" "Install hyprpicker or grim + slurp."
         exit 1
@@ -148,7 +147,7 @@ if [[ "$MODE" == "--full" ]]; then
 elif [[ "$MODE" == "--window" ]]; then
     WIN_GEOM=""
     if command -v mmsg >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
-        WIN_GEOM=$(mmsg get focusing-client 2>/dev/null | python3 - <<'PY' 2>/dev/null || true
+        WIN_GEOM=$(mmsg get focusing-client 2>/dev/null | python3 -c '
 import json, sys
 try:
     d = json.loads(sys.stdin.read())
@@ -160,8 +159,7 @@ try:
         print(f"{x},{y} {w}x{h}")
 except Exception:
     pass
-PY
-)
+' 2>/dev/null || true)
     fi
     if [[ -n "$WIN_GEOM" ]]; then
         [[ "$DELAY_SEC" -gt 0 ]] && sleep "$DELAY_SEC"
