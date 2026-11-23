@@ -128,7 +128,8 @@ if wp and os.path.isfile(wp) and os.access(wp, os.R_OK):
 elif os.path.isfile(sddm_bg) and os.path.getsize(sddm_bg) > 0:
     bg_value = "background.img"
 
-font = str(prefs.get("uiFontFamily", "JetBrains Mono")).strip() or "JetBrains Mono"
+font = str(prefs.get("uiFontFamily", "IBM Plex Sans")).strip() or "IBM Plex Sans"
+mono_font = str(prefs.get("monoFontFamily", "IBM Plex Mono")).strip() or "IBM Plex Mono"
 clock24h = "true" if prefs.get("clock24h", True) else "false"
 reduced = "true" if prefs.get("reducedMotion", False) else "false"
 is_dark = "true" if colors.get("isDark", True) else "false"
@@ -139,6 +140,7 @@ conf_text = "\n".join([
     "[General]",
     f"background={bg_value}",
     f"font={font}",
+    f"monoFont={mono_font}",
     "iconFont=Symbols Nerd Font",
     f"clock24h={clock24h}",
     f"isDark={is_dark}",

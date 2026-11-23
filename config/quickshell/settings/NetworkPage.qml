@@ -221,7 +221,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "NETWORK INTERFACES, IP & DNS"
+                    text: "Network interfaces, IP & DNS"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -233,7 +233,7 @@ ColumnLayout {
                     implicitWidth: netRefLbl.implicitWidth + 12
                     radius: Theme.r(7)
                     color: netRefMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -268,7 +268,7 @@ ColumnLayout {
                     implicitHeight: ifInner.implicitHeight + 14
                     radius: Theme.r(11)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     ColumnLayout {
@@ -299,7 +299,7 @@ ColumnLayout {
                             Text {
                                 visible: (ifRow.modelData.speed || "").length > 0
                                 text: ifRow.modelData.speed
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 color: Theme.secondary
                             }
@@ -308,7 +308,7 @@ ColumnLayout {
 
                             Text {
                                 text: "RX " + ifRow.modelData.rxMb + "MB · TX " + ifRow.modelData.txMb + "MB"
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                             }
@@ -336,7 +336,7 @@ ColumnLayout {
                             elide: Text.ElideRight
                             text: "IP: " + ((ifRow.modelData.addrs && ifRow.modelData.addrs.length > 0) ? ifRow.modelData.addrs.join(" · ") : "Unassigned")
                                 + (ifRow.modelData.mac ? ("   MAC: " + ifRow.modelData.mac) : "")
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
@@ -350,7 +350,7 @@ ColumnLayout {
 
                 Text {
                     text: "Gateway: " + (root.gateway.length > 0 ? root.gateway : "None")
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurface
                 }
@@ -384,7 +384,7 @@ ColumnLayout {
             spacing: 8
 
             Text {
-                text: "NETWORKMANAGER PROFILES & DNS PRESETS"
+                text: "NetworkManager profiles & DNS presets"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -401,7 +401,7 @@ ColumnLayout {
                     implicitHeight: nmConnInner.implicitHeight + 14
                     radius: Theme.r(10)
                     color: Theme.subCardBg
-                    border.width: nmConnRow.modelData.active ? 1 : Theme.cardBorderWidth
+                    border.width: nmConnRow.modelData.active ? 1 : Theme.subBorderWidth
                     border.color: nmConnRow.modelData.active ? Theme.primary : Theme.cardBorder
 
                     ColumnLayout {
@@ -428,7 +428,7 @@ ColumnLayout {
                                 implicitWidth: nmTogLbl.implicitWidth + 12
                                 radius: Theme.r(6)
                                 color: Theme.cardBg
-                                border.width: Theme.cardBorderWidth
+                                border.width: Theme.subBorderWidth
                                 border.color: Theme.cardBorder
 
                                 Text {
@@ -469,7 +469,7 @@ ColumnLayout {
                                     implicitWidth: dnsTxt.implicitWidth + 10
                                     radius: Theme.r(6)
                                     color: dnsMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                                    border.width: Theme.cardBorderWidth
+                                    border.width: Theme.subBorderWidth
                                     border.color: Theme.cardBorder
 
                                     Text {
@@ -546,7 +546,7 @@ ColumnLayout {
                 visible: root.wifiEnabled
                 radius: Theme.r(8)
                 color: scanMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
 
                 Text {
@@ -676,7 +676,7 @@ ColumnLayout {
             spacing: 6
 
             Text {
-                text: "AVAILABLE NETWORKS"
+                text: "Available networks"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -695,7 +695,7 @@ ColumnLayout {
                     color: netRow.modelData.inUse
                         ? Theme.withAlpha(Theme.primary, 0.20)
                         : (netMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: netRow.modelData.inUse ? 1 : Theme.cardBorderWidth
+                    border.width: netRow.modelData.inUse ? 1 : Theme.subBorderWidth
                     border.color: netRow.modelData.inUse ? Theme.primary : Theme.cardBorder
 
                     RowLayout {
@@ -733,7 +733,7 @@ ColumnLayout {
                             implicitWidth: actTxt.implicitWidth + 14
                             radius: Theme.r(7)
                             color: netRow.modelData.inUse ? Theme.withAlpha(Theme.error, 0.22) : Theme.cardBg
-                            border.width: Theme.cardBorderWidth
+                            border.width: Theme.subBorderWidth
                             border.color: Theme.cardBorder
 
                             Text {

@@ -47,10 +47,10 @@ ColumnLayout {
                 spacing: 1
 
                 Text {
-                    text: root.barStatusMsg.length > 0 ? root.barStatusMsg : "Reset Bar Widgets, Dynamic Island & Simple Bar to defaults"
+                    text: root.barStatusMsg.length > 0 ? root.barStatusMsg : "Restore bar widgets, island, and shell defaults."
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: root.barStatusMsg.length > 0 ? Font.Bold : Font.Normal
+                    font.pixelSize: Theme.fs(11)
+                    font.weight: root.barStatusMsg.length > 0 ? Font.DemiBold : Font.Normal
                     color: root.barStatusMsg.length > 0 ? Theme.success : Theme.fgSurfaceVariant
                     elide: Text.ElideRight
                 }
@@ -117,29 +117,29 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "BAR WIDGETS & MODULES (ISLAND & BAR)"
+                    text: "Bar & Hub Layout"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Item { Layout.fillWidth: true }
 
                 Text {
-                    text: "Choose Bar UI, Hub Layout & modular widgets"
+                    text: "Top bar style, hub view & modules"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(9)
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
             }
 
-            // Apple-Inspired Collapsed Top Bar / Island UI Styles
+            // Collapsed Top Bar / Island UI Styles
             Text {
-                text: "TOP BAR / DYNAMIC ISLAND UI STYLE"
+                text: "Top Bar Style"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(9)
-                font.weight: Font.Bold
+                font.pixelSize: Theme.fs(11)
+                font.weight: Font.DemiBold
                 color: Theme.fgSurfaceVariant
             }
 
@@ -163,7 +163,7 @@ ColumnLayout {
                         color: barStyleCard.selected
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (barStyleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: barStyleCard.selected ? 1 : Theme.cardBorderWidth
+                        border.width: barStyleCard.selected ? 1 : Theme.subBorderWidth
                         border.color: barStyleCard.selected ? Theme.primary : Theme.cardBorder
                         scale: barStyleMouse.pressed ? 0.97 : 1.0
 
@@ -230,10 +230,10 @@ ColumnLayout {
 
             // Expanded Dynamic Island Hub UI Layouts
             Text {
-                text: "EXPANDED HUB UI LAYOUT"
+                text: "Expanded Hub Layout"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(9)
-                font.weight: Font.Bold
+                font.pixelSize: Theme.fs(11)
+                font.weight: Font.DemiBold
                 color: Theme.fgSurfaceVariant
             }
 
@@ -257,7 +257,7 @@ ColumnLayout {
                         color: hubStyleCard.selected
                             ? Theme.withAlpha(Theme.secondary, 0.22)
                             : (hubStyleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: hubStyleCard.selected ? 1 : Theme.cardBorderWidth
+                        border.width: hubStyleCard.selected ? 1 : Theme.subBorderWidth
                         border.color: hubStyleCard.selected ? Theme.secondary : Theme.cardBorder
                         scale: hubStyleMouse.pressed ? 0.97 : 1.0
 
@@ -363,7 +363,7 @@ ColumnLayout {
                         color: bpBtn.active
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (bpMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: bpBtn.active ? 1 : Theme.cardBorderWidth
+                        border.width: bpBtn.active ? 1 : Theme.subBorderWidth
                         border.color: bpBtn.active ? Theme.primary : Theme.cardBorder
 
                         Text {
@@ -494,11 +494,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "DYNAMIC ISLAND & COMPACT PILL"
+                text: "Dynamic Island & Compact Pill"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             RowLayout {
@@ -627,11 +627,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "SIMPLE MODE TOP/BOTTOM BAR"
+                text: "Simple Mode Edge Bar"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             StepControl {
@@ -670,7 +670,7 @@ ColumnLayout {
                             color: posPill.selected
                                 ? Theme.withAlpha(Theme.primary, 0.22)
                                 : (posMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: posPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: posPill.selected ? 1 : Theme.subBorderWidth
                             border.color: posPill.selected ? Theme.primary : Theme.cardBorder
 
                             Text {
@@ -749,11 +749,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "SCREENSHOTS & SCREEN RECORDING (GRIM + SLURP + WF-RECORDER)"
+                text: "Screenshots & Recording"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             RowLayout {
@@ -773,7 +773,7 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: dirInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: dirInput.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: dirInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                     TextInput {
@@ -783,7 +783,7 @@ ColumnLayout {
                         anchors.rightMargin: 9
                         verticalAlignment: TextInput.AlignVCenter
                         text: ShellState.screenshotDir
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurface
                         clip: true
@@ -799,7 +799,7 @@ ColumnLayout {
                     implicitWidth: saveDirLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: saveDirMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -842,7 +842,7 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: recDirInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: recDirInput.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: recDirInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                     TextInput {
@@ -852,7 +852,7 @@ ColumnLayout {
                         anchors.rightMargin: 9
                         verticalAlignment: TextInput.AlignVCenter
                         text: ShellState.recordingDir
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurface
                         clip: true
@@ -868,7 +868,7 @@ ColumnLayout {
                     implicitWidth: saveRecDirLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: saveRecDirMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -955,11 +955,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "ACCESSIBILITY & MOTION"
+                text: "Accessibility & Motion"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             RowLayout {
@@ -1042,11 +1042,11 @@ ColumnLayout {
                 spacing: 8
 
                 Text {
-                    text: "DYNAMIC FILE MANAGER (RUST BACKEND)"
+                    text: "File Manager"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Item { Layout.fillWidth: true }
@@ -1640,11 +1640,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "WEATHER WIDGET & WALLPAPER SLIDESHOW"
+                text: "Weather & Wallpaper Slideshow"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             RowLayout {
@@ -1694,7 +1694,7 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: locInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: locInput.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: locInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                     TextInput {
@@ -1730,7 +1730,7 @@ ColumnLayout {
                     implicitWidth: 34
                     radius: Theme.r(8)
                     color: unitMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -1759,7 +1759,7 @@ ColumnLayout {
                     implicitWidth: saveLocLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: saveLocMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {

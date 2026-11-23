@@ -52,9 +52,9 @@ Rectangle {
             spacing: 6
 
             Text {
-                text: "INSPECTOR"
+                text: "Inspector"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(9)
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -113,7 +113,7 @@ Rectangle {
                     implicitHeight: root.pKind === "image" ? 168 : 74
                     radius: Theme.r(10)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     clip: true
 
@@ -415,7 +415,7 @@ Rectangle {
                     implicitHeight: Math.min(180, sampCol.implicitHeight + 14)
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     clip: true
 
@@ -461,7 +461,7 @@ Rectangle {
                     implicitHeight: Math.min(180, arcCol.implicitHeight + 14)
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     clip: true
 
@@ -495,7 +495,7 @@ Rectangle {
                     implicitHeight: metaCol.implicitHeight + 14
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     ColumnLayout {
@@ -508,7 +508,7 @@ Rectangle {
                             Layout.fillWidth: true
                             Text { text: "Modified"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
                             Item { Layout.fillWidth: true }
-                            Text { text: root.fileStyle.formatMtime(root.d.mtime); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurface }
+                            Text { text: root.fileStyle.formatMtime(root.d.mtime); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurface }
                         }
 
                         RowLayout {
@@ -518,7 +518,7 @@ Rectangle {
                             Item { Layout.fillWidth: true }
                             Text {
                                 text: String(root.d.perms || "") + " (" + String(root.d.modeOctal || "") + ")"
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurface
                             }

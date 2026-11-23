@@ -6,6 +6,8 @@ All bundled font binaries under `fonts/` are open-source and remain governed by 
 
 | Directory | Font Family | Copyright / Upstream | License | License File |
 | --- | --- | --- | --- | --- |
+| `fonts/IBMPlexSans/` | IBM Plex Sans | IBM Corp. (`https://github.com/IBM/plex`) | SIL Open Font License 1.1 | [`OFL.txt`](IBMPlexSans/OFL.txt) |
+| `fonts/IBMPlexMono/` | IBM Plex Mono | IBM Corp. (`https://github.com/IBM/plex`) | SIL Open Font License 1.1 | [`OFL.txt`](IBMPlexMono/OFL.txt) |
 | `fonts/JetBrainsMono/` | JetBrains Mono | The JetBrains Mono Project Authors (`https://github.com/JetBrains/JetBrainsMono`) | SIL Open Font License 1.1 | [`OFL.txt`](JetBrainsMono/OFL.txt) |
 | `fonts/SymbolsNerdFont/` | Symbols Nerd Font (Symbols Only) | Ryan McIntyre & Nerd Fonts Contributors (`https://github.com/ryanoasis/nerd-fonts`) | MIT + upstream icon-set notices (OFL 1.1 / Apache 2.0 / CC BY 4.0 / MIT) | [`LICENSE.txt`](SymbolsNerdFont/LICENSE.txt) |
 

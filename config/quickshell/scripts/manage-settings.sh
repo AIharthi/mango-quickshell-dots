@@ -11,10 +11,10 @@ MANGO_CONF="${CONFIG_BASE}/mango/config.conf"
 AUTOSTART_SH="${CONFIG_BASE}/mango/autostart.sh"
 
 case "$CMD" in
-    prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-files|reset-all|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
+    prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
         ;;
     *)
-        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-files|reset-all|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
+        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
         exit 1
         ;;
 esac
@@ -72,7 +72,8 @@ def default_prefs():
         "clockShowSeconds": False,
         "dateFormat": "ddd d MMM",
         "keepAwake": False,
-        "uiFontFamily": "JetBrains Mono",
+        "uiFontFamily": "IBM Plex Sans",
+        "monoFontFamily": "IBM Plex Mono",
         "uiFontSize": 10,
         "iconTheme": "Adwaita",
         "matugenType": "scheme-tonal-spot",
@@ -491,7 +492,7 @@ def strip_local_conf_keys(keys_to_strip):
 def reset_appearance_impl(prefs):
     defaults = default_prefs()
     appearance_keys = (
-        "uiFontFamily", "uiFontSize", "iconTheme",
+        "uiFontFamily", "monoFontFamily", "uiFontSize", "iconTheme",
         "matugenType", "matugenContrast", "matugenSourceIndex", "matugenPrefer",
         "matugenLightnessDark", "matugenLightnessLight",
         "wallpaperTransition", "wallpaperFps", "wallpaperDuration", "wallpaperResize",
@@ -507,17 +508,18 @@ def reset_appearance_impl(prefs):
             prefs[k] = defaults[k]
     save_prefs(prefs)
 
-    font_spec = "JetBrains Mono 10"
+    ui_font_spec = "IBM Plex Sans 10"
+    mono_font_spec = "IBM Plex Mono 10"
     cfg_dir = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
-    update_ini_font(os.path.join(cfg_dir, "gtk-3.0", "settings.ini"), font_spec)
-    update_ini_font(os.path.join(cfg_dir, "gtk-4.0", "settings.ini"), font_spec)
-    update_foot_font("JetBrains Mono", 10)
-    update_kitty_font("JetBrains Mono", 10)
+    update_ini_font(os.path.join(cfg_dir, "gtk-3.0", "settings.ini"), ui_font_spec)
+    update_ini_font(os.path.join(cfg_dir, "gtk-4.0", "settings.ini"), ui_font_spec)
+    update_foot_font("IBM Plex Mono", 10)
+    update_kitty_font("IBM Plex Mono", 10)
 
     if shutil.which("gsettings"):
         gsettings_cmds = [
-            ["gsettings", "set", "org.gnome.desktop.interface", "font-name", font_spec],
-            ["gsettings", "set", "org.gnome.desktop.interface", "monospace-font-name", font_spec],
+            ["gsettings", "set", "org.gnome.desktop.interface", "font-name", ui_font_spec],
+            ["gsettings", "set", "org.gnome.desktop.interface", "monospace-font-name", mono_font_spec],
             ["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", "Adwaita"],
             ["gsettings", "set", "org.gnome.desktop.interface", "font-hinting", "slight"],
             ["gsettings", "set", "org.gnome.desktop.interface", "font-antialiasing", "grayscale"],
@@ -619,9 +621,32 @@ def cmd_set_font():
     update_ini_font(os.path.join(cfg_dir, "gtk-4.0", "settings.ini"), font_spec)
     if shutil.which("gsettings"):
         subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "font-name", font_spec], stderr=subprocess.DEVNULL)
+    sync_sddm_sh = os.path.join(os.path.dirname(prefs_path), "scripts", "sync-sddm-theme.sh")
+    if os.path.isfile(sync_sddm_sh):
+        subprocess.run([sync_sddm_sh], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(json.dumps(prefs))
+
+
+def cmd_set_mono_font():
+    if len(args) < 1:
+        sys.exit("Usage: manage-settings.sh set-mono-font <family> [size]")
+    family = args[0].strip()
+    if not family or "\n" in family or "=" in family:
+        sys.exit("Invalid monospace font family")
+    prefs = load_prefs(True)
+    size = max(8, min(18, int(float(args[1])))) if len(args) >= 2 else int(prefs.get("uiFontSize", 10))
+    prefs["monoFontFamily"] = family
+    prefs["uiFontSize"] = size
+    save_prefs(prefs)
+
+    font_spec = f"{family} {size}"
+    if shutil.which("gsettings"):
         subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "monospace-font-name", font_spec], stderr=subprocess.DEVNULL)
     update_foot_font(family, size)
     update_kitty_font(family, size)
+    sync_sddm_sh = os.path.join(os.path.dirname(prefs_path), "scripts", "sync-sddm-theme.sh")
+    if os.path.isfile(sync_sddm_sh):
+        subprocess.run([sync_sddm_sh], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print(json.dumps(prefs))
 
 
@@ -643,14 +668,27 @@ def run_fc_list(pattern):
 def cmd_list_fonts():
     mono = run_fc_list(":spacing=100")
     all_fam = run_fc_list(":")
-    for fallback in ("JetBrains Mono", "DejaVu Sans Mono", "Liberation Mono"):
+    for fallback in ("IBM Plex Mono", "JetBrains Mono", "DejaVu Sans Mono", "Liberation Mono"):
         if fallback not in mono:
             mono.append(fallback)
         if fallback not in all_fam:
             all_fam.append(fallback)
+    for ui_fb in ("IBM Plex Sans", "DejaVu Sans", "Liberation Sans"):
+        if ui_fb not in all_fam:
+            all_fam.append(ui_fb)
     mono = sorted(set(mono), key=lambda s: s.lower())
     all_fam = sorted(set(all_fam), key=lambda s: s.lower())
-    print(json.dumps({"monospace": mono, "families": all_fam}))
+    mono_set = set(mono)
+    sans = [
+        f for f in all_fam
+        if f not in mono_set
+        and "nerd font" not in f.lower()
+        and "emoji" not in f.lower()
+        and "dingbats" not in f.lower()
+    ]
+    if "IBM Plex Sans" not in sans:
+        sans.insert(0, "IBM Plex Sans")
+    print(json.dumps({"sans": sans, "monospace": mono, "families": all_fam}))
 
 
 def scan_desktop_apps():
@@ -1175,6 +1213,7 @@ DISPATCH = {
     "reset-files": cmd_reset_files,
     "reset-all": cmd_reset_all,
     "set-font": cmd_set_font,
+    "set-mono-font": cmd_set_mono_font,
     "list-fonts": cmd_list_fonts,
     "defaults-get": cmd_defaults_get,
     "defaults-set": cmd_defaults_set,

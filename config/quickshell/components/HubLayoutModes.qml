@@ -48,6 +48,7 @@ Item {
     property real ramTotalGb: 0
     property int cpuTempC: -1
     property real diskPercent: 0
+    property string diskFreeLabel: ""
 
     // --- Live Audio State (for Connectivity Platter & Stage Volume) ---
     property real volumeLevel: 0.5
@@ -200,6 +201,8 @@ Item {
                 const ml = metaLines[j].trim();
                 if (ml.startsWith("DISK:")) {
                     root.diskPercent = Math.max(0, Math.min(100, parseFloat(ml.slice(5)) || 0));
+                } else if (ml.startsWith("DISKFREE:")) {
+                    root.diskFreeLabel = ml.slice(9).trim();
                 } else if (ml.startsWith("TEMP:")) {
                     const rt = parseInt(ml.slice(5), 10) || 0;
                     const deg = rt > 1000 ? Math.round(rt / 1000) : Math.round(rt);
@@ -243,6 +246,7 @@ Item {
             "sh", "-c",
             "head -n 1 /proc/stat; echo '---'; grep -E '^(MemTotal|MemAvailable|MemFree|Buffers|Cached):' /proc/meminfo; echo '---'; " +
             "df -P / 2>/dev/null | awk 'NR==2{print \"DISK:\" $5}' || true; " +
+            "df -hP / 2>/dev/null | awk 'NR==2{print \"DISKFREE:\" $4}' || true; " +
             "for t in /sys/class/hwmon/hwmon*/temp1_input /sys/class/thermal/thermal_zone*/temp; do " +
             "[ -r \"$t\" ] && v=$(cat \"$t\" 2>/dev/null) && [ -n \"$v\" ] && [ \"$v\" -gt 10000 ] 2>/dev/null && echo \"TEMP:$v\" && break; done || true; " +
             "echo '---VOL---'; pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null || true; echo '---MUTE---'; pactl get-sink-mute @DEFAULT_SINK@ 2>/dev/null || true; echo '---SINK---'; " +
@@ -352,7 +356,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     text: ringItem.centerLabel
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: 11
                     font.weight: Font.Bold
                     color: Theme.fgSurface
@@ -408,7 +412,7 @@ Item {
                 implicitHeight: 30
                 radius: Theme.r(15)
                 color: Theme.subCardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
                 clip: true
 
@@ -447,7 +451,7 @@ Item {
 
                                 Text {
                                     text: spBtn.modelData.index
-                                    font.family: Theme.fontFamily
+                                    font.family: Theme.monoFont
                                     font.pixelSize: 10
                                     font.weight: spBtn.isActive ? Font.Bold : Font.DemiBold
                                     color: spBtn.isActive ? Theme.fgPrimary : (spBtn.isOccupied ? Theme.fgSurface : Theme.fgSurfaceVariant)
@@ -481,14 +485,14 @@ Item {
                 implicitWidth: Math.max(24, layTagTxt.implicitWidth + 10)
                 radius: Theme.r(14)
                 color: layTagMouse.containsMouse ? Theme.activeBg : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
 
                 Text {
                     id: layTagTxt
                     anchors.centerIn: parent
                     text: scRoot.layoutCode
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: 10
                     font.weight: Font.Bold
                     color: Theme.primary
@@ -510,7 +514,7 @@ Item {
                 implicitWidth: winPillRow.implicitWidth + 12
                 radius: Theme.r(14)
                 color: winPillMouse.containsMouse ? Theme.withAlpha(Theme.secondary, 0.24) : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
+                border.width: winPillMouse.containsMouse ? 1 : Theme.subBorderWidth
                 border.color: winPillMouse.containsMouse ? Theme.secondary : Theme.cardBorder
 
                 RowLayout {
@@ -521,7 +525,7 @@ Item {
                     Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.secondary }
                     Text {
                         text: scRoot.winsCount > 0 ? String(scRoot.winsCount) : "0"
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: 10
                         font.weight: Font.Bold
                         color: Theme.fgSurface
@@ -622,7 +626,7 @@ Item {
                             Layout.fillHeight: true
                             radius: Theme.r(12)
                             color: ccMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                            border.width: ccTile.modelData.active ? 1 : Theme.cardBorderWidth
+                            border.width: ccTile.modelData.active ? 1 : Theme.subBorderWidth
                             border.color: ccTile.modelData.active ? Theme.withAlpha(ccTile.modelData.tint, 0.55) : Theme.cardBorder
                             clip: true
                             scale: ccMouse.pressed ? 0.95 : 1.0
@@ -724,10 +728,11 @@ Item {
             QuickControls {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 210
-                Layout.minimumHeight: DeviceCaps.hasExtraQuickControls ? 244 : 206
-                Layout.maximumHeight: DeviceCaps.hasExtraQuickControls ? 252 : 214
+                Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 236 : 178
+                Layout.minimumHeight: DeviceCaps.hasExtraQuickControls ? 232 : 174
+                Layout.maximumHeight: DeviceCaps.hasExtraQuickControls ? 240 : 182
                 active: root.active && root.layoutMode === "cupertino"
+                hideDuplicateToggles: true
                 onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
                 onOpenSettingsRequested: page => root.openSettingsRequested(page)
             }
@@ -763,7 +768,7 @@ Item {
                         ringColor: root.cpuPercent > 85 ? Theme.error : Theme.primary
                         centerLabel: Math.round(root.cpuPercent) + "%"
                         titleLabel: "CPU Load"
-                        detailLabel: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : "Live"
+                        detailLabel: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : "CPU"
                     }
 
                     ActivityRing {
@@ -787,7 +792,7 @@ Item {
                             ? (DeviceCaps.batteryPercent + "%")
                             : (Math.round(root.diskPercent) + "%")
                         titleLabel: DeviceCaps.hasBattery ? "Battery" : "Disk /"
-                        detailLabel: DeviceCaps.hasBattery ? DeviceCaps.batteryStatus : "Mounted"
+                        detailLabel: DeviceCaps.hasBattery ? DeviceCaps.batteryStatus : (root.diskFreeLabel.length > 0 ? (root.diskFreeLabel + " free") : "Root /")
                     }
                 }
             }
@@ -841,17 +846,18 @@ Item {
                     Layout.fillHeight: false
 
                     Rectangle {
+                        visible: root.hasPlayer
                         implicitHeight: 20
                         implicitWidth: stageBadge.implicitWidth + 12
                         radius: Theme.r(10)
                         color: root.isPlaying ? Theme.withAlpha(Theme.primary, 0.25) : Theme.subCardBg
-                        border.width: 1
+                        border.width: root.isPlaying ? 1 : Theme.subBorderWidth
                         border.color: root.isPlaying ? Theme.withAlpha(Theme.primary, 0.50) : Theme.cardBorder
 
                         Text {
                             id: stageBadge
                             anchors.centerIn: parent
-                            text: root.hasPlayer ? (root.player.identity || "NOW PLAYING").toUpperCase() : "STAGE PLAYER"
+                            text: root.hasPlayer ? (root.player.identity || "Media") : ""
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold
@@ -861,12 +867,12 @@ Item {
 
                     Item { Layout.fillWidth: true }
 
-                    Text {
-                        text: root.isPlaying ? "● LIVE" : "READY"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 9
-                        font.weight: Font.Bold
-                        color: root.isPlaying ? Theme.success : Theme.fgSurfaceVariant
+                    Rectangle {
+                        visible: root.isPlaying
+                        implicitWidth: 7
+                        implicitHeight: 7
+                        radius: 3.5
+                        color: Theme.success
                     }
                 }
 
@@ -982,9 +988,9 @@ Item {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: root.formatTime(root.displayPosition); font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                        Text { text: root.formatTime(root.displayPosition); font.family: Theme.monoFont; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
                         Item { Layout.fillWidth: true }
-                        Text { text: root.formatTime(root.trackLength); font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                        Text { text: root.formatTime(root.trackLength); font.family: Theme.monoFont; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
                     }
                 }
 
@@ -1068,7 +1074,7 @@ Item {
                             anchors.fill: parent
                             radius: Theme.r(17)
                             color: Theme.subCardBg
-                            border.width: Theme.cardBorderWidth
+                            border.width: Theme.subBorderWidth
                             border.color: Theme.cardBorder
                             clip: true
 
@@ -1087,7 +1093,7 @@ Item {
                                     color: root.volumeMuted ? Theme.error : Theme.fgPrimary
                                 }
                                 Text { text: root.volumeMuted ? "Muted" : "Sound"; Layout.fillWidth: true; elide: Text.ElideRight; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: root.volumeLevel > 0.25 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface }
-                                Text { text: Math.round(root.volumeLevel * 100) + "%"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: root.volumeLevel > 0.88 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface }
+                                Text { text: Math.round(root.volumeLevel * 100) + "%"; font.family: Theme.monoFont; font.pixelSize: 10; font.weight: Font.Bold; color: root.volumeLevel > 0.88 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface }
                             }
 
                             MouseArea {
@@ -1122,7 +1128,7 @@ Item {
                                 implicitHeight: 38
                                 radius: Theme.r(12)
                                 color: stAct.modelData.active ? Theme.withAlpha(stAct.modelData.tint, 0.24) : (stActMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                border.width: stAct.modelData.active ? 1 : Theme.cardBorderWidth
+                                border.width: stAct.modelData.active ? 1 : Theme.subBorderWidth
                                 border.color: stAct.modelData.active ? stAct.modelData.tint : Theme.cardBorder
 
                                 ColumnLayout {
@@ -1160,7 +1166,7 @@ Item {
                             implicitHeight: 28
                             radius: Theme.r(9)
                             color: ShellState.recordingActive ? Theme.withAlpha(Theme.error, 0.24) : (stRecMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: ShellState.recordingActive ? 1 : Theme.cardBorderWidth
+                            border.width: ShellState.recordingActive ? 1 : Theme.subBorderWidth
                             border.color: ShellState.recordingActive ? Theme.error : Theme.cardBorder
 
                             Text {
@@ -1181,11 +1187,11 @@ Item {
                             implicitHeight: 28
                             radius: Theme.r(9)
                             color: stAppMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                            border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                            border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
 
                             Text {
                                 anchors.centerIn: parent
-                                text: "Appearance →"
+                                text: "Appearance"
                                 font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold
                                 color: Theme.primary
                             }
@@ -1221,7 +1227,7 @@ Item {
                         ringColor: root.cpuPercent > 85 ? Theme.error : Theme.primary
                         centerLabel: Math.round(root.cpuPercent) + "%"
                         titleLabel: "CPU Load"
-                        detailLabel: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : "Live"
+                        detailLabel: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : "CPU"
                     }
 
                     ActivityRing {
@@ -1239,7 +1245,7 @@ Item {
                         ringColor: DeviceCaps.hasBattery ? Theme.success : Theme.tertiary
                         centerLabel: DeviceCaps.hasBattery ? (DeviceCaps.batteryPercent + "%") : (Math.round(root.diskPercent) + "%")
                         titleLabel: DeviceCaps.hasBattery ? "Battery" : "Disk /"
-                        detailLabel: DeviceCaps.hasBattery ? DeviceCaps.batteryStatus : "Root"
+                        detailLabel: DeviceCaps.hasBattery ? DeviceCaps.batteryStatus : (root.diskFreeLabel.length > 0 ? (root.diskFreeLabel + " free") : "Root /")
                     }
                 }
             }

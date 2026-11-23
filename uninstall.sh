@@ -29,7 +29,7 @@ Options:
                         /etc/sddm.conf.d/99-mango-island.conf (requires sudo/root)
   --restore-backup      Restore the latest ~/.config-backup-mango-* backup after removal
   --backup <dir>        Restore a specific backup directory (implies --restore-backup)
-  --keep-fonts          Do not remove JetBrainsMono / SymbolsNerdFont from ~/.local/share/fonts
+  --keep-fonts          Do not remove bundled fonts from ~/.local/share/fonts
   -y, --yes             Skip confirmation prompt
   -h, --help            Show this help message
 EOF
@@ -123,7 +123,7 @@ if [[ -f "$CONFIG_DIR/mango/local.conf" ]]; then
     echo "  NOTE: Personal overrides exist at $CONFIG_DIR/mango/local.conf (will be removed with $CONFIG_DIR/mango)."
 fi
 if [[ "$KEEP_FONTS" -eq 0 ]]; then
-    for fd in JetBrainsMono SymbolsNerdFont; do
+    for fd in IBMPlexSans IBMPlexMono JetBrainsMono SymbolsNerdFont; do
         if [[ -e "$FONT_DIR/$fd" ]]; then
             echo "  Remove fonts:  $FONT_DIR/$fd"
         fi
@@ -163,7 +163,7 @@ done
 if [[ "$KEEP_FONTS" -eq 0 ]]; then
     echo "==> Removing bundled fonts from $FONT_DIR"
     removed_fonts=0
-    for fd in JetBrainsMono SymbolsNerdFont; do
+    for fd in IBMPlexSans IBMPlexMono JetBrainsMono SymbolsNerdFont; do
         if [[ -e "$FONT_DIR/$fd" || -L "$FONT_DIR/$fd" ]]; then
             run_cmd rm -rf "$FONT_DIR/$fd"
             removed_fonts=1

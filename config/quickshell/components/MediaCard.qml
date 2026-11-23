@@ -147,21 +147,22 @@ ClippingRectangle {
                     spacing: 6
 
                     Rectangle {
+                        visible: root.hasPlayer
                         implicitHeight: 16
                         implicitWidth: badgeText.implicitWidth + 10
                         radius: Theme.r(8)
                         color: root.isPlaying
                             ? Theme.withAlpha(Theme.primary, 0.24)
                             : Theme.subCardBg
-                        border.width: root.isPlaying ? 1 : 0
+                        border.width: root.isPlaying ? 1 : Theme.subBorderWidth
                         border.color: Theme.withAlpha(Theme.primary, 0.45)
 
                         Text {
                             id: badgeText
                             anchors.centerIn: parent
                             text: root.hasPlayer
-                                ? (root.player.identity || "MEDIA").toUpperCase()
-                                : "MPRIS READY"
+                                ? (root.player.identity || "Media")
+                                : ""
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold
@@ -224,7 +225,7 @@ ClippingRectangle {
                         const artist = root.player.trackArtist || "";
                         const album = root.player.trackAlbum || "";
                         if (artist && album)
-                            return artist + " — " + album;
+                            return artist + " · " + album;
                         return artist || album || "Ready";
                     }
                     elide: Text.ElideRight
@@ -321,7 +322,7 @@ ClippingRectangle {
 
                 Text {
                     text: root.formatTime(root.displayPosition)
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: 10
                     color: Theme.fgSurfaceVariant
                 }
@@ -330,7 +331,7 @@ ClippingRectangle {
 
                 Text {
                     text: root.formatTime(root.trackLength)
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: 10
                     color: Theme.fgSurfaceVariant
                 }
@@ -347,14 +348,13 @@ ClippingRectangle {
 
             Item { Layout.fillWidth: true }
 
-            // Previous
-            Rectangle {
-                implicitWidth: 34
-                implicitHeight: 34
-                radius: Theme.r(17)
-                color: prevArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                Rectangle {
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    radius: Theme.r(17)
+                    color: prevArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.subBorderWidth
+                    border.color: Theme.cardBorder
                 opacity: (root.hasPlayer && root.player.canGoPrevious) ? 1.0 : 0.45
                 scale: prevArea.pressed ? 0.90 : 1.0
 
@@ -407,14 +407,13 @@ ClippingRectangle {
                 }
             }
 
-            // Next
-            Rectangle {
-                implicitWidth: 34
-                implicitHeight: 34
-                radius: Theme.r(17)
-                color: nextArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                Rectangle {
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    radius: Theme.r(17)
+                    color: nextArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.subBorderWidth
+                    border.color: Theme.cardBorder
                 opacity: (root.hasPlayer && root.player.canGoNext) ? 1.0 : 0.45
                 scale: nextArea.pressed ? 0.90 : 1.0
 

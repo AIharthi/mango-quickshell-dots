@@ -262,15 +262,15 @@ load_preset_palette() {
             ;;
         catppuccin-mocha:light)
             set_palette false \
-                "#8839ef" "#ffffff" "#dfd0f9" "#2b0859" \
+                "#8538ea" "#ffffff" "#dfd0f9" "#2b0859" \
                 "#1e66f5" "#ffffff" "#d3e2fd" "#07245e" \
                 "#ea76cb" "#ffffff" "#fad9f1" "#4f1040" \
-                "#eff1f5" "#4c4f69" "#eff1f5" "#dce0e8" "#ffffff" \
+                "#eff1f5" "#42455b" "#eff1f5" "#dce0e8" "#ffffff" \
                 "#ffffff" "#e6e9ef" "#e6e9ef" "#ccd0da" "#bcc0cc" \
-                "#4c4f69" "#6c6f85" "#8c8fa1" "#ccd0da" \
-                "#d20f39" "#ffffff" "#40a02b" "#df8e1d" "#04a5e5" \
-                "#5c5f77" "#d20f39" "#40a02b" "#df8e1d" "#1e66f5" "#ea76cb" "#179299" "#acb0be" \
-                "#6c6f85" "#d20f39" "#40a02b" "#df8e1d" "#1e66f5" "#ea76cb" "#179299" "#4c4f69"
+                "#42455b" "#545768" "#6c6f85" "#ccd0da" \
+                "#ce0f38" "#ffffff" "#307820" "#915c13" "#03709c" \
+                "#5c5f77" "#ce0f38" "#307820" "#915c13" "#1e66f5" "#ea76cb" "#179299" "#acb0be" \
+                "#6c6f85" "#ce0f38" "#307820" "#915c13" "#1e66f5" "#ea76cb" "#179299" "#42455b"
             ;;
         tokyo-night:dark)
             set_palette true \
@@ -286,15 +286,15 @@ load_preset_palette() {
             ;;
         tokyo-night:light)
             set_palette false \
-                "#2e7de9" "#ffffff" "#c9ddfc" "#0b2859" \
-                "#9854f1" "#ffffff" "#e5d6fc" "#320b63" \
-                "#007197" "#ffffff" "#c4e9f5" "#002e40" \
-                "#e1e2e7" "#3760bf" "#e1e2e7" "#c4c8da" "#f4f5fa" \
+                "#225baa" "#ffffff" "#c9ddfc" "#0b2859" \
+                "#7a42c7" "#ffffff" "#e5d6fc" "#320b63" \
+                "#006586" "#ffffff" "#c4e9f5" "#002e40" \
+                "#e1e2e7" "#243f7e" "#e1e2e7" "#c4c8da" "#f4f5fa" \
                 "#eef0f6" "#d5d6db" "#d5d6db" "#c4c8da" "#b4b8cc" \
-                "#3760bf" "#6172b0" "#848cb5" "#c4c8da" \
-                "#f52a65" "#ffffff" "#587539" "#8c6c3e" "#007197" \
-                "#e9e9ed" "#f52a65" "#587539" "#8c6c3e" "#2e7de9" "#9854f1" "#007197" "#6172b0" \
-                "#a1a6c5" "#f52a65" "#587539" "#8c6c3e" "#2e7de9" "#9854f1" "#007197" "#3760bf"
+                "#243f7e" "#45517d" "#6172b0" "#c4c8da" \
+                "#b01e49" "#ffffff" "#4c6531" "#735933" "#006586" \
+                "#e9e9ed" "#b01e49" "#4c6531" "#735933" "#225baa" "#7a42c7" "#006586" "#45517d" \
+                "#6172b0" "#b01e49" "#4c6531" "#735933" "#225baa" "#7a42c7" "#006586" "#243f7e"
             ;;
         gruvbox:dark)
             set_palette true \
@@ -310,15 +310,15 @@ load_preset_palette() {
             ;;
         gruvbox:light)
             set_palette false \
-                "#b57614" "#fbf1c7" "#ebdbb2" "#3c2706" \
-                "#076678" "#fbf1c7" "#d3e4e0" "#032e36" \
-                "#af3a03" "#fbf1c7" "#f4d6c4" "#421501" \
+                "#8b5b0f" "#ffffff" "#ebdbb2" "#3c2706" \
+                "#076678" "#ffffff" "#d3e4e0" "#032e36" \
+                "#af3a03" "#ffffff" "#f4d6c4" "#421501" \
                 "#fbf1c7" "#3c3836" "#fbf1c7" "#ebdbb2" "#f9f5d7" \
                 "#f9f5d7" "#f2e5bc" "#f2e5bc" "#ebdbb2" "#d5c4a1" \
-                "#3c3836" "#665c54" "#928374" "#d5c4a1" \
-                "#9d0006" "#fbf1c7" "#79740e" "#b57614" "#427b58" \
+                "#3c3836" "#665c54" "#7c6f64" "#d5c4a1" \
+                "#9d0006" "#ffffff" "#6d680d" "#8d5c10" "#3d7151" \
                 "#fbf1c7" "#cc241d" "#98971a" "#d79921" "#458588" "#b16286" "#689d6a" "#7c6f64" \
-                "#928374" "#9d0006" "#79740e" "#b57614" "#076678" "#8f3f71" "#427b58" "#3c3836"
+                "#928374" "#9d0006" "#6d680d" "#8d5c10" "#076678" "#8f3f71" "#3d7151" "#3c3836"
             ;;
         nord:dark)
             set_palette true \
@@ -334,15 +334,15 @@ load_preset_palette() {
             ;;
         nord:light)
             set_palette false \
-                "#5e81ac" "#eceff4" "#d4e0ee" "#1f3147" \
-                "#4c566a" "#eceff4" "#d8dee9" "#242933" \
-                "#b48ead" "#242933" "#eddce9" "#3e273a" \
+                "#4c688b" "#ffffff" "#d4e0ee" "#1f3147" \
+                "#4c566a" "#ffffff" "#d8dee9" "#242933" \
+                "#7e5b78" "#ffffff" "#eddce9" "#3e273a" \
                 "#eceff4" "#2e3440" "#eceff4" "#d8dee9" "#ffffff" \
                 "#f8f9fc" "#e5e9f0" "#e5e9f0" "#d8dee9" "#c8d0e0" \
-                "#2e3440" "#4c566a" "#7b88a1" "#d8dee9" \
-                "#bf616a" "#eceff4" "#73935c" "#b88936" "#4f8f9b" \
-                "#2e3440" "#bf616a" "#a3be8c" "#ebcb8b" "#5e81ac" "#b48ead" "#88c0d0" "#4c566a" \
-                "#434c5e" "#bf616a" "#a3be8c" "#ebcb8b" "#5e81ac" "#b48ead" "#8fbcbb" "#3b4252"
+                "#2e3440" "#4c566a" "#6d7890" "#d8dee9" \
+                "#9d5057" "#ffffff" "#577046" "#846327" "#3e7079" \
+                "#2e3440" "#9d5057" "#73935c" "#b88936" "#4c688b" "#b48ead" "#3e7079" "#4c566a" \
+                "#434c5e" "#9d5057" "#73935c" "#b88936" "#4c688b" "#b48ead" "#3e7079" "#3b4252"
             ;;
         *)
             echo "Unknown preset: $preset" >&2
@@ -718,7 +718,7 @@ apply_gtk_settings() {
         fi
     done
 
-    local font_name="JetBrains Mono 10"
+    local font_name="IBM Plex Sans 10"
     local icon_theme="Adwaita"
     local prefs_file="$QUICKSHELL_DIR/shell-prefs.json"
     if [[ -f "$prefs_file" ]]; then
@@ -731,7 +731,7 @@ try:
     ic = str(d.get("iconTheme", "Adwaita")).strip() or "Adwaita"
     fam = str(d.get("uiFontFamily", "")).strip()
     sz = int(d.get("uiFontSize", 10))
-    print(f"{ic}\t{fam} {sz}" if fam else f"{ic}\tJetBrains Mono 10")
+    print(f"{ic}\t{fam} {sz}" if fam else f"{ic}\tIBM Plex Sans 10")
 except Exception:
     pass
 PY

@@ -34,8 +34,8 @@ Rectangle {
 
     radius: Theme.r(12)
     color: root.fileStyle.paneBg
-    border.width: root.isActivePane ? Math.max(1, Theme.cardBorderWidth) : Theme.cardBorderWidth
-    border.color: root.isActivePane ? Theme.withAlpha(root.fileStyle.accent, 0.55) : Theme.cardBorder
+    border.width: (ShellState.fmDualPane && root.isActivePane) ? Math.max(1, Theme.cardBorderWidth) : Theme.cardBorderWidth
+    border.color: (ShellState.fmDualPane && root.isActivePane) ? Theme.withAlpha(root.fileStyle.accent, 0.55) : Theme.cardBorder
     clip: true
 
     function isSelected(p: string): bool {
@@ -127,18 +127,18 @@ Rectangle {
 
             Text {
                 Layout.fillWidth: true
-                text: root.isSearchView ? "NAME  (PATH)" : "NAME"
+                text: root.isSearchView ? "Name  (Path)" : "Name"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(9)
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
             Text {
                 Layout.preferredWidth: 74
                 visible: ShellState.fmShowPerms
-                text: "PERMS"
+                text: "Perms"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(9)
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
                 horizontalAlignment: Text.AlignRight
@@ -146,9 +146,9 @@ Rectangle {
             Text {
                 Layout.preferredWidth: 62
                 visible: ShellState.fmShowSizes
-                text: "SIZE"
+                text: "Size"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(9)
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
                 horizontalAlignment: Text.AlignRight
@@ -156,9 +156,9 @@ Rectangle {
             Text {
                 Layout.preferredWidth: 114
                 visible: ShellState.fmShowDates
-                text: "MODIFIED"
+                text: "Modified"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(9)
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
                 horizontalAlignment: Text.AlignRight
@@ -271,8 +271,8 @@ Rectangle {
                                 }
                                 Text {
                                     visible: !!rowCard.modelData.isSymlink
-                                    text: "→ " + String(rowCard.modelData.target || "")
-                                    font.family: Theme.fontFamily
+                                    text: "-> " + String(rowCard.modelData.target || "")
+                                    font.family: Theme.monoFont
                                     font.pixelSize: Theme.fs(9)
                                     color: Theme.info
                                     elide: Text.ElideRight
@@ -284,7 +284,7 @@ Rectangle {
                                 Layout.fillWidth: true
                                 visible: (root.isTrashView || root.isSearchView) && (String(rowCard.modelData.relPath || rowCard.modelData.originalPath || "").length > 0)
                                 text: root.isTrashView ? String(rowCard.modelData.originalPath || "") : String(rowCard.modelData.relPath || "")
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                                 elide: Text.ElideMiddle
@@ -296,7 +296,7 @@ Rectangle {
                             Layout.preferredWidth: 74
                             visible: !root.isTrashView && ShellState.fmShowPerms
                             text: String(rowCard.modelData.perms || "")
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(9)
                             color: Theme.fgSurfaceVariant
                             horizontalAlignment: Text.AlignRight
@@ -307,7 +307,7 @@ Rectangle {
                             Layout.preferredWidth: 62
                             visible: ShellState.fmShowSizes
                             text: String(rowCard.modelData.humanSize || "")
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                             horizontalAlignment: Text.AlignRight
@@ -320,7 +320,7 @@ Rectangle {
                             text: root.isTrashView
                                 ? String(rowCard.modelData.deletionDate || "").replace("T", " ")
                                 : root.fileStyle.formatMtime(rowCard.modelData.mtime)
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(9)
                             color: Theme.fgSurfaceVariant
                             horizontalAlignment: Text.AlignRight
@@ -421,7 +421,7 @@ Rectangle {
                                 return Theme.hoverBg;
                             return Theme.subCardBg;
                         }
-                        border.width: (gridWrap.foc || gridWrap.sel) ? 1 : Theme.cardBorderWidth
+                        border.width: (gridWrap.foc || gridWrap.sel) ? 1 : Theme.subBorderWidth
                         border.color: (gridWrap.foc || gridWrap.sel) ? root.fileStyle.accent : Theme.cardBorder
 
                         ColumnLayout {
@@ -509,7 +509,7 @@ Rectangle {
                     Layout.fillHeight: true
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     clip: true
 
@@ -576,8 +576,8 @@ Rectangle {
                     Layout.fillHeight: true
                     radius: Theme.r(8)
                     color: Theme.surfaceContainerLowest
-                    border.width: 1
-                    border.color: root.isActivePane ? root.fileStyle.accent : Theme.cardBorder
+                    border.width: (ShellState.fmDualPane && root.isActivePane) ? 1 : Theme.subBorderWidth
+                    border.color: (ShellState.fmDualPane && root.isActivePane) ? Theme.withAlpha(root.fileStyle.accent, 0.48) : Theme.cardBorder
                     clip: true
 
                     ListView {
@@ -669,7 +669,7 @@ Rectangle {
                     Layout.fillHeight: true
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     clip: true
 

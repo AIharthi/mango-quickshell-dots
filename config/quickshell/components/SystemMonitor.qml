@@ -184,7 +184,7 @@ Rectangle {
             spacing: 6
 
             Text {
-                text: "󰍛  SYSTEM MONITOR"
+                text: "System Monitor"
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
@@ -203,38 +203,17 @@ Rectangle {
                     id: upTxt
                     anchors.centerIn: parent
                     text: "up " + root.uptimeLabel
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: 9
                     color: Theme.fgSurfaceVariant
                 }
             }
 
             Rectangle {
-                implicitHeight: 16
-                implicitWidth: liveRow.implicitWidth + 10
-                radius: Theme.r(8)
-                color: Theme.withAlpha(Theme.success, 0.18)
-
-                RowLayout {
-                    id: liveRow
-                    anchors.centerIn: parent
-                    spacing: 4
-
-                    Rectangle {
-                        implicitWidth: 5
-                        implicitHeight: 5
-                        radius: 2.5
-                        color: Theme.success
-                    }
-
-                    Text {
-                        text: "LIVE"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 9
-                        font.weight: Font.Bold
-                        color: Theme.success
-                    }
-                }
+                implicitWidth: 8
+                implicitHeight: 8
+                radius: 4
+                color: Theme.success
             }
         }
 
@@ -258,7 +237,7 @@ Rectangle {
 
                 Text {
                     text: Math.round(root.cpuPercent) + "%"
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: 11
                     font.weight: Font.Bold
                     color: root.cpuPercent > 85 ? Theme.error : Theme.primary
@@ -349,13 +328,13 @@ Rectangle {
 
                 Item { Layout.fillWidth: true }
 
-                Text {
-                    text: root.ramUsedGb.toFixed(1) + " / " + root.ramTotalGb.toFixed(1) + " GB  (" + Math.round(root.ramPercent) + "%)"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    font.weight: Font.Bold
-                    color: root.ramPercent > 85 ? Theme.warning : Theme.secondary
-                }
+                    Text {
+                        text: root.ramUsedGb.toFixed(1) + " / " + root.ramTotalGb.toFixed(1) + " GB  (" + Math.round(root.ramPercent) + "%)"
+                        font.family: Theme.monoFont
+                        font.pixelSize: 11
+                        font.weight: Font.Bold
+                        color: root.ramPercent > 85 ? Theme.warning : Theme.secondary
+                    }
             }
 
             Rectangle {
@@ -397,15 +376,15 @@ Rectangle {
 
                 Item { Layout.fillWidth: true }
 
-                Text {
-                    text: DeviceCaps.batteryPercent + "% · " + DeviceCaps.batteryStatus
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 10
-                    font.weight: Font.Bold
-                    color: DeviceCaps.batteryLow
-                        ? Theme.error
-                        : (DeviceCaps.batteryCharging ? Theme.success : Theme.tertiary)
-                }
+                    Text {
+                        text: DeviceCaps.batteryPercent + "% · " + DeviceCaps.batteryStatus
+                        font.family: Theme.monoFont
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: DeviceCaps.batteryLow
+                            ? Theme.error
+                            : (DeviceCaps.batteryCharging ? Theme.success : Theme.tertiary)
+                    }
             }
 
             Rectangle {
@@ -457,33 +436,33 @@ Rectangle {
                 delegate: Rectangle {
                     id: metaChip
                     required property var modelData
-                    Layout.fillWidth: true
-                    implicitHeight: 22
-                    radius: Theme.r(8)
-                    color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
+                        Layout.fillWidth: true
+                        implicitHeight: 22
+                        radius: Theme.r(8)
+                        color: Theme.subCardBg
+                        border.width: Theme.subBorderWidth
+                        border.color: Theme.cardBorder
 
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 6
-                        anchors.rightMargin: 6
-                        spacing: 4
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            spacing: 4
 
-                        Item { Layout.fillWidth: true }
+                            Item { Layout.fillWidth: true }
 
-                        Text {
-                            text: metaChip.modelData.icon
-                            font.family: Theme.iconFont
-                            font.pixelSize: 11
-                            color: metaChip.modelData.col
-                        }
+                            Text {
+                                text: metaChip.modelData.icon
+                                font.family: Theme.iconFont
+                                font.pixelSize: 11
+                                color: metaChip.modelData.col
+                            }
 
-                        Text {
-                            Layout.maximumWidth: Math.max(24, metaChip.width - 28)
-                            elide: Text.ElideRight
-                            text: metaChip.modelData.lbl
-                            font.family: Theme.fontFamily
+                            Text {
+                                Layout.maximumWidth: Math.max(24, metaChip.width - 28)
+                                elide: Text.ElideRight
+                                text: metaChip.modelData.lbl
+                                font.family: Theme.monoFont
                             font.pixelSize: 9
                             font.weight: Font.DemiBold
                             color: Theme.fgSurface

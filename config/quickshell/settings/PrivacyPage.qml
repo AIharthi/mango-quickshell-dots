@@ -158,7 +158,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "CLIPBOARD & SELECTION PRIVACY"
+                text: "Clipboard & selection privacy"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -212,7 +212,7 @@ ColumnLayout {
                     implicitWidth: clrClipRow.implicitWidth + 16
                     radius: Theme.r(8)
                     color: clrClipMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.20) : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: clrClipMouse.containsMouse ? Theme.error : Theme.cardBorder
 
                     RowLayout {
@@ -267,7 +267,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "FILE HISTORY & ACCOUNT PRIVACY"
+                text: "File history & account privacy"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -312,7 +312,7 @@ ColumnLayout {
                     implicitWidth: clrRecLbl.implicitWidth + 14
                     radius: Theme.r(7)
                     color: clrRecMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.20) : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -392,7 +392,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "CAMERA, MICROPHONE & SCREEN LOCK"
+                text: "Camera, microphone & screen lock"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -468,7 +468,7 @@ ColumnLayout {
                     implicitWidth: lockNowLbl.implicitWidth + 16
                     radius: Theme.r(8)
                     color: lockNowMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -498,7 +498,7 @@ ColumnLayout {
             }
 
             Text {
-                text: "IDLE LOCK & AUTO-SUSPEND"
+                text: "Idle lock & auto-suspend"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -590,7 +590,7 @@ ColumnLayout {
                     Text {
                         text: root.sddmInstalled
                             ? ((root.sddmActive ? "Active · " : "Installed · ") + (root.sddmWritable ? "Auto-syncing theme & wallpaper" : "Run install.sh --with-sddm to enable user sync"))
-                            : "Not installed yet — run ./install.sh --with-sddm"
+                            : "Not installed yet. Run ./install.sh --with-sddm"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
@@ -603,7 +603,7 @@ ColumnLayout {
                     implicitWidth: syncSddmLbl.implicitWidth + 16
                     radius: Theme.r(8)
                     color: syncSddmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {

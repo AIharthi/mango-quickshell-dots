@@ -268,16 +268,16 @@ install_fonts() {
         return 0
     fi
 
-    echo "==> Installing bundled fonts (JetBrains Mono & Symbols Nerd Font) to $FONT_DIR"
+    echo "==> Installing bundled fonts (IBM Plex Sans, IBM Plex Mono, JetBrains Mono & Symbols Nerd Font) to $FONT_DIR"
     if [[ "$DRY_RUN" -eq 1 ]]; then
-        echo "  [dry-run] install fonts atomically to $FONT_DIR/{JetBrainsMono,SymbolsNerdFont} and refresh fc-cache if changed"
+        echo "  [dry-run] install fonts atomically to $FONT_DIR/{IBMPlexSans,IBMPlexMono,JetBrainsMono,SymbolsNerdFont} and refresh fc-cache if changed"
         return 0
     fi
 
-    mkdir -p "$FONT_DIR/JetBrainsMono" "$FONT_DIR/SymbolsNerdFont"
+    mkdir -p "$FONT_DIR/IBMPlexSans" "$FONT_DIR/IBMPlexMono" "$FONT_DIR/JetBrainsMono" "$FONT_DIR/SymbolsNerdFont"
     local changed=0
     local fam f dst
-    for fam in JetBrainsMono SymbolsNerdFont; do
+    for fam in IBMPlexSans IBMPlexMono JetBrainsMono SymbolsNerdFont; do
         while IFS= read -r -d '' f; do
             dst="$FONT_DIR/$fam/$(basename "$f")"
             if atomic_copy_file "$f" "$dst"; then
@@ -342,6 +342,11 @@ install_system_sddm() {
     local sddm_src="$SCRIPT_DIR/system/sddm-theme/mango-island"
     local target_user="${SUDO_USER:-$USER}"
     local font_pairs=(
+        "fonts/IBMPlexSans/IBMPlexSans-Regular.ttf:$sddm_dst/fonts/IBMPlexSans-Regular.ttf"
+        "fonts/IBMPlexSans/IBMPlexSans-Medium.ttf:$sddm_dst/fonts/IBMPlexSans-Medium.ttf"
+        "fonts/IBMPlexSans/IBMPlexSans-SemiBold.ttf:$sddm_dst/fonts/IBMPlexSans-SemiBold.ttf"
+        "fonts/IBMPlexSans/IBMPlexSans-Bold.ttf:$sddm_dst/fonts/IBMPlexSans-Bold.ttf"
+        "fonts/IBMPlexMono/IBMPlexMono-Bold.ttf:$sddm_dst/fonts/IBMPlexMono-Bold.ttf"
         "fonts/JetBrainsMono/JetBrainsMono-Regular.ttf:$sddm_dst/fonts/JetBrainsMono-Regular.ttf"
         "fonts/JetBrainsMono/JetBrainsMono-Bold.ttf:$sddm_dst/fonts/JetBrainsMono-Bold.ttf"
         "fonts/SymbolsNerdFont/SymbolsNerdFont-Regular.ttf:$sddm_dst/fonts/SymbolsNerdFont-Regular.ttf"

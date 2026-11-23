@@ -64,15 +64,15 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "FOOT WAYLAND TERMINAL (~/.config/foot/foot.ini)"
+                text: "Foot Terminal"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             StepControl {
-                label: "Background Opacity (colors.alpha)"
+                label: "Background Opacity"
                 displayValue: Math.round(Number(root.foot.alpha || 1.0) * 100) + "%"
                 onDecremented: root.setTerm("foot", "alpha", Math.max(0.50, Number(root.foot.alpha || 1.0) - 0.05).toFixed(2))
                 onIncremented: root.setTerm("foot", "alpha", Math.min(1.00, Number(root.foot.alpha || 1.0) + 0.05).toFixed(2))
@@ -114,7 +114,7 @@ ColumnLayout {
                             color: fCurPill.selected
                                 ? Theme.withAlpha(Theme.primary, 0.22)
                                 : (fCurMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: fCurPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: fCurPill.selected ? 1 : Theme.subBorderWidth
                             border.color: fCurPill.selected ? Theme.primary : Theme.cardBorder
 
                             Text {
@@ -186,14 +186,14 @@ ColumnLayout {
                             color: fScrPill.selected
                                 ? Theme.withAlpha(Theme.secondary, 0.22)
                                 : (fScrMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: fScrPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: fScrPill.selected ? 1 : Theme.subBorderWidth
                             border.color: fScrPill.selected ? Theme.secondary : Theme.cardBorder
 
                             Text {
                                 id: fScrTxt
                                 anchors.centerIn: parent
                                 text: fScrPill.modelData >= 1000 ? ((fScrPill.modelData / 1000) + "k") : String(fScrPill.modelData)
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: fScrPill.selected ? Font.Bold : Font.Medium
                                 color: fScrPill.selected ? Theme.secondary : Theme.fgSurface
@@ -230,11 +230,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "KITTY TERMINAL (~/.config/kitty/kitty.conf)"
+                text: "Kitty Terminal"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             StepControl {
@@ -282,7 +282,7 @@ ColumnLayout {
                             color: kCurPill.selected
                                 ? Theme.withAlpha(Theme.secondary, 0.22)
                                 : (kCurMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: kCurPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: kCurPill.selected ? 1 : Theme.subBorderWidth
                             border.color: kCurPill.selected ? Theme.secondary : Theme.cardBorder
 
                             Text {
@@ -374,14 +374,14 @@ ColumnLayout {
                             color: kScrPill.selected
                                 ? Theme.withAlpha(Theme.secondary, 0.22)
                                 : (kScrMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: kScrPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: kScrPill.selected ? 1 : Theme.subBorderWidth
                             border.color: kScrPill.selected ? Theme.secondary : Theme.cardBorder
 
                             Text {
                                 id: kScrTxt
                                 anchors.centerIn: parent
                                 text: (kScrPill.modelData / 1000) + "k"
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: kScrPill.selected ? Font.Bold : Font.Medium
                                 color: kScrPill.selected ? Theme.secondary : Theme.fgSurface

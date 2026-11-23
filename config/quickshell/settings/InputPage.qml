@@ -153,7 +153,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "KEYBOARD (PER-DEVICE LOCAL.CONF)"
+                text: "Keyboard (per-device local.conf)"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -179,7 +179,7 @@ ColumnLayout {
                         color: layChip.selected
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (layMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: layChip.selected ? 1 : Theme.cardBorderWidth
+                        border.width: layChip.selected ? 1 : Theme.subBorderWidth
                         border.color: layChip.selected ? Theme.primary : Theme.cardBorder
                         scale: layMouse.pressed ? 0.95 : 1.0
 
@@ -225,7 +225,7 @@ ColumnLayout {
                     implicitHeight: 30
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: layoutInput.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: layoutInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                     TextInput {
@@ -297,7 +297,7 @@ ColumnLayout {
                         { label: "Alt+Shift", val: "grp:alt_shift_toggle" },
                         { label: "Win+Space", val: "grp:win_space_toggle" },
                         { label: "Caps Lock", val: "grp:caps_toggle" },
-                        { label: "Caps→Esc",  val: "caps:escape" }
+                        { label: "Caps to Esc",  val: "caps:escape" }
                     ]
 
                     delegate: Rectangle {
@@ -311,7 +311,7 @@ ColumnLayout {
                         color: optBtn.selected
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (optMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: optBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.width: optBtn.selected ? 1 : Theme.subBorderWidth
                         border.color: optBtn.selected ? Theme.primary : Theme.cardBorder
                         scale: optMouse.pressed ? 0.95 : 1.0
 
@@ -371,7 +371,7 @@ ColumnLayout {
                         color: rateBtn.selected
                             ? Theme.withAlpha(Theme.secondary, 0.22)
                             : (rateMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: rateBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.width: rateBtn.selected ? 1 : Theme.subBorderWidth
                         border.color: rateBtn.selected ? Theme.secondary : Theme.cardBorder
                         scale: rateMouse.pressed ? 0.95 : 1.0
 
@@ -387,7 +387,7 @@ ColumnLayout {
                         Text {
                             anchors.centerIn: parent
                             text: rateBtn.modelData + "/s"
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             font.weight: rateBtn.selected ? Font.Bold : Font.Normal
                             color: rateBtn.selected ? Theme.secondary : Theme.fgSurface
@@ -431,7 +431,7 @@ ColumnLayout {
                         color: delayBtn.selected
                             ? Theme.withAlpha(Theme.secondary, 0.22)
                             : (delayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: delayBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.width: delayBtn.selected ? 1 : Theme.subBorderWidth
                         border.color: delayBtn.selected ? Theme.secondary : Theme.cardBorder
                         scale: delayMouse.pressed ? 0.95 : 1.0
 
@@ -447,7 +447,7 @@ ColumnLayout {
                         Text {
                             anchors.centerIn: parent
                             text: delayBtn.modelData + "ms"
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             font.weight: delayBtn.selected ? Font.Bold : Font.Normal
                             color: delayBtn.selected ? Theme.secondary : Theme.fgSurface
@@ -507,13 +507,13 @@ ColumnLayout {
                         implicitHeight: 24
                         radius: Theme.r(7)
                         color: modChip.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                        border.width: modChip.selected ? 1 : Theme.cardBorderWidth
+                        border.width: modChip.selected ? 1 : Theme.subBorderWidth
                         border.color: modChip.selected ? Theme.primary : Theme.cardBorder
 
                         Text {
                             anchors.centerIn: parent
                             text: modChip.modelData
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: modChip.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -534,7 +534,7 @@ ColumnLayout {
                 implicitHeight: 30
                 radius: Theme.r(8)
                 color: Theme.subCardBg
-                border.width: kbTestIn.activeFocus ? 1 : Theme.cardBorderWidth
+                border.width: kbTestIn.activeFocus ? 1 : Theme.subBorderWidth
                 border.color: kbTestIn.activeFocus ? Theme.primary : Theme.cardBorder
 
                 Item {
@@ -584,7 +584,7 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "MOUSE & POINTER"
+                    text: "Mouse & pointer"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -594,7 +594,7 @@ ColumnLayout {
                 Item { Layout.fillWidth: true }
 
                 Text {
-                    text: "Cursor theme & size → Appearance"
+                    text: "Cursor theme & size in Appearance"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(9)
                     color: Theme.fgSurfaceVariant
@@ -630,7 +630,7 @@ ColumnLayout {
                         color: mProfBtn.selected
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (mProfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: mProfBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.width: mProfBtn.selected ? 1 : Theme.subBorderWidth
                         border.color: mProfBtn.selected ? Theme.primary : Theme.cardBorder
                         scale: mProfMouse.pressed ? 0.96 : 1.0
 
@@ -726,7 +726,7 @@ ColumnLayout {
                         implicitHeight: 24
                         radius: Theme.r(7)
                         color: mScrBtn.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                        border.width: mScrBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.width: mScrBtn.selected ? 1 : Theme.subBorderWidth
                         border.color: mScrBtn.selected ? Theme.primary : Theme.cardBorder
                         Text { anchors.centerIn: parent; text: mScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: mScrBtn.selected ? Theme.primary : Theme.fgSurface }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("mouse_scroll_method", mScrBtn.modelData.val) }
@@ -753,7 +753,7 @@ ColumnLayout {
             spacing: 9
 
             Text {
-                text: "TOUCHPAD"
+                text: "Touchpad"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -817,7 +817,7 @@ ColumnLayout {
                         color: tpProfBtn.selected
                             ? Theme.withAlpha(Theme.secondary, 0.22)
                             : (tpProfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: tpProfBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.width: tpProfBtn.selected ? 1 : Theme.subBorderWidth
                         border.color: tpProfBtn.selected ? Theme.secondary : Theme.cardBorder
                         scale: tpProfMouse.pressed ? 0.96 : 1.0
 
@@ -895,7 +895,7 @@ ColumnLayout {
                         readonly property bool selected: root.trackpadClickMethod === tpClkBtn.modelData.val
                         Layout.fillWidth: true; implicitHeight: 24; radius: Theme.r(7)
                         color: tpClkBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                        border.width: tpClkBtn.selected ? 1 : Theme.cardBorderWidth; border.color: tpClkBtn.selected ? Theme.secondary : Theme.cardBorder
+                        border.width: tpClkBtn.selected ? 1 : Theme.subBorderWidth; border.color: tpClkBtn.selected ? Theme.secondary : Theme.cardBorder
                         Text { anchors.centerIn: parent; text: tpClkBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: tpClkBtn.selected ? Theme.secondary : Theme.fgSurface }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("trackpad_click_method", tpClkBtn.modelData.val) }
                     }
@@ -914,7 +914,7 @@ ColumnLayout {
                         readonly property bool selected: root.trackpadScrollMethod === tpScrBtn.modelData.val
                         Layout.fillWidth: true; implicitHeight: 24; radius: Theme.r(7)
                         color: tpScrBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                        border.width: tpScrBtn.selected ? 1 : Theme.cardBorderWidth; border.color: tpScrBtn.selected ? Theme.secondary : Theme.cardBorder
+                        border.width: tpScrBtn.selected ? 1 : Theme.subBorderWidth; border.color: tpScrBtn.selected ? Theme.secondary : Theme.cardBorder
                         Text { anchors.centerIn: parent; text: tpScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: tpScrBtn.selected ? Theme.secondary : Theme.fgSurface }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("trackpad_scroll_method", tpScrBtn.modelData.val) }
                     }

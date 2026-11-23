@@ -118,7 +118,7 @@ Rectangle {
             Layout.fillHeight: false
 
             Text {
-                text: "󰖲  MANGOWC TAGS"
+                text: "Workspaces"
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
@@ -133,14 +133,14 @@ Rectangle {
                 implicitWidth: layoutLabel.implicitWidth + 14
                 radius: Theme.r(10)
                 color: layoutArea.containsMouse ? Theme.activeBg : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
 
                 Text {
                     id: layoutLabel
                     anchors.centerIn: parent
                     text: "Layout: " + root.currentLayout
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: 10
                     font.weight: Font.Bold
                     color: Theme.primary
@@ -197,7 +197,7 @@ Rectangle {
                         return Theme.subCardBg;
                     }
 
-                    border.width: tagBtn.isActive ? 1 : Theme.cardBorderWidth
+                    border.width: tagBtn.isActive ? 1 : Theme.subBorderWidth
                     border.color: tagBtn.isActive ? Theme.primary : Theme.cardBorder
 
                     Behavior on color {
@@ -212,7 +212,7 @@ Rectangle {
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: tagBtn.modelData.index
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: 13
                             font.weight: Font.Bold
                             color: {
@@ -260,7 +260,7 @@ Rectangle {
                 color: winTileMouse.containsMouse
                     ? Theme.withAlpha(Theme.secondary, 0.24)
                     : Theme.withAlpha(Theme.secondary, 0.12)
-                border.width: Math.max(1, Theme.cardBorderWidth)
+                border.width: winTileMouse.containsMouse ? 1 : Theme.subBorderWidth
                 border.color: winTileMouse.containsMouse ? Theme.secondary : Theme.withAlpha(Theme.secondary, 0.38)
                 scale: winTileMouse.pressed ? 0.92 : 1.0
 

@@ -165,7 +165,7 @@ Singleton {
                         root._warned15 = true;
                         Quickshell.execDetached([
                             "sh", "-c",
-                            "command -v notify-send >/dev/null 2>&1 && notify-send -a 'Battery' -u normal \"Low Battery (" + root.batteryPercent + "%)\" 'Battery is running low — plug in charger soon.'"
+                            "command -v notify-send >/dev/null 2>&1 && notify-send -a 'Battery' -u normal \"Low Battery (" + root.batteryPercent + "%)\" 'Battery is running low. Plug in charger soon.'"
                         ]);
                     }
                 } catch (err) {}

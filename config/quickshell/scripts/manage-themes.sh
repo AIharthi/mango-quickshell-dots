@@ -95,6 +95,43 @@ def contrast_fg(bg_hex, dark_fg="#11111b", light_fg="#ffffff"):
     return dark_fg if rel_lum(bg_hex) > 0.34 else light_fg
 
 
+def contrast_ratio(c1, c2):
+    l1, l2 = rel_lum(c1), rel_lum(c2)
+    if l1 < l2:
+        l1, l2 = l2, l1
+    return (l1 + 0.05) / (l2 + 0.05)
+
+
+def ensure_contrast(fg_hex, bg_hex, min_ratio, prefer_dark_bg=True):
+    fg = norm_hex(fg_hex)
+    bgs = [norm_hex(b) for b in bg_hex] if isinstance(bg_hex, (list, tuple)) else [norm_hex(bg_hex)]
+    if all(contrast_ratio(fg, b) >= min_ratio for b in bgs):
+        return fg
+    target = "#ffffff" if prefer_dark_bg else "#000000"
+    for step in range(1, 101):
+        cand = mix(fg, target, step / 100.0)
+        if all(contrast_ratio(cand, b) >= min_ratio for b in bgs):
+            return cand
+    alt = "#000000" if prefer_dark_bg else "#ffffff"
+    for step in range(1, 101):
+        cand = mix(fg, alt, step / 100.0)
+        if all(contrast_ratio(cand, b) >= min_ratio for b in bgs):
+            return cand
+    return fg
+
+
+def best_ink_on(bg_hex, preferred_fg, dark_ink="#11111b", light_ink="#ffffff", min_ratio=4.6):
+    cand = norm_hex(preferred_fg)
+    if contrast_ratio(cand, bg_hex) >= min_ratio:
+        return cand
+    d_cr = contrast_ratio(dark_ink, bg_hex)
+    l_cr = contrast_ratio(light_ink, bg_hex)
+    best = dark_ink if d_cr >= l_cr else light_ink
+    if contrast_ratio(best, bg_hex) >= min_ratio:
+        return best
+    return ensure_contrast(best, bg_hex, min_ratio, prefer_dark_bg=(l_cr >= d_cr))
+
+
 def load_json_dict(path):
     if not os.path.isfile(path):
         return {}
@@ -370,26 +407,46 @@ def complete_palette(base, is_dark):
     wrn = norm_hex(base.get("warning"), "#f9e2af" if is_dark else "#df8e1d")
     inf = norm_hex(base.get("info"), "#89dceb" if is_dark else "#04a5e5")
 
+    # Enforce WCAG AA readability across both Dark and Light surface tiers
+    surf_pair = [surf, surf_low]
+    surf_trio = [surf, surf_low, surf_high]
+    on_surf = ensure_contrast(on_surf, surf_trio, 7.0 if is_dark else 6.0, prefer_dark_bg=is_dark)
+    on_surf_var = ensure_contrast(on_surf_var, surf_trio, 4.6, prefer_dark_bg=is_dark)
+    p = ensure_contrast(p, surf_pair, 4.6, prefer_dark_bg=is_dark)
+    s = ensure_contrast(s, surf_pair, 4.5, prefer_dark_bg=is_dark)
+    err = ensure_contrast(err, surf_pair, 4.6, prefer_dark_bg=is_dark)
+    suc = ensure_contrast(suc, surf_pair, 4.5, prefer_dark_bg=is_dark)
+    wrn = ensure_contrast(wrn, surf_pair, 4.5, prefer_dark_bg=is_dark)
+    inf = ensure_contrast(inf, surf_pair, 4.5, prefer_dark_bg=is_dark)
+
     p_cont = norm_hex(base.get("primaryContainer"), mix(p, surf, 0.68 if is_dark else 0.76))
     s_cont = norm_hex(base.get("secondaryContainer"), mix(s, surf, 0.68 if is_dark else 0.76))
     t_cont = norm_hex(base.get("tertiaryContainer"), mix(t, surf, 0.68 if is_dark else 0.76))
 
+    on_p = best_ink_on(p, base.get("onPrimary") or contrast_fg(p, "#11111b", "#ffffff"))
+    on_s = best_ink_on(s, base.get("onSecondary") or contrast_fg(s, "#11111b", "#ffffff"))
+    on_t = best_ink_on(t, base.get("onTertiary") or contrast_fg(t, "#11111b", "#ffffff"))
+    on_err = best_ink_on(err, base.get("onError") or contrast_fg(err, "#11111b", "#ffffff"))
+    on_p_cont = best_ink_on(p_cont, base.get("onPrimaryContainer") or contrast_fg(p_cont, "#11111b", "#ffffff"))
+    on_s_cont = best_ink_on(s_cont, base.get("onSecondaryContainer") or contrast_fg(s_cont, "#11111b", "#ffffff"))
+    on_t_cont = best_ink_on(t_cont, base.get("onTertiaryContainer") or contrast_fg(t_cont, "#11111b", "#ffffff"))
+
     c = {
         "isDark": bool(is_dark),
         "primary": p,
-        "onPrimary": norm_hex(base.get("onPrimary"), contrast_fg(p, bg, "#ffffff")),
+        "onPrimary": on_p,
         "primaryContainer": p_cont,
-        "onPrimaryContainer": norm_hex(base.get("onPrimaryContainer"), contrast_fg(p_cont, bg, "#ffffff")),
+        "onPrimaryContainer": on_p_cont,
         "secondary": s,
-        "onSecondary": norm_hex(base.get("onSecondary"), contrast_fg(s, bg, "#ffffff")),
+        "onSecondary": on_s,
         "secondaryContainer": s_cont,
-        "onSecondaryContainer": norm_hex(base.get("onSecondaryContainer"), contrast_fg(s_cont, bg, "#ffffff")),
+        "onSecondaryContainer": on_s_cont,
         "tertiary": t,
-        "onTertiary": norm_hex(base.get("onTertiary"), contrast_fg(t, bg, "#ffffff")),
+        "onTertiary": on_t,
         "tertiaryContainer": t_cont,
-        "onTertiaryContainer": norm_hex(base.get("onTertiaryContainer"), contrast_fg(t_cont, bg, "#ffffff")),
+        "onTertiaryContainer": on_t_cont,
         "background": bg,
-        "onBackground": norm_hex(base.get("onBackground"), on_surf),
+        "onBackground": ensure_contrast(base.get("onBackground") or on_surf, bg, 7.0 if is_dark else 6.0, prefer_dark_bg=is_dark),
         "surface": surf,
         "surfaceDim": norm_hex(base.get("surfaceDim"), bg),
         "surfaceBright": norm_hex(base.get("surfaceBright"), surf_high),
@@ -403,7 +460,7 @@ def complete_palette(base, is_dark):
         "outline": outline,
         "outlineVariant": outline_var,
         "error": err,
-        "onError": norm_hex(base.get("onError"), contrast_fg(err, bg, "#ffffff")),
+        "onError": on_err,
         "success": suc,
         "warning": wrn,
         "info": inf,

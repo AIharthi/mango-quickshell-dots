@@ -14,9 +14,10 @@ ColumnLayout {
     property int cursorHideTimeout: 0
     property bool cursorHideKeypress: false
     property var availableCursors: ["catppuccin-mocha-dark-cursors", "Adwaita"]
-    property var monospaceFonts: ["JetBrains Mono", "DejaVu Sans Mono", "Liberation Mono"]
+    property var sansFonts: ["IBM Plex Sans", "DejaVu Sans", "Liberation Sans"]
+    property var monospaceFonts: ["IBM Plex Mono", "JetBrains Mono", "DejaVu Sans Mono", "Liberation Mono"]
     property var allFonts: []
-    property bool showAllFonts: false
+    property string fontPickerMode: "ui"         // "ui" | "mono" | "all"
     property string fontSearch: ""
     property var gtkInfo: ({
         iconTheme: ShellState.iconTheme,
@@ -55,7 +56,8 @@ ColumnLayout {
     function loadCursorSettings(): void {
         if (!cursorReadProc.running)
             cursorReadProc.running = true;
-        if (ShellState.cachedMonospaceFonts.length > 0 && ShellState.cachedAllFonts.length > 0) {
+        if (ShellState.cachedSansFonts.length > 0 && ShellState.cachedMonospaceFonts.length > 0 && ShellState.cachedAllFonts.length > 0) {
+            root.sansFonts = ShellState.cachedSansFonts;
             root.monospaceFonts = ShellState.cachedMonospaceFonts;
             root.allFonts = ShellState.cachedAllFonts;
         } else if (!fontListProc.running) {
@@ -123,6 +125,10 @@ ColumnLayout {
                     return;
                 try {
                     const d = JSON.parse(raw);
+                    if (Array.isArray(d.sans) && d.sans.length > 0) {
+                        root.sansFonts = d.sans;
+                        ShellState.cachedSansFonts = d.sans;
+                    }
                     if (Array.isArray(d.monospace) && d.monospace.length > 0) {
                         root.monospaceFonts = d.monospace;
                         ShellState.cachedMonospaceFonts = d.monospace;
@@ -166,7 +172,7 @@ ColumnLayout {
     // --- 0. Safe Recovery Row ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: appResetRow.implicitHeight + 16
+        implicitHeight: appResetRow.implicitHeight + 14
         radius: Theme.r(12)
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth
@@ -185,10 +191,10 @@ ColumnLayout {
                 elide: Text.ElideRight
                 text: root.resetStatusMsg.length > 0
                     ? root.resetStatusMsg
-                    : "Made a mistake? Restore Visual Mode, Surfaces, Island Shape, Theme, Font, Cursor & Blur to defaults"
+                    : "Restore mode, surfaces, theme, fonts, cursor, and blur to defaults."
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: root.resetStatusMsg.length > 0 ? Font.Bold : Font.Normal
+                font.pixelSize: Theme.fs(11)
+                font.weight: root.resetStatusMsg.length > 0 ? Font.DemiBold : Font.Normal
                 color: root.resetStatusMsg.length > 0 ? Theme.success : Theme.fgSurfaceVariant
             }
 
@@ -199,7 +205,7 @@ ColumnLayout {
                 color: root.confirmResetAppearance
                     ? Theme.warning
                     : (rstAppMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg)
-                border.width: 1
+                border.width: root.confirmResetAppearance ? 1 : Theme.subBorderWidth
                 border.color: root.confirmResetAppearance ? Theme.warning : Theme.cardBorder
 
                 Text {
@@ -208,7 +214,7 @@ ColumnLayout {
                     text: root.confirmResetAppearance ? "Confirm Reset?" : "󰑐 Reset Appearance"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
+                    font.weight: Font.DemiBold
                     color: root.confirmResetAppearance ? Theme.fgPrimary : Theme.warning
                 }
 
@@ -254,11 +260,11 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "VISUAL MODE (QUICKSHELL + MANGOWC)"
+                    text: "Visual Mode"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Item { Layout.fillWidth: true }
@@ -268,7 +274,7 @@ ColumnLayout {
                     implicitWidth: schemeLbl.implicitWidth + 18
                     radius: Theme.r(12)
                     color: schemeBtnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     scale: schemeBtnMouse.pressed ? 0.96 : 1.0
 
@@ -325,9 +331,9 @@ ColumnLayout {
                             return Theme.r(12);
                         }
                         color: modeCard.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            ? Theme.withAlpha(Theme.primary, 0.18)
                             : (modeCardMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: modeCard.selected || mid === "retro" || mid === "neon" ? (mid === "retro" || mid === "neon" ? 2 : 1) : Theme.cardBorderWidth
+                        border.width: (modeCard.selected || mid === "retro" || mid === "neon") ? (mid === "retro" || mid === "neon" ? 2 : 1) : Theme.subBorderWidth
                         border.color: modeCard.selected ? Theme.primary : (mid === "neon" ? Theme.withAlpha(Theme.primary, 0.45) : Theme.cardBorder)
                         scale: modeCardMouse.pressed ? 0.97 : 1.0
 
@@ -468,11 +474,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "SHELL SURFACE FINISH & TRANSPARENCY"
+                text: "Surfaces & Transparency"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             // Surface Material Style
@@ -694,11 +700,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "DYNAMIC ISLAND SHAPE & TEXT SCALE"
+                text: "Island Shape & Text Scale"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             // Island Layout Style
@@ -837,13 +843,17 @@ ColumnLayout {
         id: fontCard
         Layout.fillWidth: true
         implicitHeight: fontCol.implicitHeight + 24
-        radius: Theme.r(16)
+        radius: Theme.r(14)
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth
         border.color: Theme.cardBorder
 
         readonly property var displayedFonts: {
-            const base = root.showAllFonts && root.allFonts.length > 0 ? root.allFonts : root.monospaceFonts;
+            let base = root.sansFonts;
+            if (root.fontPickerMode === "mono")
+                base = root.monospaceFonts;
+            else if (root.fontPickerMode === "all" && root.allFonts.length > 0)
+                base = root.allFonts;
             const q = root.fontSearch.trim().toLowerCase();
             if (q.length === 0)
                 return base.slice(0, 24);
@@ -867,50 +877,75 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
 
-                Text {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    text: "TYPOGRAPHY & SYSTEM FONT (SHELL · GTK · TERMINAL)"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
-                }
-
-                Rectangle {
-                    implicitHeight: 22
-                    implicitWidth: allFontsLbl.implicitWidth + 14
-                    radius: Theme.r(7)
-                    color: root.showAllFonts ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: root.showAllFonts ? Theme.secondary : Theme.cardBorder
+                    spacing: 1
 
                     Text {
-                        id: allFontsLbl
-                        anchors.centerIn: parent
-                        text: root.showAllFonts ? "All Fonts" : "Monospace"
+                        text: "Typography"
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(10)
-                        font.weight: Font.Bold
-                        color: root.showAllFonts ? Theme.secondary : Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(12)
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.showAllFonts = !root.showAllFonts
+                    Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: "UI: " + ShellState.uiFontFamily + "  ·  Mono: " + ShellState.monoFontFamily
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                Repeater {
+                    model: [
+                        { id: "ui",   label: "Interface" },
+                        { id: "mono", label: "Monospace" },
+                        { id: "all",  label: "All" }
+                    ]
+
+                    delegate: Rectangle {
+                        id: fpTab
+                        required property var modelData
+                        readonly property bool sel: root.fontPickerMode === fpTab.modelData.id
+                        implicitHeight: 24
+                        implicitWidth: fpLbl.implicitWidth + 14
+                        radius: Theme.r(7)
+                        color: fpTab.sel ? Theme.withAlpha(Theme.primary, 0.18) : (fpMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: fpTab.sel ? 1 : Theme.subBorderWidth
+                        border.color: fpTab.sel ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            id: fpLbl
+                            anchors.centerIn: parent
+                            text: fpTab.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: fpTab.sel ? Font.DemiBold : Font.Normal
+                            color: fpTab.sel ? Theme.primary : Theme.fgSurfaceVariant
+                        }
+
+                        MouseArea {
+                            id: fpMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.fontPickerMode = fpTab.modelData.id
+                        }
                     }
                 }
             }
 
             // Optional Filter Input when exploring fonts
             Rectangle {
-                visible: root.showAllFonts || root.monospaceFonts.length > 10
+                visible: root.fontPickerMode === "all" || fontCard.displayedFonts.length > 10
                 Layout.fillWidth: true
                 implicitHeight: 28
                 radius: Theme.r(8)
                 color: Theme.subCardBg
-                border.width: fontFilterInput.activeFocus ? 1 : Theme.cardBorderWidth
+                border.width: fontFilterInput.activeFocus ? 1 : Theme.subBorderWidth
                 border.color: fontFilterInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                 RowLayout {
@@ -965,24 +1000,27 @@ ColumnLayout {
                     delegate: Rectangle {
                         id: fontPill
                         required property string modelData
-                        readonly property bool selected: ShellState.uiFontFamily === fontPill.modelData
+                        readonly property bool isMonoPick: root.fontPickerMode === "mono"
+                        readonly property bool selected: fontPill.isMonoPick
+                            ? (ShellState.monoFontFamily === fontPill.modelData)
+                            : (ShellState.uiFontFamily === fontPill.modelData)
 
                         implicitHeight: 28
                         implicitWidth: fontNameTxt.implicitWidth + 18
                         radius: Theme.r(8)
                         color: fontPill.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            ? Theme.withAlpha(Theme.primary, 0.20)
                             : (fontPillMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: fontPill.selected ? 1 : Theme.cardBorderWidth
+                        border.width: fontPill.selected ? 1 : Theme.subBorderWidth
                         border.color: fontPill.selected ? Theme.primary : Theme.cardBorder
                         scale: fontPillMouse.pressed ? 0.96 : 1.0
 
                         Behavior on color {
-                            enabled: !Theme.isSimple
+                            enabled: !Theme.reducedMotion
                             ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
                         }
                         Behavior on scale {
-                            enabled: !Theme.isSimple
+                            enabled: !Theme.reducedMotion
                             NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
                         }
 
@@ -992,7 +1030,7 @@ ColumnLayout {
                             text: fontPill.modelData
                             font.family: fontPill.modelData
                             font.pixelSize: Theme.fs(11)
-                            font.weight: fontPill.selected ? Font.Bold : Font.Normal
+                            font.weight: fontPill.selected ? Font.DemiBold : Font.Normal
                             color: fontPill.selected ? Theme.primary : Theme.fgSurface
                         }
 
@@ -1001,7 +1039,12 @@ ColumnLayout {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: ShellState.setFont(fontPill.modelData, ShellState.uiFontSize)
+                            onClicked: {
+                                if (fontPill.isMonoPick)
+                                    ShellState.setMonoFont(fontPill.modelData, ShellState.uiFontSize);
+                                else
+                                    ShellState.setFont(fontPill.modelData, ShellState.uiFontSize);
+                            }
                         }
                     }
                 }
@@ -1013,7 +1056,7 @@ ColumnLayout {
                 spacing: 8
 
                 Text {
-                    text: "Font Size (GTK / Terminal)"
+                    text: "Font Size (GTK & Terminal)"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
@@ -1036,18 +1079,18 @@ ColumnLayout {
                             implicitWidth: fSzLbl.implicitWidth + 14
                             radius: Theme.r(7)
                             color: fSzPill.selected
-                                ? Theme.withAlpha(Theme.secondary, 0.22)
+                                ? Theme.withAlpha(Theme.secondary, 0.20)
                                 : (fSzMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: fSzPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: fSzPill.selected ? 1 : Theme.subBorderWidth
                             border.color: fSzPill.selected ? Theme.secondary : Theme.cardBorder
 
                             Text {
                                 id: fSzLbl
                                 anchors.centerIn: parent
                                 text: fSzPill.modelData + "pt"
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
-                                font.weight: fSzPill.selected ? Font.Bold : Font.Medium
+                                font.weight: fSzPill.selected ? Font.DemiBold : Font.Normal
                                 color: fSzPill.selected ? Theme.secondary : Theme.fgSurface
                             }
 
@@ -1056,7 +1099,10 @@ ColumnLayout {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: ShellState.setFont(ShellState.uiFontFamily, fSzPill.modelData)
+                                onClicked: {
+                                    ShellState.setFont(ShellState.uiFontFamily, fSzPill.modelData);
+                                    ShellState.setMonoFont(ShellState.monoFontFamily, fSzPill.modelData);
+                                }
                             }
                         }
                     }
@@ -1081,11 +1127,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "CURSOR & POINTER THEME (MANGOWC + GTK)"
+                text: "Cursor & Pointer"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             Flow {
@@ -1316,11 +1362,11 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "MANGOWC ANIMATIONS & EFFECTS"
+                    text: "Animations & Window Effects"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Item { Layout.fillWidth: true }
@@ -1330,7 +1376,7 @@ ColumnLayout {
                     implicitWidth: resetLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: resetMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     scale: resetMouse.pressed ? 0.95 : 1.0
 
@@ -1717,7 +1763,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "Blur Cache Optimization (blur_optimized)"
+                    text: "Blur Cache Optimization"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
@@ -1734,7 +1780,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "Dim Unfocused Windows (dim_enable)"
+                    text: "Dim Unfocused Windows"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
@@ -1837,11 +1883,11 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "WALLPAPER TRANSITIONS (AWWW / SWWW)"
+                    text: "Wallpaper Transitions"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Rectangle {
@@ -2029,11 +2075,11 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "GTK ICON THEME & FONT RENDERING"
+                text: "Icons & GTK Rendering"
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurface
             }
 
             Text {

@@ -31,7 +31,7 @@ RowLayout {
         implicitHeight: 24
         radius: Theme.r(7)
         color: minusMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-        border.width: Theme.cardBorderWidth
+        border.width: Theme.subBorderWidth
         border.color: Theme.cardBorder
         scale: minusMouse.pressed ? 0.92 : 1.0
 
@@ -47,7 +47,7 @@ RowLayout {
         Text {
             anchors.centerIn: parent
             text: "-"
-            font.family: Theme.fontFamily
+            font.family: Theme.monoFont
             font.pixelSize: Theme.fs(12)
             font.weight: Font.Bold
             color: Theme.fgSurface
@@ -67,9 +67,9 @@ RowLayout {
         Layout.preferredWidth: 58
         horizontalAlignment: Text.AlignHCenter
         text: root.displayValue
-        font.family: Theme.fontFamily
+        font.family: Theme.monoFont
         font.pixelSize: Theme.fs(11)
-        font.weight: Font.Bold
+        font.weight: Font.DemiBold
         color: root.accentColor
     }
 
@@ -78,7 +78,7 @@ RowLayout {
         implicitHeight: 24
         radius: Theme.r(7)
         color: plusMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-        border.width: Theme.cardBorderWidth
+        border.width: Theme.subBorderWidth
         border.color: Theme.cardBorder
         scale: plusMouse.pressed ? 0.92 : 1.0
 

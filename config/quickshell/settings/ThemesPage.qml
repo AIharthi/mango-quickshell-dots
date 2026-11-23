@@ -417,19 +417,19 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "ONE-CLICK AESTHETIC VIBES"
+                    text: "Aesthetic Vibes"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Item { Layout.fillWidth: true }
 
                 Text {
-                    text: "Applies palette + surface + shape"
+                    text: "Applies palette, surface, and shape"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(9)
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -451,7 +451,7 @@ ColumnLayout {
                         implicitHeight: 56
                         radius: Theme.r(11)
                         color: vibeMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: vibeMouse.containsMouse ? 1 : Theme.subBorderWidth
                         border.color: vibeMouse.containsMouse ? Theme.primary : Theme.cardBorder
                         scale: vibeMouse.pressed ? 0.97 : 1.0
 
@@ -559,11 +559,11 @@ ColumnLayout {
                 spacing: 6
 
                 Text {
-                    text: "COLOR ENGINE & SCHEME"
+                    text: "Color Engine & Scheme"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Item { Layout.fillWidth: true }
@@ -612,7 +612,7 @@ ColumnLayout {
                     implicitWidth: schemeRow.implicitWidth + 16
                     radius: Theme.r(12)
                     color: schemeMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     scale: schemeMouse.pressed ? 0.96 : 1.0
 
@@ -675,7 +675,7 @@ ColumnLayout {
                         color: engBtn.selected
                             ? Theme.primary
                             : (engMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: Theme.cardBorderWidth
+                        border.width: engBtn.selected ? 1 : Theme.subBorderWidth
                         border.color: engBtn.selected ? Theme.primary : Theme.cardBorder
                         scale: engMouse.pressed ? 0.97 : 1.0
 
@@ -725,11 +725,11 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "16 CURATED THEME PRESETS"
+                    text: "Curated Theme Presets"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Item { Layout.fillWidth: true }
@@ -762,7 +762,7 @@ ColumnLayout {
                         color: preBtn.selected
                             ? Theme.activeBg
                             : (preMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: preBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.width: preBtn.selected ? 1 : Theme.subBorderWidth
                         border.color: preBtn.selected ? Theme.primary : Theme.cardBorder
                         scale: preMouse.pressed ? 0.96 : 1.0
 
@@ -848,19 +848,19 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "SEED ACCENT COLOR GENERATOR (MATUGEN HEX)"
+                    text: "Accent Color Generator"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Item { Layout.fillWidth: true }
 
                 Text {
                     text: Theme.themeMode === "accent" ? ("Seed: " + Theme.accentColor) : "Pick or mix RGB"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(9)
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -925,7 +925,7 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: seedInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: seedInput.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: seedInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
@@ -938,7 +938,7 @@ ColumnLayout {
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.seedHex
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(11)
                             color: Theme.fgSurface
                             selectByMouse: true
@@ -992,7 +992,7 @@ ColumnLayout {
                     implicitWidth: solidUseLbl.implicitWidth + 16
                     radius: Theme.r(8)
                     color: solidUseMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -1066,11 +1066,11 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "WALLPAPER STUDIO & MATUGEN EXTRACTION"
+                    text: "Wallpaper & Dynamic Colors"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Rectangle {
@@ -1078,7 +1078,7 @@ ColumnLayout {
                     implicitWidth: rndLbl.implicitWidth + 14
                     radius: Theme.r(7)
                     color: rndMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -1142,7 +1142,7 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: wpDirInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: wpDirInput.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: wpDirInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
@@ -1154,7 +1154,7 @@ ColumnLayout {
                             anchors.verticalCenter: parent.verticalCenter
                             text: "~/Pictures/Wallpapers"
                             visible: wpDirInput.text.length === 0
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
@@ -1164,7 +1164,7 @@ ColumnLayout {
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.wallpaperDirInput
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
@@ -1179,7 +1179,7 @@ ColumnLayout {
                     implicitWidth: setDirLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: setDirMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -1410,7 +1410,7 @@ ColumnLayout {
                         color: schemeChip.selected
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (schemeChipMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: schemeChip.selected ? 1 : Theme.cardBorderWidth
+                        border.width: schemeChip.selected ? 1 : Theme.subBorderWidth
                         border.color: schemeChip.selected ? Theme.primary : Theme.cardBorder
 
                         Text {
@@ -1465,7 +1465,7 @@ ColumnLayout {
                             color: prefChip.selected
                                 ? Theme.withAlpha(Theme.secondary, 0.22)
                                 : (prefChipMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: prefChip.selected ? 1 : Theme.cardBorderWidth
+                            border.width: prefChip.selected ? 1 : Theme.subBorderWidth
                             border.color: prefChip.selected ? Theme.secondary : Theme.cardBorder
 
                             Text {
@@ -1534,11 +1534,11 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "LIVE PALETTE SLOT EDITOR & CUSTOM THEMES"
+                    text: "Palette Editor & Custom Themes"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Rectangle {
@@ -1546,7 +1546,7 @@ ColumnLayout {
                     implicitWidth: syncSlotsLbl.implicitWidth + 14
                     radius: Theme.r(7)
                     color: syncSlotsMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -1614,7 +1614,7 @@ ColumnLayout {
                         implicitHeight: 32
                         radius: Theme.r(8)
                         color: Theme.subCardBg
-                        border.width: slotField.activeFocus ? 1 : Theme.cardBorderWidth
+                        border.width: slotField.activeFocus ? 1 : Theme.subBorderWidth
                         border.color: slotField.activeFocus ? Theme.primary : Theme.cardBorder
 
                         RowLayout {
@@ -1649,7 +1649,7 @@ ColumnLayout {
                                     anchors.fill: parent
                                     verticalAlignment: TextInput.AlignVCenter
                                     text: slotRow.val
-                                    font.family: Theme.fontFamily
+                                    font.family: Theme.monoFont
                                     font.pixelSize: Theme.fs(10)
                                     color: Theme.fgSurface
                                     selectByMouse: true
@@ -1672,7 +1672,7 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: saveNameInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: saveNameInput.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: saveNameInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
@@ -1750,7 +1750,7 @@ ColumnLayout {
                     implicitHeight: 36
                     radius: Theme.r(9)
                     color: custItem.selected ? Theme.activeBg : Theme.subCardBg
-                    border.width: custItem.selected ? 1 : Theme.cardBorderWidth
+                    border.width: custItem.selected ? 1 : Theme.subBorderWidth
                     border.color: custItem.selected ? Theme.primary : Theme.cardBorder
 
                     RowLayout {
@@ -1878,7 +1878,7 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: importInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: importInput.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: importInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
@@ -1915,7 +1915,7 @@ ColumnLayout {
                     implicitWidth: impLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: impMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -1966,11 +1966,11 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "MANGOWC WINDOW BORDERS, SHADOWS & DIM TINT"
+                    text: "Window Borders, Shadows & Dim"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.DemiBold
+                    color: Theme.fgSurface
                 }
 
                 Item { Layout.fillWidth: true }
@@ -2028,7 +2028,7 @@ ColumnLayout {
                     implicitHeight: 26
                     radius: Theme.r(7)
                     color: Theme.subCardBg
-                    border.width: focusHexField.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: focusHexField.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: focusHexField.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
@@ -2050,7 +2050,7 @@ ColumnLayout {
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.mangoFocusInput
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
@@ -2065,7 +2065,7 @@ ColumnLayout {
                     implicitWidth: fSetLbl.implicitWidth + 12
                     radius: Theme.r(7)
                     color: fSetMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -2105,7 +2105,7 @@ ColumnLayout {
                     implicitWidth: fClrLbl.implicitWidth + 12
                     radius: Theme.r(7)
                     color: fClrMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -2158,7 +2158,7 @@ ColumnLayout {
                     implicitHeight: 26
                     radius: Theme.r(7)
                     color: Theme.subCardBg
-                    border.width: borderHexField.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: borderHexField.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: borderHexField.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
@@ -2180,7 +2180,7 @@ ColumnLayout {
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.mangoBorderInput
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
@@ -2195,7 +2195,7 @@ ColumnLayout {
                     implicitWidth: bSetLbl.implicitWidth + 12
                     radius: Theme.r(7)
                     color: bSetMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -2235,7 +2235,7 @@ ColumnLayout {
                     implicitWidth: bClrLbl.implicitWidth + 12
                     radius: Theme.r(7)
                     color: bClrMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {

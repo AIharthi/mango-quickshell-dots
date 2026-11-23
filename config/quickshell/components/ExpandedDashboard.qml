@@ -51,7 +51,7 @@ ColumnLayout {
 
             Text {
                 text: ShellState.formatTime(headerClock.date)
-                font.family: Theme.fontFamily
+                font.family: Theme.monoFont
                 font.pixelSize: 14
                 font.weight: Font.Bold
                 color: Theme.fgSurface
@@ -77,7 +77,7 @@ ColumnLayout {
             implicitWidth: tabRow.implicitWidth + 6
             radius: Theme.r(16)
             color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
 
             RowLayout {
@@ -168,7 +168,7 @@ ColumnLayout {
                 implicitWidth: 26
                 radius: Theme.r(13)
                 color: hubSwitchMouse.containsMouse ? Theme.activeBg : Theme.cardBg
-                border.width: Math.max(Theme.cardBorderWidth, 1)
+                border.width: hubSwitchMouse.containsMouse ? 1 : Theme.subBorderWidth
                 border.color: hubSwitchMouse.containsMouse ? Theme.primary : Theme.withAlpha(Theme.primary, 0.35)
                 visible: root.activeTab === "overview"
                 scale: hubSwitchMouse.pressed ? 0.92 : 1.0
@@ -214,7 +214,7 @@ ColumnLayout {
                 implicitHeight: 26
                 radius: Theme.r(13)
                 color: dndHeaderArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.warning, 0.16)
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.withAlpha(Theme.warning, 0.45)
 
                 Text {
@@ -240,7 +240,7 @@ ColumnLayout {
                 implicitHeight: 26
                 radius: Theme.r(13)
                 color: awakeHeaderArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.tertiary, 0.16)
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.withAlpha(Theme.tertiary, 0.45)
 
                 Text {
@@ -265,7 +265,7 @@ ColumnLayout {
                 implicitHeight: 26
                 radius: Theme.r(13)
                 color: settingsArea.containsMouse ? Theme.hoverBg : Theme.cardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
                 scale: settingsArea.pressed ? 0.92 : 1.0
 
@@ -312,7 +312,7 @@ ColumnLayout {
                 color: root.powerMenuOpen
                     ? Theme.withAlpha(Theme.error, 0.22)
                     : (powerArea.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                border.width: Theme.cardBorderWidth
+                border.width: root.powerMenuOpen ? 1 : Theme.subBorderWidth
                 border.color: root.powerMenuOpen ? Theme.error : Theme.cardBorder
                 scale: powerArea.pressed ? 0.92 : 1.0
 
@@ -349,8 +349,8 @@ ColumnLayout {
                 color: root.pinnedOpen
                     ? Theme.activeBg
                     : (pinArea.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                border.width: root.pinnedOpen ? 1 : Theme.subBorderWidth
+                border.color: root.pinnedOpen ? Theme.primary : Theme.cardBorder
                 scale: pinArea.pressed ? 0.92 : 1.0
 
                 Behavior on color {
@@ -386,7 +386,7 @@ ColumnLayout {
                 color: closeArea.containsMouse
                     ? Theme.withAlpha(Theme.error, 0.22)
                     : Theme.cardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
                 scale: closeArea.pressed ? 0.92 : 1.0
 

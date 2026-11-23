@@ -416,7 +416,7 @@ Rectangle {
 
         Text {
             text: ShellState.formatTime(clock.date)
-            font.family: Theme.fontFamily
+            font.family: Theme.monoFont
             font.pixelSize: Theme.fs(12)
             font.weight: Font.Bold
             color: Theme.fgSurface
@@ -453,7 +453,7 @@ Rectangle {
 
                 Text {
                     text: "CPU " + Math.round(root.cpuPercent) + "%"
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: root.cpuPercent > 85 ? Theme.error : Theme.primary
@@ -461,7 +461,7 @@ Rectangle {
 
                 Text {
                     text: "RAM " + Math.round(root.ramPercent) + "%"
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: root.ramPercent > 85 ? Theme.warning : Theme.secondary
@@ -578,7 +578,7 @@ Rectangle {
                 spacing: 4
                 Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.tertiary }
                 Text {
-                    text: "GAME"
+                    text: "Game"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -617,7 +617,7 @@ Rectangle {
                 Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.secondary }
                 Text {
                     text: ShellState.formatTimer(ShellState.stopwatchElapsedSec)
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.secondary
@@ -655,7 +655,7 @@ Rectangle {
                 Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.primary }
                 Text {
                     text: ShellState.weatherTemp
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
@@ -699,7 +699,7 @@ Rectangle {
                 }
                 Text {
                     text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec)
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.error
@@ -743,7 +743,7 @@ Rectangle {
                 }
                 Text {
                     text: ShellState.formatTimer(ShellState.timerRemainingSec)
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.primary
@@ -988,7 +988,7 @@ Rectangle {
             Text {
                 id: simpleLbl
                 anchors.centerIn: parent
-                text: "SIMPLE"
+                text: "Simple"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -1020,7 +1020,7 @@ Rectangle {
             Text {
                 id: blurLbl
                 anchors.centerIn: parent
-                text: "BLUR"
+                text: "Blur"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold

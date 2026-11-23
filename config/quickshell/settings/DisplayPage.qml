@@ -284,7 +284,7 @@ ColumnLayout {
             implicitWidth: refRow.implicitWidth + 16
             radius: Theme.r(10)
             color: refMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
 
             RowLayout {
@@ -387,13 +387,13 @@ ColumnLayout {
                         color: stateMouse.containsMouse
                             ? Theme.hoverBg
                             : (outCard.modelData.enabled ? Theme.withAlpha(Theme.success, 0.20) : Theme.subCardBg)
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: outCard.modelData.enabled ? Theme.withAlpha(Theme.success, 0.45) : Theme.cardBorder
 
                         Text {
                             id: stateTxt
                             anchors.centerIn: parent
-                            text: outCard.modelData.enabled ? "ACTIVE" : "OFF"
+                            text: outCard.modelData.enabled ? "Active" : "Off"
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
@@ -411,7 +411,7 @@ ColumnLayout {
                 }
 
                 Text {
-                    text: "RESOLUTION & REFRESH RATE"
+                    text: "Resolution & refresh rate"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -436,7 +436,7 @@ ColumnLayout {
                             color: modePill.selected
                                 ? Theme.withAlpha(Theme.primary, 0.22)
                                 : (modePillMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: modePill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: modePill.selected ? 1 : Theme.subBorderWidth
                             border.color: modePill.selected ? Theme.primary : Theme.cardBorder
                             scale: modePillMouse.pressed ? 0.95 : 1.0
 
@@ -453,7 +453,7 @@ ColumnLayout {
                                 id: modeTxt
                                 anchors.centerIn: parent
                                 text: modePill.modelData.label + (modePill.modelData.preferred ? " ★" : "")
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: modePill.selected ? Font.Bold : Font.Normal
                                 color: modePill.selected ? Theme.primary : Theme.fgSurface
@@ -471,7 +471,7 @@ ColumnLayout {
                 }
 
                 Text {
-                    text: "DISPLAY SCALE"
+                    text: "Display scale"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -496,7 +496,7 @@ ColumnLayout {
                             color: scalePill.selected
                                 ? Theme.withAlpha(Theme.secondary, 0.22)
                                 : (scaleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: scalePill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: scalePill.selected ? 1 : Theme.subBorderWidth
                             border.color: scalePill.selected ? Theme.secondary : Theme.cardBorder
                             scale: scaleMouse.pressed ? 0.95 : 1.0
 
@@ -531,7 +531,7 @@ ColumnLayout {
 
                 // Orientation / Rotation
                 Text {
-                    text: "ORIENTATION & ROTATION"
+                    text: "Orientation & rotation"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -556,7 +556,7 @@ ColumnLayout {
                             color: rotPill.selected
                                 ? Theme.withAlpha(Theme.primary, 0.22)
                                 : (rotMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: rotPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: rotPill.selected ? 1 : Theme.subBorderWidth
                             border.color: rotPill.selected ? Theme.primary : Theme.cardBorder
 
                             Text {
@@ -587,7 +587,7 @@ ColumnLayout {
                     spacing: 6
 
                     Text {
-                        text: "MULTI-MONITOR POSITION (" + (root.otherOutputFor(outCard.modelData.name) || "other") + ")"
+                        text: "Multi-monitor position (" + (root.otherOutputFor(outCard.modelData.name) || "other") + ")"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
@@ -617,7 +617,7 @@ ColumnLayout {
                                 implicitWidth: mPosTxt.implicitWidth + 14
                                 radius: Theme.r(7)
                                 color: mPosPill.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                                border.width: mPosPill.selected ? 1 : Theme.cardBorderWidth
+                                border.width: mPosPill.selected ? 1 : Theme.subBorderWidth
                                 border.color: mPosPill.selected ? Theme.secondary : Theme.cardBorder
 
                                 Text {
@@ -717,7 +717,7 @@ ColumnLayout {
                         implicitHeight: 30
                         radius: Theme.r(9)
                         color: saveRuleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
                         scale: saveRuleMouse.pressed ? 0.97 : 1.0
 
@@ -769,7 +769,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "DISPLAY BRIGHTNESS (" + (DeviceCaps.hasBacklight ? "BACKLIGHT" : "DDC/CI") + ")"
+                text: "Display brightness (" + (DeviceCaps.hasBacklight ? "Backlight" : "DDC/CI") + ")"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -798,7 +798,7 @@ ColumnLayout {
                         implicitHeight: 24
                         radius: Theme.r(7)
                         color: brtPill.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                        border.width: brtPill.selected ? 1 : Theme.cardBorderWidth
+                        border.width: brtPill.selected ? 1 : Theme.subBorderWidth
                         border.color: brtPill.selected ? Theme.primary : Theme.cardBorder
 
                         Text {
@@ -854,7 +854,7 @@ ColumnLayout {
                     spacing: 1
 
                     Text {
-                        text: "NIGHT LIGHT (" + (DeviceCaps.nightLightCmd.length > 0 ? DeviceCaps.nightLightCmd : "color filter") + ")"
+                        text: "Night light (" + (DeviceCaps.nightLightCmd.length > 0 ? DeviceCaps.nightLightCmd : "color filter") + ")"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
@@ -894,7 +894,7 @@ ColumnLayout {
                         color: nlPill.selected
                             ? Theme.withAlpha(Theme.warning, 0.22)
                             : (nlMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: nlPill.selected ? 1 : Theme.cardBorderWidth
+                        border.width: nlPill.selected ? 1 : Theme.subBorderWidth
                         border.color: nlPill.selected ? Theme.warning : Theme.cardBorder
 
                         Text {

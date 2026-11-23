@@ -86,13 +86,79 @@ PanelWindow {
             return "";
         const arg = String(b.arg || "").trim();
         const act = String(b.action || "").trim();
-        if (arg.indexOf("qs ipc call island ") === 0)
-            return "Shell: " + arg.slice("qs ipc call island ".length);
+        const ipcLabels = {
+            "toggle": "Toggle hub",
+            "toggleDashboard": "Toggle island hub",
+            "collapse": "Collapse island",
+            "toggleLauncher": "App launcher",
+            "toggleFileManager": "File manager",
+            "toggleFiles": "File manager",
+            "toggleFilesTab": "Quick files drawer",
+            "openFiles": "Open folder",
+            "closeFiles": "Close file manager",
+            "toggleSettings": "Settings",
+            "openSettings": "Open settings",
+            "closeSettings": "Close settings",
+            "toggleKeybindSheet": "Keyboard shortcuts",
+            "toggleWindowSwitcher": "Window switcher",
+            "togglePowerMenu": "Power menu",
+            "togglePowerOverlay": "Power menu",
+            "toggleThemeTab": "Themes & wallpaper",
+            "toggleAlertsTab": "Notifications & calendar",
+            "toggleNotifications": "Notifications & calendar",
+            "toggleGameMode": "Toggle game mode",
+            "toggleDnd": "Toggle Do Not Disturb",
+            "toggleKeepAwake": "Toggle keep screen awake",
+            "toggleDarkLight": "Toggle dark / light mode",
+            "cycleHubUiStyle": "Cycle hub layout",
+            "cycleBarUiStyle": "Cycle bar style",
+            "cycleShellMode": "Cycle visual style",
+            "randomWallpaper": "Shuffle wallpaper",
+            "togglePip": "Toggle Picture-in-Picture",
+            "cyclePipCorner": "Move PiP corner",
+            "snapPip": "Snap PiP window",
+            "lockSession": "Lock screen",
+            "toggleClipboard": "Clipboard history",
+            "clearClipboard": "Clear clipboard",
+            "toggleEmoji": "Emoji picker",
+            "refreshWeather": "Refresh weather",
+            "syncSddmTheme": "Sync SDDM theme"
+        };
+        if (arg.indexOf("qs ipc call island ") === 0) {
+            const fn = arg.slice("qs ipc call island ".length).trim();
+            return ipcLabels[fn] || ("Shell: " + fn);
+        }
+        if (arg.indexOf("screenshot.sh") !== -1)
+            return arg.indexOf("--full") !== -1 ? "Full screenshot" : "Area screenshot";
+        if (arg.indexOf("record-screen.sh") !== -1)
+            return "Toggle screen recording";
+        if (arg.indexOf("pactl ") !== -1) {
+            if (arg.indexOf("set-sink-mute") !== -1) return "Toggle audio mute";
+            if (arg.indexOf("set-source-mute") !== -1) return "Toggle mic mute";
+            if (arg.indexOf("+5%") !== -1) return "Volume up";
+            if (arg.indexOf("-5%") !== -1) return "Volume down";
+        }
+        if (arg.indexOf("brightnessctl ") !== -1)
+            return arg.indexOf("+") !== -1 ? "Brightness up" : "Brightness down";
         if (arg.length > 0 && (act === "spawn" || act === "spawn_shell"))
             return arg;
+        const actLabels = {
+            "killclient": "Close active window",
+            "togglefloating": "Toggle floating window",
+            "togglefullscreen": "Toggle fullscreen",
+            "switch_layout": "Cycle tiling layout",
+            "reload_config": "Reload MangoWC config",
+            "quit": "Log out of MangoWC",
+            "toggleoverview": "Workspace overview",
+            "focusstack": "Cycle window focus",
+            "view": "Switch workspace",
+            "tag": "Move window to workspace",
+            "focusmon": "Focus next monitor",
+            "tagmon": "Move window to monitor"
+        };
         if (arg.length > 0)
-            return act + " (" + arg + ")";
-        return act;
+            return (actLabels[act] || act) + " (" + arg + ")";
+        return actLabels[act] || act;
     }
 
     readonly property var filteredBinds: {
@@ -197,7 +263,7 @@ PanelWindow {
                     implicitHeight: 28
                     radius: Theme.r(14)
                     color: closeMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.cardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -224,7 +290,7 @@ PanelWindow {
                 implicitHeight: 38
                 radius: Theme.r(12)
                 color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
+                border.width: searchInput.activeFocus ? 1 : Theme.subBorderWidth
                 border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                 RowLayout {
@@ -276,50 +342,43 @@ PanelWindow {
                 }
             }
 
-            // Category Chips
-            Flickable {
+            // Category Chips (wrap cleanly so no category label clips)
+            Flow {
                 Layout.fillWidth: true
-                implicitHeight: 28
-                contentWidth: catRow.implicitWidth
-                clip: true
+                spacing: 6
 
-                Row {
-                    id: catRow
-                    spacing: 6
+                Repeater {
+                    model: root.categories
+                    delegate: Rectangle {
+                        id: catChip
+                        required property string modelData
+                        readonly property bool isSel: root.selectedCategory === catChip.modelData
 
-                    Repeater {
-                        model: root.categories
-                        delegate: Rectangle {
-                            id: catChip
-                            required property string modelData
-                            readonly property bool isSel: root.selectedCategory === catChip.modelData
+                        implicitHeight: 26
+                        implicitWidth: catLbl.implicitWidth + 16
+                        radius: Theme.r(13)
+                        color: catChip.isSel
+                            ? Theme.primary
+                            : (catMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
+                        border.width: catChip.isSel ? 1 : Theme.subBorderWidth
+                        border.color: catChip.isSel ? Theme.primary : Theme.cardBorder
 
-                            implicitHeight: 26
-                            implicitWidth: catLbl.implicitWidth + 16
-                            radius: Theme.r(13)
-                            color: catChip.isSel
-                                ? Theme.primary
-                                : (catMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                            border.width: Theme.cardBorderWidth
-                            border.color: Theme.cardBorder
+                        Text {
+                            id: catLbl
+                            anchors.centerIn: parent
+                            text: catChip.modelData
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: catChip.isSel ? Font.Bold : Font.Medium
+                            color: catChip.isSel ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                        }
 
-                            Text {
-                                id: catLbl
-                                anchors.centerIn: parent
-                                text: catChip.modelData
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(10)
-                                font.weight: catChip.isSel ? Font.Bold : Font.Medium
-                                color: catChip.isSel ? Theme.fgPrimary : Theme.fgSurfaceVariant
-                            }
-
-                            MouseArea {
-                                id: catMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.selectedCategory = catChip.modelData
-                            }
+                        MouseArea {
+                            id: catMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.selectedCategory = catChip.modelData
                         }
                     }
                 }
@@ -380,7 +439,7 @@ PanelWindow {
                                                 id: modLbl
                                                 anchors.centerIn: parent
                                                 text: modPill.modelData
-                                                font.family: Theme.fontFamily
+                                                font.family: Theme.monoFont
                                                 font.pixelSize: Theme.fs(9)
                                                 font.weight: Font.Bold
                                                 color: Theme.primary
@@ -400,7 +459,7 @@ PanelWindow {
                                             id: keyLbl
                                             anchors.centerIn: parent
                                             text: bindCell.modelData.key
-                                            font.family: Theme.fontFamily
+                                            font.family: Theme.monoFont
                                             font.pixelSize: Theme.fs(9)
                                             font.weight: Font.Bold
                                             color: Theme.fgSurface
@@ -427,7 +486,7 @@ PanelWindow {
             // Footer
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: "Customize bindings in Settings → Shortcuts · Super + / to toggle"
+                text: "Customize bindings in Settings under Shortcuts · Super + / to toggle"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 color: Theme.fgSurfaceVariant

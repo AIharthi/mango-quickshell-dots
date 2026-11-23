@@ -228,7 +228,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "QUICK-LAUNCH KEYBIND APPLICATIONS"
+                text: "Quick-launch keybind applications"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -248,7 +248,7 @@ ColumnLayout {
                     implicitHeight: appRowCol.implicitHeight + 16
                     radius: Theme.r(11)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     ColumnLayout {
@@ -281,14 +281,14 @@ ColumnLayout {
                                 implicitWidth: hintTxt.implicitWidth + 10
                                 radius: Theme.r(5)
                                 color: Theme.cardBg
-                                border.width: Theme.cardBorderWidth
+                                border.width: Theme.subBorderWidth
                                 border.color: Theme.cardBorder
 
                                 Text {
                                     id: hintTxt
                                     anchors.centerIn: parent
                                     text: appRow.modelData.bindHint
-                                    font.family: Theme.fontFamily
+                                    font.family: Theme.monoFont
                                     font.pixelSize: Theme.fs(9)
                                     color: Theme.fgSurfaceVariant
                                 }
@@ -298,7 +298,7 @@ ColumnLayout {
 
                             Text {
                                 text: appRow.activeCmd
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
                                 color: Theme.secondary
@@ -323,7 +323,7 @@ ColumnLayout {
                                     color: candPill.selected
                                         ? Theme.withAlpha(Theme.primary, 0.22)
                                         : (candMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                                    border.width: candPill.selected ? 1 : Theme.cardBorderWidth
+                                    border.width: candPill.selected ? 1 : Theme.subBorderWidth
                                     border.color: candPill.selected ? Theme.primary : Theme.cardBorder
 
                                     Text {
@@ -357,7 +357,7 @@ ColumnLayout {
                                 implicitHeight: 26
                                 radius: Theme.r(7)
                                 color: Theme.cardBg
-                                border.width: customInput.activeFocus ? 1 : Theme.cardBorderWidth
+                                border.width: customInput.activeFocus ? 1 : Theme.subBorderWidth
                                 border.color: customInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                                 Item {
@@ -378,7 +378,7 @@ ColumnLayout {
                                         id: customInput
                                         anchors.fill: parent
                                         verticalAlignment: TextInput.AlignVCenter
-                                        font.family: Theme.fontFamily
+                                        font.family: Theme.monoFont
                                         font.pixelSize: Theme.fs(10)
                                         color: Theme.fgSurface
                                         clip: true
@@ -397,7 +397,7 @@ ColumnLayout {
                                 implicitWidth: setCmdLbl.implicitWidth + 14
                                 radius: Theme.r(7)
                                 color: setCmdMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                                border.width: Theme.cardBorderWidth
+                                border.width: Theme.subBorderWidth
                                 border.color: Theme.cardBorder
 
                                 Text {
@@ -448,7 +448,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "SYSTEM DEFAULT APPLICATIONS (XDG-MIME)"
+                text: "System default applications"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -469,7 +469,7 @@ ColumnLayout {
                     implicitHeight: mimeInner.implicitHeight + 16
                     radius: Theme.r(11)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     ColumnLayout {
@@ -525,7 +525,7 @@ ColumnLayout {
                                     color: optPill.selected
                                         ? Theme.withAlpha(Theme.secondary, 0.22)
                                         : (optMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                                    border.width: optPill.selected ? 1 : Theme.cardBorderWidth
+                                    border.width: optPill.selected ? 1 : Theme.subBorderWidth
                                     border.color: optPill.selected ? Theme.secondary : Theme.cardBorder
 
                                     Text {
@@ -570,7 +570,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "STARTUP APPLICATIONS (MANGOWC EXEC_ONCE)"
+                text: "Startup applications"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -586,7 +586,7 @@ ColumnLayout {
                     implicitHeight: 30
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: startupInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: startupInput.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: startupInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
@@ -607,7 +607,7 @@ ColumnLayout {
                             id: startupInput
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(11)
                             color: Theme.fgSurface
                             clip: true
@@ -685,7 +685,7 @@ ColumnLayout {
                     implicitHeight: 34
                     radius: Theme.r(9)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     RowLayout {
@@ -696,7 +696,7 @@ ColumnLayout {
 
                         Text {
                             text: "local.conf"
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
                             color: Theme.primary
@@ -706,7 +706,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                             text: usrStartRow.modelData.cmd
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(11)
                             color: Theme.fgSurface
                         }
@@ -778,7 +778,7 @@ ColumnLayout {
                 spacing: 4
 
                 Text {
-                    text: "CORE AUTOSTART SERVICES (autostart.sh)"
+                    text: "Core autostart services (autostart.sh)"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(9)
                     font.weight: Font.Bold
@@ -830,7 +830,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "APP LAUNCHER VISIBILITY (HIDDEN-APPS.JSON)"
+                text: "Launcher visibility"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -846,7 +846,7 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: hideIn.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: hideIn.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: hideIn.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
@@ -890,7 +890,7 @@ ColumnLayout {
                     implicitWidth: hidPfLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: hidPfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text { id: hidPfLbl; anchors.centerIn: parent; text: "Hide Prefix"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.secondary }
@@ -912,7 +912,7 @@ ColumnLayout {
                         implicitWidth: hidTagRow.implicitWidth + 12
                         radius: Theme.r(6)
                         color: Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         RowLayout {
@@ -920,7 +920,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 5
 
-                            Text { text: hidTag.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurface }
+                            Text { text: hidTag.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurface }
                             Text { text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.error }
                         }
 
@@ -949,7 +949,7 @@ ColumnLayout {
                         implicitWidth: pfTagRow.implicitWidth + 12
                         radius: Theme.r(6)
                         color: Theme.withAlpha(Theme.secondary, 0.14)
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.withAlpha(Theme.secondary, 0.4)
 
                         RowLayout {
@@ -957,7 +957,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 5
 
-                            Text { text: "prefix:" + pfTag.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.secondary }
+                            Text { text: "prefix:" + pfTag.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.secondary }
                             Text { text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.error }
                         }
 
@@ -990,7 +990,7 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "SESSION ENVIRONMENT VARIABLES (env= IN local.conf)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
+                Text { Layout.fillWidth: true; text: "Session environment variables (env= in local.conf)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
                 Text { visible: root.envStatus.length > 0; text: root.envStatus; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.success }
             }
 
@@ -1003,13 +1003,13 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: envKeyIn.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: envKeyIn.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: envKeyIn.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: "VARIABLE"; visible: envKeyIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
-                        TextInput { id: envKeyIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Variable"; visible: envKeyIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                        TextInput { id: envKeyIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
                     }
                 }
 
@@ -1018,13 +1018,13 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: envValIn.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: envValIn.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: envValIn.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
                         Text { anchors.verticalCenter: parent.verticalCenter; text: "Value (e.g. wayland)"; visible: envValIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
-                        TextInput { id: envValIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
+                        TextInput { id: envValIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
                     }
                 }
 
@@ -1055,13 +1055,13 @@ ColumnLayout {
                     implicitHeight: 30
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     RowLayout {
                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 6; spacing: 8
-                        Text { text: envRow.modelData.key; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.secondary }
-                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "= " + envRow.modelData.value; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
+                        Text { text: envRow.modelData.key; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.secondary }
+                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "= " + envRow.modelData.value; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
 
                         Rectangle {
                             implicitWidth: 20; implicitHeight: 20; radius: Theme.r(5)

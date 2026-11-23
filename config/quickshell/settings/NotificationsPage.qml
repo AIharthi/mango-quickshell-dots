@@ -33,7 +33,7 @@ ColumnLayout {
             spacing: 12
 
             Text {
-                text: "DO NOT DISTURB & POPUPS"
+                text: "Do Not Disturb & popups"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -49,7 +49,7 @@ ColumnLayout {
                     implicitHeight: 34
                     radius: Theme.r(10)
                     color: ShellState.dnd ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: ShellState.dnd ? 1 : Theme.subBorderWidth
                     border.color: ShellState.dnd ? Theme.withAlpha(Theme.warning, 0.45) : Theme.cardBorder
 
                     Text {
@@ -120,7 +120,7 @@ ColumnLayout {
                             color: durPill.selected
                                 ? Theme.withAlpha(Theme.primary, 0.22)
                                 : (durMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: durPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: durPill.selected ? 1 : Theme.subBorderWidth
                             border.color: durPill.selected ? Theme.primary : Theme.cardBorder
                             scale: durMouse.pressed ? 0.95 : 1.0
 
@@ -218,14 +218,14 @@ ColumnLayout {
                             implicitWidth: hCapTxt.implicitWidth + 12
                             radius: Theme.r(7)
                             color: hCapPill.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                            border.width: hCapPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: hCapPill.selected ? 1 : Theme.subBorderWidth
                             border.color: hCapPill.selected ? Theme.secondary : Theme.cardBorder
 
                             Text {
                                 id: hCapTxt
                                 anchors.centerIn: parent
                                 text: String(hCapPill.modelData)
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: hCapPill.selected ? Font.Bold : Font.Medium
                                 color: hCapPill.selected ? Theme.secondary : Theme.fgSurface
@@ -260,7 +260,7 @@ ColumnLayout {
                     implicitWidth: testRow.implicitWidth + 18
                     radius: Theme.r(8)
                     color: testMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     scale: testMouse.pressed ? 0.96 : 1.0
 
@@ -329,7 +329,7 @@ ColumnLayout {
                 spacing: 8
 
                 Text {
-                    text: "NOTIFICATION HISTORY"
+                    text: "Notification history"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -346,7 +346,7 @@ ColumnLayout {
                         id: cntTxt
                         anchors.centerIn: parent
                         text: String(ShellState.notificationHistory.length)
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.secondary
@@ -361,7 +361,7 @@ ColumnLayout {
                     implicitWidth: clrRow.implicitWidth + 14
                     radius: Theme.r(7)
                     color: clrHistMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     RowLayout {
@@ -406,7 +406,7 @@ ColumnLayout {
                     implicitHeight: notifBodyCol.implicitHeight + 16
                     radius: Theme.r(11)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     RowLayout {

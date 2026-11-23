@@ -202,9 +202,9 @@ RowLayout {
                 Text {
                     leftPadding: 4
                     bottomPadding: 2
-                    text: "FAVORITES"
+                    text: "Favorites"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(9)
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -260,9 +260,9 @@ RowLayout {
                     Layout.topMargin: 6
                     leftPadding: 4
                     bottomPadding: 2
-                    text: "BOOKMARKS"
+                    text: "Bookmarks"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(9)
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -335,7 +335,7 @@ RowLayout {
                                 id: trashCntTxt
                                 anchors.centerIn: parent
                                 text: String(root.placesData.trashCount || 0)
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurfaceVariant
@@ -361,9 +361,9 @@ RowLayout {
                     Layout.topMargin: 6
                     leftPadding: 4
                     bottomPadding: 2
-                    text: "LOCATIONS"
+                    text: "Locations"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(9)
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -377,7 +377,7 @@ RowLayout {
                         implicitHeight: 36
                         radius: Theme.r(10)
                         color: qdMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         ColumnLayout {
@@ -390,7 +390,7 @@ RowLayout {
                                 spacing: 4
                                 Text { text: qdBtn.modelData.removable ? "󰕓" : "󰋊"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: fstyle.accent }
                                 Text { Layout.fillWidth: true; text: String(qdBtn.modelData.label || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface; elide: Text.ElideRight }
-                                Text { text: String(qdBtn.modelData.availHuman || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); color: Theme.fgSurfaceVariant }
+                                Text { text: String(qdBtn.modelData.availHuman || ""); font.family: Theme.monoFont; font.pixelSize: Theme.fs(8); color: Theme.fgSurfaceVariant }
                             }
 
                             Rectangle {
@@ -450,7 +450,7 @@ RowLayout {
                     implicitHeight: 28
                     radius: Theme.r(14)
                     color: upMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     enabled: !root.inTrashView && root.parentPath.length > 0
                     opacity: enabled ? 1.0 : 0.45
@@ -471,7 +471,7 @@ RowLayout {
                     implicitHeight: 30
                     radius: Theme.r(15)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     clip: true
 
@@ -571,7 +571,7 @@ RowLayout {
                     implicitHeight: 28
                     radius: Theme.r(14)
                     color: termMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text { anchors.centerIn: parent; text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
@@ -598,7 +598,7 @@ RowLayout {
                     Text {
                         id: fullLbl
                         anchors.centerIn: parent
-                        text: "Finder ↗"
+                        text: "Finder"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
@@ -628,7 +628,7 @@ RowLayout {
                     implicitHeight: 30
                     radius: Theme.r(15)
                     color: Theme.subCardBg
-                    border.width: quickFilter.activeFocus ? 1.5 : Theme.cardBorderWidth
+                    border.width: quickFilter.activeFocus ? 1.5 : Theme.subBorderWidth
                     border.color: quickFilter.activeFocus ? fstyle.accent : Theme.cardBorder
 
                     RowLayout {
@@ -709,7 +709,7 @@ RowLayout {
                     color: ShellState.fmShowHidden
                         ? Theme.withAlpha(fstyle.accent, 0.22)
                         : (hidMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: ShellState.fmShowHidden ? 1 : Theme.cardBorderWidth
+                    border.width: ShellState.fmShowHidden ? 1 : Theme.subBorderWidth
                     border.color: ShellState.fmShowHidden ? fstyle.accent : Theme.cardBorder
 
                     Text {

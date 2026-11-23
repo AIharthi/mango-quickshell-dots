@@ -291,7 +291,7 @@ Item {
                             return root.osdMuted ? "Paused" : "Playing";
                         return root.osdSupported ? (Math.round(root.osdValue * 100) + "%") : "N/A";
                     }
-                    font.family: Theme.fontFamily
+                    font.family: (root.osdType === "kb" || root.osdType.indexOf("media-") === 0) ? Theme.fontFamily : Theme.monoFont
                     font.pixelSize: 12
                     font.weight: Font.Bold
                     color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
@@ -390,8 +390,8 @@ Item {
 
                 Text {
                     text: (root.currentNotif && root.currentNotif.appName)
-                        ? root.currentNotif.appName.toUpperCase()
-                        : "NOTIFICATION"
+                        ? root.currentNotif.appName
+                        : "Notification"
                     font.family: Theme.fontFamily
                     font.pixelSize: 9
                     font.weight: Font.Bold
@@ -476,7 +476,7 @@ Item {
                         width: actionLabel.implicitWidth + 18
                         radius: Theme.r(12)
                         color: actionArea.containsMouse ? Theme.activeBg : Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         Text {

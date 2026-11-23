@@ -163,7 +163,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "HARDWARE THERMAL SENSORS (/sys/class/hwmon · 4s LIVE)"
+                    text: "Hardware thermal sensors (/sys/class/hwmon · 4s)"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -175,7 +175,7 @@ ColumnLayout {
                     implicitWidth: thermRefLbl.implicitWidth + 12
                     radius: Theme.r(7)
                     color: thermRefMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -220,7 +220,7 @@ ColumnLayout {
                         implicitHeight: 42
                         radius: Theme.r(10)
                         color: Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         ColumnLayout {
@@ -243,7 +243,7 @@ ColumnLayout {
 
                                 Text {
                                     text: sensCard.temp.toFixed(1) + " °C"
-                                    font.family: Theme.fontFamily
+                                    font.family: Theme.monoFont
                                     font.pixelSize: Theme.fs(10)
                                     font.weight: Font.Bold
                                     color: sensCard.barCol
@@ -304,7 +304,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "TOP RUNNING PROCESSES"
+                    text: "Top running processes"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -328,7 +328,7 @@ ColumnLayout {
                         color: sortPill.selected
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (sortMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: sortPill.selected ? 1 : Theme.cardBorderWidth
+                        border.width: sortPill.selected ? 1 : Theme.subBorderWidth
                         border.color: sortPill.selected ? Theme.primary : Theme.cardBorder
 
                         Text {
@@ -360,7 +360,7 @@ ColumnLayout {
                 implicitHeight: 28
                 radius: Theme.r(8)
                 color: Theme.subCardBg
-                border.width: procFilterIn.activeFocus ? 1 : Theme.cardBorderWidth
+                border.width: procFilterIn.activeFocus ? 1 : Theme.subBorderWidth
                 border.color: procFilterIn.activeFocus ? Theme.primary : Theme.cardBorder
 
                 Item {
@@ -402,7 +402,7 @@ ColumnLayout {
                     implicitHeight: 30
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     RowLayout {
@@ -414,7 +414,7 @@ ColumnLayout {
                         Text {
                             Layout.preferredWidth: 46
                             text: String(procRow.modelData.pid)
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(9)
                             color: Theme.fgSurfaceVariant
                         }
@@ -433,7 +433,7 @@ ColumnLayout {
                             Layout.preferredWidth: 52
                             horizontalAlignment: Text.AlignRight
                             text: Number(procRow.modelData.cpuPct).toFixed(1) + "%"
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Number(procRow.modelData.cpuPct) >= 50 ? Theme.warning : Theme.primary
@@ -443,7 +443,7 @@ ColumnLayout {
                             Layout.preferredWidth: 68
                             horizontalAlignment: Text.AlignRight
                             text: Math.round(Number(procRow.modelData.memMb)) + " MB"
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.secondary
                         }
@@ -533,7 +533,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "SYSTEM SERVICES (" + (root.initSystem ? root.initSystem.toUpperCase() : "INIT") + ")"
+                    text: "System services (" + (root.initSystem ? root.initSystem : "init") + ")"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -557,7 +557,7 @@ ColumnLayout {
                         color: svcFiltPill.selected
                             ? Theme.withAlpha(Theme.secondary, 0.22)
                             : (svcFiltMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: svcFiltPill.selected ? 1 : Theme.cardBorderWidth
+                        border.width: svcFiltPill.selected ? 1 : Theme.subBorderWidth
                         border.color: svcFiltPill.selected ? Theme.secondary : Theme.cardBorder
 
                         Text {
@@ -600,7 +600,7 @@ ColumnLayout {
                         implicitHeight: 28
                         radius: Theme.r(8)
                         color: Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         RowLayout {
@@ -613,7 +613,7 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
                                 text: svcRow.modelData.name
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurface
                             }
@@ -631,7 +631,7 @@ ColumnLayout {
                                 implicitWidth: svcActLbl.implicitWidth + 8
                                 radius: Theme.r(5)
                                 color: svcActMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                                border.width: Theme.cardBorderWidth
+                                border.width: Theme.subBorderWidth
                                 border.color: Theme.cardBorder
 
                                 Text {

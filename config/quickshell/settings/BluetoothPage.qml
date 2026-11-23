@@ -152,7 +152,7 @@ ColumnLayout {
                 visible: root.powered
                 radius: Theme.r(8)
                 color: scanMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
 
                 Text {
@@ -198,7 +198,7 @@ ColumnLayout {
             spacing: 6
 
             Text {
-                text: "DEVICES"
+                text: "Devices"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -217,7 +217,7 @@ ColumnLayout {
                     color: devRow.modelData.connected
                         ? Theme.withAlpha(Theme.secondary, 0.20)
                         : (devMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: devRow.modelData.connected ? 1 : Theme.cardBorderWidth
+                    border.width: devRow.modelData.connected ? 1 : Theme.subBorderWidth
                     border.color: devRow.modelData.connected ? Theme.secondary : Theme.cardBorder
 
                     RowLayout {
@@ -249,7 +249,7 @@ ColumnLayout {
 
                             Text {
                                 text: devRow.modelData.mac
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                             }

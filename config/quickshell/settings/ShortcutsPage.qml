@@ -195,7 +195,7 @@ ColumnLayout {
                     implicitHeight: 30
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: bindSearch.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: bindSearch.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: bindSearch.activeFocus ? Theme.primary : Theme.cardBorder
 
                     RowLayout {
@@ -244,16 +244,16 @@ ColumnLayout {
                     implicitWidth: countBadge.implicitWidth + 16
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
                         id: countBadge
                         anchors.centerIn: parent
                         text: root.filteredBinds.length + " binds"
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(10)
-                        font.weight: Font.Bold
+                        font.weight: Font.DemiBold
                         color: Theme.primary
                     }
                 }
@@ -263,7 +263,7 @@ ColumnLayout {
                     implicitWidth: addToggleLbl.implicitWidth + 16
                     radius: Theme.r(8)
                     color: root.showAddForm ? Theme.primary : Theme.subCardBg
-                    border.width: root.showAddForm ? 1 : Theme.cardBorderWidth
+                    border.width: root.showAddForm ? 1 : Theme.subBorderWidth
                     border.color: root.showAddForm ? Theme.primary : Theme.cardBorder
 
                     Text {
@@ -304,10 +304,10 @@ ColumnLayout {
                             required property string modelData
                             readonly property bool selected: root.newMods.indexOf(modPick.modelData) !== -1
                             implicitHeight: 22; implicitWidth: modPickTxt.implicitWidth + 10; radius: Theme.r(6)
-                            color: modPick.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                            border.width: modPick.selected ? 1 : Theme.cardBorderWidth
+                            color: modPick.selected ? Theme.withAlpha(Theme.primary, 0.20) : Theme.subCardBg
+                            border.width: modPick.selected ? 1 : Theme.subBorderWidth
                             border.color: modPick.selected ? Theme.primary : Theme.cardBorder
-                            Text { id: modPickTxt; anchors.centerIn: parent; text: modPick.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: modPick.selected ? Font.Bold : Font.Normal; color: modPick.selected ? Theme.primary : Theme.fgSurface }
+                            Text { id: modPickTxt; anchors.centerIn: parent; text: modPick.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: modPick.selected ? Font.Bold : Font.Normal; color: modPick.selected ? Theme.primary : Theme.fgSurface }
                             MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.toggleMod(modPick.modelData) }
                         }
                     }
@@ -321,10 +321,10 @@ ColumnLayout {
                             required property string modelData
                             readonly property bool selected: root.newAction === actPick.modelData
                             implicitHeight: 22; implicitWidth: actPickTxt.implicitWidth + 10; radius: Theme.r(6)
-                            color: actPick.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                            border.width: actPick.selected ? 1 : Theme.cardBorderWidth
+                            color: actPick.selected ? Theme.withAlpha(Theme.secondary, 0.20) : Theme.subCardBg
+                            border.width: actPick.selected ? 1 : Theme.subBorderWidth
                             border.color: actPick.selected ? Theme.secondary : Theme.cardBorder
-                            Text { id: actPickTxt; anchors.centerIn: parent; text: actPick.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: actPick.selected ? Theme.secondary : Theme.fgSurface }
+                            Text { id: actPickTxt; anchors.centerIn: parent; text: actPick.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: actPick.selected ? Theme.secondary : Theme.fgSurface }
                             MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.newAction = actPick.modelData }
                         }
                     }
@@ -336,17 +336,17 @@ ColumnLayout {
 
                     Rectangle {
                         Layout.preferredWidth: 110; implicitHeight: 28; radius: Theme.r(8); color: Theme.subCardBg
-                        border.width: keyIn.activeFocus ? 1 : Theme.cardBorderWidth; border.color: keyIn.activeFocus ? Theme.primary : Theme.cardBorder
+                        border.width: keyIn.activeFocus ? 1 : Theme.subBorderWidth; border.color: keyIn.activeFocus ? Theme.primary : Theme.cardBorder
                         Item {
                             anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
                             Text { anchors.verticalCenter: parent.verticalCenter; text: "Key (e.g. e, F5)"; visible: keyIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
-                            TextInput { id: keyIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
+                            TextInput { id: keyIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
                         }
                     }
 
                     Rectangle {
                         Layout.preferredWidth: 110; implicitHeight: 28; radius: Theme.r(8); color: Theme.subCardBg
-                        border.width: actIn.activeFocus ? 1 : Theme.cardBorderWidth; border.color: actIn.activeFocus ? Theme.secondary : Theme.cardBorder
+                        border.width: actIn.activeFocus ? 1 : Theme.subBorderWidth; border.color: actIn.activeFocus ? Theme.secondary : Theme.cardBorder
                         Item {
                             anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
                             TextInput {
@@ -354,7 +354,7 @@ ColumnLayout {
                                 anchors.fill: parent
                                 verticalAlignment: TextInput.AlignVCenter
                                 text: root.newAction
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 color: Theme.secondary
                                 clip: true
@@ -365,18 +365,18 @@ ColumnLayout {
 
                     Rectangle {
                         Layout.fillWidth: true; implicitHeight: 28; radius: Theme.r(8); color: Theme.subCardBg
-                        border.width: argIn.activeFocus ? 1 : Theme.cardBorderWidth; border.color: argIn.activeFocus ? Theme.primary : Theme.cardBorder
+                        border.width: argIn.activeFocus ? 1 : Theme.subBorderWidth; border.color: argIn.activeFocus ? Theme.primary : Theme.cardBorder
                         Item {
                             anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
-                            Text { anchors.verticalCenter: parent.verticalCenter; text: "Command / Argument (for spawn)"; visible: argIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
-                            TextInput { id: argIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
+                            Text { anchors.verticalCenter: parent.verticalCenter; text: "Command or argument"; visible: argIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                            TextInput { id: argIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
                         }
                     }
 
                     Rectangle {
                         visible: root.editingOldRaw.length > 0
                         implicitHeight: 28; implicitWidth: cancelEditLbl.implicitWidth + 12; radius: Theme.r(8); color: Theme.subCardBg
-                        border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
                         Text { id: cancelEditLbl; anchors.centerIn: parent; text: "Cancel"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.cancelEditBind() }
                     }
@@ -418,7 +418,7 @@ ColumnLayout {
                         color: catPill.selected
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (catMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: catPill.selected ? 1 : Theme.cardBorderWidth
+                        border.width: catPill.selected ? 1 : Theme.subBorderWidth
                         border.color: catPill.selected ? Theme.primary : Theme.cardBorder
 
                         Text {
@@ -460,7 +460,7 @@ ColumnLayout {
             anchors.margins: 10
             spacing: 6
 
-            Text { text: "YOUR CUSTOM SHORTCUTS (local.conf)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
+            Text { text: "Custom Shortcuts"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(12); font.weight: Font.DemiBold; color: Theme.fgSurface }
 
             Repeater {
                 model: root.customBinds
@@ -470,7 +470,7 @@ ColumnLayout {
                     Layout.fillWidth: true; implicitHeight: 30; radius: Theme.r(8); color: Theme.subCardBg
                     RowLayout {
                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 6; spacing: 8
-                        Text { text: cbRow.modelData.raw; Layout.fillWidth: true; elide: Text.ElideRight; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.primary }
+                        Text { text: cbRow.modelData.raw; Layout.fillWidth: true; elide: Text.ElideRight; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); color: Theme.primary }
                         Rectangle {
                             implicitWidth: 20; implicitHeight: 20; radius: Theme.r(5)
                             color: delCbMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : "transparent"
@@ -532,9 +532,9 @@ ColumnLayout {
                                     id: modTxt
                                     anchors.centerIn: parent
                                     text: modCap.modelData
-                                    font.family: Theme.fontFamily
+                                    font.family: Theme.monoFont
                                     font.pixelSize: Theme.fs(9)
-                                    font.weight: Font.Bold
+                                    font.weight: Font.DemiBold
                                     color: Theme.primary
                                 }
                             }
@@ -546,15 +546,15 @@ ColumnLayout {
                             radius: Theme.r(6)
                             color: Theme.subCardBg
                             border.width: 1
-                            border.color: Theme.outlineVariant
+                            border.color: Theme.hairlineBorder
 
                             Text {
                                 id: keyTxt
                                 anchors.centerIn: parent
                                 text: (bindRow.modelData.kind === "mouse" ? "󰍽 " : "") + bindRow.modelData.key
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
-                                font.weight: Font.Bold
+                                font.weight: Font.DemiBold
                                 color: Theme.fgSurface
                             }
                         }
@@ -591,7 +591,7 @@ ColumnLayout {
                         implicitWidth: editBindLbl.implicitWidth + 12
                         radius: Theme.r(6)
                         color: editBindMouse.containsMouse ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: editBindMouse.containsMouse ? 1 : Theme.subBorderWidth
                         border.color: editBindMouse.containsMouse ? Theme.primary : Theme.cardBorder
 
                         Text {
@@ -618,7 +618,7 @@ ColumnLayout {
                         implicitHeight: 24
                         radius: Theme.r(6)
                         color: delBindMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: delBindMouse.containsMouse ? 1 : Theme.subBorderWidth
                         border.color: delBindMouse.containsMouse ? Theme.error : Theme.cardBorder
 
                         Text {

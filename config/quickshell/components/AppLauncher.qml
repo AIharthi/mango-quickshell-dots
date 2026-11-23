@@ -683,7 +683,7 @@ ColumnLayout {
                         if (root.effectiveMode === "calc") return "Type math expression (e.g. 1920*1080, 0xff + 16, sqrt(144))...";
                         if (root.effectiveMode === "cmds") return "Search desktop commands...";
                         if (root.effectiveMode === "emoji") return "Search emojis & Nerd Font icons...";
-                        return "Spotlight Search  (prefixes: = calc · > cmd · : emoji · cb clip)";
+                        return "Search apps, clipboard, or type = for math";
                     }
                     elide: Text.ElideRight
                     width: parent.width
@@ -761,7 +761,7 @@ ColumnLayout {
                     id: cntBadgeLbl
                     anchors.centerIn: parent
                     text: root.currentCount + (root.effectiveMode === "apps" ? " apps" : " items")
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: 9
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
@@ -784,7 +784,7 @@ ColumnLayout {
             implicitWidth: modePillRow.implicitWidth + 6
             radius: Theme.r(15)
             color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
 
             RowLayout {
@@ -863,7 +863,7 @@ ColumnLayout {
             implicitWidth: clrClipLbl.implicitWidth + 14
             radius: Theme.r(13)
             color: clrClipMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: clrClipMouse.containsMouse ? Theme.error : Theme.cardBorder
 
             Text {
@@ -893,8 +893,8 @@ ColumnLayout {
             Repeater {
                 model: [
                     { k: "↑↓", l: "Select" },
-                    { k: "↵",  l: "Open" },
-                    { k: "Esc",l: "Close" }
+                    { k: "Enter", l: "Open" },
+                    { k: "Esc", l: "Close" }
                 ]
                 delegate: RowLayout {
                     id: khItem
@@ -906,14 +906,14 @@ ColumnLayout {
                         implicitWidth: khTxt.implicitWidth + 8
                         radius: Theme.r(5)
                         color: Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         Text {
                             id: khTxt
                             anchors.centerIn: parent
                             text: khItem.modelData.k
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: 8
                             font.weight: Font.Bold
                             color: Theme.fgSurface
@@ -1016,7 +1016,11 @@ ColumnLayout {
 
                         Text {
                             Layout.fillWidth: true
-                            visible: text.length > 0
+                            visible: {
+                                const sub = String(appRow.modelData.genericName || appRow.modelData.comment || "").trim();
+                                const nm = String(appRow.modelData.name || "").trim();
+                                return sub.length > 0 && sub.toLowerCase() !== nm.toLowerCase();
+                            }
                             text: appRow.modelData.genericName || appRow.modelData.comment || ""
                             elide: Text.ElideRight
                             maximumLineCount: 1
@@ -1036,7 +1040,7 @@ ColumnLayout {
                         Text {
                             id: openHintLbl
                             anchors.centerIn: parent
-                            text: "Open ↵"
+                            text: "Open"
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold
@@ -1194,7 +1198,7 @@ ColumnLayout {
                 color: calcRow.isSelected
                     ? Theme.activeBg
                     : (calcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: calcRow.isSelected ? 1 : Theme.cardBorderWidth
+                border.width: calcRow.isSelected ? 1 : Theme.subBorderWidth
                 border.color: calcRow.isSelected ? Theme.withAlpha(Theme.primary, 0.45) : Theme.cardBorder
 
                 RowLayout {
@@ -1249,7 +1253,7 @@ ColumnLayout {
                         Text {
                             id: copyHintLbl
                             anchors.centerIn: parent
-                            text: "Copy ↵"
+                            text: "Copy"
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
                             font.weight: Font.Bold
@@ -1353,7 +1357,7 @@ ColumnLayout {
                         Text {
                             id: runHintLbl
                             anchors.centerIn: parent
-                            text: "Run ↵"
+                            text: "Run"
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold

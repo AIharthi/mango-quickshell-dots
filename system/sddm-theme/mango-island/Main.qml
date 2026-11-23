@@ -9,13 +9,21 @@ Rectangle {
     color: root.colSurfaceLowest
 
     // --- Bundled Fonts (with system fallback) ---
+    FontLoader { id: plexReg; source: "fonts/IBMPlexSans-Regular.ttf" }
+    FontLoader { id: plexMed; source: "fonts/IBMPlexSans-Medium.ttf" }
+    FontLoader { id: plexSemi; source: "fonts/IBMPlexSans-SemiBold.ttf" }
+    FontLoader { id: plexBold; source: "fonts/IBMPlexSans-Bold.ttf" }
+    FontLoader { id: plexMonoBold; source: "fonts/IBMPlexMono-Bold.ttf" }
     FontLoader { id: jbReg; source: "fonts/JetBrainsMono-Regular.ttf" }
     FontLoader { id: jbBold; source: "fonts/JetBrainsMono-Bold.ttf" }
     FontLoader { id: nfIcons; source: "fonts/SymbolsNerdFont-Regular.ttf" }
 
-    readonly property string uiFont: (jbReg.status === FontLoader.Ready)
-        ? jbReg.name
-        : String((config && config.font) ? config.font : "JetBrains Mono")
+    readonly property string uiFont: (typeof config !== "undefined" && config && config.font && String(config.font).length > 0)
+        ? String(config.font)
+        : ((plexReg.status === FontLoader.Ready) ? plexReg.name : "IBM Plex Sans")
+    readonly property string monoFont: (typeof config !== "undefined" && config && config.monoFont && String(config.monoFont).length > 0)
+        ? String(config.monoFont)
+        : ((plexMonoBold.status === FontLoader.Ready) ? plexMonoBold.name : ((jbBold.status === FontLoader.Ready) ? jbBold.name : "IBM Plex Mono"))
     readonly property string iconFont: (nfIcons.status === FontLoader.Ready)
         ? nfIcons.name
         : String((config && config.iconFont) ? config.iconFont : "Symbols Nerd Font")
@@ -184,7 +192,7 @@ Rectangle {
         function onLoginFailed() {
             root.authenticating = false;
             pwdInput.text = "";
-            root.errorText = "Incorrect password — try again";
+            root.errorText = "Incorrect password. Try again.";
             if (!root.reducedMotion)
                 shakeAnim.restart();
             pwdInput.forceActiveFocus();
@@ -345,7 +353,7 @@ Rectangle {
                     id: clockTxt
                     Layout.alignment: Qt.AlignHCenter
                     text: root.formatClock(new Date())
-                    font.family: root.uiFont
+                    font.family: root.monoFont
                     font.pixelSize: 50
                     font.weight: Font.Bold
                     color: root.colFg
@@ -373,8 +381,7 @@ Rectangle {
                     implicitWidth: usrRow.implicitWidth + 16
                     radius: 13
                     color: usrMouse.containsMouse ? root.withAlpha(cfgStr("primary", "#cba6f7"), 0.16) : root.colCardBg
-                    border.width: 1
-                    border.color: root.colBorder
+                    border.width: 0
 
                     RowLayout {
                         id: usrRow
@@ -421,8 +428,7 @@ Rectangle {
                     implicitWidth: sessRow.implicitWidth + 16
                     radius: 13
                     color: sessMouse.containsMouse ? root.withAlpha(cfgStr("secondary", "#89b4fa"), 0.16) : root.colCardBg
-                    border.width: 1
-                    border.color: root.colBorder
+                    border.width: 0
 
                     RowLayout {
                         id: sessRow
@@ -463,8 +469,7 @@ Rectangle {
                     implicitWidth: kbRow.implicitWidth + 14
                     radius: 13
                     color: kbMouse.containsMouse ? root.withAlpha(cfgStr("primary", "#cba6f7"), 0.16) : root.colCardBg
-                    border.width: 1
-                    border.color: root.colBorder
+                    border.width: 0
 
                     RowLayout {
                         id: kbRow
@@ -479,7 +484,7 @@ Rectangle {
                         }
                         Text {
                             text: root.currentKbLabel()
-                            font.family: root.uiFont
+                            font.family: root.monoFont
                             font.pixelSize: 10
                             font.weight: Font.Bold
                             color: root.colFg
@@ -511,8 +516,8 @@ Rectangle {
                     Text {
                         id: capsLbl
                         anchors.centerIn: parent
-                        text: "CAPS"
-                        font.family: root.uiFont
+                        text: "Caps"
+                        font.family: root.monoFont
                         font.pixelSize: 9
                         font.weight: Font.Bold
                         color: root.colWarning

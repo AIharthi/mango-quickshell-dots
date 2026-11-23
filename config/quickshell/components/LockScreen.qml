@@ -223,8 +223,8 @@ Item {
                 root.finishAuthUnlock();
             } else {
                 root.errorText = (result === PamResult.MaxTries)
-                    ? "Too many attempts — wait a moment"
-                    : "Incorrect password — try again";
+                    ? "Too many attempts. Wait a moment."
+                    : "Incorrect password. Try again.";
                 root.authFailedShake();
                 if (root.locked && !pam.active)
                     pam.start();
@@ -445,7 +445,7 @@ Item {
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: ShellState.formatTime(lockClock.date)
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: 50
                             font.weight: Font.Bold
                             color: Theme.fgSurface
@@ -471,7 +471,7 @@ Item {
                             implicitWidth: userChipRow.implicitWidth + 16
                             radius: Theme.r(12)
                             color: Theme.cardBg
-                            border.width: Theme.cardBorderWidth
+                            border.width: Theme.subBorderWidth
                             border.color: Theme.cardBorder
 
                             RowLayout {
@@ -501,7 +501,7 @@ Item {
                             implicitWidth: kbChipRow.implicitWidth + 14
                             radius: Theme.r(12)
                             color: kbChipMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                            border.width: Theme.cardBorderWidth
+                            border.width: Theme.subBorderWidth
                             border.color: Theme.cardBorder
 
                             RowLayout {
@@ -517,7 +517,7 @@ Item {
                                 }
                                 Text {
                                     text: root.kbLayoutShort
-                                    font.family: Theme.fontFamily
+                                    font.family: Theme.monoFont
                                     font.pixelSize: 10
                                     font.weight: Font.Bold
                                     color: Theme.fgSurface
@@ -539,7 +539,7 @@ Item {
                             implicitWidth: batChipRow.implicitWidth + 14
                             radius: Theme.r(12)
                             color: Theme.cardBg
-                            border.width: Theme.cardBorderWidth
+                            border.width: Theme.subBorderWidth
                             border.color: Theme.cardBorder
 
                             RowLayout {
@@ -557,7 +557,7 @@ Item {
                                 }
                                 Text {
                                     text: DeviceCaps.batteryPercent + "%"
-                                    font.family: Theme.fontFamily
+                                    font.family: Theme.monoFont
                                     font.pixelSize: 10
                                     font.weight: Font.Bold
                                     color: Theme.fgSurface
@@ -571,7 +571,7 @@ Item {
                             implicitWidth: 26
                             radius: Theme.r(12)
                             color: Theme.withAlpha(Theme.warning, 0.16)
-                            border.width: Theme.cardBorderWidth
+                            border.width: Theme.subBorderWidth
                             border.color: Theme.withAlpha(Theme.warning, 0.45)
 
                             Text {
@@ -591,7 +591,7 @@ Item {
                         implicitHeight: 50
                         radius: Theme.r(14)
                         color: Theme.cardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         RowLayout {
@@ -905,11 +905,12 @@ Item {
             }
 
             // Bottom-Right Animated Session Power Controls
-            RowLayout {
+            Item {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.margins: 24
-                spacing: 8
+                implicitWidth: lockPowerRow.implicitWidth
+                implicitHeight: lockPowerRow.implicitHeight
                 opacity: lockSurf.cardVisible ? 1.0 : 0.0
                 transform: Translate {
                     y: Theme.reducedMotion ? 0 : (lockSurf.cardVisible ? 0 : 16)
@@ -922,6 +923,11 @@ Item {
                     enabled: !Theme.reducedMotion
                     NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
                 }
+
+                RowLayout {
+                    id: lockPowerRow
+                    anchors.fill: parent
+                    spacing: 8
 
                 Rectangle {
                     implicitHeight: 34
@@ -1063,6 +1069,7 @@ Item {
                             }
                         }
                     }
+                }
                 }
             }
         }

@@ -13,6 +13,15 @@ ColumnLayout {
     signal openSettingsRequested(string page)
     spacing: 10
 
+    function formatWallpaperName(fname: string): string {
+        const clean = String(fname || "")
+            .replace(/\.(png|jpe?g|webp|bmp|avif)$/i, "")
+            .replace(/[_-]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+        return clean.length > 0 ? clean : String(fname || "");
+    }
+
     // --- Apple Segmented Mode, Shuffle, Studio & Dark/Light Bar ---
     RowLayout {
         Layout.fillWidth: true
@@ -28,7 +37,7 @@ ColumnLayout {
             implicitWidth: modeRow.implicitWidth + 6
             radius: Theme.r(16)
             color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
 
             RowLayout {
@@ -98,7 +107,7 @@ ColumnLayout {
             implicitWidth: rndLbl.implicitWidth + 16
             radius: Theme.r(16)
             color: rndMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
             scale: rndMouse.pressed ? 0.95 : 1.0
 
@@ -129,7 +138,7 @@ ColumnLayout {
             implicitWidth: stuLbl.implicitWidth + 16
             radius: Theme.r(16)
             color: stuMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
             scale: stuMouse.pressed ? 0.95 : 1.0
 
@@ -138,7 +147,7 @@ ColumnLayout {
             Text {
                 id: stuLbl
                 anchors.centerIn: parent
-                text: "Studio →"
+                text: "Studio"
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
@@ -174,7 +183,7 @@ ColumnLayout {
             implicitWidth: schemeRow.implicitWidth + 16
             radius: Theme.r(16)
             color: schemeArea.containsMouse ? Theme.hoverBg : Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
             scale: schemeArea.pressed ? 0.95 : 1.0
 
@@ -252,7 +261,7 @@ ColumnLayout {
                         color: presetChip.isSelected
                             ? Theme.activeBg
                             : (presetMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: presetChip.isSelected ? 1 : Theme.cardBorderWidth
+                        border.width: presetChip.isSelected ? 1 : Theme.subBorderWidth
                         border.color: presetChip.isSelected ? Theme.primary : Theme.cardBorder
 
                         RowLayout {
@@ -308,9 +317,9 @@ ColumnLayout {
             spacing: 12
 
             Text {
-                text: "SEED"
+                text: "Accent"
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: 10
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -445,7 +454,7 @@ ColumnLayout {
                                 anchors.leftMargin: 9
                                 anchors.rightMargin: 9
                                 anchors.bottomMargin: 5
-                                text: wallDelegate.fileName
+                                text: root.formatWallpaperName(wallDelegate.fileName)
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 10

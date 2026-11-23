@@ -168,7 +168,11 @@ PanelWindow {
     ClippingRectangle {
         anchors.centerIn: parent
         width: Math.min(720, Math.max(400, root.width - 64))
-        height: Math.min(520, Math.max(320, root.height - 80))
+        height: Math.min(520, Math.max(210, 154 + Math.max(1, root.filteredClients.length) * 56))
+        Behavior on height {
+            enabled: !Theme.reducedMotion && !Theme.isSimple
+            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        }
         radius: Theme.r(24)
         color: Theme.notchBg
         contentUnderBorder: false
@@ -254,7 +258,7 @@ PanelWindow {
                     implicitHeight: 26
                     radius: Theme.r(13)
                     color: clsBtnMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.cardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -281,7 +285,7 @@ PanelWindow {
                 implicitHeight: 38
                 radius: Theme.r(12)
                 color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
+                border.width: searchInput.activeFocus ? 1 : Theme.subBorderWidth
                 border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                 RowLayout {
@@ -304,7 +308,7 @@ PanelWindow {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: searchInput.text.length === 0
-                            text: "Search windows by title, app, or tag... (Enter to focus · Del to close)"
+                            text: "Switch window by title, app, or workspace..."
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(11)
                             color: Theme.fgSurfaceVariant
@@ -388,7 +392,7 @@ PanelWindow {
                         color: winRow.isSelected
                             ? Theme.activeBg
                             : (rowMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: winRow.modelData.is_focused ? 1 : 0
+                        border.width: winRow.isSelected ? 1 : 0
                         border.color: Theme.withAlpha(Theme.primary, 0.55)
 
                         MouseArea {
@@ -435,15 +439,28 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 spacing: 1
 
-                                Text {
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    text: String(winRow.modelData.title || winRow.appId || "Untitled")
-                                    elide: Text.ElideRight
-                                    maximumLineCount: 1
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(12)
-                                    font.weight: winRow.isSelected ? Font.Bold : Font.DemiBold
-                                    color: winRow.isSelected ? Theme.primary : Theme.fgSurface
+                                    spacing: 6
+
+                                    Rectangle {
+                                        visible: !!winRow.modelData.is_focused
+                                        implicitWidth: 6
+                                        implicitHeight: 6
+                                        radius: 3
+                                        color: Theme.primary
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: String(winRow.modelData.title || winRow.appId || "Untitled")
+                                        elide: Text.ElideRight
+                                        maximumLineCount: 1
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fs(12)
+                                        font.weight: winRow.isSelected ? Font.Bold : Font.DemiBold
+                                        color: winRow.isSelected ? Theme.primary : Theme.fgSurface
+                                    }
                                 }
 
                                 Text {

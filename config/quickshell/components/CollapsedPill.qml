@@ -523,7 +523,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 4
                 Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.tertiary }
-                Text { text: "GAME"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.tertiary }
+                Text { text: "Game"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.tertiary }
             }
 
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleGameMode() }
@@ -545,7 +545,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 4
                 Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
-                Text { text: ShellState.formatTimer(ShellState.stopwatchElapsedSec); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
+                Text { text: ShellState.formatTimer(ShellState.stopwatchElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
             }
 
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.timerClicked() }
@@ -565,7 +565,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 4
                 Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.primary }
-                Text { text: ShellState.weatherTemp; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: ShellState.weatherTemp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
             }
 
             MouseArea { id: wPillMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.notificationsClicked() }
@@ -587,7 +587,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 4
                 Text { text: "󰑊"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.error }
-                Text { text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.error }
+                Text { text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.error }
             }
 
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "stop"]) }
@@ -609,7 +609,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 4
                 Text { text: "󰔛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.primary }
-                Text { text: ShellState.formatTimer(ShellState.timerRemainingSec); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
+                Text { text: ShellState.formatTimer(ShellState.timerRemainingSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
             }
 
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.timerClicked() }
@@ -631,7 +631,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 3
                 Text { text: "󰂚"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
-                Text { text: String(ShellState.unreadCount); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: String(ShellState.unreadCount); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
             }
 
             MouseArea { id: unrMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.notificationsClicked() }
@@ -653,7 +653,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 4
                 Text { text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.primary }
-                Text { text: Math.round(ShellState.fmOpProgress * 100) + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
+                Text { text: Math.round(ShellState.fmOpProgress * 100) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
             }
 
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.filesClicked() }
@@ -722,7 +722,7 @@ Item {
             visible: ShellState.barShowLayout
             implicitHeight: 18; implicitWidth: apLayLbl.implicitWidth + 10; radius: Theme.r(9)
             color: apLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { id: apLayLbl; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
+            Text { id: apLayLbl; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
             MouseArea { id: apLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
         }
 
@@ -746,7 +746,7 @@ Item {
         Text {
             Layout.alignment: Qt.AlignVCenter
             text: ShellState.formatTime(clock.date)
-            font.family: Theme.fontFamily
+            font.family: Theme.monoFont
             font.pixelSize: Theme.fs(12)
             font.weight: Font.Bold
             color: Theme.fgSurface
@@ -775,8 +775,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowSystem
             spacing: 5
-            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
-            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
+            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
+            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
         }
 
         // Optional Volume & Mute
@@ -795,7 +795,7 @@ Item {
                 id: kbPillRowAp
                 anchors.centerIn: parent; spacing: 3
                 Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
-                Text { text: root.kbLayoutShort; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
             }
         }
 
@@ -815,7 +815,7 @@ Item {
             spacing: 3
             visible: root.hasBatteryChip
             Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
-            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
         }
 
         SystemTrayStrip {
@@ -904,7 +904,7 @@ Item {
                         anchors.centerIn: parent
                         spacing: 4
                         Rectangle { implicitWidth: 5; implicitHeight: 5; radius: 2.5; color: Theme.primary }
-                        Text { text: "Tag " + root.activeTagIndex; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
+                        Text { text: "Tag " + root.activeTagIndex; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
                     }
                 }
 
@@ -915,7 +915,7 @@ Item {
                     radius: Theme.r(9)
                     color: spLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
-                    Text { id: spLayTxt; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
+                    Text { id: spLayTxt; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
                     MouseArea { id: spLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
                 }
 
@@ -958,7 +958,7 @@ Item {
 
                 Text {
                     text: ShellState.formatTime(clock.date)
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(12)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
@@ -1000,8 +1000,8 @@ Item {
                 RowLayout {
                     visible: ShellState.barShowSystem
                     spacing: 4
-                    Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
-                    Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
+                    Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
+                    Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
                 }
 
                 LiveActivityChips {}
@@ -1016,7 +1016,7 @@ Item {
                         id: kbPillRowSp
                         anchors.centerIn: parent; spacing: 3
                         Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.secondary }
-                        Text { text: root.kbLayoutShort; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                        Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
                     }
                 }
 
@@ -1027,7 +1027,7 @@ Item {
                     visible: root.hasBatteryChip
                     spacing: 3
                     Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
-                    Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+                    Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
                 }
 
                 SystemTrayStrip {
@@ -1120,7 +1120,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 4
                 Rectangle { implicitWidth: 5; implicitHeight: 5; radius: 2.5; color: Theme.primary }
-                Text { text: String(root.activeTagIndex); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
+                Text { text: String(root.activeTagIndex); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
             }
         }
 
@@ -1131,7 +1131,7 @@ Item {
             implicitWidth: mbLayTxt.implicitWidth + 8
             radius: Theme.r(6)
             color: mbLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { id: mbLayTxt; anchors.centerIn: parent; text: root.currentLayout; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
+            Text { id: mbLayTxt; anchors.centerIn: parent; text: root.currentLayout; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
             MouseArea { id: mbLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
         }
 
@@ -1150,8 +1150,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowSystem
             spacing: 5
-            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
-            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
+            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
+            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
         }
 
         LiveActivityChips {}
@@ -1167,7 +1167,7 @@ Item {
                 id: kbPillRowMb
                 anchors.centerIn: parent; spacing: 3
                 Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
-                Text { text: root.kbLayoutShort; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
             }
         }
 
@@ -1179,7 +1179,7 @@ Item {
             visible: root.hasBatteryChip
             spacing: 3
             Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
-            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
         }
 
         SystemTrayStrip {
@@ -1239,7 +1239,7 @@ Item {
 
                 Text {
                     text: ShellState.formatTime(clock.date)
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(11)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
@@ -1281,7 +1281,7 @@ Item {
             visible: ShellState.barShowLayout
             implicitHeight: 18; implicitWidth: clLayLbl.implicitWidth + 10; radius: Theme.r(6)
             color: clLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { id: clLayLbl; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.secondary }
+            Text { id: clLayLbl; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.secondary }
             MouseArea { id: clLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
         }
 
@@ -1303,7 +1303,7 @@ Item {
         Text {
             Layout.alignment: Qt.AlignVCenter
             text: ShellState.formatTime(clock.date)
-            font.family: Theme.fontFamily; font.pixelSize: Theme.fs(13); font.weight: Font.Bold; color: Theme.fgSurface
+            font.family: Theme.monoFont; font.pixelSize: Theme.fs(13); font.weight: Font.Bold; color: Theme.fgSurface
         }
 
         Text {
@@ -1324,8 +1324,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowSystem
             spacing: 5
-            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
-            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
+            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
+            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
         }
 
         VolumePillButton { visible: ShellState.barShowVolume && DeviceCaps.hasAudio }
@@ -1339,7 +1339,7 @@ Item {
                 id: kbPillRowCl
                 anchors.centerIn: parent; spacing: 3
                 Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
-                Text { text: root.kbLayoutShort; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
             }
         }
 
@@ -1351,7 +1351,7 @@ Item {
             spacing: 4
             visible: root.hasBatteryChip
             Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
-            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
+            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(11); font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
         }
 
         LiveActivityChips {}

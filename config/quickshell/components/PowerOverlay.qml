@@ -122,6 +122,113 @@ PanelWindow {
         }
     }
 
+    component PowerActionCard : Rectangle {
+        id: actCard
+        required property var actionData
+        required property int actionIndex
+
+        readonly property bool isSel: actCard.actionIndex === root.selectedIndex
+        readonly property bool isPending: root.confirmId === actCard.actionData.id
+        readonly property color tintCol: {
+            if (actCard.actionData.id === "lock") return Theme.primary;
+            if (actCard.actionData.id === "suspend") return Theme.secondary;
+            if (actCard.actionData.id === "hibernate") return Theme.tertiary;
+            if (actCard.actionData.id === "poweroff") return Theme.error;
+            return Theme.warning;
+        }
+
+        Layout.fillWidth: true
+        implicitHeight: 108
+        radius: Theme.r(18)
+        color: actCard.isPending
+            ? Theme.withAlpha(Theme.error, 0.28)
+            : (actMouse.containsMouse || actCard.isSel
+                ? Theme.activeBg
+                : (actCard.actionData.danger ? Theme.withAlpha(actCard.tintCol, 0.08) : Theme.cardBg))
+        border.width: (actCard.isPending || actCard.isSel || actMouse.containsMouse) ? 1.5 : Theme.subBorderWidth
+        border.color: actCard.isPending
+            ? Theme.error
+            : ((actCard.isSel || actMouse.containsMouse)
+                ? actCard.tintCol
+                : (actCard.actionData.danger ? Theme.withAlpha(actCard.tintCol, 0.28) : Theme.cardBorder))
+        scale: actMouse.pressed ? 0.95 : (actMouse.containsMouse ? 1.02 : 1.0)
+
+        Behavior on scale {
+            enabled: !Theme.reducedMotion
+            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+        }
+        Behavior on color {
+            enabled: !Theme.reducedMotion
+            ColorAnimation { duration: 140 }
+        }
+
+        Rectangle {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: 10
+            implicitWidth: 20
+            implicitHeight: 20
+            radius: Theme.r(6)
+            color: Theme.subCardBg
+
+            Text {
+                anchors.centerIn: parent
+                text: actCard.actionData.hotkey
+                font.family: Theme.monoFont
+                font.pixelSize: Theme.fs(9)
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+        }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 6
+
+            Rectangle {
+                Layout.alignment: Qt.AlignHCenter
+                implicitWidth: 40
+                implicitHeight: 40
+                radius: Theme.r(14)
+                color: Theme.withAlpha(actCard.tintCol, 0.18)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: actCard.actionData.icon
+                    font.family: Theme.iconFont
+                    font.pixelSize: Theme.fs(20)
+                    color: actCard.isPending ? Theme.error : actCard.tintCol
+                }
+            }
+
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: actCard.isPending ? "Click again to confirm" : actCard.actionData.label
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(12)
+                font.weight: Font.Bold
+                color: actCard.isPending ? Theme.error : Theme.fgSurface
+            }
+
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: actCard.actionData.sub
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(9)
+                color: Theme.fgSurfaceVariant
+            }
+        }
+
+        MouseArea {
+            id: actMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onEntered: root.selectedIndex = actCard.actionIndex
+            onClicked: root.triggerAction(actCard.actionData.id, actCard.actionData.confirm)
+        }
+    }
+
     FocusScope {
         id: powerScope
         anchors.fill: parent
@@ -235,7 +342,7 @@ PanelWindow {
 
                     Text {
                         text: ShellState.formatTime(pwrClock.date)
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(16)
                         font.weight: Font.Bold
                         color: Theme.primary
@@ -246,7 +353,7 @@ PanelWindow {
                         implicitHeight: 28
                         radius: Theme.r(14)
                         color: clsMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.cardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         Text {
@@ -267,118 +374,42 @@ PanelWindow {
                     }
                 }
 
-                // 3 x 2 Action Grid
-                GridLayout {
+                // Safe Session Actions Row (Lock, Suspend, Hibernate)
+                RowLayout {
                     Layout.fillWidth: true
-                    columns: 3
-                    rowSpacing: 10
-                    columnSpacing: 10
+                    spacing: 10
 
                     Repeater {
-                        model: root.actions
+                        model: root.actions.slice(0, 3)
 
-                        delegate: Rectangle {
-                            id: actCard
+                        delegate: PowerActionCard {
                             required property var modelData
                             required property int index
+                            actionData: modelData
+                            actionIndex: index
+                        }
+                    }
+                }
 
-                            readonly property bool isSel: actCard.index === root.selectedIndex
-                            readonly property bool isPending: root.confirmId === actCard.modelData.id
-                            readonly property color tintCol: {
-                                if (actCard.modelData.id === "lock") return Theme.primary;
-                                if (actCard.modelData.id === "suspend") return Theme.secondary;
-                                if (actCard.modelData.id === "hibernate") return Theme.tertiary;
-                                if (actCard.modelData.id === "poweroff") return Theme.error;
-                                return Theme.warning;
-                            }
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 1
+                    color: Theme.hairlineBorder
+                }
 
-                            Layout.fillWidth: true
-                            implicitHeight: 112
-                            radius: Theme.r(18)
-                            color: actCard.isPending
-                                ? Theme.withAlpha(Theme.error, 0.28)
-                                : (actMouse.containsMouse || actCard.isSel ? Theme.activeBg : Theme.cardBg)
-                            border.width: (actCard.isPending || actCard.isSel || actMouse.containsMouse) ? 1.5 : Theme.cardBorderWidth
-                            border.color: actCard.isPending
-                                ? Theme.error
-                                : ((actCard.isSel || actMouse.containsMouse) ? actCard.tintCol : Theme.cardBorder)
-                            scale: actMouse.pressed ? 0.95 : (actMouse.containsMouse ? 1.02 : 1.0)
+                // Destructive Session Actions Row (Log Out, Reboot, Power Off)
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
 
-                            Behavior on scale {
-                                enabled: !Theme.reducedMotion
-                                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
-                            }
-                            Behavior on color {
-                                enabled: !Theme.reducedMotion
-                                ColorAnimation { duration: 140 }
-                            }
+                    Repeater {
+                        model: root.actions.slice(3, 6)
 
-                            // Hotkey badge top-right
-                            Rectangle {
-                                anchors.top: parent.top
-                                anchors.right: parent.right
-                                anchors.margins: 10
-                                implicitWidth: 20
-                                implicitHeight: 20
-                                radius: Theme.r(6)
-                                color: Theme.subCardBg
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: actCard.modelData.hotkey
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(9)
-                                    font.weight: Font.Bold
-                                    color: Theme.fgSurfaceVariant
-                                }
-                            }
-
-                            ColumnLayout {
-                                anchors.centerIn: parent
-                                spacing: 6
-
-                                Rectangle {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    implicitWidth: 40
-                                    implicitHeight: 40
-                                    radius: Theme.r(14)
-                                    color: Theme.withAlpha(actCard.tintCol, 0.18)
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: actCard.modelData.icon
-                                        font.family: Theme.iconFont
-                                        font.pixelSize: Theme.fs(20)
-                                        color: actCard.isPending ? Theme.error : actCard.tintCol
-                                    }
-                                }
-
-                                Text {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: actCard.isPending ? "Click again to confirm" : actCard.modelData.label
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(12)
-                                    font.weight: Font.Bold
-                                    color: actCard.isPending ? Theme.error : Theme.fgSurface
-                                }
-
-                                Text {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: actCard.modelData.sub
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(9)
-                                    color: Theme.fgSurfaceVariant
-                                }
-                            }
-
-                            MouseArea {
-                                id: actMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onEntered: root.selectedIndex = actCard.index
-                                onClicked: root.triggerAction(actCard.modelData.id, actCard.modelData.confirm)
-                            }
+                        delegate: PowerActionCard {
+                            required property var modelData
+                            required property int index
+                            actionData: modelData
+                            actionIndex: index + 3
                         }
                     }
                 }

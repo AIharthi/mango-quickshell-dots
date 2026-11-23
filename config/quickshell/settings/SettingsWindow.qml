@@ -30,43 +30,66 @@ PanelWindow {
 
     Component.onCompleted: Qt.callLater(() => {
         root._entered = true;
-        if (root.isOpen)
+        if (root.isOpen) {
             settingsFocusScope.forceActiveFocus();
+            scrollActiveNavIntoView();
+        }
     })
     onIsOpenChanged: {
         if (isOpen) {
-            Qt.callLater(() => settingsFocusScope.forceActiveFocus());
+            Qt.callLater(() => {
+                settingsFocusScope.forceActiveFocus();
+                scrollActiveNavIntoView();
+            });
         } else {
             searchQuery = "";
             resetMenuOpen = false;
             confirmFactoryReset = false;
         }
     }
+    onResolvedPageChanged: Qt.callLater(scrollActiveNavIntoView)
+
+    function scrollActiveNavIntoView(): void {
+        if (!navFlick || !navCol)
+            return;
+        for (let i = 0; i < navCol.children.length; i++) {
+            const item = navCol.children[i];
+            if (item && item.isSelected) {
+                const top = item.y;
+                const bot = item.y + item.height;
+                if (top < navFlick.contentY + 8)
+                    navFlick.contentY = Math.max(0, top - 8);
+                else if (bot > navFlick.contentY + navFlick.height - 8)
+                    navFlick.contentY = Math.max(0, bot - navFlick.height + 8);
+                return;
+            }
+        }
+    }
 
     readonly property var navItems: {
         const items = [
-            { id: "appearance", label: "Appearance",    icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, surfaces, island shape, fonts, cursor, GTK & blur" },
-            { id: "themes",     label: "Themes & Colors",icon: "󰌁", source: "ThemesPage.qml",       sub: "Vibes, 16 presets, Matugen, seed hex, custom themes & wallpapers" },
-            { id: "shell",      label: "Shell & Bar",   icon: "󰕮", source: "ShellPage.qml",         sub: "Dynamic Island, Simple Bar, screenshots & motion" },
-            { id: "windows",    label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Picture-in-Picture (PiP), tiling layouts, tag & window rules" }
+            { id: "appearance",    section: "Personalize",     label: "Appearance",    icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, surfaces, island shape, typography, cursor, and blur" },
+            { id: "themes",        section: "Personalize",     label: "Themes & Colors",icon: "󰌁", source: "ThemesPage.qml",       sub: "Vibes, curated presets, Matugen extraction, and wallpapers" },
+            { id: "shell",         section: "Personalize",     label: "Shell & Bar",   icon: "󰕮", source: "ShellPage.qml",         sub: "Bar style, hub layout, widgets, file manager, and screenshots" },
+            { id: "windows",       section: "Desktop & Input", label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Picture-in-Picture, tiling layouts, gaps, and window rules" },
+            { id: "input",         section: "Desktop & Input", label: "Input",         icon: "󰌌", source: "InputPage.qml",         sub: "Keyboard layouts, repeat rate, pointer speed, and touchpad" },
+            { id: "shortcuts",     section: "Desktop & Input", label: "Shortcuts",     icon: "󰌌", source: "ShortcutsPage.qml",     sub: "Browse, edit, and add MangoWC keybindings" },
+            { id: "notifications", section: "Desktop & Input", label: "Notifications", icon: "󰂚", source: "NotificationsPage.qml", sub: "Do Not Disturb, alert timeouts, and notification history" },
+            { id: "apps",          section: "Desktop & Input", label: "Apps & Startup",icon: "󰀻", source: "AppsPage.qml",          sub: "Default applications, hidden launcher apps, and startup" }
         ];
         if (DeviceCaps.hasAudio)
-            items.push({ id: "audio", label: "Audio", icon: "󰋋", source: "AudioPage.qml", sub: "Volume, card profiles, per-app mixer & test" });
+            items.push({ id: "audio",     section: "Hardware", label: "Audio",     icon: "󰋋", source: "AudioPage.qml",     sub: "Volume, card profiles, per-app mixer, and channel test" });
         if (DeviceCaps.hasWlrRandr)
-            items.push({ id: "displays", label: "Displays", icon: "󰍹", source: "DisplayPage.qml", sub: "Resolution, layout, rotation, VRR & brightness" });
+            items.push({ id: "displays",  section: "Hardware", label: "Displays",  icon: "󰍹", source: "DisplayPage.qml",   sub: "Resolution, arrangement, rotation, VRR, and night light" });
         if (DeviceCaps.hasNetwork || DeviceCaps.hasWifi)
-            items.push({ id: "network", label: "Network", icon: "󰤨", source: "NetworkPage.qml", sub: "Interfaces, IP/DNS & Wi-Fi connections" });
+            items.push({ id: "network",   section: "Hardware", label: "Network",   icon: "󰤨", source: "NetworkPage.qml",   sub: "Interfaces, IP/DNS profiles, and Wi-Fi connections" });
         if (DeviceCaps.hasBluetooth)
-            items.push({ id: "bluetooth", label: "Bluetooth", icon: "󰂯", source: "BluetoothPage.qml", sub: "Adapter power & paired devices" });
-        items.push({ id: "input", label: "Input", icon: "󰌌", source: "InputPage.qml", sub: "Keyboard, pointer speed, scroll & touchpad" });
+            items.push({ id: "bluetooth", section: "Hardware", label: "Bluetooth", icon: "󰂯", source: "BluetoothPage.qml", sub: "Adapter power and paired Bluetooth devices" });
         if (DeviceCaps.hasFoot || DeviceCaps.hasKitty)
-            items.push({ id: "terminals", label: "Terminals", icon: "󰆍", source: "TerminalPage.qml", sub: "Foot & Kitty opacity, padding, cursor & scrollback" });
-        items.push({ id: "notifications", label: "Notifications", icon: "󰂚", source: "NotificationsPage.qml", sub: "Do Not Disturb, alerts, duration & history" });
-        items.push({ id: "apps",          label: "Apps & Startup",icon: "󰀻", source: "AppsPage.qml",          sub: "Default apps, hidden launcher apps, env & startup" });
-        items.push({ id: "shortcuts",     label: "Shortcuts",     icon: "󰌌", source: "ShortcutsPage.qml",     sub: "View, filter & add MangoWC shortcuts" });
-        items.push({ id: "privacy",       label: "Privacy",       icon: "󰌾", source: "PrivacyPage.qml",       sub: "Clipboard, history tracking, camera, mic & lock" });
-        items.push({ id: "monitor",       label: "Monitor",       icon: "󰍛", source: "MonitorPage.qml",       sub: "Temperatures, running processes & services" });
-        items.push({ id: "system",        label: "System",        icon: "󰋼", source: "SystemPage.qml",        sub: "User, clock, storage, backup & local.conf" });
+            items.push({ id: "terminals", section: "System",   label: "Terminals", icon: "󰆍", source: "TerminalPage.qml",  sub: "Foot and Kitty opacity, padding, cursor, and scrollback" });
+        items.push({ id: "privacy",       section: "System",   label: "Privacy",   icon: "󰌾", source: "PrivacyPage.qml",   sub: "Clipboard, history, camera, mic, lock, and login screen" });
+        items.push({ id: "monitor",       section: "System",   label: "Monitor",   icon: "󰍛", source: "MonitorPage.qml",   sub: "Thermal sensors, running processes, and system services" });
+        items.push({ id: "system",        section: "System",   label: "System",    icon: "󰋼", source: "SystemPage.qml",    sub: "Account, clock format, storage, backup, and local config" });
         return items;
     }
 
@@ -276,7 +299,7 @@ PanelWindow {
                                 implicitHeight: 24
                                 radius: Theme.r(8)
                                 color: Theme.subCardBg
-                                border.width: Theme.cardBorderWidth
+                                border.width: Theme.subBorderWidth
                                 border.color: Theme.cardBorder
 
                                 RowLayout {
@@ -312,7 +335,7 @@ PanelWindow {
                             implicitHeight: 30
                             radius: Theme.r(8)
                             color: Theme.subCardBg
-                            border.width: searchInput.activeFocus ? 1 : Theme.cardBorderWidth
+                            border.width: searchInput.activeFocus ? 1 : Theme.subBorderWidth
                             border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
 
                             RowLayout {
@@ -396,19 +419,20 @@ PanelWindow {
                             }
                         }
 
-                        // Search Results OR Scrollable Category Navigation
+                        // Search Results OR Scrollable Grouped Category Navigation
                         Flickable {
+                            id: navFlick
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             clip: true
                             contentWidth: width
-                            contentHeight: root.searchQuery.trim().length > 0 ? searchCol.implicitHeight : navHost.implicitHeight
+                            contentHeight: root.searchQuery.trim().length > 0 ? searchCol.implicitHeight : navCol.implicitHeight
                             boundsBehavior: Flickable.StopAtBounds
 
                             ColumnLayout {
                                 id: searchCol
                                 visible: root.searchQuery.trim().length > 0
-                                width: parent.width
+                                width: navFlick.width
                                 spacing: 4
 
                                 Text {
@@ -431,7 +455,7 @@ PanelWindow {
                                         implicitHeight: 38
                                         radius: Theme.r(9)
                                         color: hitMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                                        border.width: Theme.cardBorderWidth
+                                        border.width: Theme.subBorderWidth
                                         border.color: Theme.cardBorder
 
                                         ColumnLayout {
@@ -448,7 +472,7 @@ PanelWindow {
                                                 text: hitBtn.modelData.label
                                                 font.family: Theme.fontFamily
                                                 font.pixelSize: Theme.fs(11)
-                                                font.weight: Font.Bold
+                                                font.weight: Font.DemiBold
                                                 color: Theme.fgSurface
                                             }
 
@@ -476,90 +500,98 @@ PanelWindow {
                                 }
                             }
 
-                            // Dynamic Navigation Links with Sliding Selection Indicator
-                            Item {
-                                id: navHost
+                            // Grouped Navigation Links (Personalize / Desktop & Input / Hardware / System)
+                            ColumnLayout {
+                                id: navCol
                                 visible: root.searchQuery.trim().length === 0
-                                width: parent.width
-                                implicitHeight: navCol.implicitHeight
+                                width: navFlick.width
+                                spacing: 3
 
-                                Rectangle {
-                                    id: navIndicator
-                                    x: 0
-                                    y: root.currentNavIndex * 38
-                                    width: parent.width
-                                    height: 34
-                                    radius: Theme.r(10)
-                                    color: Theme.primary
-                                    border.width: Theme.isSimple ? 1 : 0
-                                    border.color: Theme.primary
+                                Repeater {
+                                    model: root.navItems
 
-                                    Behavior on y {
-                                        enabled: !Theme.reducedMotion
-                                        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
-                                    }
-                                }
+                                    delegate: ColumnLayout {
+                                        id: navGroupWrap
+                                        required property var modelData
+                                        required property int index
+                                        readonly property bool isSelected: root.resolvedPage === navGroupWrap.modelData.id
+                                        readonly property bool showHeader: navGroupWrap.index === 0
+                                            || navGroupWrap.modelData.section !== root.navItems[navGroupWrap.index - 1].section
 
-                                ColumnLayout {
-                                    id: navCol
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    spacing: 4
+                                        Layout.fillWidth: true
+                                        spacing: 3
 
-                                    Repeater {
-                                        model: root.navItems
-
-                                        delegate: Rectangle {
-                                            id: navBtn
-                                            required property var modelData
-                                            readonly property bool isSelected: root.resolvedPage === navBtn.modelData.id
-
+                                        Text {
+                                            visible: navGroupWrap.showHeader
                                             Layout.fillWidth: true
-                                            implicitHeight: 34
-                                            radius: Theme.r(10)
-                                            color: (!navBtn.isSelected && navMouse.containsMouse) ? Theme.hoverBg : "transparent"
-                                            scale: navMouse.pressed ? 0.97 : 1.0
+                                            Layout.topMargin: navGroupWrap.index === 0 ? 2 : 9
+                                            Layout.leftMargin: 8
+                                            Layout.bottomMargin: 2
+                                            text: navGroupWrap.modelData.section
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: Theme.fs(10)
+                                            font.weight: Font.DemiBold
+                                            color: Theme.fgSurfaceVariant
+                                        }
+
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            implicitHeight: 32
+                                            radius: Theme.r(9)
+                                            color: navGroupWrap.isSelected
+                                                ? Theme.withAlpha(Theme.primary, Theme.isDark ? 0.16 : 0.14)
+                                                : (navMouse.containsMouse ? Theme.hoverBg : "transparent")
+                                            border.width: (navGroupWrap.isSelected && Theme.isSimple) ? 1 : 0
+                                            border.color: Theme.primary
+                                            scale: navMouse.pressed ? 0.98 : 1.0
 
                                             Behavior on color {
-                                                enabled: !Theme.isSimple
-                                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                                                enabled: !Theme.reducedMotion
+                                                ColorAnimation { duration: 130; easing.type: Easing.OutCubic }
                                             }
                                             Behavior on scale {
-                                                enabled: !Theme.isSimple
-                                                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                                enabled: !Theme.reducedMotion
+                                                NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                                            }
+
+                                            // Left Accent Indicator Bar
+                                            Rectangle {
+                                                visible: navGroupWrap.isSelected
+                                                anchors.left: parent.left
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                anchors.leftMargin: 4
+                                                width: 3
+                                                height: 16
+                                                radius: 1.5
+                                                color: Theme.primary
                                             }
 
                                             RowLayout {
                                                 anchors.fill: parent
-                                                anchors.leftMargin: 10
+                                                anchors.leftMargin: 12
                                                 anchors.rightMargin: 10
                                                 spacing: 9
 
                                                 Text {
-                                                    text: navBtn.modelData.icon
+                                                    text: navGroupWrap.modelData.icon
                                                     font.family: Theme.iconFont
-                                                    font.pixelSize: Theme.fs(14)
-                                                    color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                                    font.pixelSize: Theme.fs(13)
+                                                    color: navGroupWrap.isSelected ? Theme.primary : Theme.fgSurfaceVariant
 
                                                     Behavior on color {
-                                                        enabled: !Theme.isSimple
-                                                        ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                                        enabled: !Theme.reducedMotion
+                                                        ColorAnimation { duration: 130; easing.type: Easing.OutCubic }
                                                     }
                                                 }
 
                                                 Text {
                                                     Layout.fillWidth: true
                                                     elide: Text.ElideRight
-                                                    text: navBtn.modelData.label
+                                                    text: navGroupWrap.modelData.label
                                                     font.family: Theme.fontFamily
                                                     font.pixelSize: Theme.fs(12)
-                                                    font.weight: navBtn.isSelected ? Font.Bold : Font.Medium
-                                                    color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurface
-
-                                                    Behavior on color {
-                                                        enabled: !Theme.isSimple
-                                                        ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
-                                                    }
+                                                    font.weight: navGroupWrap.isSelected ? Font.DemiBold : Font.Normal
+                                                    color: Theme.fgSurface
                                                 }
                                             }
 
@@ -568,7 +600,7 @@ PanelWindow {
                                                 anchors.fill: parent
                                                 hoverEnabled: true
                                                 cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.pageSelected(navBtn.modelData.id)
+                                                onClicked: root.pageSelected(navGroupWrap.modelData.id)
                                             }
                                         }
                                     }
@@ -582,7 +614,7 @@ PanelWindow {
                             implicitHeight: rstDrawerCol.implicitHeight + 10
                             radius: Theme.r(9)
                             color: Theme.subCardBg
-                            border.width: Theme.cardBorderWidth
+                            border.width: root.resetMenuOpen ? 1 : Theme.subBorderWidth
                             border.color: root.resetMenuOpen ? Theme.warning : Theme.cardBorder
 
                             ColumnLayout {
@@ -741,7 +773,7 @@ PanelWindow {
                             implicitHeight: 28
                             radius: Theme.r(9)
                             color: Theme.cardBg
-                            border.width: Theme.cardBorderWidth
+                            border.width: Theme.subBorderWidth
                             border.color: Theme.cardBorder
 
                             RowLayout {
@@ -751,7 +783,7 @@ PanelWindow {
                                 spacing: 6
 
                                 Text {
-                                    text: "Mode:"
+                                    text: "Style"
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(10)
                                     color: Theme.fgSurfaceVariant
@@ -760,10 +792,16 @@ PanelWindow {
                                 Text {
                                     Layout.fillWidth: true
                                     horizontalAlignment: Text.AlignRight
-                                    text: Theme.shellMode.toUpperCase()
+                                    text: {
+                                        for (let i = 0; i < Theme.availableModes.length; i++) {
+                                            if (Theme.availableModes[i].id === Theme.shellMode)
+                                                return Theme.availableModes[i].label;
+                                        }
+                                        return "Island";
+                                    }
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(10)
-                                    font.weight: Font.Bold
+                                    font.weight: Font.DemiBold
                                     color: Theme.primary
                                 }
                             }
@@ -775,7 +813,7 @@ PanelWindow {
                 Rectangle {
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    color: Theme.isSimple ? Theme.outlineVariant : Theme.withAlpha(Theme.outlineVariant, 0.45)
+                    color: Theme.isSimple ? Theme.outlineVariant : Theme.hairlineBorder
                 }
 
                 // --- Right Content Area ---
@@ -784,50 +822,63 @@ PanelWindow {
                     Layout.fillHeight: true
                     spacing: 0
 
-                    // Page Header
-                    RowLayout {
+                    // Page Header (anchor-pinned close button so it stays flush top-right at all widths)
+                    Item {
                         Layout.fillWidth: true
-                        Layout.margins: 16
-                        Layout.bottomMargin: 10
-                        spacing: 10
+                        Layout.leftMargin: 20
+                        Layout.rightMargin: 20
+                        Layout.topMargin: 14
+                        Layout.bottomMargin: 12
+                        implicitHeight: Math.max(32, headerTitleCol.implicitHeight)
 
                         ColumnLayout {
-                            Layout.fillWidth: true
+                            id: headerTitleCol
+                            anchors.left: parent.left
+                            anchors.right: headerCloseBtn.left
+                            anchors.rightMargin: 12
+                            anchors.verticalCenter: parent.verticalCenter
                             spacing: 2
 
                             Text {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
                                 text: root.currentNavItem.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(15)
+                                font.pixelSize: Theme.fs(16)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurface
                             }
 
                             Text {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
                                 text: root.currentNavItem.sub
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(10)
+                                font.pixelSize: Theme.fs(11)
                                 color: Theme.fgSurfaceVariant
                             }
                         }
 
                         Rectangle {
-                            implicitWidth: 28
-                            implicitHeight: 28
+                            id: headerCloseBtn
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 28
+                            height: 28
                             radius: Theme.r(14)
                             color: closeBtnMouse.containsMouse
-                                ? Theme.withAlpha(Theme.error, 0.22)
-                                : Theme.cardBg
-                            border.width: Theme.cardBorderWidth
+                                ? Theme.withAlpha(Theme.error, 0.20)
+                                : Theme.subCardBg
+                            border.width: Theme.subBorderWidth
                             border.color: Theme.cardBorder
                             scale: closeBtnMouse.pressed ? 0.90 : 1.0
 
                             Behavior on color {
-                                enabled: !Theme.isSimple
-                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                                enabled: !Theme.reducedMotion
+                                ColorAnimation { duration: 130; easing.type: Easing.OutCubic }
                             }
                             Behavior on scale {
-                                enabled: !Theme.isSimple
+                                enabled: !Theme.reducedMotion
                                 NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
                             }
 
@@ -853,14 +904,17 @@ PanelWindow {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
-                        color: Theme.isSimple ? Theme.outlineVariant : Theme.withAlpha(Theme.outlineVariant, 0.35)
+                        color: Theme.isSimple ? Theme.outlineVariant : Theme.hairlineBorder
                     }
 
                     // Scrollable Page Container with Animated Page Entry
                     Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        Layout.margins: 16
+                        Layout.leftMargin: 20
+                        Layout.rightMargin: 20
+                        Layout.topMargin: 14
+                        Layout.bottomMargin: 14
 
                         Flickable {
                             id: scrollFlick

@@ -16,7 +16,8 @@ Singleton {
     property bool clockShowSeconds: false
     property string dateFormat: "ddd d MMM"
     property bool keepAwake: false
-    property string uiFontFamily: "JetBrains Mono"
+    property string uiFontFamily: "IBM Plex Sans"
+    property string monoFontFamily: "IBM Plex Mono"
     property int uiFontSize: 10
     property string iconTheme: "Adwaita"
     property string matugenType: "scheme-tonal-spot"
@@ -189,6 +190,7 @@ Singleton {
     property int pipMargin: 20
 
     // --- Session Caches (avoid repeated slow subprocess lookups) ---
+    property var cachedSansFonts: []
     property var cachedMonospaceFonts: []
     property var cachedAllFonts: []
     property string cachedExtractedWpPath: ""
@@ -218,6 +220,7 @@ Singleton {
             if (d.dateFormat !== undefined && String(d.dateFormat).length > 0) root.dateFormat = String(d.dateFormat);
             if (d.keepAwake !== undefined) root.keepAwake = !!d.keepAwake;
             if (d.uiFontFamily !== undefined && String(d.uiFontFamily).length > 0) root.uiFontFamily = String(d.uiFontFamily);
+            if (d.monoFontFamily !== undefined && String(d.monoFontFamily).length > 0) root.monoFontFamily = String(d.monoFontFamily);
             if (d.uiFontSize !== undefined) root.uiFontSize = Math.max(8, Math.min(18, Number(d.uiFontSize)));
             if (d.iconTheme !== undefined && String(d.iconTheme).length > 0) root.iconTheme = String(d.iconTheme);
             if (d.matugenType !== undefined && String(d.matugenType).length > 0) root.matugenType = String(d.matugenType);
@@ -359,6 +362,7 @@ Singleton {
         else if (key === "dateFormat") root.dateFormat = String(value);
         else if (key === "keepAwake") root.keepAwake = !!value;
         else if (key === "uiFontFamily") root.uiFontFamily = String(value);
+        else if (key === "monoFontFamily") root.monoFontFamily = String(value);
         else if (key === "uiFontSize") root.uiFontSize = Math.max(8, Math.min(18, Number(value)));
         else if (key === "iconTheme") root.iconTheme = String(value);
         else if (key === "matugenType") root.matugenType = String(value);
@@ -703,6 +707,19 @@ Singleton {
         ]);
     }
 
+    function setMonoFont(family: string, size: int): void {
+        const cleanFam = (family || "").trim();
+        const clampedSize = Math.max(8, Math.min(18, size));
+        if (cleanFam.length === 0)
+            return;
+        root.monoFontFamily = cleanFam;
+        root.uiFontSize = clampedSize;
+        Quickshell.execDetached([
+            Quickshell.shellPath("scripts/manage-settings.sh"),
+            "set-mono-font", cleanFam, String(clampedSize)
+        ]);
+    }
+
     function setNightLight(enabled: bool, temp: int): void {
         const clampedTemp = Math.max(2500, Math.min(6500, temp));
         root.nightLightEnabled = enabled;
@@ -934,7 +951,7 @@ Singleton {
                 root.timerRemainingSec = root.timerDurationSec;
                 Quickshell.execDetached([
                     "sh", "-c",
-                    "command -v notify-send >/dev/null 2>&1 && notify-send -a 'Focus Timer' 'Focus Session Complete' 'Time is up — take a short break!' -t 6000"
+                    "command -v notify-send >/dev/null 2>&1 && notify-send -a 'Focus Timer' 'Focus Session Complete' 'Time is up. Take a short break.' -t 6000"
                 ]);
             }
         }

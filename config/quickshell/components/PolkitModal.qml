@@ -126,7 +126,7 @@ Item {
                                 visible: text.length > 0
                                 text: agent.flow ? (agent.flow.actionId || "") : ""
                                 elide: Text.ElideRight
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurfaceVariant
                             }
@@ -149,7 +149,7 @@ Item {
                         implicitHeight: 32
                         radius: Theme.r(10)
                         color: Theme.cardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         RowLayout {
@@ -261,7 +261,7 @@ Item {
                             implicitWidth: cancelLbl.implicitWidth + 24
                             radius: Theme.r(10)
                             color: cancelMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                            border.width: Theme.cardBorderWidth
+                            border.width: Theme.subBorderWidth
                             border.color: Theme.cardBorder
 
                             Text {

@@ -215,7 +215,7 @@ ColumnLayout {
             visible: DeviceCaps.hasPavucontrol
             radius: Theme.r(10)
             color: pavuMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
 
             RowLayout {
@@ -252,7 +252,7 @@ ColumnLayout {
             implicitWidth: refRow.implicitWidth + 16
             radius: Theme.r(10)
             color: refMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
 
             RowLayout {
@@ -301,7 +301,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "OUTPUT (SPEAKERS & HEADPHONES)"
+                text: "Output (speakers & headphones)"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -317,7 +317,7 @@ ColumnLayout {
                     implicitHeight: 30
                     radius: Theme.r(15)
                     color: outMuteMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -383,7 +383,7 @@ ColumnLayout {
                     Layout.preferredWidth: 42
                     horizontalAlignment: Text.AlignRight
                     text: Math.round(root.outVolume * 100) + "%"
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(11)
                     font.weight: Font.Bold
                     color: root.outVolume > 1.0 ? Theme.warning : Theme.fgSurface
@@ -432,7 +432,7 @@ ColumnLayout {
                         implicitWidth: tstTxt.implicitWidth + 14
                         radius: Theme.r(7)
                         color: tstMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: Theme.cardBorder
 
                         Text {
@@ -470,7 +470,7 @@ ColumnLayout {
                     color: sinkRow.isDefault
                         ? Theme.withAlpha(Theme.primary, 0.20)
                         : (sinkMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: sinkRow.isDefault ? 1 : Theme.cardBorderWidth
+                    border.width: sinkRow.isDefault ? 1 : Theme.subBorderWidth
                     border.color: sinkRow.isDefault ? Theme.primary : Theme.cardBorder
                     scale: sinkMouse.pressed ? 0.98 : 1.0
 
@@ -535,7 +535,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "INPUT (MICROPHONES)"
+                text: "Input (microphones)"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -551,7 +551,7 @@ ColumnLayout {
                     implicitHeight: 30
                     radius: Theme.r(15)
                     color: inMuteMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -615,7 +615,7 @@ ColumnLayout {
                     Layout.preferredWidth: 38
                     horizontalAlignment: Text.AlignRight
                     text: Math.round(root.inVolume * 100) + "%"
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(11)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
@@ -636,7 +636,7 @@ ColumnLayout {
                     color: srcRow.isDefault
                         ? Theme.withAlpha(Theme.secondary, 0.20)
                         : (srcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: srcRow.isDefault ? 1 : Theme.cardBorderWidth
+                    border.width: srcRow.isDefault ? 1 : Theme.subBorderWidth
                     border.color: srcRow.isDefault ? Theme.secondary : Theme.cardBorder
                     scale: srcMouse.pressed ? 0.98 : 1.0
 
@@ -714,7 +714,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "APPLICATION MIXER (ACTIVE STREAMS)"
+                    text: "Application mixer"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -726,7 +726,7 @@ ColumnLayout {
                     implicitWidth: mixRefLbl.implicitWidth + 12
                     radius: Theme.r(7)
                     color: mixRefMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -761,7 +761,7 @@ ColumnLayout {
                     implicitHeight: 44
                     radius: Theme.r(11)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     RowLayout {
@@ -855,7 +855,7 @@ ColumnLayout {
                             Layout.preferredWidth: 38
                             horizontalAlignment: Text.AlignRight
                             text: streamRow.modelData.mute ? "Mute" : (Math.round(streamRow.modelData.vol * 100) + "%")
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: streamRow.modelData.mute ? Theme.error : Theme.fgSurface
@@ -891,7 +891,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "HARDWARE AUDIO CARD PROFILES"
+                text: "Hardware audio card profiles"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -908,7 +908,7 @@ ColumnLayout {
                     implicitHeight: cardBoxCol.implicitHeight + 14
                     radius: Theme.r(10)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     ColumnLayout {
@@ -945,7 +945,7 @@ ColumnLayout {
                                     color: profChip.selected
                                         ? Theme.withAlpha(Theme.secondary, 0.22)
                                         : (profMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                                    border.width: profChip.selected ? 1 : Theme.cardBorderWidth
+                                    border.width: profChip.selected ? 1 : Theme.subBorderWidth
                                     border.color: profChip.selected ? Theme.secondary : Theme.cardBorder
 
                                     Text {

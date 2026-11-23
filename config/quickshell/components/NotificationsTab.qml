@@ -261,13 +261,15 @@ RowLayout {
                             Text {
                                 anchors.centerIn: parent
                                 text: dayCell.modelData.day
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: 10
                                 font.weight: dayCell.modelData.isToday ? Font.Bold : Font.Medium
                                 color: {
                                     if (dayCell.modelData.isToday)
                                         return Theme.fgPrimary;
-                                    return dayCell.modelData.inMonth ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.40);
+                                    return dayCell.modelData.inMonth
+                                        ? Theme.fgSurface
+                                        : Theme.withAlpha(Theme.fgSurfaceVariant, Theme.isDark ? 0.62 : 0.68);
                                 }
                             }
 
@@ -358,59 +360,68 @@ RowLayout {
                     Layout.fillHeight: false
                     spacing: 4
 
-                    Rectangle {
-                        implicitHeight: 22
-                        implicitWidth: segTimerRow.implicitWidth + 6
-                        radius: Theme.r(11)
-                        color: Theme.subCardBg
+                    RowLayout {
+                        spacing: 12
 
-                        RowLayout {
-                            id: segTimerRow
-                            anchors.centerIn: parent
-                            spacing: 2
+                        Item {
+                            implicitWidth: tglTimerCol.implicitWidth
+                            implicitHeight: tglTimerCol.implicitHeight
 
-                            Rectangle {
-                                implicitHeight: 18
-                                implicitWidth: tglTimerLbl.implicitWidth + 10
-                                radius: Theme.r(9)
-                                color: root.timerMode === "timer" ? Theme.primary : "transparent"
-
+                            Column {
+                                id: tglTimerCol
+                                spacing: 2
                                 Text {
-                                    id: tglTimerLbl
-                                    anchors.centerIn: parent
-                                    text: "󰔛 Timer"
+                                    text: "Timer"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
-                                    font.weight: Font.Bold
-                                    color: root.timerMode === "timer" ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                    font.pixelSize: 10
+                                    font.weight: root.timerMode === "timer" ? Font.Bold : Font.Medium
+                                    color: root.timerMode === "timer" ? Theme.primary : Theme.fgSurfaceVariant
                                 }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.timerMode = "timer"
+                                Rectangle {
+                                    width: parent.width
+                                    height: 2
+                                    radius: 1
+                                    color: Theme.primary
+                                    visible: root.timerMode === "timer"
                                 }
                             }
 
-                            Rectangle {
-                                implicitHeight: 18
-                                implicitWidth: tglSwLbl.implicitWidth + 10
-                                radius: Theme.r(9)
-                                color: root.timerMode === "stopwatch" ? Theme.primary : "transparent"
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.timerMode = "timer"
+                            }
+                        }
 
+                        Item {
+                            implicitWidth: tglSwCol.implicitWidth
+                            implicitHeight: tglSwCol.implicitHeight
+
+                            Column {
+                                id: tglSwCol
+                                spacing: 2
                                 Text {
-                                    id: tglSwLbl
-                                    anchors.centerIn: parent
-                                    text: "󱎫 Sw"
+                                    text: "Stopwatch"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
-                                    font.weight: Font.Bold
-                                    color: root.timerMode === "stopwatch" ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                    font.pixelSize: 10
+                                    font.weight: root.timerMode === "stopwatch" ? Font.Bold : Font.Medium
+                                    color: root.timerMode === "stopwatch" ? Theme.primary : Theme.fgSurfaceVariant
                                 }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.timerMode = "stopwatch"
+                                Rectangle {
+                                    width: parent.width
+                                    height: 2
+                                    radius: 1
+                                    color: Theme.primary
+                                    visible: root.timerMode === "stopwatch"
                                 }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.timerMode = "stopwatch"
                             }
                         }
                     }
@@ -422,7 +433,7 @@ RowLayout {
                         text: root.timerMode === "timer"
                             ? ShellState.formatTimer(ShellState.timerRemainingSec)
                             : ShellState.formatTimer(ShellState.stopwatchElapsedSec)
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: 17
                         font.weight: Font.Bold
                         color: (root.timerMode === "timer" ? ShellState.timerActive : ShellState.stopwatchActive)
@@ -731,7 +742,7 @@ RowLayout {
                         elide: Text.ElideRight
                         text: ShellState.weatherAvailable
                             ? (ShellState.weatherCity + " · 󰖎 " + ShellState.weatherHumidity + " · " + ShellState.weatherWind)
-                            : "Click refresh or check Settings → Shell"
+                            : "Click refresh or check Settings under Shell"
                         font.family: Theme.fontFamily
                         font.pixelSize: 9
                         color: Theme.fgSurfaceVariant
@@ -783,9 +794,9 @@ RowLayout {
                     Layout.fillWidth: true
 
                     Text {
-                        text: "󰎞  NOTES"
+                        text: "Notes"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: 10
                         font.weight: Font.Bold
                         color: Theme.fgSurfaceVariant
                     }
@@ -909,7 +920,7 @@ RowLayout {
                     color: ShellState.dnd
                         ? Theme.withAlpha(Theme.warning, 0.20)
                         : (dndMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: Theme.cardBorderWidth
+                    border.width: ShellState.dnd ? 1 : Theme.subBorderWidth
                     border.color: ShellState.dnd ? Theme.warning : Theme.cardBorder
 
                     RowLayout {
@@ -947,7 +958,7 @@ RowLayout {
                     implicitWidth: clrAllLbl.implicitWidth + 12
                     radius: Theme.r(12)
                     color: clrAllMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.20) : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: clrAllMouse.containsMouse ? Theme.error : Theme.cardBorder
 
                     Text {
@@ -991,7 +1002,7 @@ RowLayout {
                         implicitHeight: nCol.implicitHeight + 18
                         radius: Theme.r(14)
                         color: Theme.subCardBg
-                        border.width: nCard.urgent ? 1 : Theme.cardBorderWidth
+                        border.width: nCard.urgent ? 1 : Theme.subBorderWidth
                         border.color: nCard.urgent ? Theme.withAlpha(Theme.error, 0.65) : Theme.cardBorder
                         clip: true
 
@@ -1035,16 +1046,16 @@ RowLayout {
                                 }
 
                                 Text {
-                                    text: (nCard.modelData.appName || "System").toUpperCase()
+                                    text: nCard.modelData.appName || "System"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
-                                    font.weight: Font.Bold
+                                    font.pixelSize: 10
+                                    font.weight: Font.DemiBold
                                     color: nCard.urgent ? Theme.error : Theme.primary
                                 }
 
                                 Text {
                                     text: nCard.modelData.timeStr || ""
-                                    font.family: Theme.fontFamily
+                                    font.family: Theme.monoFont
                                     font.pixelSize: 9
                                     color: Theme.fgSurfaceVariant
                                 }
@@ -1077,6 +1088,11 @@ RowLayout {
 
                             Text {
                                 Layout.fillWidth: true
+                                visible: {
+                                    const s = String(nCard.modelData.summary || "").trim();
+                                    const a = String(nCard.modelData.appName || "System").trim();
+                                    return s.length > 0 && s.toLowerCase() !== a.toLowerCase();
+                                }
                                 text: nCard.modelData.summary || ""
                                 elide: Text.ElideRight
                                 maximumLineCount: 1

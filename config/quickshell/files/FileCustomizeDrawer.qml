@@ -113,9 +113,9 @@ Rectangle {
                     spacing: 6
 
                     Text {
-                        text: "QUICK WORKFLOW PRESETS"
+                        text: "Quick workflow presets"
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(9)
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgSurfaceVariant
                     }
@@ -204,9 +204,9 @@ Rectangle {
                         spacing: 8
 
                         Text {
-                            text: "LAYOUT & WINDOW"
+                            text: "Layout & window"
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(9)
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Theme.fgSurfaceVariant
                         }
@@ -329,9 +329,9 @@ Rectangle {
                         spacing: 8
 
                         Text {
-                            text: "SURFACE, COLOR & TYPOGRAPHY"
+                            text: "Surface, color & typography"
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(9)
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Theme.fgSurfaceVariant
                         }
@@ -533,9 +533,9 @@ Rectangle {
                         spacing: 8
 
                         Text {
-                            text: "FILES, COLUMNS & STARTUP"
+                            text: "Files, columns & startup"
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(9)
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Theme.fgSurfaceVariant
                         }

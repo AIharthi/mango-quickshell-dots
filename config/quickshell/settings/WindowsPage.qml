@@ -275,7 +275,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "PICTURE-IN-PICTURE (PiP)"
+                    text: "Picture-in-Picture (PiP)"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -287,7 +287,7 @@ ColumnLayout {
                     implicitWidth: pipMoveLbl.implicitWidth + 12
                     radius: Theme.r(7)
                     color: pipMoveMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -437,7 +437,7 @@ ColumnLayout {
                         color: pipCorChip.selected
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (pipCorMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: pipCorChip.selected ? 1 : Theme.cardBorderWidth
+                        border.width: pipCorChip.selected ? 1 : Theme.subBorderWidth
                         border.color: pipCorChip.selected ? Theme.primary : Theme.cardBorder
 
                         Text {
@@ -494,7 +494,7 @@ ColumnLayout {
                         color: pipSzChip.selected
                             ? Theme.withAlpha(Theme.secondary, 0.22)
                             : (pipSzMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: pipSzChip.selected ? 1 : Theme.cardBorderWidth
+                        border.width: pipSzChip.selected ? 1 : Theme.subBorderWidth
                         border.color: pipSzChip.selected ? Theme.secondary : Theme.cardBorder
 
                         Text {
@@ -560,7 +560,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "FOCUS & CURSOR"
+                text: "Focus & cursor"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -636,7 +636,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "TILING & LAYOUTS"
+                text: "Tiling & layouts"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -732,7 +732,7 @@ ColumnLayout {
                         color: scrollerChip.selected
                             ? Theme.withAlpha(Theme.secondary, 0.22)
                             : (scMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: scrollerChip.selected ? 1 : Theme.cardBorderWidth
+                        border.width: scrollerChip.selected ? 1 : Theme.subBorderWidth
                         border.color: scrollerChip.selected ? Theme.secondary : Theme.cardBorder
                         scale: scMouse.pressed ? 0.95 : 1.0
 
@@ -783,7 +783,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "FLOATING WINDOWS"
+                text: "Floating windows"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -847,7 +847,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "EXTENDED LAYOUT, CROSS-MONITOR & HOT CORNERS"
+                text: "Extended layout, cross-monitor & hot corners"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -975,7 +975,7 @@ ColumnLayout {
                         implicitHeight: 24
                         radius: Theme.r(7)
                         color: hcBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                        border.width: hcBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.width: hcBtn.selected ? 1 : Theme.subBorderWidth
                         border.color: hcBtn.selected ? Theme.secondary : Theme.cardBorder
 
                         Text {
@@ -1029,7 +1029,7 @@ ColumnLayout {
             spacing: 8
 
             Text {
-                text: "PER-WORKSPACE DEFAULT LAYOUTS (TAG RULES)"
+                text: "Per-workspace default layouts"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -1068,14 +1068,14 @@ ColumnLayout {
                             implicitWidth: lTxt.implicitWidth + 10
                             radius: Theme.r(6)
                             color: lChip.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                            border.width: lChip.selected ? 1 : Theme.cardBorderWidth
+                            border.width: lChip.selected ? 1 : Theme.subBorderWidth
                             border.color: lChip.selected ? Theme.primary : Theme.cardBorder
 
                             Text {
                                 id: lTxt
                                 anchors.centerIn: parent
                                 text: lChip.modelData
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(9)
                                 font.weight: lChip.selected ? Font.Bold : Font.Normal
                                 color: lChip.selected ? Theme.primary : Theme.fgSurface
@@ -1126,7 +1126,7 @@ ColumnLayout {
                     implicitHeight: 28
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: appIdIn.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.width: appIdIn.activeFocus ? 1 : Theme.subBorderWidth
                     border.color: appIdIn.activeFocus ? Theme.primary : Theme.cardBorder
 
                     Item {
@@ -1147,7 +1147,7 @@ ColumnLayout {
                             id: appIdIn
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
@@ -1160,7 +1160,7 @@ ColumnLayout {
                     implicitWidth: 64
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Item {
@@ -1247,7 +1247,7 @@ ColumnLayout {
                         implicitWidth: wrFlTxt.implicitWidth + 12
                         radius: Theme.r(6)
                         color: wrFlagChip.active ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                        border.width: wrFlagChip.active ? 1 : Theme.cardBorderWidth
+                        border.width: wrFlagChip.active ? 1 : Theme.subBorderWidth
                         border.color: wrFlagChip.active ? Theme.secondary : Theme.cardBorder
 
                         Text {
@@ -1295,7 +1295,7 @@ ColumnLayout {
                     implicitHeight: 30
                     radius: Theme.r(8)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     RowLayout {
@@ -1308,7 +1308,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                             text: "window_rule=" + wrRow.modelData
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                         }

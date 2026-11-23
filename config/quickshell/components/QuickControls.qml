@@ -9,6 +9,7 @@ Rectangle {
     id: root
 
     property bool active: false
+    property bool hideDuplicateToggles: false
     signal draggingChanged(bool dragging)
     signal openSettingsRequested(string page)
 
@@ -239,7 +240,7 @@ Rectangle {
             Layout.fillHeight: false
 
             Text {
-                text: "󰒓  QUICK CONTROLS"
+                text: "Quick Controls"
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
@@ -271,7 +272,7 @@ Rectangle {
                     anchors.fill: parent
                     radius: Theme.r(16)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
                     clip: true
 
@@ -324,7 +325,7 @@ Rectangle {
 
                         Text {
                             text: Math.round(root.volumeLevel * 100) + "%"
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: 10
                             font.weight: Font.Bold
                             color: root.volumeLevel > 0.88 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface
@@ -363,7 +364,7 @@ Rectangle {
                 color: root.micMuted
                     ? Theme.withAlpha(Theme.error, 0.20)
                     : (micMuteArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: root.micMuted ? 1 : Theme.cardBorderWidth
+                border.width: root.micMuted ? 1 : Theme.subBorderWidth
                 border.color: root.micMuted ? Theme.error : Theme.cardBorder
 
                 Text {
@@ -400,7 +401,7 @@ Rectangle {
                 anchors.fill: parent
                 radius: Theme.r(16)
                 color: Theme.subCardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
                 clip: true
 
@@ -443,7 +444,7 @@ Rectangle {
 
                     Text {
                         text: root.brightnessSupported ? (Math.round(root.brightnessLevel * 100) + "%") : "N/A"
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: 10
                         font.weight: Font.Bold
                         color: root.brightnessLevel > 0.88 ? Theme.fgPrimary : Theme.fgSurface
@@ -491,7 +492,7 @@ Rectangle {
                 color: root.wifiEnabled
                     ? Theme.withAlpha(Theme.primary, 0.22)
                     : (wifiArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: Theme.cardBorderWidth
+                border.width: root.wifiEnabled ? 1 : Theme.subBorderWidth
                 border.color: root.wifiEnabled ? Theme.primary : Theme.cardBorder
                 scale: wifiArea.pressed ? 0.97 : 1.0
 
@@ -555,7 +556,7 @@ Rectangle {
                 color: root.btEnabled
                     ? Theme.withAlpha(Theme.secondary, 0.22)
                     : (btArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: Theme.cardBorderWidth
+                border.width: root.btEnabled ? 1 : Theme.subBorderWidth
                 border.color: root.btEnabled ? Theme.secondary : Theme.cardBorder
                 scale: btArea.pressed ? 0.97 : 1.0
 
@@ -616,10 +617,10 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: false
             implicitHeight: 32
-            visible: !DeviceCaps.hasExtraQuickControls
+            visible: !DeviceCaps.hasExtraQuickControls && !root.hideDuplicateToggles
             radius: Theme.r(11)
             color: audioSettingsArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
             scale: audioSettingsArea.pressed ? 0.97 : 1.0
 
@@ -704,12 +705,19 @@ Rectangle {
             spacing: 6
 
             Repeater {
-                model: [
-                    { id: "shot",  label: "Capture", icon: "󰹑", active: false, accent: Theme.primary },
-                    { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
-                    { id: "game",  label: "Game",    icon: "󰊴", active: ShellState.gameModeActive, accent: Theme.tertiary },
-                    { id: "wins",  label: "Windows", icon: "󰖯", active: false, accent: Theme.secondary }
-                ]
+                model: root.hideDuplicateToggles
+                    ? [
+                        { id: "shot",  label: "Capture", icon: "󰹑", active: false, accent: Theme.primary },
+                        { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
+                        { id: "keys",  label: "Keys",    icon: "󰌌", active: false, accent: Theme.tertiary },
+                        { id: "wins",  label: "Windows", icon: "󰖯", active: false, accent: Theme.secondary }
+                    ]
+                    : [
+                        { id: "shot",  label: "Capture", icon: "󰹑", active: false, accent: Theme.primary },
+                        { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
+                        { id: "game",  label: "Game",    icon: "󰊴", active: ShellState.gameModeActive, accent: Theme.tertiary },
+                        { id: "wins",  label: "Windows", icon: "󰖯", active: false, accent: Theme.secondary }
+                    ]
 
                 delegate: Rectangle {
                     id: qaBtn
@@ -720,7 +728,7 @@ Rectangle {
                     color: qaBtn.modelData.active
                         ? Theme.withAlpha(qaBtn.modelData.accent, 0.24)
                         : (qaMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: qaBtn.modelData.active ? 1 : Theme.cardBorderWidth
+                    border.width: qaBtn.modelData.active ? 1 : Theme.subBorderWidth
                     border.color: qaBtn.modelData.active ? qaBtn.modelData.accent : Theme.cardBorder
                     scale: qaMouse.pressed ? 0.94 : 1.0
 
@@ -759,6 +767,8 @@ Rectangle {
                                 Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "toggle", "--area"]);
                             } else if (aid === "game") {
                                 ShellState.toggleGameMode();
+                            } else if (aid === "keys") {
+                                Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleKeybindSheet"]);
                             } else if (aid === "wins") {
                                 Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleWindowSwitcher"]);
                             }
@@ -776,7 +786,7 @@ Rectangle {
                 color: ShellState.nightLightEnabled
                     ? Theme.withAlpha(Theme.warning, 0.24)
                     : (nlMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: ShellState.nightLightEnabled ? 1 : Theme.cardBorderWidth
+                border.width: ShellState.nightLightEnabled ? 1 : Theme.subBorderWidth
                 border.color: ShellState.nightLightEnabled ? Theme.warning : Theme.cardBorder
 
                 Text {
@@ -807,7 +817,7 @@ Rectangle {
             implicitHeight: 32
             radius: Theme.r(12)
             color: styleSummaryMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            border.width: Theme.cardBorderWidth
+            border.width: Theme.subBorderWidth
             border.color: Theme.cardBorder
             scale: styleSummaryMouse.pressed ? 0.97 : 1.0
 
@@ -846,7 +856,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: "Appearance →"
+                    text: "Appearance"
                     font.family: Theme.fontFamily
                     font.pixelSize: 9
                     font.weight: Font.DemiBold

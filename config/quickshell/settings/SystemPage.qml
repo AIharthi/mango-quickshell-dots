@@ -207,7 +207,7 @@ ColumnLayout {
             spacing: 8
 
             Text {
-                text: "DEVICE & HARDWARE"
+                text: "Device & hardware"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -272,7 +272,7 @@ ColumnLayout {
                     implicitHeight: cpuCol.implicitHeight + 12
                     radius: Theme.r(9)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     ColumnLayout {
@@ -282,7 +282,7 @@ ColumnLayout {
                         spacing: 2
 
                         Text {
-                            text: "PROCESSOR & MEMORY"
+                            text: "Processor & memory"
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
@@ -301,7 +301,7 @@ ColumnLayout {
 
                         Text {
                             text: "RAM: " + root.memUsedGb.toFixed(1) + " / " + root.memTotalGb.toFixed(1) + " GB (" + root.memUsedPct + "%)"
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             color: Theme.secondary
                         }
@@ -313,7 +313,7 @@ ColumnLayout {
                     implicitHeight: gpuCol.implicitHeight + 12
                     radius: Theme.r(9)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     ColumnLayout {
@@ -323,7 +323,7 @@ ColumnLayout {
                         spacing: 2
 
                         Text {
-                            text: "GRAPHICS & SESSION"
+                            text: "Graphics & session"
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
@@ -380,7 +380,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "DATE & TIME FORMAT"
+                    text: "Date & time format"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -392,14 +392,14 @@ ColumnLayout {
                     implicitWidth: previewClockTxt.implicitWidth + 14
                     radius: Theme.r(7)
                     color: Theme.withAlpha(Theme.primary, 0.16)
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.withAlpha(Theme.primary, 0.4)
 
                     Text {
                         id: previewClockTxt
                         anchors.centerIn: parent
                         text: ShellState.formatTime(sysClock.date) + "  ·  " + ShellState.formatDate(sysClock.date)
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
@@ -461,14 +461,14 @@ ColumnLayout {
                         color: dfPill.selected
                             ? Theme.withAlpha(Theme.secondary, 0.22)
                             : (dfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: dfPill.selected ? 1 : Theme.cardBorderWidth
+                        border.width: dfPill.selected ? 1 : Theme.subBorderWidth
                         border.color: dfPill.selected ? Theme.secondary : Theme.cardBorder
 
                         Text {
                             id: dfTxt
                             anchors.centerIn: parent
                             text: Qt.formatDateTime(sysClock.date, dfPill.modelData)
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             font.weight: dfPill.selected ? Font.Bold : Font.Medium
                             color: dfPill.selected ? Theme.secondary : Theme.fgSurface
@@ -515,7 +515,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "DISK STORAGE"
+                    text: "Disk storage"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -538,7 +538,7 @@ ColumnLayout {
                     implicitHeight: diskInner.implicitHeight + 14
                     radius: Theme.r(10)
                     color: Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     ColumnLayout {
@@ -627,7 +627,7 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "DETECTED HARDWARE CAPABILITIES"
+                    text: "Detected hardware capabilities"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -641,7 +641,7 @@ ColumnLayout {
                     implicitWidth: redetectLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: redetectMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.cardBorderWidth
+                    border.width: Theme.subBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -701,7 +701,7 @@ ColumnLayout {
                         color: capBadge.modelData.ok
                             ? Theme.withAlpha(Theme.success, 0.16)
                             : Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: capBadge.modelData.ok ? Theme.withAlpha(Theme.success, 0.45) : Theme.cardBorder
 
                         RowLayout {
@@ -745,7 +745,7 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "POWER, IDLE & SESSION"
+                text: "Power, idle & session"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -797,7 +797,7 @@ ColumnLayout {
                 spacing: 6
 
                 Text {
-                    text: "POWER PROFILE"
+                    text: "Power profile"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
@@ -822,7 +822,7 @@ ColumnLayout {
                             color: ppPill.selected
                                 ? Theme.withAlpha(Theme.primary, 0.22)
                                 : (ppMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: ppPill.selected ? 1 : Theme.cardBorderWidth
+                            border.width: ppPill.selected ? 1 : Theme.subBorderWidth
                             border.color: ppPill.selected ? Theme.primary : Theme.cardBorder
 
                             Text {
@@ -893,7 +893,7 @@ ColumnLayout {
                 implicitWidth: reloadWmLbl.implicitWidth + 16
                 radius: Theme.r(8)
                 color: reloadWmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
                 scale: reloadWmMouse.pressed ? 0.95 : 1.0
 
@@ -930,7 +930,7 @@ ColumnLayout {
                 implicitWidth: rstLocalLbl.implicitWidth + 16
                 radius: Theme.r(8)
                 color: rstLocalMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
-                border.width: Theme.cardBorderWidth
+                border.width: Theme.subBorderWidth
                 border.color: Theme.cardBorder
                 scale: rstLocalMouse.pressed ? 0.95 : 1.0
 
@@ -1009,7 +1009,7 @@ ColumnLayout {
             spacing: 8
 
             Text {
-                text: "USER ACCOUNT, BACKUP & RESET"
+                text: "User account, backup & reset"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
@@ -1079,7 +1079,7 @@ ColumnLayout {
                         implicitWidth: bkpItemRow.implicitWidth + 12
                         radius: Theme.r(7)
                         color: bkpItemMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                        border.width: Theme.cardBorderWidth
+                        border.width: Theme.subBorderWidth
                         border.color: bkpItemMouse.containsMouse ? Theme.primary : Theme.cardBorder
 
                         RowLayout {
@@ -1087,7 +1087,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 5
                             Text { text: "󰑐 Restore " + bkpItem.modelData.name; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Medium; color: Theme.fgSurface }
-                            Text { text: "(" + bkpItem.modelData.sizeKb + " KB)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); color: Theme.primary }
+                            Text { text: "(" + bkpItem.modelData.sizeKb + " KB)"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(8); color: Theme.primary }
                         }
 
                         MouseArea {

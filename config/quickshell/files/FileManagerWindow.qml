@@ -189,6 +189,31 @@ PanelWindow {
         return false;
     }
 
+    function displayBreadcrumbs(rawList: var): var {
+        const raw = Array.isArray(rawList) ? rawList : [];
+        const home = Quickshell.env("HOME") || "";
+        if (home.length > 0) {
+            for (let i = 0; i < raw.length; i++) {
+                if (String(raw[i].path || "") === home) {
+                    const out = [{ label: "Home", path: home, isHome: true }];
+                    for (let j = i + 1; j < raw.length; j++) {
+                        out.push({
+                            label: String(raw[j].label || ""),
+                            path: String(raw[j].path || ""),
+                            isHome: false
+                        });
+                    }
+                    return out;
+                }
+            }
+        }
+        return raw.map(c => ({
+            label: String(c.label || ""),
+            path: String(c.path || ""),
+            isHome: false
+        }));
+    }
+
     function refreshPlaces(): void {
         backend.getPlaces((ok, data, err) => {
             if (ok && data)
@@ -1190,7 +1215,7 @@ PanelWindow {
                     Rectangle {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: bkMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
                         opacity: (parent.ap && parent.ap.histIndex > 0) ? 1.0 : 0.45
                         Text { anchors.centerIn: parent; text: "󰁍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
                         MouseArea { id: bkMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.goBack() }
@@ -1199,7 +1224,7 @@ PanelWindow {
                     Rectangle {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: fwMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
                         opacity: (parent.ap && parent.ap.histIndex + 1 < parent.ap.history.length) ? 1.0 : 0.45
                         Text { anchors.centerIn: parent; text: "󰁔"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
                         MouseArea { id: fwMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.goForward() }
@@ -1208,7 +1233,7 @@ PanelWindow {
                     Rectangle {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: upBtnMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
                         opacity: (parent.ap && !parent.ap.isTrashView && parent.ap.parent.length > 0) ? 1.0 : 0.45
                         Text { anchors.centerIn: parent; text: "󰁝"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
                         MouseArea { id: upBtnMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.goUp() }
@@ -1251,7 +1276,7 @@ PanelWindow {
                                     }
 
                                     Repeater {
-                                        model: (root.activePane() && !root.activePane().isTrashView) ? (root.activePane().breadcrumbs || []) : []
+                                        model: (root.activePane() && !root.activePane().isTrashView) ? root.displayBreadcrumbs(root.activePane().breadcrumbs) : []
                                         delegate: RowLayout {
                                             id: crumbWrap
                                             required property var modelData
@@ -1260,26 +1285,39 @@ PanelWindow {
 
                                             Text {
                                                 visible: crumbWrap.index > 0
-                                                text: "/"
-                                                font.family: Theme.fontFamily
+                                                text: "󰅂"
+                                                font.family: Theme.iconFont
                                                 font.pixelSize: Theme.fs(10)
-                                                color: Theme.outline
+                                                color: Theme.fgSurfaceVariant
                                             }
 
                                             Rectangle {
                                                 implicitHeight: 20
-                                                implicitWidth: cbLbl.implicitWidth + 10
+                                                implicitWidth: cbRow.implicitWidth + 10
                                                 radius: Theme.r(5)
                                                 color: cbMouse.containsMouse ? Theme.hoverBg : "transparent"
 
-                                                Text {
-                                                    id: cbLbl
+                                                RowLayout {
+                                                    id: cbRow
                                                     anchors.centerIn: parent
-                                                    text: String(crumbWrap.modelData.label || "/")
-                                                    font.family: Theme.fontFamily
-                                                    font.pixelSize: Theme.fs(10)
-                                                    font.weight: Font.Medium
-                                                    color: Theme.fgSurface
+                                                    spacing: 4
+
+                                                    Text {
+                                                        visible: !!crumbWrap.modelData.isHome
+                                                        text: "󰋜"
+                                                        font.family: Theme.iconFont
+                                                        font.pixelSize: Theme.fs(11)
+                                                        color: Theme.fgSurfaceVariant
+                                                    }
+
+                                                    Text {
+                                                        id: cbLbl
+                                                        text: String(crumbWrap.modelData.label || "/")
+                                                        font.family: Theme.fontFamily
+                                                        font.pixelSize: Theme.fs(10)
+                                                        font.weight: Font.Medium
+                                                        color: Theme.fgSurface
+                                                    }
                                                 }
                                                 MouseArea {
                                                     id: cbMouse
@@ -1325,7 +1363,7 @@ PanelWindow {
                                 id: pathInput
                                 Layout.fillWidth: true
                                 color: Theme.fgSurface
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(11)
                                 placeholderText: "Enter path (e.g. ~/Pictures or /etc)..."
                                 placeholderTextColor: Theme.fgSurfaceVariant
@@ -1424,7 +1462,7 @@ PanelWindow {
                     Rectangle {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: mkdMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
                         Text { anchors.centerIn: parent; text: "󰉖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
                         MouseArea { id: mkdMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openPrompt("mkdir", "New Folder Name", "New Folder", null) }
                     }
@@ -1432,7 +1470,7 @@ PanelWindow {
                     Rectangle {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: mkfMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
                         Text { anchors.centerIn: parent; text: "󰈤"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
                         MouseArea { id: mkfMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openPrompt("touch", "New File Name", "notes.txt", null) }
                     }
@@ -1441,7 +1479,7 @@ PanelWindow {
                     Rectangle {
                         implicitHeight: 28; implicitWidth: sortLbl.implicitWidth + 14; radius: Theme.r(8)
                         color: srtMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
 
                         Text {
                             id: sortLbl
@@ -1477,7 +1515,7 @@ PanelWindow {
                     Rectangle {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: ShellState.fmShowHidden ? Theme.withAlpha(fstyle.accent, 0.22) : (hidMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                        border.width: 1; border.color: ShellState.fmShowHidden ? fstyle.accent : Theme.cardBorder
+                        border.width: ShellState.fmShowHidden ? 1 : Theme.subBorderWidth; border.color: ShellState.fmShowHidden ? fstyle.accent : Theme.cardBorder
                         Text { anchors.centerIn: parent; text: ShellState.fmShowHidden ? "󰈈" : "󰈉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: ShellState.fmShowHidden ? fstyle.accent : Theme.fgSurfaceVariant }
                         MouseArea { id: hidMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmShowHidden", !ShellState.fmShowHidden) }
                     }
@@ -1485,7 +1523,7 @@ PanelWindow {
                     Rectangle {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: trmMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
                         Text { anchors.centerIn: parent; text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
                         MouseArea {
                             id: trmMouse
@@ -1535,9 +1573,9 @@ PanelWindow {
 
                                 Text {
                                     visible: !sbCard.iconsOnly
-                                    text: "PLACES"
+                                    text: "Places"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(9)
+                                    font.pixelSize: Theme.fs(10)
                                     font.weight: Font.Bold
                                     color: Theme.fgSurfaceVariant
                                 }
@@ -1651,9 +1689,9 @@ PanelWindow {
 
                                     Text {
                                         Layout.fillWidth: true
-                                        text: "BOOKMARKS"
+                                        text: "Bookmarks"
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fs(9)
+                                        font.pixelSize: Theme.fs(10)
                                         font.weight: Font.Bold
                                         color: Theme.fgSurfaceVariant
                                     }
@@ -1746,9 +1784,9 @@ PanelWindow {
                                 Text {
                                     visible: ShellState.fmSidebarStyle !== "icons" && (root.placesData.drives || []).length > 0
                                     Layout.topMargin: 6
-                                    text: "DRIVES"
+                                    text: "Drives"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(9)
+                                    font.pixelSize: Theme.fs(10)
                                     font.weight: Font.Bold
                                     color: Theme.fgSurfaceVariant
                                 }

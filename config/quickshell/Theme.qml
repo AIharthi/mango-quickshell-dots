@@ -86,7 +86,8 @@ Singleton {
     ]
 
     // --- Typography & Design Tokens ---
-    readonly property string fontFamily: ShellState.uiFontFamily.length > 0 ? ShellState.uiFontFamily : "JetBrains Mono"
+    readonly property string fontFamily: ShellState.uiFontFamily.length > 0 ? ShellState.uiFontFamily : "IBM Plex Sans"
+    readonly property string monoFont: ShellState.monoFontFamily.length > 0 ? ShellState.monoFontFamily : "IBM Plex Mono"
     readonly property string iconFont: "Symbols Nerd Font"
     readonly property bool reducedMotion: isSimple || ShellState.reducedMotion
     readonly property int animFast: reducedMotion ? 0 : 110
@@ -189,7 +190,7 @@ Singleton {
             return outlineVariant;
         if (isBlur || ShellState.surfaceStyle === "glass")
             return isDark ? withAlpha(fgSurface, 0.22) : withAlpha(outline, 0.32);
-        return withAlpha(fgSurface, 0.14);
+        return isDark ? withAlpha(fgSurface, 0.13) : withAlpha(outline, 0.24);
     }
     readonly property int islandBorderWidth: {
         if (ShellState.borderStyle === "none" || ShellState.uiBorderWidth <= 0)
@@ -279,13 +280,15 @@ Singleton {
             return isDark ? withAlpha(fgSurface, 0.16) : withAlpha(outline, 0.25);
         if (isSimple)
             return outlineVariant;
-        return isDark ? withAlpha(fgSurface, 0.12) : withAlpha(outline, 0.22);
+        return isDark ? withAlpha(fgSurface, 0.09) : withAlpha(outline, 0.20);
     }
     readonly property int cardBorderWidth: {
         if (ShellState.borderStyle === "none" || ShellState.uiBorderWidth <= 0)
             return 0;
         return ShellState.uiBorderWidth;
     }
+    readonly property int subBorderWidth: (ShellState.highContrast || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow" || isRetro || isSimple) ? cardBorderWidth : 0
+    readonly property color hairlineBorder: isDark ? withAlpha(fgSurface, 0.08) : withAlpha(outline, 0.18)
     readonly property color hoverBg: withAlpha(primary, 0.14)
     readonly property color activeBg: withAlpha(primary, 0.22)
 
