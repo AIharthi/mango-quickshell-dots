@@ -46,6 +46,8 @@ Singleton {
     property string batteryStatus: "Full"
     property bool batteryCharging: false
     property bool batteryLow: false
+    property bool _warned15: false
+    property bool _warned5: false
 
     readonly property string batteryIcon: {
         if (root.batteryCharging)
@@ -149,6 +151,23 @@ Singleton {
                     root.batteryStatus = st;
                     root.batteryCharging = (d.charging !== undefined) ? !!d.charging : (st === "Charging" || st === "Full");
                     root.batteryLow = (!root.batteryCharging && root.batteryPercent <= 20);
+                    if (root.batteryCharging) {
+                        root._warned15 = false;
+                        root._warned5 = false;
+                    } else if (root.batteryPercent <= 5 && !root._warned5) {
+                        root._warned5 = true;
+                        root._warned15 = true;
+                        Quickshell.execDetached([
+                            "sh", "-c",
+                            "command -v notify-send >/dev/null 2>&1 && notify-send -a 'Battery' -u critical \"Critical Battery (" + root.batteryPercent + "%)\" 'Connect charger immediately to prevent shutdown.'"
+                        ]);
+                    } else if (root.batteryPercent <= 15 && !root._warned15) {
+                        root._warned15 = true;
+                        Quickshell.execDetached([
+                            "sh", "-c",
+                            "command -v notify-send >/dev/null 2>&1 && notify-send -a 'Battery' -u normal \"Low Battery (" + root.batteryPercent + "%)\" 'Battery is running low — plug in charger soon.'"
+                        ]);
+                    }
                 } catch (err) {}
             }
         }

@@ -49,11 +49,27 @@ Singleton {
     property bool highContrast: false
     property bool audioOverAmp: false
 
-    // --- Screenshots ---
+    // --- Screenshots & Recording ---
     property string screenshotDir: "~/Pictures/Screenshots"
     property bool screenshotCopyClipboard: true
     property bool screenshotNotify: true
     property int screenshotDelay: 0
+    property string recordingDir: "~/Videos/Recordings"
+
+    // --- Idle Power & Scratchpad ---
+    property bool idleLockEnabled: true
+    property int idleLockSeconds: 300
+    property bool idleSuspendEnabled: false
+    property int idleSuspendSeconds: 900
+    property string scratchpadText: ""
+
+    // --- Session Focus Timer & Screen Recording Status ---
+    property bool timerActive: false
+    property int timerDurationSec: 1500
+    property int timerRemainingSec: 1500
+    property bool recordingActive: false
+    property int recordingElapsedSec: 0
+    property int _recordingStartedAt: 0
 
     // --- Surface, Shape, Island Layout & Advanced Theming ---
     property string surfaceStyle: "default"      // "default" | "glass" | "oled" | "flat" | "tinted"
@@ -196,6 +212,12 @@ Singleton {
             if (d.screenshotCopyClipboard !== undefined) root.screenshotCopyClipboard = !!d.screenshotCopyClipboard;
             if (d.screenshotNotify !== undefined) root.screenshotNotify = !!d.screenshotNotify;
             if (d.screenshotDelay !== undefined) root.screenshotDelay = Math.max(0, Math.min(10, Number(d.screenshotDelay)));
+            if (d.recordingDir !== undefined && String(d.recordingDir).length > 0) root.recordingDir = String(d.recordingDir);
+            if (d.idleLockEnabled !== undefined) root.idleLockEnabled = !!d.idleLockEnabled;
+            if (d.idleLockSeconds !== undefined) root.idleLockSeconds = Math.max(30, Math.min(3600, Number(d.idleLockSeconds)));
+            if (d.idleSuspendEnabled !== undefined) root.idleSuspendEnabled = !!d.idleSuspendEnabled;
+            if (d.idleSuspendSeconds !== undefined) root.idleSuspendSeconds = Math.max(60, Math.min(7200, Number(d.idleSuspendSeconds)));
+            if (d.scratchpadText !== undefined) root.scratchpadText = String(d.scratchpadText);
             if (d.surfaceStyle !== undefined && String(d.surfaceStyle).length > 0) root.surfaceStyle = String(d.surfaceStyle);
             if (d.shellOpacity !== undefined) root.shellOpacity = Math.max(0.40, Math.min(1.0, Number(d.shellOpacity)));
             if (d.cardOpacity !== undefined) root.cardOpacity = Math.max(0.15, Math.min(1.0, Number(d.cardOpacity)));
@@ -310,6 +332,12 @@ Singleton {
         else if (key === "screenshotCopyClipboard") root.screenshotCopyClipboard = !!value;
         else if (key === "screenshotNotify") root.screenshotNotify = !!value;
         else if (key === "screenshotDelay") root.screenshotDelay = Math.max(0, Math.min(10, Number(value)));
+        else if (key === "recordingDir") root.recordingDir = String(value);
+        else if (key === "idleLockEnabled") root.idleLockEnabled = !!value;
+        else if (key === "idleLockSeconds") root.idleLockSeconds = Math.max(30, Math.min(3600, Number(value)));
+        else if (key === "idleSuspendEnabled") root.idleSuspendEnabled = !!value;
+        else if (key === "idleSuspendSeconds") root.idleSuspendSeconds = Math.max(60, Math.min(7200, Number(value)));
+        else if (key === "scratchpadText") root.scratchpadText = String(value);
         else if (key === "surfaceStyle") root.surfaceStyle = String(value);
         else if (key === "shellOpacity") root.shellOpacity = Math.max(0.40, Math.min(1.0, Number(value)));
         else if (key === "cardOpacity") root.cardOpacity = Math.max(0.15, Math.min(1.0, Number(value)));
@@ -623,6 +651,121 @@ Singleton {
         root.unreadCount = 0;
     }
 
+    function markAllNotificationsRead(): void {
+        clearUnread();
+    }
+
+    function clearNotifications(): void {
+        clearHistory();
+    }
+
+    function removeNotification(uid: int): void {
+        dismissNotification(uid);
+    }
+
+    function formatTimer(sec: int): string {
+        const s = Math.max(0, Math.round(sec));
+        const hrs = Math.floor(s / 3600);
+        const mins = Math.floor((s % 3600) / 60);
+        const rem = s % 60;
+        const mm = (mins < 10 && hrs > 0 ? "0" : (mins < 10 ? "0" : "")) + mins;
+        const ss = (rem < 10 ? "0" : "") + rem;
+        return hrs > 0 ? (hrs + ":" + mm + ":" + ss) : (mm + ":" + ss);
+    }
+
+    function startTimer(): void {
+        if (root.timerRemainingSec <= 0)
+            root.timerRemainingSec = root.timerDurationSec;
+        root.timerActive = true;
+    }
+
+    function pauseTimer(): void {
+        root.timerActive = false;
+    }
+
+    function toggleTimer(): void {
+        if (root.timerActive)
+            pauseTimer();
+        else
+            startTimer();
+    }
+
+    function resetTimer(seconds: int): void {
+        const clamped = Math.max(60, Math.min(7200, seconds));
+        root.timerActive = false;
+        root.timerDurationSec = clamped;
+        root.timerRemainingSec = clamped;
+    }
+
+    function syncRecordingState(): void {
+        if (!recStatusProc.running)
+            recStatusProc.running = true;
+    }
+
+    Timer {
+        id: focusCountdownTimer
+        interval: 1000
+        repeat: true
+        running: root.timerActive
+        onTriggered: {
+            if (root.timerRemainingSec > 1) {
+                root.timerRemainingSec -= 1;
+            } else {
+                root.timerActive = false;
+                root.timerRemainingSec = root.timerDurationSec;
+                Quickshell.execDetached([
+                    "sh", "-c",
+                    "command -v notify-send >/dev/null 2>&1 && notify-send -a 'Focus Timer' 'Focus Session Complete' 'Time is up — take a short break!' -t 6000"
+                ]);
+            }
+        }
+    }
+
+    Timer {
+        id: recordingElapsedTimer
+        interval: 1000
+        repeat: true
+        running: root.recordingActive
+        onTriggered: {
+            if (root._recordingStartedAt > 0) {
+                const nowSec = Math.floor(Date.now() / 1000);
+                root.recordingElapsedSec = Math.max(0, nowSec - root._recordingStartedAt);
+            } else {
+                root.recordingElapsedSec += 1;
+            }
+        }
+    }
+
+    Process {
+        id: recStatusProc
+        command: [Quickshell.shellPath("scripts/record-screen.sh"), "status"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0) {
+                    root.recordingActive = false;
+                    root.recordingElapsedSec = 0;
+                    root._recordingStartedAt = 0;
+                    return;
+                }
+                try {
+                    const d = JSON.parse(raw);
+                    root.recordingActive = !!d.active;
+                    const startedAt = Number(d.startedAt || 0);
+                    root._recordingStartedAt = startedAt;
+                    if (root.recordingActive && startedAt > 0) {
+                        const nowSec = Math.floor(Date.now() / 1000);
+                        root.recordingElapsedSec = Math.max(0, nowSec - startedAt);
+                    } else if (!root.recordingActive) {
+                        root.recordingElapsedSec = 0;
+                    }
+                } catch (err) {
+                    root.recordingActive = false;
+                }
+            }
+        }
+    }
+
     function formatTime(dt): string {
         if (!dt)
             return "";
@@ -640,6 +783,7 @@ Singleton {
 
     Component.onCompleted: {
         initProc.running = true;
+        syncRecordingState();
     }
 
     Process {

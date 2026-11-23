@@ -776,6 +776,116 @@ EOF
     fi
 }
 
+sync_qt6ct_and_zed() {
+    [[ -f "$COLORS_JSON" ]] || return 0
+    command -v python3 >/dev/null 2>&1 || return 0
+    local qt6_dir="$CONFIG_DIR/qt6ct"
+    local zed_dir="$CONFIG_DIR/zed"
+    if [[ ! -d "$qt6_dir" && ! -d "$zed_dir" ]]; then
+        return 0
+    fi
+    python3 - "$COLORS_JSON" "$qt6_dir" "$zed_dir" <<'PY' 2>/dev/null || true
+import json, os, sys, tempfile
+
+colors_path, qt6_dir, zed_dir = sys.argv[1:4]
+with open(colors_path, "r", encoding="utf-8") as f:
+    c = json.load(f)
+
+
+def atomic_write(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".tmp_", text=True)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as out:
+            out.write(content)
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, path)
+    except Exception:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+def argb(hex_str, fallback="#ff1e1e2e"):
+    h = str(hex_str or "").strip().lstrip("#")
+    if len(h) == 6:
+        return f"#ff{h.lower()}"
+    return fallback
+
+
+if os.path.isdir(qt6_dir):
+    fg = argb(c.get("onSurface"), "#ffcdd6f4")
+    fg_var = argb(c.get("onSurfaceVariant"), "#ffa6adc8")
+    bg = argb(c.get("surfaceContainerLow"), "#ff181825")
+    base = argb(c.get("surfaceContainerLowest"), "#ff11111b")
+    alt_base = argb(c.get("surfaceContainer"), "#ff1e1e2e")
+    btn = argb(c.get("surfaceContainerHigh"), "#ff313244")
+    hi = argb(c.get("primary"), "#ffcba6f7")
+    on_hi = argb(c.get("onPrimary"), "#ff11111b")
+    link = argb(c.get("secondary"), "#ff89b4fa")
+    visited = argb(c.get("tertiary"), "#fff5c2e7")
+    bright = argb(c.get("surfaceBright"), "#ff45475a")
+    mid = argb(c.get("outlineVariant"), "#ff313244")
+    dark = argb(c.get("outline"), "#ff6c7086")
+    active = [fg, btn, bright, mid, dark, mid, fg, fg, fg, base, bg, dark, hi, on_hi, link, visited, alt_base, base, base, fg, fg_var]
+    disabled = [fg_var, btn, bright, mid, dark, mid, fg_var, fg_var, fg_var, base, bg, dark, mid, fg_var, link, visited, alt_base, base, base, fg_var, fg_var]
+    qt_conf = (
+        "[ColorScheme]\n"
+        f"active_colors={', '.join(active)}\n"
+        f"disabled_colors={', '.join(disabled)}\n"
+        f"inactive_colors={', '.join(active)}\n"
+    )
+    atomic_write(os.path.join(qt6_dir, "colors", "mango-matugen.conf"), qt_conf)
+
+if os.path.isdir(zed_dir):
+    is_dark = bool(c.get("isDark", True))
+    theme_doc = {
+        "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
+        "name": "Mango Matugen",
+        "author": "mango-quickshell-dots",
+        "themes": [
+            {
+                "name": "Mango Matugen",
+                "appearance": "dark" if is_dark else "light",
+                "style": {
+                    "border": c.get("outlineVariant", "#313244"),
+                    "border.variant": c.get("outlineVariant", "#313244"),
+                    "border.focused": c.get("primary", "#cba6f7"),
+                    "elevated_surface.background": c.get("surfaceContainerHigh", "#313244"),
+                    "surface.background": c.get("surfaceContainerLow", "#181825"),
+                    "background": c.get("surfaceContainerLowest", "#11111b"),
+                    "element.background": c.get("surfaceContainer", "#1e1e2e"),
+                    "element.hover": c.get("surfaceBright", "#313244"),
+                    "element.selected": c.get("primaryContainer", "#3e2f56"),
+                    "text": c.get("onSurface", "#cdd6f4"),
+                    "text.muted": c.get("onSurfaceVariant", "#a6adc8"),
+                    "text.accent": c.get("primary", "#cba6f7"),
+                    "editor.foreground": c.get("onSurface", "#cdd6f4"),
+                    "editor.background": c.get("surfaceContainerLowest", "#11111b"),
+                    "editor.gutter.background": c.get("surfaceContainerLowest", "#11111b"),
+                    "editor.active_line.background": c.get("surfaceContainerLow", "#181825"),
+                    "terminal.background": c.get("surfaceContainerLowest", "#11111b"),
+                    "terminal.foreground": c.get("onSurface", "#cdd6f4"),
+                    "error": c.get("error", "#f38ba8"),
+                    "warning": c.get("warning", "#f9e2af"),
+                    "info": c.get("info", "#89dceb"),
+                    "success": c.get("success", "#a6e3a1"),
+                    "syntax": {
+                        "keyword": {"color": c.get("primary", "#cba6f7")},
+                        "function": {"color": c.get("secondary", "#89b4fa")},
+                        "string": {"color": c.get("success", "#a6e3a1")},
+                        "type": {"color": c.get("warning", "#f9e2af")},
+                        "constant": {"color": c.get("tertiary", "#f5c2e7")},
+                        "comment": {"color": c.get("outline", "#6c7086"), "font_style": "italic"},
+                    },
+                },
+            }
+        ],
+    }
+    atomic_write(os.path.join(zed_dir, "themes", "mango-matugen.json"), json.dumps(theme_doc, indent=2) + "\n")
+PY
+}
+
 # --- Live Reload Foot (OSC sequences) & Kitty (SIGUSR1) & MangoWC ---
 push_foot_osc() {
     local foot_colors="$FOOT_DIR/colors.ini"
@@ -962,5 +1072,6 @@ if [[ -x "$QUICKSHELL_DIR/scripts/manage-themes.sh" ]]; then
 fi
 
 apply_gtk_settings
+sync_qt6ct_and_zed
 reload_wm_and_terminals
 write_theme_state

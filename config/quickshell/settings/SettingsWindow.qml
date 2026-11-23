@@ -85,7 +85,7 @@ PanelWindow {
         { label: "Dynamic Island & Pill",      pageId: "shell",         keywords: "island hover delay collapse media spin equalizer osd pill" },
         { label: "Bar Widgets & Modules",      pageId: "shell",         keywords: "bar widgets modules date active window title workspaces tags layout cpu ram volume mute keyboard layout tray quick icons files battery presets minimal balanced full" },
         { label: "Dynamic File Manager (Rust)",pageId: "shell",         keywords: "file manager files rust explorer miller columns dual pane grid preview customize bar icon" },
-        { label: "Simple Bar & Screenshots",   pageId: "shell",         keywords: "bar height top bottom layout screenshot grim slurp clipboard delay" },
+        { label: "Simple Bar & Screenshots",   pageId: "shell",         keywords: "bar height top bottom layout screenshot grim slurp clipboard delay screen record video" },
         { label: "Accessibility & Motion",     pageId: "shell",         keywords: "reduced motion animations high contrast borders a11y" },
         { label: "Reset & Factory Recovery",   pageId: "system",        keywords: "reset restore undo default factory recovery reset appearance reset bar" },
         { label: "Picture-in-Picture (PiP)",   pageId: "windows",       keywords: "pip picture in picture video youtube float sticky global overlay corner bottom right top left firefox helium chrome discord popout" },
@@ -100,10 +100,10 @@ PanelWindow {
         { label: "Bluetooth Devices",          pageId: "bluetooth",     keywords: "bluetooth pair connect audio device" },
         { label: "Keyboard, Mouse & Touchpad", pageId: "input",         keywords: "keyboard model layout repeat sandbox mouse left handed middle click scroll touchpad" },
         { label: "Foot & Kitty Settings",      pageId: "terminals",     keywords: "terminal foot kitty opacity alpha padding cursor blink scrollback" },
-        { label: "DND, Critical & Sounds",     pageId: "notifications", keywords: "notification dnd do not disturb critical sound history clear test" },
+        { label: "DND, Critical & Sounds",     pageId: "notifications", keywords: "notification dnd do not disturb critical sound history clear test alerts calendar timer" },
         { label: "Defaults, Hidden Apps & Env",pageId: "apps",          keywords: "default browser terminal editor hidden apps launcher startup autostart exec_once env" },
-        { label: "Shortcuts & Custom Binds",   pageId: "shortcuts",     keywords: "shortcut keybind hotkeys super mod mousebind custom bind" },
-        { label: "Clipboard, Camera & Lock",   pageId: "privacy",       keywords: "privacy clipboard clear middle paste recent files camera microphone lock" },
+        { label: "Shortcuts & Custom Binds",   pageId: "shortcuts",     keywords: "shortcut keybind hotkeys super mod mousebind custom bind cheat sheet" },
+        { label: "Clipboard, Idle Lock & Privacy", pageId: "privacy",   keywords: "privacy clipboard history clear middle paste recent files camera microphone lock idle timeout suspend" },
         { label: "Sensors, Processes & Init",  pageId: "monitor",       keywords: "temp temperature cpu gpu process pid kill openrc systemd services" },
         { label: "User, Clock & Backup",       pageId: "system",        keywords: "user account clock 24h seconds date format keep awake disk storage backup export reset" }
     ]

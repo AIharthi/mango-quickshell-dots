@@ -456,6 +456,82 @@ ColumnLayout {
                 }
             }
 
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: Theme.outlineVariant
+            }
+
+            Text {
+                text: "IDLE LOCK & AUTO-SUSPEND"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        text: "Auto-Lock on Inactivity"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        color: Theme.fgSurface
+                    }
+                    Text {
+                        text: "Paused automatically when Keep Awake or fullscreen inhibitor is active"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.idleLockEnabled
+                    onToggled: ShellState.setPref("idleLockEnabled", !ShellState.idleLockEnabled)
+                }
+            }
+
+            StepControl {
+                label: "Idle Lock Timeout"
+                displayValue: Math.round(ShellState.idleLockSeconds / 60) + "m"
+                controlEnabled: ShellState.idleLockEnabled
+                onDecremented: ShellState.setPref("idleLockSeconds", Math.max(60, ShellState.idleLockSeconds - 60))
+                onIncremented: ShellState.setPref("idleLockSeconds", Math.min(3600, ShellState.idleLockSeconds + 60))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Auto-Suspend on Extended Inactivity"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.idleSuspendEnabled
+                    onToggled: ShellState.setPref("idleSuspendEnabled", !ShellState.idleSuspendEnabled)
+                }
+            }
+
+            StepControl {
+                label: "Auto-Suspend Timeout"
+                displayValue: Math.round(ShellState.idleSuspendSeconds / 60) + "m"
+                controlEnabled: ShellState.idleSuspendEnabled
+                onDecremented: ShellState.setPref("idleSuspendSeconds", Math.max(120, ShellState.idleSuspendSeconds - 60))
+                onIncremented: ShellState.setPref("idleSuspendSeconds", Math.min(7200, ShellState.idleSuspendSeconds + 60))
+            }
+
             Text {
                 visible: root.statusMsg.length > 0
                 text: root.statusMsg

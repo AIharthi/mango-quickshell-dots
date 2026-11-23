@@ -17,6 +17,8 @@ RowLayout {
     signal launcherClicked()
     signal settingsClicked()
     signal filesClicked()
+    signal notificationsClicked()
+    signal timerClicked()
 
     // --- Live Modular Widget State ---
     property string monitorName: ""
@@ -80,6 +82,9 @@ RowLayout {
         || ShellState.barShowQuickIcons
         || ShellState.barShowFiles
         || ShellState.fmOpActive
+        || ShellState.recordingActive
+        || ShellState.timerActive
+        || ShellState.unreadCount > 0
         || barMode
 
     spacing: hasAnyModule ? 8 : 0
@@ -764,6 +769,130 @@ RowLayout {
                 enabled: !Theme.isSimple
                 ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
             }
+        }
+    }
+
+    // Live Screen Recording Pill (click to stop)
+    Rectangle {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.recordingActive
+        implicitHeight: 20
+        implicitWidth: recRow.implicitWidth + 12
+        radius: Theme.r(7)
+        color: Theme.withAlpha(Theme.error, 0.22)
+        border.width: 1
+        border.color: Theme.error
+
+        RowLayout {
+            id: recRow
+            anchors.centerIn: parent
+            spacing: 4
+
+            Text {
+                text: "󰑊"
+                font.family: Theme.iconFont
+                font.pixelSize: 10
+                color: Theme.error
+
+                SequentialAnimation on opacity {
+                    running: ShellState.recordingActive && root.visible && !Theme.reducedMotion
+                    loops: Animation.Infinite
+                    NumberAnimation { to: 0.35; duration: 600 }
+                    NumberAnimation { to: 1.0; duration: 600 }
+                }
+            }
+
+            Text {
+                text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec)
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.error
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "stop"])
+        }
+    }
+
+    // Live Focus Timer Pill
+    Rectangle {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.timerActive
+        implicitHeight: 20
+        implicitWidth: timerPillRow.implicitWidth + 10
+        radius: Theme.r(7)
+        color: Theme.withAlpha(Theme.primary, 0.18)
+        border.width: 1
+        border.color: Theme.withAlpha(Theme.primary, 0.6)
+
+        RowLayout {
+            id: timerPillRow
+            anchors.centerIn: parent
+            spacing: 4
+
+            Text {
+                text: "󰔛"
+                font.family: Theme.iconFont
+                font.pixelSize: 11
+                color: Theme.primary
+            }
+            Text {
+                text: ShellState.formatTimer(ShellState.timerRemainingSec)
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.primary
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.timerClicked()
+        }
+    }
+
+    // Unread Notifications Pill
+    Rectangle {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.unreadCount > 0
+        implicitHeight: 20
+        implicitWidth: unreadRow.implicitWidth + 10
+        radius: Theme.r(7)
+        color: notifPillMouse.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.secondary, 0.18)
+        border.width: 1
+        border.color: Theme.withAlpha(Theme.secondary, 0.45)
+
+        RowLayout {
+            id: unreadRow
+            anchors.centerIn: parent
+            spacing: 3
+
+            Text {
+                text: "󰂚"
+                font.family: Theme.iconFont
+                font.pixelSize: 10
+                color: Theme.secondary
+            }
+            Text {
+                text: String(ShellState.unreadCount)
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.fgSurface
+            }
+        }
+
+        MouseArea {
+            id: notifPillMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.notificationsClicked()
         }
     }
 

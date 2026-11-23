@@ -11,18 +11,26 @@ Default compositor keybindings live in [`config/mango/config.conf`](../config/ma
 | `Super + Return` | Open default terminal (`launch-app.sh terminal`) |
 | `Super + B` | Open default browser (`launch-app.sh browser`) |
 | `Super + Z` | Open default editor (`launch-app.sh editor`) |
-| `Super + A` / `Super + Space` | Toggle Quickshell App Launcher |
+| `Super + A` / `Super + Space` | Toggle Multi-Mode Launcher (`Apps`, `=` Calc, `>` Commands, `:` Emoji, `cb ` Clipboard) |
+| `Super + V` | Toggle Clipboard History Manager (`manage-clipboard.sh`) |
+| `Super + Shift + N` | Toggle Alerts & Agenda Hub (Notifications, Calendar, Focus Timer, Scratchpad) |
+| `Super + /` | Toggle Interactive Keybind Cheat Sheet Modal |
 | `Super + D` | Toggle Dynamic Island Hub |
 | `Super + S` | Toggle Built-in Settings App (`16` hardware-aware pages) |
 | `Super + Shift + T` | Toggle Theme & Wallpaper Switcher |
 | `Super + Shift + E` | Toggle Dynamic File Manager (`mango-fm`) |
 | `Super + Alt + E` | Toggle Dynamic Island Quick Files Tab |
-| `Super + Shift + L` | Lock screen (`lock.sh`: `hyprlock` / `swaylock` / `waylock`) |
+| `Super + Shift + L` | Lock screen (`lock.sh`: native `WlSessionLock` PAM screen, or `hyprlock`/`swaylock`/`waylock` fallback) |
 | `Super + =` | Area screenshot (`screenshot.sh --area`) |
 | `Super + Shift + =` | Fullscreen screenshot (`screenshot.sh --full`) |
+| `Super + Ctrl + =` | Focused window screenshot (`screenshot.sh --window`) |
+| `Super + Alt + C` | Eyedropper color picker (`screenshot.sh --color`, copies `#RRGGBB`) |
+| `Super + Shift + R` | Toggle area screen recording (`record-screen.sh toggle --area`) |
 | `Super + R` | Reload MangoWC config (`reload_config`) |
 | `Super + M` | Quit MangoWC (`quit`) |
 | `XF86AudioRaiseVolume` / `LowerVolume` / `Mute` | Adjust volume (`pactl`) + show Dynamic Island OSD |
+| `XF86AudioMicMute` | Toggle microphone mute (`pactl`) + show Dynamic Island Mic OSD |
+| `XF86AudioPlay` / `Next` / `Prev` | Media transport (`playerctl`) + show Dynamic Island Media OSD |
 | `XF86MonBrightnessUp` / `Down` | Adjust backlight (`brightnessctl`) + show Dynamic Island OSD |
 
 ---
@@ -99,12 +107,17 @@ Default compositor keybindings live in [`config/mango/config.conf`](../config/ma
 ## Quickshell IPC Commands (`qs ipc call island ...`)
 
 ```bash
-# Drawers, Launcher, Settings & Files
+# Drawers, Launcher, Lock, Settings & Files
+qs ipc call island lockSession
 qs ipc call island toggleLauncher
+qs ipc call island toggleClipboard
+qs ipc call island toggleNotifications
+qs ipc call island toggleKeybindSheet
 qs ipc call island toggleThemeTab
 qs ipc call island toggleDashboard
 qs ipc call island collapse
-qs ipc call island showOsd <volume|mute|brightness>
+qs ipc call island showOsd <volume|mute|brightness|mic|kb|media-play|media-next|media-prev>
+qs ipc call island syncRecordingState
 qs ipc call island toggleSettings
 qs ipc call island openSettings <appearance|themes|shell|windows|audio|displays|network|bluetooth|input|terminals|notifications|apps|shortcuts|privacy|monitor|system>
 qs ipc call island closeSettings

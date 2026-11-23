@@ -171,6 +171,8 @@ for candidate in ("hyprlock", "swaylock", "waylock"):
     if shutil.which(candidate):
         locker_cmd = candidate
         break
+if not locker_cmd and (shutil.which("qs") or shutil.which("quickshell")):
+    locker_cmd = "quickshell"
 has_locker = bool(locker_cmd)
 
 device_type = "laptop" if (has_battery or has_backlight or has_touchpad) else "desktop"

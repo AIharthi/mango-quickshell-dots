@@ -175,7 +175,7 @@ create_backups() {
 
 install_configs() {
     echo "==> Installing dotfiles to $CONFIG_DIR (preserving user state & local.conf)"
-    run_cmd mkdir -p "$CONFIG_DIR" "$HOME/Pictures/Wallpapers" "$HOME/Pictures/Screenshots"
+    run_cmd mkdir -p "$CONFIG_DIR" "$HOME/Pictures/Wallpapers" "$HOME/Pictures/Screenshots" "$HOME/Videos/Recordings"
 
     local d rel src dst dst_dir
     for d in "${DIRS[@]}"; do

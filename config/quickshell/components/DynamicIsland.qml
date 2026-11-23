@@ -10,7 +10,8 @@ Item {
     readonly property alias maskTarget: islandContainer
     property string screenName: ""
     property string islandState: "collapsed"    // "collapsed" | "osd" | "notification" | "expanded"
-    property string activeTab: "overview"       // "overview" | "themes" | "launcher"
+    property string activeTab: "overview"       // "overview" | "files" | "themes" | "launcher" | "notifications"
+    property string launcherMode: "apps"
     property bool pinnedOpen: false
     property bool powerMenuOpen: false
     property bool launcherSearchFocused: false
@@ -18,6 +19,7 @@ Item {
 
     signal openSettingsRequested(string page)
     signal openFilesRequested(string path)
+    signal openKeybindsRequested()
 
     readonly property bool needsKeyboardFocus:
         (islandState === "expanded" && activeTab === "launcher") || launcherSearchFocused
@@ -88,6 +90,20 @@ Item {
     }
 
     function toggleLauncher(): void {
+        if (root.islandState === "expanded" && root.activeTab === "launcher" && root.launcherMode !== "apps") {
+            root.launcherMode = "apps";
+            return;
+        }
+        root.launcherMode = "apps";
+        toggleTab("launcher");
+    }
+
+    function toggleClipboard(): void {
+        if (root.islandState === "expanded" && root.activeTab === "launcher" && root.launcherMode !== "clip") {
+            root.launcherMode = "clip";
+            return;
+        }
+        root.launcherMode = "clip";
         toggleTab("launcher");
     }
 
@@ -97,6 +113,10 @@ Item {
 
     function toggleFilesTab(): void {
         toggleTab("files");
+    }
+
+    function toggleNotifications(): void {
+        toggleTab("notifications");
     }
 
     function toggleDashboard(): void {
@@ -140,18 +160,22 @@ Item {
     // --- Target Geometry per State ---
     readonly property int expandedWidth: {
         if (root.activeTab === "launcher")
-            return 620;
+            return 650;
+        if (root.activeTab === "notifications")
+            return 720;
         if (root.activeTab === "files")
-            return 680;
+            return 700;
         if (root.activeTab === "themes")
-            return 690;
-        return 670;
+            return 700;
+        return 700;
     }
 
     readonly property int expandedHeight: {
         let h = 400;
         if (root.activeTab === "launcher")
-            h = 456;
+            h = 472;
+        else if (root.activeTab === "notifications")
+            h = 468;
         else if (root.activeTab === "files")
             h = 444;
         else if (root.activeTab === "themes")
@@ -366,6 +390,8 @@ Item {
             onLauncherClicked: root.toggleLauncher()
             onSettingsClicked: root.openSettingsRequested("appearance")
             onFilesClicked: root.openFilesRequested("")
+            onNotificationsClicked: root.toggleNotifications()
+            onTimerClicked: root.toggleNotifications()
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion
@@ -436,6 +462,7 @@ Item {
                 isOpen: root.islandState === "expanded"
                 screenName: root.screenName
                 activeTab: root.activeTab
+                launcherMode: root.launcherMode
                 pinnedOpen: root.pinnedOpen
                 powerMenuOpen: root.powerMenuOpen
                 player: root.activePlayer
@@ -451,6 +478,7 @@ Item {
                 onTogglePowerMenuRequested: root.powerMenuOpen = !root.powerMenuOpen
                 onOpenSettingsRequested: page => root.openSettingsRequested(page)
                 onOpenFilesRequested: path => root.openFilesRequested(path)
+                onOpenKeybindsRequested: root.openKeybindsRequested()
                 onCloseRequested: root.collapse()
                 onSearchFocusChanged: focused => { root.launcherSearchFocused = focused; }
                 onControlInteractionChanged: interacting => {

@@ -18,10 +18,15 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 
 ## Highlights
 
-- **Hardware & Init-System Aware (`DeviceCaps`)**: Automatically adapts controls and Settings tabs to actual hardware (multi-battery aggregation `BAT0`+`BAT1`, `/sys/class/backlight`, `/sys/class/ieee80211` Wi-Fi, Bluetooth, audio) and works across **systemd** (`loginctl` / `systemctl`) and **OpenRC + elogind** (`loginctl`, `dbus-run-session`, non-systemd PipeWire fallback).
-- **Dynamic Island & 3 Visual Modes (`default` / `simple` / `blur`)**: Morphs smoothly between Floating Pill, Top Notch, Full-Width Bar, and `28px` Square Bar, with modular bar widgets (`Minimal Pill`, `Balanced Island`, `Full Desktop Bar`), OSD, Notification Server, and fuzzy App Launcher (`Super + Space`).
-- **Live Matugen & Preset Theming**: Syncs wallpapers (`awww` or `swww` auto-detected), 16 dark/light presets, 8 one-click vibes, seed accent generator, and JSON custom theme import across Quickshell, MangoWC, GTK 3/4, Foot, and Kitty (`flock`-serialized updates). See [`docs/THEMING.md`](docs/THEMING.md).
-- **Built-in 16-Page Settings App (`Super + S`)**: Covers Appearance, Themes & Colors Studio, Shell & Bar, Windows & cross-browser Picture-in-Picture (`Super + P`), Audio, Displays (`wlr-randr`), Network/DNS, Bluetooth, Input & Touchpad, Foot/Kitty Terminals, Notifications/DND, Apps & Startup, live `mango -p`-validated Shortcuts, Privacy, Thermal/Process/Service Monitor, System Backup & Safe Resets.
+- **Hardware & Init-System Aware (`DeviceCaps`)**: Automatically adapts controls and Settings tabs to actual hardware (multi-battery aggregation `BAT0`+`BAT1` with low/critical battery alerts, `/sys/class/backlight`, `/sys/class/ieee80211` Wi-Fi, Bluetooth, audio) and works across **systemd** (`loginctl` / `systemctl`) and **OpenRC + elogind** (`loginctl`, `dbus-run-session`, non-systemd PipeWire fallback).
+- **Dynamic Island & 3 Visual Modes (`default` / `simple` / `blur`)**: Morphs smoothly between Floating Pill, Top Notch, Full-Width Bar, and `28px` Square Bar, with modular bar widgets (`Minimal Pill`, `Balanced Island`, `Full Desktop Bar`), multi-type OSD (volume, mute, mic mute, brightness, media transport), and Notification Server.
+- **Multi-Mode Launcher (`Super + Space` / `Super + V`)**: Fuzzy App Launcher plus built-in **Clipboard History Manager** (`cb ` / `Super + V` with pinning & password-manager exclusion), **Inline Calculator / Hex / Binary Converter** (`=`), **Quick Desktop Commands** (`>`), and **Emoji / Nerd Font Glyph Picker** (`:`).
+- **Alerts & Agenda Hub (`Super + Shift + N`)**: Unified Notification Center with unread pill badge, interactive **Month Calendar**, **Focus / Pomodoro Timer** docked live in the Dynamic Island pill, and persistent **Quick Scratchpad**.
+- **Native Wayland Lock Screen, Polkit Agent & Idle Power Manager**: Built-in `WlSessionLock` lock screen with user-space PAM verification (`pam/lock`), native `PolkitAgent` authentication modal, and `ext-idle-notify-v1` auto-lock/auto-suspend daemon (`IdleMonitor`, respecting `keepAwake` and media inhibitors).
+- **Capture, Eyedropper & Screen Recording**: Area (`Super + =`), Fullscreen (`Super + Shift + =`), Focused Window (`Super + Ctrl + =`), and annotated (`--edit`) screenshots, pixel **Eyedropper Color Picker** (`Super + Alt + C`), and **Screen Recorder** (`Super + Shift + R` via `wf-recorder`) with a live pulsing Dynamic Island `REC` pill.
+- **Interactive Keybind Cheat Sheet (`Super + /`)**: Searchable category modal displaying live bindings parsed from MangoWC and `local.conf`.
+- **Live Matugen & Preset Theming**: Syncs wallpapers (`awww` or `swww` auto-detected), 16 dark/light presets, 8 one-click vibes, seed accent generator, and JSON custom theme import across Quickshell, MangoWC, GTK 3/4 + `color-scheme` portal preference, Foot, Kitty, Qt6ct, and Zed (`flock`-serialized updates). See [`docs/THEMING.md`](docs/THEMING.md).
+- **Built-in 16-Page Settings App (`Super + S`)**: Covers Appearance, Themes & Colors Studio, Shell & Bar, Windows & cross-browser Picture-in-Picture (`Super + P`), Audio, Displays (`wlr-randr`), Network/DNS, Bluetooth, Input & Touchpad, Foot/Kitty Terminals, Notifications/DND, Apps & Startup, live `mango -p`-validated Shortcuts, Privacy & Idle Lock, Thermal/Process/Service Monitor, System Backup & Safe Resets.
 - **Zero-Dependency Rust File Manager (`rust/mango-fm`)**: `std`-only pure Rust backend (`Cargo.lock` tracked) + customizable Quickshell UI (`List`, async thumbnail `Grid`, 3-column `Miller`, `Dual-Pane F3`, multi-tab, XDG Trash, mounts, bookmarks, Zip/Tar Slip & flag-injection hardened). See [`docs/FILE_MANAGER.md`](docs/FILE_MANAGER.md).
 - **Idempotent Multi-Machine Configs**: Machine-specific overrides stay in `~/.config/mango/local.conf` (`source_optional`) and `~/.config/quickshell/shell-prefs.json` — preserved cleanly across `./install.sh` re-runs.
 
@@ -47,7 +52,7 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 ├── rust/mango-fm/                # Zero-dependency std-only Rust file manager backend (built into ~/.config/quickshell/bin/mango-fm)
 ├── config/
 │   ├── mango/                    # MangoWC config, mode.conf, theme.conf, autostart.sh
-│   ├── quickshell/               # shell.qml, Theme, DeviceCaps, ShellState, components/, files/, settings/, scripts/
+│   ├── quickshell/               # shell.qml, Theme, DeviceCaps, ShellState, pam/, components/, files/, settings/, scripts/
 │   ├── matugen/                  # Matugen config & templates (Quickshell, GTK 3/4, MangoWC, Foot, Kitty)
 │   ├── foot/                     # Foot terminal config + live color palette
 │   ├── kitty/                    # Kitty terminal config + live color palette
@@ -65,12 +70,12 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 
 | Category | Tools / Packages | Purpose |
 | --- | --- | --- |
-| **Core (Required)** | `mango` (`mangowm` + `scenefx`), `quickshell` (`qs`), `python3`, `qt6-svg`, `qt6-imageformats`, `qt6-5compat` | Compositor, QML bar/island/settings, helper backend scripts |
+| **Core (Required)** | `mango` (`mangowm` + `scenefx`), `quickshell` (`qs`), `python3`, `qt6-svg`, `qt6-imageformats`, `qt6-5compat` | Compositor, QML bar/island/lock/polkit/settings, helper backend scripts |
 | **Build (`mango-fm`)** | `cargo` + `rustc` (`>= 1.70`) | Compiles zero-dependency `rust/mango-fm` cleanly offline |
-| **Theming & Wallpapers** | `matugen`, `awww` (or `swww`), `adw-gtk-theme` / `adw-gtk3` | Material You wallpaper extraction & Wayland wallpaper transitions |
-| **Audio & Displays** | `pipewire`, `wireplumber`, `pipewire-pulse` (`pactl`), `wlr-randr` | Volume/mixer sliders, per-monitor layout, scaling, rotation, VRR |
-| **Utilities (Recommended)** | `grim`, `slurp`, `wl-clipboard` (`wl-copy`), `libnotify`, `polkit-gnome`, `xdg-desktop-portal{,-wlr,-gtk}`, `foot` or `kitty` | Area/fullscreen screenshots, URI/clipboard, polkit auth prompts, screencasts |
-| **Laptop & Extras (Optional)** | `brightnessctl`, `networkmanager` (`nmcli`), `bluez` (`bluetoothctl`), `playerctl`, `hyprlock`/`swaylock`/`waylock`, `pavucontrol`, `zip`, `tar`, `unzip` | Backlight slider, Wi-Fi/BT UI, media controls, lock screen, archives |
+| **Theming & Wallpapers** | `matugen`, `awww` (or `swww`), `adw-gtk-theme` / `adw-gtk3` | Material You wallpaper extraction, Wayland transitions & GTK/Qt6/Zed sync |
+| **Audio & Displays** | `pipewire`, `wireplumber`, `pipewire-pulse` (`pactl`), `wlr-randr` | Volume/mic mixer sliders, per-monitor layout, scaling, rotation, VRR |
+| **Utilities (Recommended)** | `grim`, `slurp`, `wl-clipboard` (`wl-copy`, `wl-paste`), `libnotify`, `gnome-keyring`, `xdg-desktop-portal{,-wlr,-gtk}`, `foot` or `kitty` | Area/window/full screenshots, color picker, clipboard history, keyring, screencasts |
+| **Media, Recording & Extras (Optional)** | `wf-recorder` (or `gpu-screen-recorder`), `playerctl`, `brightnessctl`, `networkmanager` (`nmcli`), `bluez` (`bluetoothctl`), `hyprpicker`, `satty`/`swappy`, `hyprlock`/`swaylock`/`waylock`, `pavucontrol`, `qt6ct`, `zip`, `tar`, `unzip` | Screen recording, media keys/OSD, backlight slider, Wi-Fi/BT UI, annotation, fallback lockers, archives |
 
 <details>
 <summary><strong>Distro Package Install Commands (Arch Linux, Fedora & Gentoo)</strong></summary>
@@ -82,15 +87,15 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 sudo pacman -S --needed \
   mangowm matugen foot kitty \
   wlr-randr grim slurp wl-clipboard brightnessctl libnotify \
-  pipewire wireplumber pipewire-pulse \
+  pipewire wireplumber pipewire-pulse playerctl \
   xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
-  polkit-gnome python adw-gtk-theme rust \
+  gnome-keyring polkit-gnome python adw-gtk-theme rust \
   ttf-jetbrains-mono ttf-nerd-fonts-symbols \
   qt6-svg qt6-imageformats qt6-multimedia qt6-5compat
 
 # AUR packages (Quickshell + awww wallpaper daemon)
 yay -S --needed quickshell awww-git
-# Optional: swaylock (or hyprlock), pavucontrol, playerctl, bluez, networkmanager, zip, unzip
+# Optional full-desktop extras: wf-recorder hyprpicker satty pavucontrol qt6ct bluez networkmanager swaylock zip unzip
 ```
 
 #### Fedora
@@ -103,16 +108,16 @@ sudo dnf copr enable -y scottames/awww
 sudo dnf install -y \
   mangowc quickshell awww \
   foot kitty wlr-randr grim slurp wl-clipboard brightnessctl libnotify \
-  pipewire pipewire-pulseaudio wireplumber \
+  pipewire pipewire-pulseaudio wireplumber playerctl \
   xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
-  polkit-gnome python3 adw-gtk3-theme \
+  gnome-keyring polkit-gnome python3 adw-gtk3-theme \
   jetbrains-mono-fonts \
   qt6-qtsvg qt6-qtimageformats qt6-qtmultimedia qt6-qt5compat \
   cargo rust
 
 cargo install matugen
 # Ensure ~/.cargo/bin is in your PATH
-# Optional: swaylock, pavucontrol, playerctl, bluez-tools, NetworkManager, zip, unzip
+# Optional full-desktop extras: wf-recorder (via RPM Fusion/COPR), swappy, hyprpicker, pavucontrol, qt6ct, bluez-tools, NetworkManager, swaylock, zip, unzip
 ```
 
 #### Gentoo (`systemd` or `OpenRC + elogind`)
@@ -127,10 +132,12 @@ sudo emerge --ask --verbose \
   media-fonts/jetbrains-mono media-fonts/symbols-nerd-font \
   x11-themes/adw-gtk3 sys-apps/xdg-desktop-portal \
   gui-libs/xdg-desktop-portal-wlr sys-apps/xdg-desktop-portal-gtk \
-  gnome-extra/polkit-gnome media-video/pipewire media-video/wireplumber \
+  gnome-base/gnome-keyring gnome-extra/polkit-gnome \
+  media-video/pipewire media-video/wireplumber media-sound/playerctl \
   dev-lang/rust
-# Optional: gui-apps/swaylock, media-sound/pavucontrol, media-sound/playerctl, app-arch/zip, app-arch/unzip
+# Optional full-desktop extras: gui-apps/wf-recorder, gui-apps/satty, gui-apps/swaylock, media-sound/pavucontrol, x11-misc/qt6ct, app-arch/zip, app-arch/unzip
 # OpenRC users: ensure sys-auth/elogind is installed & enabled; media-video/pipewire provides gentoo-pipewire-launcher or WirePlumber.
+# Native lock screen (LockScreen.qml) uses user-space PAM (config/quickshell/pam/lock + unix_chkpwd) and native PolkitModal uses Quickshell.Services.Polkit without extra root setup.
 ```
 
 </details>
@@ -185,14 +192,18 @@ cd mango-quickshell-dots
 | Shortcut | Action |
 | --- | --- |
 | `Super + Return` / `B` / `Z` | Default terminal / browser / editor (`launch-app.sh`) |
-| `Super + Space` / `Super + A` | App Launcher |
+| `Super + Space` / `Super + A` | Multi-Mode Launcher (Apps, `=` Calc, `>` Commands, `:` Emoji, `cb ` Clipboard) |
+| `Super + V` | Clipboard History Manager (pin, search, copy, clear) |
+| `Super + Shift + N` | Alerts & Agenda Hub (Notifications, Calendar, Focus Timer, Scratchpad) |
 | `Super + D` | Dynamic Island Hub |
+| `Super + /` | Interactive Keybind Cheat Sheet Overlay |
 | `Super + Shift + E` / `Super + Alt + E` | File Manager / Dynamic Island Quick Files |
 | `Super + S` | Settings App |
 | `Super + Shift + T` | Theme & Wallpaper Switcher |
 | `Super + P` / `Shift + P` / `Alt + P` | Toggle Picture-in-Picture / Cycle Corner / Re-Snap |
-| `Super + =` / `Super + Shift + =` | Area / Fullscreen Screenshot |
-| `Super + Shift + L` | Lock Screen |
+| `Super + =` / `Shift + =` / `Ctrl + =` | Area / Fullscreen / Focused Window Screenshot |
+| `Super + Alt + C` / `Super + Shift + R` | Eyedropper Color Picker (`#RRGGBB`) / Toggle Area Screen Recording |
+| `Super + Shift + L` | Native Quickshell Lock Screen (`WlSessionLock` + PAM, with external fallbacks) |
 | `Super + Q` / `Super + 1..9` / `Super + N` | Close window / Switch tag / Cycle layout |
 | `Super + R` / `Super + M` | Reload MangoWC / Quit session |
 

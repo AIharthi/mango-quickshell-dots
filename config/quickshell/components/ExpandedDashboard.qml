@@ -10,7 +10,8 @@ ColumnLayout {
 
     property bool isOpen: false
     property string screenName: ""
-    property string activeTab: "overview"       // "overview" | "files" | "themes" | "launcher"
+    property string activeTab: "overview"       // "overview" | "files" | "themes" | "launcher" | "notifications"
+    property string launcherMode: "apps"
     property bool pinnedOpen: false
     property bool powerMenuOpen: false
     property var player: null
@@ -20,6 +21,7 @@ ColumnLayout {
     signal togglePowerMenuRequested()
     signal openSettingsRequested(string page)
     signal openFilesRequested(string path)
+    signal openKeybindsRequested()
     signal closeRequested()
     signal searchFocusChanged(bool focused)
     signal controlInteractionChanged(bool interacting)
@@ -31,15 +33,15 @@ ColumnLayout {
         precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
     }
 
-    // --- Header Bar (Clock/Date left, Segmented Tabs dead-center, Pin/Close right) ---
-    Item {
+    // --- Header Bar (Clock/Date left, Segmented Tabs centered, Status + Pin/Close right) ---
+    RowLayout {
         Layout.fillWidth: true
         implicitHeight: 32
+        spacing: 8
 
         // Clock & Date Chip
         RowLayout {
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: Qt.AlignVCenter
             spacing: 8
 
             Text {
@@ -58,9 +60,11 @@ ColumnLayout {
             }
         }
 
-        // Segmented Tab Switcher (mathematically centered)
+        Item { Layout.fillWidth: true }
+
+        // Segmented Tab Switcher
         Rectangle {
-            anchors.centerIn: parent
+            Layout.alignment: Qt.AlignVCenter
             height: 30
             width: tabRow.implicitWidth + 6
             radius: Theme.r(15)
@@ -75,19 +79,21 @@ ColumnLayout {
 
                 Repeater {
                     model: [
-                        { id: "overview", icon: "󰕮", label: "Hub" },
-                        { id: "files",    icon: "󰉋", label: "Files" },
-                        { id: "themes",   icon: "󰏘", label: "Themes" },
-                        { id: "launcher", icon: "󰀻", label: "Apps" }
+                        { id: "overview",      icon: "󰕮", label: "Hub" },
+                        { id: "files",         icon: "󰉋", label: "Files" },
+                        { id: "themes",        icon: "󰏘", label: "Themes" },
+                        { id: "launcher",      icon: "󰀻", label: "Apps" },
+                        { id: "notifications", icon: "󰂚", label: "Alerts" }
                     ]
 
                     delegate: Rectangle {
                         id: tabBtn
                         required property var modelData
                         readonly property bool isCurrent: root.activeTab === tabBtn.modelData.id
+                        readonly property bool hasBadge: tabBtn.modelData.id === "notifications" && ShellState.unreadCount > 0
 
                         implicitHeight: 24
-                        implicitWidth: tabContent.implicitWidth + 18
+                        implicitWidth: tabContent.implicitWidth + 14
                         radius: Theme.r(12)
                         color: tabBtn.isCurrent
                             ? Theme.primary
@@ -101,7 +107,7 @@ ColumnLayout {
                         RowLayout {
                             id: tabContent
                             anchors.centerIn: parent
-                            spacing: 5
+                            spacing: 4
 
                             Text {
                                 text: tabBtn.modelData.icon
@@ -117,6 +123,14 @@ ColumnLayout {
                                 font.weight: tabBtn.isCurrent ? Font.Bold : Font.Medium
                                 color: tabBtn.isCurrent ? Theme.fgPrimary : Theme.fgSurfaceVariant
                             }
+
+                            Rectangle {
+                                visible: tabBtn.hasBadge
+                                implicitWidth: 6
+                                implicitHeight: 6
+                                radius: 3
+                                color: tabBtn.isCurrent ? Theme.fgPrimary : Theme.error
+                            }
                         }
 
                         MouseArea {
@@ -131,10 +145,11 @@ ColumnLayout {
             }
         }
 
+        Item { Layout.fillWidth: true }
+
         // Settings + Power + Pin & Close Buttons
         RowLayout {
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: Qt.AlignVCenter
             spacing: 6
 
             // Active-only status chips (click to turn off)
@@ -379,9 +394,11 @@ ColumnLayout {
             _fadingTab = _prevTab;
             _prevTab = activeTab;
             tabUnloadTimer.restart();
-            if (activeTab !== "launcher" && activeTab !== "files")
+            if (activeTab !== "launcher" && activeTab !== "files" && activeTab !== "notifications")
                 searchFocusChanged(false);
         }
+        if (activeTab === "notifications")
+            ShellState.clearUnread();
     }
 
     Timer {
@@ -492,7 +509,7 @@ ColumnLayout {
             }
         }
 
-        // Tab 3: Fuzzy App Launcher
+        // Tab 4: Multi-Mode Launcher (Apps, Clipboard, Calc, Commands, Emoji)
         Loader {
             id: launcherLoader
             anchors.fill: parent
@@ -506,8 +523,30 @@ ColumnLayout {
 
             sourceComponent: AppLauncher {
                 active: root.isOpen && root.activeTab === "launcher"
+                initialMode: root.launcherMode
                 onSearchFocusChanged: focused => root.searchFocusChanged(focused)
                 onCloseRequested: root.closeRequested()
+                onOpenSettingsRequested: page => root.openSettingsRequested(page)
+                onOpenFilesRequested: path => root.openFilesRequested(path)
+                onOpenKeybindsRequested: root.openKeybindsRequested()
+            }
+        }
+
+        // Tab 5: Alerts, Calendar, Focus Timer & Scratchpad
+        Loader {
+            id: notificationsLoader
+            anchors.fill: parent
+            active: root.activeTab === "notifications" || root._fadingTab === "notifications"
+            visible: opacity > 0.01
+            opacity: root.activeTab === "notifications" ? 1.0 : 0.0
+
+            Behavior on opacity {
+                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+            }
+
+            sourceComponent: NotificationsTab {
+                active: root.isOpen && root.activeTab === "notifications"
+                onInputFocusChanged: focused => root.searchFocusChanged(focused)
             }
         }
     }

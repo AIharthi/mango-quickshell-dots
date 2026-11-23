@@ -14,10 +14,12 @@ Item {
     property bool active: false
 
     // OSD State
-    property string osdType: "volume"           // "volume" | "mute" | "brightness"
+    property string osdType: "volume"           // "volume" | "mute" | "brightness" | "mic" | "kb" | "media-play" | "media-next" | "media-prev"
     property real osdValue: 0.5                 // 0.0 .. 1.0
     property bool osdMuted: false
     property bool osdSupported: true
+    property string osdTextValue: ""
+    property bool osdShowBar: true
 
     // Notification State
     property var currentNotif: null
@@ -30,11 +32,14 @@ Item {
     function showOsd(kind: string): void {
         const normalized = (kind || "volume").toLowerCase();
         root.osdType = normalized;
+        root.osdTextValue = "";
+        root.osdShowBar = (normalized === "volume" || normalized === "mute" || normalized === "brightness" || normalized === "mic");
         refreshOsdValue(normalized);
     }
 
     property bool _volRefreshPending: false
     property bool _brightRefreshPending: false
+    property bool _micRefreshPending: false
 
     function refreshOsdValue(kind: string): void {
         const normalized = (kind || root.osdType || "volume").toLowerCase();
@@ -47,6 +52,23 @@ Item {
                 root._brightRefreshPending = true;
             else
                 brightnessProc.running = true;
+        } else if (normalized === "mic") {
+            if (!DeviceCaps.hasAudio) {
+                root.osdSupported = false;
+                return;
+            }
+            if (micProc.running)
+                root._micRefreshPending = true;
+            else
+                micProc.running = true;
+        } else if (normalized === "kb") {
+            root.osdSupported = true;
+            if (!kbProc.running)
+                kbProc.running = true;
+        } else if (normalized.indexOf("media-") === 0) {
+            root.osdSupported = true;
+            if (!mediaProc.running)
+                mediaProc.running = true;
         } else {
             if (!DeviceCaps.hasAudio) {
                 root.osdSupported = false;
@@ -126,7 +148,63 @@ Item {
         }
     }
 
-    // --- 1. OSD Layout (Volume / Mute / Brightness) ---
+    Process {
+        id: micProc
+        command: ["sh", "-c", "pactl get-source-volume @DEFAULT_SOURCE@; pactl get-source-mute @DEFAULT_SOURCE@"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const match = text.match(/([0-9]+)%/);
+                if (match) {
+                    const v = parseInt(match[1], 10) / 100.0;
+                    root.osdValue = Math.max(0.0, Math.min(1.5, v));
+                    root.osdMuted = text.indexOf("Mute: yes") !== -1 || v <= 0.001;
+                    root.osdSupported = true;
+                }
+            }
+        }
+        onExited: {
+            if (root._micRefreshPending) {
+                root._micRefreshPending = false;
+                micProc.running = true;
+            }
+        }
+    }
+
+    Process {
+        id: kbProc
+        command: ["mmsg", "get", "keyboardlayout"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                try {
+                    const d = JSON.parse(raw);
+                    root.osdTextValue = String(d.layout || "Unknown");
+                } catch (err) {
+                    root.osdTextValue = raw || "Switched";
+                }
+            }
+        }
+    }
+
+    Process {
+        id: mediaProc
+        command: ["sh", "-c", "playerctl metadata --format '{{status}}\t{{title}}\t{{artist}}' 2>/dev/null || echo 'Stopped\tMedia\t'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = (text || "").trim().split("\t");
+                const st = parts[0] || "";
+                const title = parts[1] || "";
+                const artist = parts[2] || "";
+                root.osdMuted = (st.toLowerCase() === "paused");
+                if (title.length > 0 && artist.length > 0)
+                    root.osdTextValue = title + " · " + artist;
+                else
+                    root.osdTextValue = title || st || "Media";
+            }
+        }
+    }
+
+    // --- 1. OSD Layout (Volume / Mute / Brightness / Mic / Media / KB) ---
     RowLayout {
         id: osdRow
         anchors.fill: parent
@@ -140,7 +218,7 @@ Item {
             implicitWidth: 30
             implicitHeight: 30
             radius: Theme.r(15)
-            color: (root.osdType !== "brightness" && root.osdMuted)
+            color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
                 ? Theme.withAlpha(Theme.error, 0.20)
                 : Theme.withAlpha(Theme.primary, 0.20)
 
@@ -148,12 +226,22 @@ Item {
                 anchors.centerIn: parent
                 font.family: Theme.iconFont
                 font.pixelSize: 15
-                color: (root.osdType !== "brightness" && root.osdMuted)
+                color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
                     ? Theme.error
                     : Theme.primary
                 text: {
                     if (root.osdType === "brightness")
                         return "󰃠";
+                    if (root.osdType === "mic")
+                        return root.osdMuted ? "󰍭" : "󰍬";
+                    if (root.osdType === "kb")
+                        return "󰌌";
+                    if (root.osdType === "media-next")
+                        return "󰒭";
+                    if (root.osdType === "media-prev")
+                        return "󰒮";
+                    if (root.osdType === "media-play")
+                        return root.osdMuted ? "󰏤" : "󰐊";
                     if (root.osdMuted || root.osdValue <= 0.001)
                         return "󰝟";
                     if (root.osdValue < 0.45)
@@ -172,9 +260,17 @@ Item {
                 Layout.fillWidth: true
 
                 Text {
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
                     text: {
                         if (root.osdType === "brightness")
                             return root.osdSupported ? "Brightness" : "No Backlight";
+                        if (root.osdType === "mic")
+                            return root.osdMuted ? "Mic Muted" : "Microphone";
+                        if (root.osdType === "kb")
+                            return "Keyboard Layout";
+                        if (root.osdType.indexOf("media-") === 0)
+                            return root.osdTextValue.length > 0 ? root.osdTextValue : "Media";
                         return root.osdMuted ? "Muted" : "Volume";
                     }
                     font.family: Theme.fontFamily
@@ -183,22 +279,29 @@ Item {
                     color: Theme.fgSurface
                 }
 
-                Item { Layout.fillWidth: true }
-
                 Text {
-                    text: root.osdSupported
-                        ? (Math.round(root.osdValue * 100) + "%")
-                        : "N/A"
+                    text: {
+                        if (root.osdType === "kb")
+                            return root.osdTextValue.length > 0 ? root.osdTextValue : "Active";
+                        if (root.osdType === "media-next")
+                            return "Next";
+                        if (root.osdType === "media-prev")
+                            return "Prev";
+                        if (root.osdType === "media-play")
+                            return root.osdMuted ? "Paused" : "Playing";
+                        return root.osdSupported ? (Math.round(root.osdValue * 100) + "%") : "N/A";
+                    }
                     font.family: Theme.fontFamily
                     font.pixelSize: 11
                     font.weight: Font.Bold
-                    color: (root.osdType !== "brightness" && root.osdMuted)
+                    color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
                         ? Theme.error
                         : Theme.primary
                 }
             }
 
             Rectangle {
+                visible: root.osdShowBar
                 Layout.fillWidth: true
                 implicitHeight: 6
                 radius: Theme.r(3)

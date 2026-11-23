@@ -148,6 +148,12 @@ def default_prefs():
         "screenshotCopyClipboard": True,
         "screenshotNotify": True,
         "screenshotDelay": 0,
+        "recordingDir": "~/Videos/Recordings",
+        "idleLockEnabled": True,
+        "idleLockSeconds": 300,
+        "idleSuspendEnabled": False,
+        "idleSuspendSeconds": 900,
+        "scratchpadText": "",
         "surfaceStyle": "default",
         "shellOpacity": 0.92,
         "cardOpacity": 0.50,
@@ -318,6 +324,14 @@ def validate_and_apply_pref(prefs, key, raw_val):
         prefs[key] = round(max(0.1, min(3.0, float(prefs[key]))), 2)
     elif key == "screenshotDelay":
         prefs[key] = max(0, min(10, int(prefs[key])))
+    elif key == "recordingDir":
+        prefs[key] = str(prefs[key]).strip() or "~/Videos/Recordings"
+    elif key == "idleLockSeconds":
+        prefs[key] = max(30, min(3600, int(prefs[key])))
+    elif key == "idleSuspendSeconds":
+        prefs[key] = max(60, min(7200, int(prefs[key])))
+    elif key == "scratchpadText":
+        prefs[key] = str(prefs[key])[:16384]
     elif key == "shellOpacity":
         prefs[key] = round(max(0.40, min(1.00, float(prefs[key]))), 2)
     elif key == "cardOpacity":

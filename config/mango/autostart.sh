@@ -35,21 +35,37 @@ if ! pgrep -x pipewire >/dev/null 2>&1; then
     fi
 fi
 
-# Polkit authentication agent (Gentoo / Fedora / Arch paths)
-if ! pgrep -f 'polkit-gnome-authentication-agent-1|polkit-kde-authentication-agent-1|lxqt-policykit-agent|mate-polkit|xfce-polkit' >/dev/null 2>&1; then
-    for agent in \
-        /usr/libexec/polkit-gnome-authentication-agent-1 \
-        /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 \
-        /usr/libexec/lxqt-policykit-agent \
-        /usr/lib/polkit-kde-authentication-agent-1 \
-        /usr/libexec/polkit-kde-authentication-agent-1 \
-        /usr/libexec/xfce-polkit \
-        /usr/lib/mate-polkit/polkit-mate-authentication-agent-1; do
-        if [[ -x "$agent" ]]; then
-            "$agent" </dev/null >/dev/null 2>&1 &
-            break
-        fi
-    done
+# Polkit authentication agent fallback (used when Quickshell is not installed)
+if ! command -v qs >/dev/null 2>&1; then
+    if ! pgrep -f 'polkit-gnome-authentication-agent-1|polkit-kde-authentication-agent-1|lxqt-policykit-agent|mate-polkit|xfce-polkit' >/dev/null 2>&1; then
+        for agent in \
+            /usr/libexec/polkit-gnome-authentication-agent-1 \
+            /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 \
+            /usr/libexec/lxqt-policykit-agent \
+            /usr/lib/polkit-kde-authentication-agent-1 \
+            /usr/libexec/polkit-kde-authentication-agent-1 \
+            /usr/libexec/xfce-polkit \
+            /usr/lib/mate-polkit/polkit-mate-authentication-agent-1; do
+            if [[ -x "$agent" ]]; then
+                "$agent" </dev/null >/dev/null 2>&1 &
+                break
+            fi
+        done
+    fi
+fi
+
+# Secret Service / Keyring daemon (NetworkManager Wi-Fi credentials & app secrets)
+if command -v gnome-keyring-daemon >/dev/null 2>&1; then
+    if ! pgrep -x gnome-keyring-daemon >/dev/null 2>&1; then
+        gnome-keyring-daemon --start --components=secrets </dev/null >/dev/null 2>&1 || true
+    fi
+fi
+
+# Wayland Clipboard History Watcher
+if [[ -x "${CONFIG_BASE}/quickshell/scripts/manage-clipboard.sh" ]]; then
+    if ! pgrep -f 'manage-clipboard\.sh watch' >/dev/null 2>&1; then
+        "${CONFIG_BASE}/quickshell/scripts/manage-clipboard.sh" watch </dev/null >/dev/null 2>&1 &
+    fi
 fi
 
 # Wallpaper daemon (prefer already-running daemon, else awww -> swww)

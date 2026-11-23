@@ -35,6 +35,7 @@ Rectangle {
     signal toggleLauncherRequested()
     signal toggleSettingsRequested()
     signal toggleFilesRequested()
+    signal toggleNotificationsRequested()
 
     color: Theme.surfaceContainerLowest
     radius: 0
@@ -560,6 +561,138 @@ Rectangle {
             width: 1
             height: parent.height
             visible: ShellState.barShowTray && trayStrip.hasItems
+            color: Theme.outlineVariant
+        }
+
+        // Live Recording Chip (Simple Mode)
+        Rectangle {
+            width: sbRecRow.implicitWidth + 14
+            height: parent.height
+            radius: 0
+            visible: ShellState.recordingActive
+            color: sbRecMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.30) : Theme.withAlpha(Theme.error, 0.18)
+
+            Row {
+                id: sbRecRow
+                anchors.centerIn: parent
+                spacing: 4
+
+                Text {
+                    text: "󰑊"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 11
+                    color: Theme.error
+                }
+                Text {
+                    text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.error
+                }
+            }
+
+            MouseArea {
+                id: sbRecMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "stop"])
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: ShellState.recordingActive
+            color: Theme.outlineVariant
+        }
+
+        // Live Focus Timer Chip (Simple Mode)
+        Rectangle {
+            width: sbTimerRow.implicitWidth + 14
+            height: parent.height
+            radius: 0
+            visible: ShellState.timerActive
+            color: sbTimerMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+            Row {
+                id: sbTimerRow
+                anchors.centerIn: parent
+                spacing: 4
+
+                Text {
+                    text: "󰔛"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 11
+                    color: Theme.primary
+                }
+                Text {
+                    text: ShellState.formatTimer(ShellState.timerRemainingSec)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.primary
+                }
+            }
+
+            MouseArea {
+                id: sbTimerMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.toggleNotificationsRequested()
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: ShellState.timerActive
+            color: Theme.outlineVariant
+        }
+
+        // Unread Notifications Chip (Simple Mode)
+        Rectangle {
+            width: sbUnreadRow.implicitWidth + 12
+            height: parent.height
+            radius: 0
+            visible: ShellState.unreadCount > 0
+            color: sbUnreadMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+            Row {
+                id: sbUnreadRow
+                anchors.centerIn: parent
+                spacing: 3
+
+                Text {
+                    text: "󰂚"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 11
+                    color: Theme.secondary
+                }
+                Text {
+                    text: String(ShellState.unreadCount)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurface
+                }
+            }
+
+            MouseArea {
+                id: sbUnreadMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.toggleNotificationsRequested()
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: ShellState.unreadCount > 0
             color: Theme.outlineVariant
         }
 

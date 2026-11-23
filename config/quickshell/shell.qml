@@ -19,6 +19,9 @@ ShellRoot {
     property bool _filesLoaded: false
     property string filesStartPath: ""
 
+    property bool keybindsOpen: false
+    property bool _keybindsLoaded: false
+
     function primaryIsland(): var {
         const list = screenVariants.instances;
         if (!list || list.length === 0)
@@ -84,6 +87,28 @@ ShellRoot {
             root.openFiles("");
     }
 
+    function openKeybinds(): void {
+        root.closeSettings();
+        root.closeFiles();
+        root.collapseAll();
+        keybindsUnloadTimer.stop();
+        root._keybindsLoaded = true;
+        root.keybindsOpen = true;
+    }
+
+    function closeKeybinds(): void {
+        root.keybindsOpen = false;
+        if (root._keybindsLoaded)
+            keybindsUnloadTimer.restart();
+    }
+
+    function toggleKeybindSheet(): void {
+        if (root.keybindsOpen)
+            root.closeKeybinds();
+        else
+            root.openKeybinds();
+    }
+
     Timer {
         id: settingsUnloadTimer
         interval: Theme.reducedMotion ? 10 : 150
@@ -101,6 +126,16 @@ ShellRoot {
         onTriggered: {
             if (!root.filesOpen)
                 root._filesLoaded = false;
+        }
+    }
+
+    Timer {
+        id: keybindsUnloadTimer
+        interval: Theme.reducedMotion ? 10 : 150
+        repeat: false
+        onTriggered: {
+            if (!root.keybindsOpen)
+                root._keybindsLoaded = false;
         }
     }
 
@@ -192,6 +227,7 @@ ShellRoot {
                         onToggleLauncherRequested: islandItem.toggleLauncher()
                         onToggleSettingsRequested: root.toggleSettings()
                         onToggleFilesRequested: root.toggleFiles()
+                        onToggleNotificationsRequested: islandItem.toggleNotifications()
                     }
                 }
             }
@@ -234,6 +270,7 @@ ShellRoot {
                     screenName: screenScope.modelData ? screenScope.modelData.name : ""
                     onOpenSettingsRequested: page => root.openSettings(page)
                     onOpenFilesRequested: path => root.openFiles(path)
+                    onOpenKeybindsRequested: root.openKeybinds()
                 }
             }
         }
@@ -265,13 +302,60 @@ ShellRoot {
         }
     }
 
+    // Keybind Cheat Sheet Modal (lazy-loaded on demand)
+    LazyLoader {
+        id: keybindsLoader
+        active: root._keybindsLoaded
+
+        KeybindSheet {
+            isOpen: root.keybindsOpen
+            onCloseRequested: root.closeKeybinds()
+        }
+    }
+
+    // Native Polkit Authentication Agent Modal
+    PolkitModal {}
+
+    // Native Wayland Lock Screen + Idle Power Manager
+    LockScreen {
+        id: lockScreen
+    }
+
     IpcHandler {
         target: "island"
+
+        function lockSession(): void {
+            root.collapseAll();
+            root.closeSettings();
+            root.closeFiles();
+            root.closeKeybinds();
+            lockScreen.lock();
+        }
 
         function toggleLauncher(): void {
             const isl = root.primaryIsland();
             if (isl)
                 isl.toggleLauncher();
+        }
+
+        function toggleClipboard(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleClipboard();
+        }
+
+        function toggleNotifications(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleNotifications();
+        }
+
+        function toggleKeybindSheet(): void {
+            root.toggleKeybindSheet();
+        }
+
+        function syncRecordingState(): void {
+            ShellState.syncRecordingState();
         }
 
         function toggleThemeTab(): void {
