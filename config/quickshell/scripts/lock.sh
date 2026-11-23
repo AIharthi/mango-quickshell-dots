@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Lock screen using native Quickshell session lock first, then external lockers.
 
-if command -v qs >/dev/null 2>&1 && pgrep -x qs >/dev/null 2>&1; then
+if command -v qs >/dev/null 2>&1 && (pgrep -x qs >/dev/null 2>&1 || pgrep -x quickshell >/dev/null 2>&1); then
     if qs ipc call island lockSession >/dev/null 2>&1; then
         exit 0
     fi

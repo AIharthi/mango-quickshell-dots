@@ -24,7 +24,7 @@ notify_user() {
 }
 
 sync_shell() {
-    if command -v qs >/dev/null 2>&1 && pgrep -x qs >/dev/null 2>&1; then
+    if command -v qs >/dev/null 2>&1 && (pgrep -x qs >/dev/null 2>&1 || pgrep -x quickshell >/dev/null 2>&1); then
         qs ipc call island syncRecordingState >/dev/null 2>&1 || true
     fi
 }
@@ -92,10 +92,11 @@ PY
 )
     if [[ -n "$pid" && "$pid" -gt 1 ]] && kill -0 "$pid" 2>/dev/null; then
         kill -INT "$pid" 2>/dev/null || true
-        local i
-        for i in $(seq 1 30); do
+        local tries=0
+        while (( tries < 30 )); do
             kill -0 "$pid" 2>/dev/null || break
             sleep 0.1
+            tries=$((tries + 1))
         done
         if kill -0 "$pid" 2>/dev/null; then
             kill -TERM "$pid" 2>/dev/null || true

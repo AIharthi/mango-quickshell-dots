@@ -757,7 +757,8 @@ EOF
     done
 
     if command -v gsettings >/dev/null 2>&1; then
-        local runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+        local runtime_dir
+        runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
         if [[ ( -z "${DBUS_SESSION_BUS_ADDRESS:-}" || "${DBUS_SESSION_BUS_ADDRESS:-}" == "disabled:" ) && -S "${runtime_dir}/bus" ]]; then
             export DBUS_SESSION_BUS_ADDRESS="unix:path=${runtime_dir}/bus"
         fi

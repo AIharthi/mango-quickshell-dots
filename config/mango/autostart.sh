@@ -89,7 +89,7 @@ fi
 
 # Launch Quickshell Dynamic Island
 if command -v qs >/dev/null 2>&1; then
-    if ! pgrep -x qs >/dev/null 2>&1; then
+    if ! pgrep -x qs >/dev/null 2>&1 && ! pgrep -x quickshell >/dev/null 2>&1; then
         qs -d </dev/null >/dev/null 2>&1 &
     fi
 fi
