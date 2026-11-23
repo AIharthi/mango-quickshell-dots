@@ -66,6 +66,27 @@ ShellRoot {
         }
     }
 
+    // Event-driven Picture-in-Picture window watcher (zero idle CPU)
+    Process {
+        id: pipWatcher
+        command: [Quickshell.shellPath("scripts/manage-pip.sh"), "watch"]
+        running: ShellState.pipAutoManage
+        onExited: {
+            if (ShellState.pipAutoManage)
+                pipRestartTimer.restart();
+        }
+    }
+
+    Timer {
+        id: pipRestartTimer
+        interval: 3000
+        repeat: false
+        onTriggered: {
+            if (ShellState.pipAutoManage && !pipWatcher.running)
+                pipWatcher.running = true;
+        }
+    }
+
     NotificationServer {
         id: notifServer
         keepOnReload: true
@@ -282,6 +303,18 @@ ShellRoot {
 
         function resetAllSettings(): void {
             ShellState.resetAllSettings();
+        }
+
+        function togglePip(): void {
+            ShellState.togglePip();
+        }
+
+        function cyclePipCorner(): void {
+            ShellState.cyclePipCorner();
+        }
+
+        function snapPip(): void {
+            ShellState.snapPip();
         }
     }
 }

@@ -91,6 +91,14 @@ Singleton {
     property bool barShowQuickIcons: false
     property bool barShowBattery: true
 
+    // --- Picture-in-Picture (PiP) ---
+    property bool pipAutoManage: true
+    property bool pipSticky: true
+    property bool pipAlwaysOnTop: true
+    property string pipCorner: "bottom-right"
+    property int pipWidthPct: 25
+    property int pipMargin: 20
+
     // --- Session Caches (avoid repeated slow subprocess lookups) ---
     property var cachedMonospaceFonts: []
     property var cachedAllFonts: []
@@ -186,6 +194,12 @@ Singleton {
             if (d.barShowTray !== undefined) root.barShowTray = !!d.barShowTray;
             if (d.barShowQuickIcons !== undefined) root.barShowQuickIcons = !!d.barShowQuickIcons;
             if (d.barShowBattery !== undefined) root.barShowBattery = !!d.barShowBattery;
+            if (d.pipAutoManage !== undefined) root.pipAutoManage = !!d.pipAutoManage;
+            if (d.pipSticky !== undefined) root.pipSticky = !!d.pipSticky;
+            if (d.pipAlwaysOnTop !== undefined) root.pipAlwaysOnTop = !!d.pipAlwaysOnTop;
+            if (d.pipCorner !== undefined && String(d.pipCorner).length > 0) root.pipCorner = String(d.pipCorner);
+            if (d.pipWidthPct !== undefined) root.pipWidthPct = Math.max(18, Math.min(45, Number(d.pipWidthPct)));
+            if (d.pipMargin !== undefined) root.pipMargin = Math.max(6, Math.min(64, Number(d.pipMargin)));
             root.lastError = "";
         } catch (err) {
             prefsRetryTimer.restart();
@@ -268,11 +282,29 @@ Singleton {
         else if (key === "barShowTray") root.barShowTray = !!value;
         else if (key === "barShowQuickIcons") root.barShowQuickIcons = !!value;
         else if (key === "barShowBattery") root.barShowBattery = !!value;
+        else if (key === "pipAutoManage") root.pipAutoManage = !!value;
+        else if (key === "pipSticky") root.pipSticky = !!value;
+        else if (key === "pipAlwaysOnTop") root.pipAlwaysOnTop = !!value;
+        else if (key === "pipCorner") root.pipCorner = String(value);
+        else if (key === "pipWidthPct") root.pipWidthPct = Math.max(18, Math.min(45, Number(value)));
+        else if (key === "pipMargin") root.pipMargin = Math.max(6, Math.min(64, Number(value)));
 
         Quickshell.execDetached([
             Quickshell.shellPath("scripts/manage-settings.sh"),
             "prefs-set", key, String(value)
         ]);
+    }
+
+    function togglePip(): void {
+        Quickshell.execDetached([Quickshell.shellPath("scripts/manage-pip.sh"), "toggle"]);
+    }
+
+    function cyclePipCorner(): void {
+        Quickshell.execDetached([Quickshell.shellPath("scripts/manage-pip.sh"), "cycle-corner"]);
+    }
+
+    function snapPip(): void {
+        Quickshell.execDetached([Quickshell.shellPath("scripts/manage-pip.sh"), "snap"]);
     }
 
     function resetPrefs(): void {

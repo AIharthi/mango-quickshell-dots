@@ -41,7 +41,7 @@ PanelWindow {
             { id: "appearance", label: "Appearance",    icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, surfaces, island shape, fonts, cursor, GTK & blur" },
             { id: "themes",     label: "Themes & Colors",icon: "󰌁", source: "ThemesPage.qml",       sub: "Vibes, 16 presets, Matugen, seed hex, custom themes & wallpapers" },
             { id: "shell",      label: "Shell & Bar",   icon: "󰕮", source: "ShellPage.qml",         sub: "Dynamic Island, Simple Bar, screenshots & motion" },
-            { id: "windows",    label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Tiling layouts, per-tag rules & window rules" }
+            { id: "windows",    label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Picture-in-Picture (PiP), tiling layouts, tag & window rules" }
         ];
         if (DeviceCaps.hasAudio)
             items.push({ id: "audio", label: "Audio", icon: "󰋋", source: "AudioPage.qml", sub: "Volume, card profiles, per-app mixer & test" });
@@ -81,6 +81,7 @@ PanelWindow {
         { label: "Simple Bar & Screenshots",   pageId: "shell",         keywords: "bar height top bottom layout screenshot grim slurp clipboard delay" },
         { label: "Accessibility & Motion",     pageId: "shell",         keywords: "reduced motion animations high contrast borders a11y" },
         { label: "Reset & Factory Recovery",   pageId: "system",        keywords: "reset restore undo default factory recovery reset appearance reset bar" },
+        { label: "Picture-in-Picture (PiP)",   pageId: "windows",       keywords: "pip picture in picture video youtube float sticky global overlay corner bottom right top left firefox helium chrome discord popout" },
         { label: "Tiling, Hotarea & Overview", pageId: "windows",       keywords: "tiling scroller master gaps snap floating focus warp monocle hotarea tearing overview" },
         { label: "Per-Tag & Window Rules",     pageId: "windows",       keywords: "tag_rule window_rule workspace default layout floating rule app_id" },
         { label: "Output, Mic & 150% Boost",   pageId: "audio",         keywords: "audio sound volume mute speaker headphone microphone sink over amplification boost" },

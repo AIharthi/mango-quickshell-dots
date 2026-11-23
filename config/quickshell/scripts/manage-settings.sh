@@ -108,6 +108,12 @@ def default_prefs():
         "barShowTray": False,
         "barShowQuickIcons": False,
         "barShowBattery": True,
+        "pipAutoManage": True,
+        "pipSticky": True,
+        "pipAlwaysOnTop": True,
+        "pipCorner": "bottom-right",
+        "pipWidthPct": 25,
+        "pipMargin": 20,
         "reducedMotion": False,
         "highContrast": False,
         "audioOverAmp": False,
@@ -319,6 +325,13 @@ def cmd_prefs_set():
     elif key == "islandStyle":
         v = str(prefs[key]).strip().lower()
         prefs[key] = v if v in ("pill", "notch", "bar") else "pill"
+    elif key == "pipCorner":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("bottom-right", "bottom-left", "top-right", "top-left") else "bottom-right"
+    elif key == "pipWidthPct":
+        prefs[key] = max(18, min(45, int(prefs[key])))
+    elif key == "pipMargin":
+        prefs[key] = max(6, min(64, int(prefs[key])))
 
     if shutil.which("gsettings"):
         if key == "clock24h":

@@ -16,7 +16,7 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
   - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), Dark/Light scheme, **Shell Surface Finish & Transparency** (`Default` / `Frosted Glass` / `OLED Black` / `Flat Minimal` / `Accent Tinted`, panel/card opacity sliders, corner roundness scale `Sharp`–`Pill`, border accent styles `None` / `Subtle` / `Accent` / `Glow`, border width), **Dynamic Island Shape & Text Scale** (`Floating Pill`, `Top Notch`, `Full-Width Bar`, pill height, top margin, `85%`–`120%` UI text scale), `awww`/`swww` wallpaper transitions, **Typography & System Font** (synced across Quickshell, GTK, Foot & Kitty), **GTK, Icons & Font Rendering**, **Cursor Theme & Size**, and full MangoWC compositor effects.
   - **Themes & Colors Studio**: Full appearance customization hub with **8 One-Click Aesthetic Vibes** (*Aurora Glass*, *Minimal Square*, *OLED Stealth*, *Neon Cyber*, *Cozy Paper*, *Full Dock Bar*, *Warm Gruvbox*, *Dracula Notch*), **16 Curated Dark/Light Presets** (*Catppuccin*, *Tokyo Night*, *Gruvbox*, *Nord*, *Rose Pine*, *Dracula*, *Everforest*, *Kanagawa*, *Solarized*, *One Dark*, *Ayu Mirage*, *Oxocarbon*, *Synthwave*, *OLED Pitch*, *Sakura*, *Cyberpunk*), **Seed Accent Color Generator** (`matugen color hex` + RGB channel mixer), **Wallpaper Studio** (folder picker, thumbnail gallery, Random shuffle, Solid color backdrop clear, **Extracted Dominant Source Color** picker, all 10 Matugen scheme algorithms, `--prefer`, contrast, dark/light surface lightness), **Live 10-Slot Palette Editor & Custom Theme Manager** (save, apply, export & import JSON themes), and **MangoWC Window Color & Shadow Overrides** (focused/unfocused border hex overrides, **Accent-Colored Window Shadows**, shadow opacity & dim strength).
   - **Shell & Bar**: **Modular Bar Widgets & Presets** (`Minimal Pill`, `Balanced Island`, `Full Desktop Bar`) — toggle **Date**, **Active Window Title**, **Workspaces / Tags**, **Window Layout Badge (`[T]`)**, **Now-Playing Media**, **CPU & RAM**, **Volume (click mute / scroll ±5%)**, **Keyboard Layout (`US` / `AR`)**, **System Tray**, **Launcher & Settings shortcut icons**, and **Battery** across the Dynamic Island (Pill / Notch / Full-Width Bar) and Simple Bar, plus Dynamic Island hover/collapse delays, OSD controls, Screenshot settings, and global Reduced Motion / High-Contrast options.
-  - **Windows**: Focus follows mouse (`sloppy_focus`), cursor warp, border drag resize hitbox, Scroller/Master/Dwindle/Monocle options, cross-monitor/tag focus, Overview gaps & Hot Corners (`hotarea`), Allow Fullscreen Tearing, **Per-Tag Default Layouts (Tags 1–9)** (`tag_rule`), and a live `mango -p`-validated **Custom Window Rules** (`window_rule`) builder.
+  - **Windows**: **Picture-in-Picture (PiP)** controller (cross-browser auto-float/sticky/always-on-top across Firefox, Helium, Chromium, Brave, Zen & Discord Popout including delayed titles, resolution-relative 16:9 sizing, 4-corner snap & margin controls, plus universal `Super + P` PiP toggle), smart floating rules for portals/dialogs/utilities, Focus follows mouse (`sloppy_focus`), cursor warp, border drag resize hitbox, Scroller/Master/Dwindle/Monocle options, cross-monitor/tag focus, Overview gaps & Hot Corners (`hotarea`), Allow Fullscreen Tearing, **Per-Tag Default Layouts (Tags 1–9)** (`tag_rule`), and a live `mango -p`-validated **Custom Window Rules** (`window_rule`) builder (including `Global` & `Overlay` flags).
   - **Audio**: Output & mic sliders (with optional **150% Over-Amplification** boost), mute toggles, live default sink/source switching, **Speaker Left/Right/Stereo Channel Test**, **Application Mixer** (per-stream volume & mute), **Hardware Audio Card Profiles**, and `pavucontrol`.
   - **Displays**: Connected outputs (`wlr-randr`), enable/disable output toggle, resolution, refresh rate, fractional scaling, **Multi-Monitor Relative Positioning**, **Orientation / Rotation** (`0°`–`270°`), **Adaptive Sync (VRR)**, persistent `monitor_rule` export, conditional **Brightness** (`brightnessctl` / `ddcutil`), and conditional **Night Light** (`hyprsunset`/`wlsunset`/`gammastep`).
   - **Network & Bluetooth**: Always-on **Network Interfaces, IP, Gateway & DNS** status (`ip` / `/sys/class/net`), **NetworkManager Profiles & Quick DNS Presets** (Auto / Cloudflare / Google / Quad9), plus hardware-gated **Wi-Fi** scanning/connect and **Bluetooth** device pairing.
@@ -219,6 +219,9 @@ cd mango-quickshell-dots
 | `Super + T` | Force current tag & window back to tiled mode |
 | `Super + \` | Toggle floating |
 | `Super + F` | Toggle fullscreen |
+| `Super + P` | Toggle any window into Picture-in-Picture (floating + sticky + overlay) |
+| `Super + Shift + P` | Move active PiP window to next screen corner |
+| `Super + Alt + P` | Re-snap active PiP window to configured size & corner |
 | `Super + R` | Reload MangoWC config |
 | `Super + M` | Quit MangoWC |
 
@@ -245,6 +248,9 @@ qs ipc call island clearClipboard
 qs ipc call island resetAppearance
 qs ipc call island resetBar
 qs ipc call island resetAllSettings
+qs ipc call island togglePip
+qs ipc call island cyclePipCorner
+qs ipc call island snapPip
 ```
 
 ---

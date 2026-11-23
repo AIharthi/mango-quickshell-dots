@@ -53,6 +53,8 @@ ColumnLayout {
     property var windowRules: []
     property string ruleStatus: ""
     property bool ruleFloating: true
+    property bool ruleGlobal: false
+    property bool ruleOverlay: false
     property bool ruleNoBlur: false
     property bool ruleNoShadow: false
     property string ruleTag: ""
@@ -122,6 +124,8 @@ ColumnLayout {
             return;
         const parts = [];
         if (root.ruleFloating) parts.push("is_floating:1");
+        if (root.ruleGlobal) parts.push("is_global:1");
+        if (root.ruleOverlay) parts.push("is_overlay:1");
         if (root.ruleNoBlur) parts.push("no_blur:1");
         if (root.ruleNoShadow) parts.push("no_shadow:1");
         if (/^[1-9]$/.test(root.ruleTag.trim())) parts.push("tags:" + root.ruleTag.trim());
@@ -246,6 +250,296 @@ ColumnLayout {
                     root.windowRules = Array.isArray(d.rules) ? d.rules : [];
                     root.ruleStatus = "Rule list synced & verified with mango -p";
                 } catch (err) {}
+            }
+        }
+    }
+
+    // --- 0. Picture-in-Picture (PiP) ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: pipCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: pipCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "PICTURE-IN-PICTURE (PiP)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: pipMoveLbl.implicitWidth + 12
+                    radius: Theme.r(7)
+                    color: pipMoveMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: pipMoveLbl
+                        anchors.centerIn: parent
+                        text: "Move Corner"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Medium
+                        color: Theme.secondary
+                    }
+
+                    MouseArea {
+                        id: pipMoveMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: ShellState.cyclePipCorner()
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: pipSnapLbl.implicitWidth + 12
+                    radius: Theme.r(7)
+                    color: pipSnapMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+
+                    Text {
+                        id: pipSnapLbl
+                        anchors.centerIn: parent
+                        text: "Snap Active"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.fgPrimary
+                    }
+
+                    MouseArea {
+                        id: pipSnapMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: ShellState.snapPip()
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        text: "Auto-Manage Browser & App PiP"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        color: Theme.fgSurface
+                    }
+
+                    Text {
+                        text: "Auto-floats Firefox, Helium, Chromium, Brave, Zen & Discord Popout (even delayed titles)"
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 9
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.pipAutoManage
+                    onToggled: ShellState.setPref("pipAutoManage", !ShellState.pipAutoManage)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Sticky Across All Workspaces (is_global)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.pipSticky
+                    onToggled: {
+                        ShellState.setPref("pipSticky", !ShellState.pipSticky);
+                        ShellState.snapPip();
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Always On Top (is_overlay)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.pipAlwaysOnTop
+                    onToggled: {
+                        ShellState.setPref("pipAlwaysOnTop", !ShellState.pipAlwaysOnTop);
+                        ShellState.snapPip();
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 112
+                    text: "Default Corner"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "bottom-right", label: "Bottom-Right" },
+                        { id: "bottom-left",  label: "Bottom-Left" },
+                        { id: "top-right",    label: "Top-Right" },
+                        { id: "top-left",     label: "Top-Left" }
+                    ]
+
+                    delegate: Rectangle {
+                        id: pipCorChip
+                        required property var modelData
+                        readonly property bool selected: ShellState.pipCorner === pipCorChip.modelData.id
+
+                        Layout.fillWidth: true
+                        implicitHeight: 26
+                        radius: Theme.r(8)
+                        color: pipCorChip.selected
+                            ? Theme.withAlpha(Theme.primary, 0.22)
+                            : (pipCorMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: pipCorChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: pipCorChip.selected ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: pipCorChip.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: pipCorChip.selected ? Font.Bold : Font.Medium
+                            color: pipCorChip.selected ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: pipCorMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                ShellState.setPref("pipCorner", pipCorChip.modelData.id);
+                                ShellState.snapPip();
+                            }
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 112
+                    text: "Window Size"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { val: 20, label: "Small 20%" },
+                        { val: 25, label: "Medium 25%" },
+                        { val: 32, label: "Large 32%" },
+                        { val: 40, label: "XL 40%" }
+                    ]
+
+                    delegate: Rectangle {
+                        id: pipSzChip
+                        required property var modelData
+                        readonly property bool selected: ShellState.pipWidthPct === pipSzChip.modelData.val
+
+                        Layout.fillWidth: true
+                        implicitHeight: 26
+                        radius: Theme.r(8)
+                        color: pipSzChip.selected
+                            ? Theme.withAlpha(Theme.secondary, 0.22)
+                            : (pipSzMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: pipSzChip.selected ? 1 : Theme.cardBorderWidth
+                        border.color: pipSzChip.selected ? Theme.secondary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: pipSzChip.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: pipSzChip.selected ? Font.Bold : Font.Medium
+                            color: pipSzChip.selected ? Theme.secondary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: pipSzMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                ShellState.setPref("pipWidthPct", pipSzChip.modelData.val);
+                                ShellState.snapPip();
+                            }
+                        }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "Corner Edge Margin"
+                displayValue: ShellState.pipMargin + " px"
+                onDecremented: {
+                    ShellState.setPref("pipMargin", Math.max(8, ShellState.pipMargin - 4));
+                    ShellState.snapPip();
+                }
+                onIncremented: {
+                    ShellState.setPref("pipMargin", Math.min(60, ShellState.pipMargin + 4));
+                    ShellState.snapPip();
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: "Shortcuts: Super+P toggles PiP on any window · Super+Shift+P moves corner · Super+Alt+P re-snaps"
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                color: Theme.fgSurfaceVariant
             }
         }
     }
@@ -872,6 +1166,8 @@ ColumnLayout {
                 Repeater {
                     model: [
                         { id: "flt",  label: "Floating" },
+                        { id: "glob", label: "Global" },
+                        { id: "ovly", label: "Overlay" },
                         { id: "blur", label: "No Blur" },
                         { id: "shd",  label: "No Shadow" }
                     ]
@@ -881,7 +1177,11 @@ ColumnLayout {
                         required property var modelData
                         readonly property bool active: wrFlagChip.modelData.id === "flt"
                             ? root.ruleFloating
-                            : (wrFlagChip.modelData.id === "blur" ? root.ruleNoBlur : root.ruleNoShadow)
+                            : (wrFlagChip.modelData.id === "glob"
+                                ? root.ruleGlobal
+                                : (wrFlagChip.modelData.id === "ovly"
+                                    ? root.ruleOverlay
+                                    : (wrFlagChip.modelData.id === "blur" ? root.ruleNoBlur : root.ruleNoShadow)))
 
                         implicitHeight: 22
                         implicitWidth: wrFlTxt.implicitWidth + 12
@@ -905,6 +1205,8 @@ ColumnLayout {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
                                 if (wrFlagChip.modelData.id === "flt") root.ruleFloating = !root.ruleFloating;
+                                else if (wrFlagChip.modelData.id === "glob") root.ruleGlobal = !root.ruleGlobal;
+                                else if (wrFlagChip.modelData.id === "ovly") root.ruleOverlay = !root.ruleOverlay;
                                 else if (wrFlagChip.modelData.id === "blur") root.ruleNoBlur = !root.ruleNoBlur;
                                 else root.ruleNoShadow = !root.ruleNoShadow;
                             }
