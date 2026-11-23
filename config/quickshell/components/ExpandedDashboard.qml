@@ -26,48 +26,56 @@ ColumnLayout {
     signal searchFocusChanged(bool focused)
     signal controlInteractionChanged(bool interacting)
 
-    spacing: 12
+    spacing: 10
 
     SystemClock {
         id: headerClock
         precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
     }
 
-    // --- Header Bar (Clock/Date left, Segmented Tabs centered, Status + Pin/Close right) ---
+    // --- Header Bar (Clock/Date left, Segmented Tabs centered, Compact Action Icons right) ---
     RowLayout {
         Layout.fillWidth: true
-        implicitHeight: 32
+        Layout.fillHeight: false
+        Layout.preferredHeight: 34
+        Layout.minimumHeight: 34
+        Layout.maximumHeight: 34
         spacing: 8
+        clip: true
 
         // Clock & Date Chip
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
-            spacing: 8
+            Layout.fillHeight: false
+            spacing: 6
 
             Text {
                 text: ShellState.formatTime(headerClock.date)
                 font.family: Theme.fontFamily
-                font.pixelSize: 15
+                font.pixelSize: 14
                 font.weight: Font.Bold
                 color: Theme.fgSurface
             }
 
             Text {
+                Layout.maximumWidth: 78
+                elide: Text.ElideRight
                 text: ShellState.formatDate(headerClock.date)
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: 10
                 color: Theme.fgSurfaceVariant
             }
         }
 
         Item { Layout.fillWidth: true }
 
-        // Segmented Tab Switcher
+        // Apple Segmented Tab Switcher
         Rectangle {
             Layout.alignment: Qt.AlignVCenter
-            implicitHeight: 30
+            Layout.fillHeight: false
+            implicitHeight: 32
             implicitWidth: tabRow.implicitWidth + 6
-            radius: Theme.r(15)
+            radius: Theme.r(16)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
             border.color: Theme.cardBorder
@@ -75,7 +83,7 @@ ColumnLayout {
             RowLayout {
                 id: tabRow
                 anchors.centerIn: parent
-                spacing: 3
+                spacing: 2
 
                 Repeater {
                     model: [
@@ -92,16 +100,16 @@ ColumnLayout {
                         readonly property bool isCurrent: root.activeTab === tabBtn.modelData.id
                         readonly property bool hasBadge: tabBtn.modelData.id === "notifications" && ShellState.unreadCount > 0
 
-                        implicitHeight: 24
-                        implicitWidth: tabContent.implicitWidth + 14
-                        radius: Theme.r(12)
+                        implicitHeight: 26
+                        implicitWidth: tabContent.implicitWidth + 12
+                        radius: Theme.r(13)
                         color: tabBtn.isCurrent
                             ? Theme.primary
                             : (tabArea.containsMouse ? Theme.hoverBg : "transparent")
 
                         Behavior on color {
                             enabled: !Theme.isSimple
-                            ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                         }
 
                         RowLayout {
@@ -112,14 +120,14 @@ ColumnLayout {
                             Text {
                                 text: tabBtn.modelData.icon
                                 font.family: Theme.iconFont
-                                font.pixelSize: 12
+                                font.pixelSize: 11
                                 color: tabBtn.isCurrent ? Theme.fgPrimary : Theme.fgSurfaceVariant
                             }
 
                             Text {
                                 text: tabBtn.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: 10
                                 font.weight: tabBtn.isCurrent ? Font.Bold : Font.Medium
                                 color: tabBtn.isCurrent ? Theme.fgPrimary : Theme.fgSurfaceVariant
                             }
@@ -147,22 +155,23 @@ ColumnLayout {
 
         Item { Layout.fillWidth: true }
 
-        // Hub Layout Switcher Pill + Active Status Chips + Settings/Power/Pin/Close
+        // Right Action Cluster (guaranteed to fit cleanly at 700px+ without clipping Close button)
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
-            spacing: 6
+            Layout.fillHeight: false
+            spacing: 5
 
-            // Sleek Hub Layout Switcher Pill (LMB cycle, RMB -> Settings -> Shell)
+            // Compact Hub Layout Switcher Circle (LMB cycles Hub layout, RMB -> Settings -> Shell)
             Rectangle {
                 id: hubSwitchPill
-                implicitHeight: 28
-                implicitWidth: hubLayoutRow.implicitWidth + 14
-                radius: Theme.r(14)
-                color: hubSwitchMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 26
+                implicitWidth: 26
+                radius: Theme.r(13)
+                color: hubSwitchMouse.containsMouse ? Theme.activeBg : Theme.cardBg
+                border.width: Math.max(Theme.cardBorderWidth, 1)
+                border.color: hubSwitchMouse.containsMouse ? Theme.primary : Theme.withAlpha(Theme.primary, 0.35)
                 visible: root.activeTab === "overview"
-                scale: hubSwitchMouse.pressed ? 0.94 : 1.0
+                scale: hubSwitchMouse.pressed ? 0.92 : 1.0
 
                 Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
@@ -175,25 +184,12 @@ ColumnLayout {
                     return arr[0];
                 }
 
-                RowLayout {
-                    id: hubLayoutRow
+                Text {
                     anchors.centerIn: parent
-                    spacing: 4
-
-                    Text {
-                        text: hubSwitchPill.curHubObj ? hubSwitchPill.curHubObj.icon : "󰕰"
-                        font.family: Theme.iconFont
-                        font.pixelSize: 11
-                        color: Theme.primary
-                    }
-
-                    Text {
-                        text: hubSwitchPill.curHubObj ? hubSwitchPill.curHubObj.label : "Cupertino"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 9
-                        font.weight: Font.Bold
-                        color: Theme.fgSurfaceVariant
-                    }
+                    text: hubSwitchPill.curHubObj ? hubSwitchPill.curHubObj.icon : "󰕰"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 12
+                    color: Theme.primary
                 }
 
                 MouseArea {
@@ -214,9 +210,9 @@ ColumnLayout {
             // Active-only status chips (click to turn off)
             Rectangle {
                 visible: ShellState.dnd
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: Theme.r(14)
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: Theme.r(13)
                 color: dndHeaderArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.warning, 0.16)
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.withAlpha(Theme.warning, 0.45)
@@ -225,7 +221,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰂛"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                     color: Theme.warning
                 }
 
@@ -240,9 +236,9 @@ ColumnLayout {
 
             Rectangle {
                 visible: ShellState.keepAwake
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: Theme.r(14)
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: Theme.r(13)
                 color: awakeHeaderArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.tertiary, 0.16)
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.withAlpha(Theme.tertiary, 0.45)
@@ -251,7 +247,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰅶"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                     color: Theme.tertiary
                 }
 
@@ -265,9 +261,9 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: Theme.r(14)
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: Theme.r(13)
                 color: settingsArea.containsMouse ? Theme.hoverBg : Theme.cardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
@@ -275,7 +271,7 @@ ColumnLayout {
 
                 Behavior on color {
                     enabled: !Theme.isSimple
-                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
                 Behavior on scale {
                     enabled: !Theme.isSimple
@@ -286,7 +282,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰒓"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                     color: settingsArea.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
                     rotation: settingsArea.containsMouse ? 45 : 0
 
@@ -296,7 +292,7 @@ ColumnLayout {
                     }
                     Behavior on color {
                         enabled: !Theme.isSimple
-                        ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                     }
                 }
 
@@ -310,9 +306,9 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: Theme.r(14)
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: Theme.r(13)
                 color: root.powerMenuOpen
                     ? Theme.withAlpha(Theme.error, 0.22)
                     : (powerArea.containsMouse ? Theme.hoverBg : Theme.cardBg)
@@ -322,7 +318,7 @@ ColumnLayout {
 
                 Behavior on color {
                     enabled: !Theme.isSimple
-                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
                 Behavior on scale {
                     enabled: !Theme.isSimple
@@ -333,7 +329,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰐥"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                     color: (root.powerMenuOpen || powerArea.containsMouse) ? Theme.error : Theme.fgSurfaceVariant
                 }
 
@@ -347,9 +343,9 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: Theme.r(14)
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: Theme.r(13)
                 color: root.pinnedOpen
                     ? Theme.activeBg
                     : (pinArea.containsMouse ? Theme.hoverBg : Theme.cardBg)
@@ -359,7 +355,7 @@ ColumnLayout {
 
                 Behavior on color {
                     enabled: !Theme.isSimple
-                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
                 Behavior on scale {
                     enabled: !Theme.isSimple
@@ -370,7 +366,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: root.pinnedOpen ? "󰐃" : "󰤱"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                     color: root.pinnedOpen ? Theme.primary : Theme.fgSurfaceVariant
                 }
 
@@ -384,9 +380,9 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: Theme.r(14)
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: Theme.r(13)
                 color: closeArea.containsMouse
                     ? Theme.withAlpha(Theme.error, 0.22)
                     : Theme.cardBg
@@ -396,7 +392,7 @@ ColumnLayout {
 
                 Behavior on color {
                     enabled: !Theme.isSimple
-                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
                 Behavior on scale {
                     enabled: !Theme.isSimple
@@ -407,7 +403,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰅖"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                     color: closeArea.containsMouse ? Theme.error : Theme.fgSurfaceVariant
                 }
 
@@ -425,18 +421,20 @@ ColumnLayout {
     // --- Collapsible Animated Power Action Strip ---
     Item {
         Layout.fillWidth: true
-        Layout.preferredHeight: root.powerMenuOpen ? 34 : 0
+        Layout.fillHeight: false
+        Layout.preferredHeight: root.powerMenuOpen ? 36 : 0
+        Layout.maximumHeight: root.powerMenuOpen ? 36 : 0
         opacity: root.powerMenuOpen ? 1.0 : 0.0
         visible: opacity > 0.01
         clip: true
 
         Behavior on Layout.preferredHeight {
             enabled: !Theme.isSimple
-            NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
         }
         Behavior on opacity {
             enabled: !Theme.isSimple
-            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
         }
 
         PowerMenu {
@@ -496,7 +494,8 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: 174
+                        Layout.preferredHeight: 184
+                        Layout.minimumHeight: 168
                         player: root.player
                         active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
                         onSeekingChanged: seeking => root.controlInteractionChanged(seeking)
@@ -506,7 +505,8 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: 174
+                        Layout.preferredHeight: 184
+                        Layout.minimumHeight: 168
                         active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
                     }
 
@@ -514,7 +514,8 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 208
+                        Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 250 : 216
+                        Layout.minimumHeight: 196
                         screenName: root.screenName
                         active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
                     }
@@ -523,7 +524,8 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 208
+                        Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 250 : 216
+                        Layout.minimumHeight: 196
                         active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
                         onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
                         onOpenSettingsRequested: page => root.openSettingsRequested(page)

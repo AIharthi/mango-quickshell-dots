@@ -335,7 +335,7 @@ ShellRoot {
                     )
                 )
                 exclusionMode: ExclusionMode.Normal
-                implicitHeight: 580
+                implicitHeight: 620
                 color: "transparent"
 
                 // Only the visible Dynamic Island pill (or active square dropdown in Simple Mode) intercepts mouse events.

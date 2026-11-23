@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import ".."
 
 RowLayout {
@@ -108,33 +107,40 @@ RowLayout {
 
     // ==================== LEFT COLUMN: Calendar + Focus Timer + Scratchpad ====================
     ColumnLayout {
-        Layout.preferredWidth: 278
+        Layout.preferredWidth: 288
+        Layout.minimumWidth: 280
+        Layout.maximumWidth: 294
         Layout.fillHeight: true
         spacing: 8
 
         // --- Month Calendar Card ---
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: calCol.implicitHeight + 18
-            radius: Theme.r(16)
+            Layout.fillHeight: false
+            Layout.preferredHeight: 206
+            Layout.minimumHeight: 202
+            Layout.maximumHeight: 212
+            radius: Theme.r(18)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
             border.color: Theme.cardBorder
+            clip: true
 
             ColumnLayout {
                 id: calCol
                 anchors.fill: parent
-                anchors.margins: 9
-                spacing: 5
+                anchors.margins: 10
+                spacing: 6
 
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
                     spacing: 4
 
                     Text {
                         text: root.monthNames[root.viewMonth] + " " + root.viewYear
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: 12
                         font.weight: Font.Bold
                         color: Theme.fgSurface
                     }
@@ -142,9 +148,9 @@ RowLayout {
                     Item { Layout.fillWidth: true }
 
                     Rectangle {
-                        implicitWidth: 20
-                        implicitHeight: 20
-                        radius: Theme.r(6)
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        radius: Theme.r(11)
                         color: prevM.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
                         Text {
@@ -165,9 +171,9 @@ RowLayout {
                     }
 
                     Rectangle {
-                        implicitHeight: 20
-                        implicitWidth: todayLbl.implicitWidth + 10
-                        radius: Theme.r(6)
+                        implicitHeight: 22
+                        implicitWidth: todayLbl.implicitWidth + 12
+                        radius: Theme.r(11)
                         color: todayM.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
                         Text {
@@ -190,9 +196,9 @@ RowLayout {
                     }
 
                     Rectangle {
-                        implicitWidth: 20
-                        implicitHeight: 20
-                        radius: Theme.r(6)
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        radius: Theme.r(11)
                         color: nextM.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
                         Text {
@@ -213,7 +219,7 @@ RowLayout {
                     }
                 }
 
-                // Weekday headers
+                // Weekday headers + Circular Apple Day Cells
                 GridLayout {
                     Layout.fillWidth: true
                     columns: 7
@@ -236,13 +242,21 @@ RowLayout {
 
                     Repeater {
                         model: root.calendarCells
-                        delegate: Rectangle {
+                        delegate: Item {
                             id: dayCell
                             required property var modelData
                             Layout.fillWidth: true
-                            implicitHeight: 19
-                            radius: Theme.r(6)
-                            color: dayCell.modelData.isToday ? Theme.primary : "transparent"
+                            implicitHeight: 21
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 20
+                                height: 20
+                                radius: 10
+                                color: dayCell.modelData.isToday
+                                    ? Theme.primary
+                                    : (dayHover.containsMouse && dayCell.modelData.inMonth ? Theme.hoverBg : "transparent")
+                            }
 
                             Text {
                                 anchors.centerIn: parent
@@ -253,8 +267,14 @@ RowLayout {
                                 color: {
                                     if (dayCell.modelData.isToday)
                                         return Theme.fgPrimary;
-                                    return dayCell.modelData.inMonth ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.42);
+                                    return dayCell.modelData.inMonth ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.40);
                                 }
+                            }
+
+                            MouseArea {
+                                id: dayHover
+                                anchors.fill: parent
+                                hoverEnabled: true
                             }
                         }
                     }
@@ -262,11 +282,14 @@ RowLayout {
             }
         }
 
-        // --- 2-Segment Bottom Drawer Switcher (Focus & Timer | Scratchpad) ---
+        // --- 2-Segment Bottom Drawer Switcher (Focus & Weather | Notes) ---
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 28
-            radius: Theme.r(10)
+            Layout.fillHeight: false
+            Layout.preferredHeight: 30
+            Layout.minimumHeight: 30
+            Layout.maximumHeight: 30
+            radius: Theme.r(15)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
             border.color: Theme.cardBorder
@@ -279,7 +302,7 @@ RowLayout {
                 Repeater {
                     model: [
                         { id: "timer", label: "󰔛 Focus & Weather" },
-                        { id: "notes", label: "󰎞 Scratchpad" }
+                        { id: "notes", label: "󰎞 Notes" }
                     ]
 
                     delegate: Rectangle {
@@ -288,7 +311,7 @@ RowLayout {
                         readonly property bool sel: root.bottomWidget === bwTab.modelData.id
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        radius: Theme.r(7)
+                        radius: Theme.r(12)
                         color: bwTab.sel ? Theme.primary : (bwMouse.containsMouse ? Theme.hoverBg : "transparent")
 
                         Text {
@@ -317,74 +340,90 @@ RowLayout {
             visible: root.bottomWidget === "timer"
             Layout.fillWidth: true
             Layout.fillHeight: !ShellState.weatherEnabled
-            implicitHeight: timerCol.implicitHeight + 18
-            radius: Theme.r(16)
+            implicitHeight: timerCol.implicitHeight + 20
+            radius: Theme.r(18)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
             border.color: (ShellState.timerActive || ShellState.stopwatchActive) ? Theme.primary : Theme.cardBorder
+            clip: true
 
             ColumnLayout {
                 id: timerCol
                 anchors.fill: parent
-                anchors.margins: 9
-                spacing: 6
+                anchors.margins: 10
+                spacing: 7
 
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
                     spacing: 4
 
                     Rectangle {
-                        implicitHeight: 18
-                        implicitWidth: tglTimerLbl.implicitWidth + 10
-                        radius: Theme.r(6)
-                        color: root.timerMode === "timer" ? Theme.primary : Theme.subCardBg
+                        implicitHeight: 22
+                        implicitWidth: segTimerRow.implicitWidth + 6
+                        radius: Theme.r(11)
+                        color: Theme.subCardBg
 
-                        Text {
-                            id: tglTimerLbl
+                        RowLayout {
+                            id: segTimerRow
                             anchors.centerIn: parent
-                            text: "󰔛 Timer"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 9
-                            font.weight: Font.Bold
-                            color: root.timerMode === "timer" ? Theme.fgPrimary : Theme.fgSurfaceVariant
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.timerMode = "timer"
-                        }
-                    }
+                            spacing: 2
 
-                    Rectangle {
-                        implicitHeight: 18
-                        implicitWidth: tglSwLbl.implicitWidth + 10
-                        radius: Theme.r(6)
-                        color: root.timerMode === "stopwatch" ? Theme.primary : Theme.subCardBg
+                            Rectangle {
+                                implicitHeight: 18
+                                implicitWidth: tglTimerLbl.implicitWidth + 10
+                                radius: Theme.r(9)
+                                color: root.timerMode === "timer" ? Theme.primary : "transparent"
 
-                        Text {
-                            id: tglSwLbl
-                            anchors.centerIn: parent
-                            text: "󱎫 Stopwatch"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 9
-                            font.weight: Font.Bold
-                            color: root.timerMode === "stopwatch" ? Theme.fgPrimary : Theme.fgSurfaceVariant
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.timerMode = "stopwatch"
+                                Text {
+                                    id: tglTimerLbl
+                                    anchors.centerIn: parent
+                                    text: "󰔛 Timer"
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 9
+                                    font.weight: Font.Bold
+                                    color: root.timerMode === "timer" ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.timerMode = "timer"
+                                }
+                            }
+
+                            Rectangle {
+                                implicitHeight: 18
+                                implicitWidth: tglSwLbl.implicitWidth + 10
+                                radius: Theme.r(9)
+                                color: root.timerMode === "stopwatch" ? Theme.primary : "transparent"
+
+                                Text {
+                                    id: tglSwLbl
+                                    anchors.centerIn: parent
+                                    text: "󱎫 Sw"
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 9
+                                    font.weight: Font.Bold
+                                    color: root.timerMode === "stopwatch" ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.timerMode = "stopwatch"
+                                }
+                            }
                         }
                     }
 
                     Item { Layout.fillWidth: true }
 
                     Text {
+                        visible: ShellState.weatherEnabled
                         text: root.timerMode === "timer"
                             ? ShellState.formatTimer(ShellState.timerRemainingSec)
                             : ShellState.formatTimer(ShellState.stopwatchElapsedSec)
                         font.family: Theme.fontFamily
-                        font.pixelSize: 15
+                        font.pixelSize: 17
                         font.weight: Font.Bold
                         color: (root.timerMode === "timer" ? ShellState.timerActive : ShellState.stopwatchActive)
                             ? Theme.primary
@@ -392,10 +431,68 @@ RowLayout {
                     }
                 }
 
+                // Expanded Apple Focus Hero Time (when Weather card is hidden, fills space gracefully)
+                Item {
+                    Layout.fillHeight: !ShellState.weatherEnabled
+                    visible: !ShellState.weatherEnabled
+                }
+
+                ColumnLayout {
+                    visible: !ShellState.weatherEnabled
+                    Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    spacing: 2
+
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: root.timerMode === "timer"
+                            ? ShellState.formatTimer(ShellState.timerRemainingSec)
+                            : ShellState.formatTimer(ShellState.stopwatchElapsedSec)
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 28
+                        font.weight: Font.Bold
+                        color: (root.timerMode === "timer" ? ShellState.timerActive : ShellState.stopwatchActive)
+                            ? Theme.primary
+                            : Theme.fgSurface
+                    }
+
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: root.timerMode === "timer"
+                            ? (ShellState.timerActive ? "Focus session running" : "Focus Timer Ready")
+                            : (ShellState.stopwatchActive ? "Stopwatch running" : "Stopwatch Ready")
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 9
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                // Subtle Apple Progress Bar during active Timer
+                Rectangle {
+                    visible: root.timerMode === "timer" && ShellState.timerDurationSec > 0
+                    Layout.fillWidth: true
+                    implicitHeight: 5
+                    radius: 2.5
+                    color: Theme.surfaceContainerHighest
+
+                    Rectangle {
+                        height: parent.height
+                        width: parent.width * Math.max(0.0, Math.min(1.0, ShellState.timerRemainingSec / Math.max(1, ShellState.timerDurationSec)))
+                        radius: 2.5
+                        color: Theme.primary
+                    }
+                }
+
+                Item {
+                    Layout.fillHeight: !ShellState.weatherEnabled
+                    visible: !ShellState.weatherEnabled
+                }
+
                 // Timer Presets + Controls
                 RowLayout {
                     visible: root.timerMode === "timer"
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
                     spacing: 4
 
                     Repeater {
@@ -404,9 +501,9 @@ RowLayout {
                             id: preBtn
                             required property int modelData
                             readonly property bool isSel: ShellState.timerDurationSec === preBtn.modelData * 60
-                            implicitHeight: 22
+                            implicitHeight: 24
                             Layout.fillWidth: true
-                            radius: Theme.r(7)
+                            radius: Theme.r(12)
                             color: preBtn.isSel
                                 ? Theme.activeBg
                                 : (preMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
@@ -431,9 +528,9 @@ RowLayout {
                     }
 
                     Rectangle {
-                        implicitHeight: 22
+                        implicitHeight: 24
                         implicitWidth: startLbl.implicitWidth + 14
-                        radius: Theme.r(7)
+                        radius: Theme.r(12)
                         color: ShellState.timerActive
                             ? Theme.withAlpha(Theme.warning, 0.24)
                             : Theme.primary
@@ -456,9 +553,9 @@ RowLayout {
                     }
 
                     Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
-                        radius: Theme.r(7)
+                        implicitWidth: 24
+                        implicitHeight: 24
+                        radius: Theme.r(12)
                         color: rstMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
                         Text {
@@ -491,8 +588,8 @@ RowLayout {
 
                         Rectangle {
                             Layout.fillWidth: true
-                            implicitHeight: 22
-                            radius: Theme.r(7)
+                            implicitHeight: 24
+                            radius: Theme.r(12)
                             color: ShellState.stopwatchActive
                                 ? Theme.withAlpha(Theme.warning, 0.24)
                                 : Theme.primary
@@ -514,8 +611,8 @@ RowLayout {
 
                         Rectangle {
                             Layout.fillWidth: true
-                            implicitHeight: 22
-                            radius: Theme.r(7)
+                            implicitHeight: 24
+                            radius: Theme.r(12)
                             color: lapMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
                             Text {
@@ -536,9 +633,9 @@ RowLayout {
                         }
 
                         Rectangle {
-                            implicitWidth: 22
-                            implicitHeight: 22
-                            radius: Theme.r(7)
+                            implicitWidth: 24
+                            implicitHeight: 24
+                            radius: Theme.r(12)
                             color: swRstMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
                             Text {
@@ -568,9 +665,9 @@ RowLayout {
                                 id: lapBadge
                                 required property string modelData
                                 required property int index
-                                implicitHeight: 16
-                                implicitWidth: lapTxt.implicitWidth + 8
-                                radius: Theme.r(5)
+                                implicitHeight: 17
+                                implicitWidth: lapTxt.implicitWidth + 10
+                                radius: Theme.r(8)
                                 color: Theme.subCardBg
 
                                 Text {
@@ -592,16 +689,18 @@ RowLayout {
         Rectangle {
             visible: root.bottomWidget === "timer" && ShellState.weatherEnabled
             Layout.fillWidth: true
-            implicitHeight: wCol.implicitHeight + 16
-            radius: Theme.r(16)
+            Layout.fillHeight: false
+            implicitHeight: wCol.implicitHeight + 18
+            radius: Theme.r(18)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
             border.color: Theme.cardBorder
+            clip: true
 
             RowLayout {
                 id: wCol
                 anchors.fill: parent
-                anchors.margins: 8
+                anchors.margins: 10
                 spacing: 8
 
                 Text {
@@ -640,9 +739,9 @@ RowLayout {
                 }
 
                 Rectangle {
-                    implicitWidth: 22
-                    implicitHeight: 22
-                    radius: Theme.r(7)
+                    implicitWidth: 24
+                    implicitHeight: 24
+                    radius: Theme.r(12)
                     color: wRefMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
                     Text {
@@ -669,21 +768,22 @@ RowLayout {
             visible: root.bottomWidget === "notes"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            radius: Theme.r(16)
+            radius: Theme.r(18)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
             border.color: scratchInput.activeFocus ? Theme.primary : Theme.cardBorder
+            clip: true
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 9
-                spacing: 4
+                anchors.margins: 10
+                spacing: 6
 
                 RowLayout {
                     Layout.fillWidth: true
 
                     Text {
-                        text: "󰎞  SCRATCHPAD"
+                        text: "󰎞  NOTES"
                         font.family: Theme.fontFamily
                         font.pixelSize: 9
                         font.weight: Font.Bold
@@ -736,7 +836,7 @@ RowLayout {
                         selectionColor: Theme.primary
                         selectedTextColor: Theme.fgPrimary
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: 11
                         text: ShellState.scratchpadText
 
                         onTextChanged: {
@@ -754,37 +854,39 @@ RowLayout {
         }
     }
 
-    // ==================== RIGHT COLUMN: Notification Center ====================
+    // ==================== RIGHT COLUMN: macOS Notification Center ====================
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Theme.r(16)
+        radius: Theme.r(18)
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth
         border.color: Theme.cardBorder
+        clip: true
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 8
+            anchors.margins: 12
+            spacing: 10
 
             // Header
             RowLayout {
                 Layout.fillWidth: true
+                Layout.fillHeight: false
                 spacing: 6
 
                 Text {
-                    text: "󰂚  NOTIFICATIONS"
+                    text: "Notifications"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: 12
                     font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    color: Theme.fgSurface
                 }
 
                 Rectangle {
-                    implicitHeight: 18
+                    implicitHeight: 20
                     implicitWidth: cntLbl.implicitWidth + 10
-                    radius: Theme.r(9)
+                    radius: Theme.r(10)
                     color: Theme.subCardBg
 
                     Text {
@@ -886,21 +988,51 @@ RowLayout {
                         readonly property bool urgent: Number(nCard.modelData.urgency || 0) === 2
 
                         width: notifList.width
-                        implicitHeight: nCol.implicitHeight + 16
-                        radius: Theme.r(12)
+                        implicitHeight: nCol.implicitHeight + 18
+                        radius: Theme.r(14)
                         color: Theme.subCardBg
-                        border.width: 1
-                        border.color: nCard.urgent ? Theme.withAlpha(Theme.error, 0.6) : Theme.cardBorder
+                        border.width: nCard.urgent ? 1 : Theme.cardBorderWidth
+                        border.color: nCard.urgent ? Theme.withAlpha(Theme.error, 0.65) : Theme.cardBorder
+                        clip: true
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.topMargin: 8
+                            anchors.bottomMargin: 8
+                            width: 3
+                            radius: 1.5
+                            color: nCard.urgent ? Theme.error : Theme.primary
+                        }
 
                         ColumnLayout {
                             id: nCol
                             anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 2
+                            anchors.leftMargin: 13
+                            anchors.rightMargin: 9
+                            anchors.topMargin: 9
+                            anchors.bottomMargin: 9
+                            spacing: 3
 
                             RowLayout {
                                 Layout.fillWidth: true
                                 spacing: 6
+
+                                Rectangle {
+                                    implicitWidth: 20
+                                    implicitHeight: 20
+                                    radius: Theme.r(10)
+                                    color: nCard.urgent ? Theme.withAlpha(Theme.error, 0.20) : Theme.withAlpha(Theme.primary, 0.16)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: nCard.urgent ? "󰀨" : "󰂚"
+                                        font.family: Theme.iconFont
+                                        font.pixelSize: 10
+                                        color: nCard.urgent ? Theme.error : Theme.primary
+                                    }
+                                }
 
                                 Text {
                                     text: (nCard.modelData.appName || "System").toUpperCase()
@@ -920,9 +1052,9 @@ RowLayout {
                                 Item { Layout.fillWidth: true }
 
                                 Rectangle {
-                                    implicitWidth: 18
-                                    implicitHeight: 18
-                                    radius: Theme.r(9)
+                                    implicitWidth: 20
+                                    implicitHeight: 20
+                                    radius: Theme.r(10)
                                     color: dismissMouse.containsMouse ? Theme.hoverBg : "transparent"
 
                                     Text {
@@ -972,21 +1104,38 @@ RowLayout {
                 ColumnLayout {
                     anchors.centerIn: parent
                     visible: (ShellState.notificationHistory || []).length === 0
-                    spacing: 6
+                    spacing: 8
 
-                    Text {
+                    Rectangle {
                         Layout.alignment: Qt.AlignHCenter
-                        text: ShellState.dnd ? "󰂛" : "󰂜"
-                        font.family: Theme.iconFont
-                        font.pixelSize: 28
-                        color: Theme.fgSurfaceVariant
+                        implicitWidth: 50
+                        implicitHeight: 50
+                        radius: Theme.r(25)
+                        color: Theme.subCardBg
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: ShellState.dnd ? "󰂛" : "󰂜"
+                            font.family: Theme.iconFont
+                            font.pixelSize: 24
+                            color: ShellState.dnd ? Theme.warning : Theme.primary
+                        }
                     }
 
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        text: ShellState.dnd ? "Do Not Disturb is active" : "All caught up — no notifications"
+                        text: ShellState.dnd ? "Do Not Disturb is active" : "No Notifications"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
+                        color: Theme.fgSurface
+                    }
+
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: ShellState.dnd ? "Desktop alerts are silenced" : "You're all caught up"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
                         color: Theme.fgSurfaceVariant
                     }
                 }

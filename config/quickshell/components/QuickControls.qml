@@ -227,14 +227,16 @@ Rectangle {
     color: Theme.cardBg
     border.width: Theme.cardBorderWidth
     border.color: Theme.cardBorder
+    clip: true
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 8
+        anchors.margins: 11
+        spacing: 7
 
         RowLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: false
 
             Text {
                 text: "󰒓  QUICK CONTROLS"
@@ -257,16 +259,17 @@ Rectangle {
         // --- Apple Control Center Capsule Volume Slider ---
         RowLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: false
             spacing: 8
 
             Item {
                 id: volCapsule
                 Layout.fillWidth: true
-                implicitHeight: 34
+                implicitHeight: 32
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Theme.r(17)
+                    radius: Theme.r(16)
                     color: Theme.subCardBg
                     border.width: Theme.cardBorderWidth
                     border.color: Theme.cardBorder
@@ -277,7 +280,7 @@ Rectangle {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
                         width: Math.max(parent.height, parent.width * root.volumeLevel)
-                        radius: Theme.r(17)
+                        radius: Theme.r(16)
                         color: root.volumeMuted ? Theme.surfaceContainerHighest : Theme.primary
 
                         Behavior on width {
@@ -354,9 +357,9 @@ Rectangle {
             }
 
             Rectangle {
-                implicitWidth: 34
-                implicitHeight: 34
-                radius: Theme.r(17)
+                implicitWidth: 32
+                implicitHeight: 32
+                radius: Theme.r(16)
                 color: root.micMuted
                     ? Theme.withAlpha(Theme.error, 0.20)
                     : (micMuteArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
@@ -388,7 +391,8 @@ Rectangle {
         Item {
             id: brightCapsule
             Layout.fillWidth: true
-            implicitHeight: 32
+            Layout.fillHeight: false
+            implicitHeight: 30
             visible: DeviceCaps.hasBacklight
             opacity: root.brightnessSupported ? 1.0 : 0.45
 
@@ -474,6 +478,7 @@ Rectangle {
         // --- Hardware-Aware Wi-Fi & Bluetooth Pills (only shown when hardware exists) ---
         RowLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: false
             spacing: 8
             visible: DeviceCaps.hasWifi || DeviceCaps.hasBluetooth
 
@@ -609,6 +614,7 @@ Rectangle {
         // --- Desktop Audio & Settings Shortcut (shown when no backlight/wifi/bt clutter exists) ---
         Rectangle {
             Layout.fillWidth: true
+            Layout.fillHeight: false
             implicitHeight: 32
             visible: !DeviceCaps.hasExtraQuickControls
             radius: Theme.r(11)
@@ -694,6 +700,7 @@ Rectangle {
         // --- Decluttered 4-Pill Quick Actions Strip ---
         RowLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: false
             spacing: 6
 
             Repeater {
@@ -790,11 +797,14 @@ Rectangle {
             }
         }
 
+        Item { Layout.fillHeight: true }
+
         // --- Clean Apple Visual Style Summary Pill (LMB -> Settings Appearance, RMB -> Cycle Mode) ---
         Rectangle {
             id: styleSummaryCard
             Layout.fillWidth: true
-            implicitHeight: 34
+            Layout.fillHeight: false
+            implicitHeight: 32
             radius: Theme.r(12)
             color: styleSummaryMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
             border.width: Theme.cardBorderWidth

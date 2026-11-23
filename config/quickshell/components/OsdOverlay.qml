@@ -204,20 +204,20 @@ Item {
         }
     }
 
-    // --- 1. OSD Layout (Volume / Mute / Brightness / Mic / Media / KB) ---
+    // --- 1. Apple Dynamic Island OSD Layout (Volume / Mute / Brightness / Mic / Media / KB) ---
     RowLayout {
         id: osdRow
         anchors.fill: parent
-        anchors.leftMargin: 8
-        anchors.rightMargin: 8
+        anchors.leftMargin: 10
+        anchors.rightMargin: 10
         spacing: 12
         visible: root.mode === "osd"
 
         Rectangle {
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 30
-            implicitHeight: 30
-            radius: Theme.r(15)
+            implicitWidth: 34
+            implicitHeight: 34
+            radius: Theme.r(17)
             color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
                 ? Theme.withAlpha(Theme.error, 0.20)
                 : Theme.withAlpha(Theme.primary, 0.20)
@@ -225,7 +225,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 font.family: Theme.iconFont
-                font.pixelSize: 15
+                font.pixelSize: 16
                 color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
                     ? Theme.error
                     : Theme.primary
@@ -254,7 +254,7 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            spacing: 4
+            spacing: 5
 
             RowLayout {
                 Layout.fillWidth: true
@@ -264,18 +264,18 @@ Item {
                     elide: Text.ElideRight
                     text: {
                         if (root.osdType === "brightness")
-                            return root.osdSupported ? "Brightness" : "No Backlight";
+                            return root.osdSupported ? "Display" : "No Backlight";
                         if (root.osdType === "mic")
                             return root.osdMuted ? "Mic Muted" : "Microphone";
                         if (root.osdType === "kb")
                             return "Keyboard Layout";
                         if (root.osdType.indexOf("media-") === 0)
                             return root.osdTextValue.length > 0 ? root.osdTextValue : "Media";
-                        return root.osdMuted ? "Muted" : "Volume";
+                        return root.osdMuted ? "Muted" : "Sound";
                     }
                     font.family: Theme.fontFamily
                     font.pixelSize: 11
-                    font.weight: Font.DemiBold
+                    font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
 
@@ -292,7 +292,7 @@ Item {
                         return root.osdSupported ? (Math.round(root.osdValue * 100) + "%") : "N/A";
                     }
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: 12
                     font.weight: Font.Bold
                     color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
                         ? Theme.error
@@ -303,45 +303,48 @@ Item {
             Rectangle {
                 visible: root.osdShowBar
                 Layout.fillWidth: true
-                implicitHeight: 6
-                radius: Theme.r(3)
+                implicitHeight: 10
+                radius: Theme.r(5)
                 color: Theme.surfaceContainerHighest
+                clip: true
 
                 Rectangle {
                     height: parent.height
-                    radius: Theme.r(3)
-                    width: Math.max(0, Math.min(parent.width, parent.width * Math.min(1.0, root.osdValue)))
+                    radius: Theme.r(5)
+                    width: root.osdValue <= 0.001 ? 0 : Math.max(parent.height, Math.min(parent.width, parent.width * Math.min(1.0, root.osdValue)))
                     color: (root.osdType !== "brightness" && root.osdMuted)
                         ? Theme.error
                         : Theme.primary
 
                     Behavior on width {
                         enabled: !Theme.isSimple
-                        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        NumberAnimation { duration: 130; easing.type: Easing.OutCubic }
                     }
                 }
             }
         }
     }
 
-    // --- 2. Notification Morphing Layout ---
+    // --- 2. Apple Notification Morphing Toast Layout ---
     RowLayout {
         id: notifRow
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 6
-        anchors.rightMargin: 6
+        anchors.leftMargin: 8
+        anchors.rightMargin: 8
         spacing: 10
         visible: root.mode === "notification" && root.currentNotif !== null
 
         // App Icon / Notification Thumbnail
         ClippingRectangle {
             Layout.alignment: Qt.AlignTop
-            implicitWidth: 38
-            implicitHeight: 38
+            implicitWidth: 40
+            implicitHeight: 40
             radius: Theme.r(12)
             color: root.isUrgent ? Theme.withAlpha(Theme.error, 0.22) : Theme.primaryContainer
+            contentUnderBorder: false
+            contentInsideBorder: true
 
             Image {
                 id: notifImg
@@ -390,9 +393,16 @@ Item {
                         ? root.currentNotif.appName.toUpperCase()
                         : "NOTIFICATION"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: 9
                     font.weight: Font.Bold
                     color: root.isUrgent ? Theme.error : Theme.primary
+                }
+
+                Text {
+                    text: "now"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 9
+                    color: Theme.fgSurfaceVariant
                 }
 
                 Item { Layout.fillWidth: true }
@@ -401,13 +411,13 @@ Item {
                     implicitWidth: 20
                     implicitHeight: 20
                     radius: Theme.r(10)
-                    color: closeMouse.containsMouse ? Theme.hoverBg : "transparent"
+                    color: closeMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰅖"
                         font.family: Theme.iconFont
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         color: Theme.fgSurfaceVariant
                     }
 
@@ -460,11 +470,11 @@ Item {
                     delegate: Rectangle {
                         id: actionBtn
                         required property var modelData
-                        implicitHeight: 22
-                        implicitWidth: actionLabel.implicitWidth + 16
-                        height: 22
-                        width: actionLabel.implicitWidth + 16
-                        radius: Theme.r(11)
+                        implicitHeight: 24
+                        implicitWidth: actionLabel.implicitWidth + 18
+                        height: 24
+                        width: actionLabel.implicitWidth + 18
+                        radius: Theme.r(12)
                         color: actionArea.containsMouse ? Theme.activeBg : Theme.subCardBg
                         border.width: Theme.cardBorderWidth
                         border.color: Theme.cardBorder
@@ -475,7 +485,7 @@ Item {
                             text: actionBtn.modelData.text
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
-                            font.weight: Font.Medium
+                            font.weight: Font.DemiBold
                             color: Theme.fgSurface
                         }
 

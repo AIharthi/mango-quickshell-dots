@@ -160,29 +160,23 @@ Item {
     // --- Target Geometry per State ---
     readonly property int expandedWidth: {
         if (root.activeTab === "launcher")
-            return 650;
-        if (root.activeTab === "notifications")
-            return 720;
-        if (root.activeTab === "files")
             return 700;
-        if (root.activeTab === "themes")
-            return 700;
-        return 720;
+        return 760;
     }
 
     readonly property int expandedHeight: {
-        let h = 464;
+        let h = 486;
         if (root.activeTab === "launcher")
-            h = 472;
+            h = 488;
         else if (root.activeTab === "notifications")
-            h = 474;
+            h = 492;
         else if (root.activeTab === "files")
-            h = 444;
+            h = 468;
         else if (root.activeTab === "themes")
-            h = 440;
+            h = 468;
         else
-            h = DeviceCaps.hasExtraQuickControls ? 504 : 464;
-        return h + (root.powerMenuOpen ? 46 : 0);
+            h = DeviceCaps.hasExtraQuickControls ? 526 : 486;
+        return h + (root.powerMenuOpen ? 48 : 0);
     }
 
     readonly property int notchPad: (!Theme.isSimple && ShellState.barUiStyle === "classic" && ShellState.islandStyle === "notch") ? 14 : 0
@@ -203,9 +197,9 @@ Item {
             return Math.max(128, Math.min(Math.round(root.width) - 32, Math.round(collapsedPill.implicitWidth) + 28));
         }
         if (root.islandState === "osd")
-            return 320;
+            return 340;
         if (root.islandState === "notification")
-            return 420;
+            return 436;
         return root.expandedWidth;
     }
 
@@ -218,9 +212,9 @@ Item {
             return ShellState.pillHeight + root.notchPad;
         }
         if (root.islandState === "osd")
-            return 56 + root.notchPad;
+            return 62 + root.notchPad;
         if (root.islandState === "notification")
-            return Math.max(78, Math.min(148, Math.round(osdOverlay.notificationHeight) + 20)) + root.notchPad;
+            return Math.max(82, Math.min(156, Math.round(osdOverlay.notificationHeight) + 22)) + root.notchPad;
         return root.expandedHeight + root.notchPad;
     }
 
@@ -403,6 +397,28 @@ Item {
             height: 1
             visible: Theme.showOledRim && !root.splitCollapsed
             color: Theme.withAlpha(Theme.primary, 0.35)
+        }
+
+        // Subtle Apple Inner Edge Rim (keeps pill/expanded silhouette crisp even with borderStyle: "none")
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: "transparent"
+            border.width: 1
+            border.color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.09)
+            visible: !Theme.isSimple && !root.splitCollapsed && !root.menuCollapsed && Theme.islandBorderWidth === 0
+            z: 5
+        }
+
+        // macOS Sequoia Menu Bar Crisp Bottom Hairline
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.10)
+            visible: root.menuCollapsed
+            z: 5
         }
 
         // Subtle urgent bottom accent for critical notifications (no outer outline)

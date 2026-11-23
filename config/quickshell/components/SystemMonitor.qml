@@ -171,6 +171,7 @@ Rectangle {
     color: Theme.cardBg
     border.width: Theme.cardBorderWidth
     border.color: Theme.cardBorder
+    clip: true
 
     ColumnLayout {
         anchors.fill: parent
@@ -179,6 +180,7 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: false
             spacing: 6
 
             Text {
@@ -285,7 +287,9 @@ Rectangle {
             Canvas {
                 id: cpuSpark
                 Layout.fillWidth: true
-                Layout.preferredHeight: DeviceCaps.hasBattery ? 18 : 26
+                Layout.fillHeight: true
+                Layout.minimumHeight: DeviceCaps.hasBattery ? 18 : 26
+                Layout.maximumHeight: 104
                 antialiasing: true
 
                 readonly property color strokeCol: root.cpuPercent > 85 ? Theme.error : Theme.primary
@@ -461,8 +465,12 @@ Rectangle {
                     border.color: Theme.cardBorder
 
                     RowLayout {
-                        anchors.centerIn: parent
+                        anchors.fill: parent
+                        anchors.leftMargin: 6
+                        anchors.rightMargin: 6
                         spacing: 4
+
+                        Item { Layout.fillWidth: true }
 
                         Text {
                             text: metaChip.modelData.icon
@@ -472,12 +480,16 @@ Rectangle {
                         }
 
                         Text {
+                            Layout.maximumWidth: Math.max(24, metaChip.width - 28)
+                            elide: Text.ElideRight
                             text: metaChip.modelData.lbl
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.DemiBold
                             color: Theme.fgSurface
                         }
+
+                        Item { Layout.fillWidth: true }
                     }
                 }
             }

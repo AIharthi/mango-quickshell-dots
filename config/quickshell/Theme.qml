@@ -147,29 +147,29 @@ Singleton {
             return withAlpha("#000000", 0.97);
         if (isNeon)
             return isDark
-                ? withAlpha(Qt.tint("#07070c", withAlpha(primaryContainer, 0.16)), 0.95)
-                : withAlpha(surface, 0.96);
+                ? withAlpha(Qt.tint("#07070c", withAlpha(primaryContainer, 0.16)), 0.96)
+                : withAlpha(surface, 0.97);
         if (isRetro)
             return isDark ? surfaceContainerLow : surface;
         if (isMinimal)
             return withAlpha(surfaceContainerLowest, 0.97);
         if (isBlur)
             return isDark
-                ? withAlpha(surfaceContainerLowest, Math.min(0.84, Math.max(0.68, ShellState.shellOpacity * 0.80)))
-                : withAlpha(surface, Math.min(0.88, ShellState.shellOpacity * 0.84));
+                ? withAlpha(surfaceContainerLowest, Math.min(0.86, Math.max(0.70, ShellState.shellOpacity * 0.82)))
+                : withAlpha(surface, Math.min(0.89, ShellState.shellOpacity * 0.85));
         if (ShellState.surfaceStyle === "flat")
             return withAlpha(surfaceContainerLowest, Math.max(0.95, ShellState.shellOpacity));
         if (ShellState.surfaceStyle === "oled")
-            return withAlpha("#000000", Math.max(0.92, ShellState.shellOpacity));
+            return withAlpha("#000000", Math.max(0.94, ShellState.shellOpacity));
         if (ShellState.surfaceStyle === "tinted")
-            return withAlpha(primaryContainer, Math.max(0.88, Math.min(0.96, ShellState.shellOpacity * 0.92)));
+            return withAlpha(primaryContainer, Math.max(0.90, Math.min(0.97, ShellState.shellOpacity * 0.94)));
         if (ShellState.surfaceStyle === "glass")
             return isDark
-                ? withAlpha(surfaceContainerLowest, Math.min(0.86, ShellState.shellOpacity * 0.82))
-                : withAlpha(surface, Math.min(0.90, ShellState.shellOpacity * 0.86));
+                ? withAlpha(surfaceContainerLowest, Math.min(0.88, ShellState.shellOpacity * 0.84))
+                : withAlpha(surface, Math.min(0.91, ShellState.shellOpacity * 0.87));
         return isDark
-            ? withAlpha(Qt.tint("#07070b", withAlpha(surfaceContainerLowest, 0.30)), Math.max(0.94, ShellState.shellOpacity))
-            : withAlpha(surface, Math.max(0.95, ShellState.shellOpacity));
+            ? withAlpha(Qt.tint("#07070b", withAlpha(surfaceContainerLowest, 0.30)), Math.max(0.95, ShellState.shellOpacity))
+            : withAlpha(surface, Math.max(0.96, ShellState.shellOpacity));
     }
     readonly property color islandBg: notchBg
     readonly property color islandBorder: {
@@ -209,23 +209,23 @@ Singleton {
             return withAlpha("#09090e", 0.96);
         if (isNeon)
             return isDark
-                ? withAlpha(Qt.tint("#0c0d14", withAlpha(primaryContainer, 0.18)), 0.93)
-                : withAlpha(surfaceContainerHigh, 0.94);
+                ? withAlpha(Qt.tint("#0c0d14", withAlpha(primaryContainer, 0.18)), 0.94)
+                : withAlpha(surfaceContainerHigh, 0.95);
         if (isRetro)
             return isDark ? surfaceContainer : surfaceDim;
         if (isMinimal)
             return isDark ? withAlpha(surfaceContainer, 0.96) : withAlpha(surfaceContainerLow, 0.98);
         if (isBlur)
             return isDark
-                ? withAlpha(surfaceContainerHigh, Math.max(0.58, ShellState.cardOpacity * 0.92))
-                : withAlpha(surfaceContainerHigh, 0.80);
+                ? withAlpha(surfaceContainerHigh, Math.max(0.60, ShellState.cardOpacity * 0.92))
+                : withAlpha(surfaceContainerHigh, 0.82);
         if (ShellState.surfaceStyle === "oled")
-            return withAlpha("#0a0a0f", Math.max(0.84, ShellState.cardOpacity));
+            return withAlpha("#0a0a0f", Math.max(0.86, ShellState.cardOpacity));
         if (ShellState.surfaceStyle === "tinted")
-            return withAlpha(surfaceContainerHigh, Math.max(0.78, ShellState.cardOpacity * 0.92));
+            return withAlpha(surfaceContainerHigh, Math.max(0.82, ShellState.cardOpacity * 0.94));
         return isDark
-            ? withAlpha(surfaceContainer, Math.max(0.82, Math.min(0.95, ShellState.cardOpacity + 0.30)))
-            : withAlpha(surfaceContainerHigh, Math.min(1.0, ShellState.cardOpacity + 0.34));
+            ? withAlpha(surfaceContainer, Math.max(0.88, Math.min(0.97, ShellState.cardOpacity + 0.38)))
+            : withAlpha(surfaceContainerHigh, Math.min(1.0, ShellState.cardOpacity + 0.36));
     }
     readonly property color subCardBg: {
         if (isSimple)
@@ -233,20 +233,20 @@ Singleton {
         if (isOled)
             return withAlpha("#12121a", 0.94);
         if (isNeon)
-            return isDark ? withAlpha(primaryContainer, 0.34) : withAlpha(surfaceContainerHigh, 0.88);
+            return isDark ? withAlpha(primaryContainer, 0.36) : withAlpha(surfaceContainerHigh, 0.90);
         if (isRetro)
             return isDark ? surfaceContainerHigh : surfaceContainer;
         if (isMinimal)
-            return isDark ? withAlpha(surfaceContainerHigh, 0.72) : withAlpha(surfaceContainer, 0.90);
+            return isDark ? withAlpha(surfaceContainerHigh, 0.74) : withAlpha(surfaceContainer, 0.90);
         if (isBlur)
             return isDark
-                ? withAlpha(surfaceContainerHighest, Math.max(0.42, ShellState.cardOpacity * 0.78))
-                : withAlpha(surfaceContainer, 0.78);
+                ? withAlpha(surfaceContainerHighest, Math.max(0.46, ShellState.cardOpacity * 0.78))
+                : withAlpha(surfaceContainer, 0.80);
         if (ShellState.surfaceStyle === "oled")
-            return withAlpha("#12121a", Math.max(0.76, ShellState.cardOpacity));
+            return withAlpha("#12121a", Math.max(0.78, ShellState.cardOpacity));
         return isDark
-            ? withAlpha(surfaceContainerHigh, Math.max(0.68, Math.min(0.92, ShellState.cardOpacity + 0.20)))
-            : withAlpha(surfaceContainer, Math.min(1.0, ShellState.cardOpacity + 0.40));
+            ? withAlpha(surfaceContainerHigh, Math.max(0.76, Math.min(0.94, ShellState.cardOpacity + 0.28)))
+            : withAlpha(surfaceContainer, Math.min(1.0, ShellState.cardOpacity + 0.42));
     }
     readonly property color cardBorder: {
         if (ShellState.highContrast)

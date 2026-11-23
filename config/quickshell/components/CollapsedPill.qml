@@ -666,6 +666,7 @@ Item {
         anchors.centerIn: parent
         visible: root.barUiStyle === "apple"
         spacing: 8
+        clip: true
 
         // Left: Compact Active Space Dot Pill (when idle) or Spinning Media Cover
         Rectangle {
@@ -755,21 +756,24 @@ Item {
     }
 
     // ==================== BAR STYLE 2: SPLIT FLOATING ISLANDS (3 GLASS PODS) ====================
-    RowLayout {
+    Item {
         id: splitRow
         anchors.fill: parent
         visible: root.barUiStyle === "split"
-        spacing: 8
+        clip: true
 
         // POD 1 (LEFT): Launcher + Workspaces + Layout
         Rectangle {
-            Layout.alignment: Qt.AlignVCenter
-            implicitHeight: ShellState.pillHeight
-            implicitWidth: podLeftRow.implicitWidth + 18
+            id: splitPodLeft
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            height: ShellState.pillHeight
+            width: Math.min(podLeftRow.implicitWidth + 18, Math.max(220, Math.round(splitRow.width * 0.36)))
             radius: Theme.r(Math.round(ShellState.pillHeight / 2))
             color: Theme.notchBg
-            border.width: Theme.islandBorderWidth
-            border.color: Theme.islandBorder
+            border.width: Theme.islandBorderWidth > 0 ? Theme.islandBorderWidth : (Theme.isSimple ? 0 : 1)
+            border.color: Theme.islandBorderWidth > 0 ? Theme.islandBorder : (Theme.isDark ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.09))
+            clip: true
 
             RowLayout {
                 id: podLeftRow
@@ -791,7 +795,7 @@ Item {
                 Rectangle {
                     implicitHeight: 18
                     implicitWidth: spLayTxt.implicitWidth + 10
-                    radius: Theme.r(6)
+                    radius: Theme.r(9)
                     color: spLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
 
                     Text { id: spLayTxt; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.secondary }
@@ -800,7 +804,7 @@ Item {
 
                 Text {
                     visible: ShellState.barShowWindow && root.activeWindowTitle.length > 0
-                    Layout.maximumWidth: 150
+                    Layout.maximumWidth: 130
                     elide: Text.ElideRight
                     text: root.activeWindowTitle
                     font.family: Theme.fontFamily
@@ -810,17 +814,17 @@ Item {
             }
         }
 
-        Item { Layout.fillWidth: true }
-
-        // POD 2 (CENTER): Clock + Date + Dynamic Now Playing (click to expand Island)
+        // POD 2 (DEAD-CENTER): Clock + Date + Dynamic Now Playing (click to expand Island)
         Rectangle {
-            Layout.alignment: Qt.AlignVCenter
-            implicitHeight: ShellState.pillHeight
-            implicitWidth: Math.max(120, podCenterRow.implicitWidth + 24)
+            id: splitPodCenter
+            anchors.centerIn: parent
+            height: ShellState.pillHeight
+            width: Math.max(120, Math.min(Math.max(140, splitRow.width - splitPodLeft.width - splitPodRight.width - 20), podCenterRow.implicitWidth + 24))
             radius: Theme.r(Math.round(ShellState.pillHeight / 2))
             color: podCenterMouse.containsMouse ? Qt.lighter(Theme.notchBg, 1.06) : Theme.notchBg
-            border.width: Theme.islandBorderWidth
-            border.color: Theme.islandBorder
+            border.width: Theme.islandBorderWidth > 0 ? Theme.islandBorderWidth : (Theme.isSimple ? 0 : 1)
+            border.color: Theme.islandBorderWidth > 0 ? Theme.islandBorder : (Theme.isDark ? Qt.rgba(1, 1, 1, 0.11) : Qt.rgba(0, 0, 0, 0.10))
+            clip: true
 
             MouseArea {
                 id: podCenterMouse
@@ -853,22 +857,23 @@ Item {
 
                 MediaMiniGroup {
                     visible: root.hasMedia
-                    maxTitleWidth: 170
+                    maxTitleWidth: 165
                 }
             }
         }
 
-        Item { Layout.fillWidth: true }
-
         // POD 3 (RIGHT): Live Activities, Volume, Focus, Battery, Control Center
         Rectangle {
-            Layout.alignment: Qt.AlignVCenter
-            implicitHeight: ShellState.pillHeight
-            implicitWidth: podRightRow.implicitWidth + 18
+            id: splitPodRight
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            height: ShellState.pillHeight
+            width: Math.min(podRightRow.implicitWidth + 18, Math.max(200, Math.round(splitRow.width * 0.36)))
             radius: Theme.r(Math.round(ShellState.pillHeight / 2))
             color: Theme.notchBg
-            border.width: Theme.islandBorderWidth
-            border.color: Theme.islandBorder
+            border.width: Theme.islandBorderWidth > 0 ? Theme.islandBorderWidth : (Theme.isSimple ? 0 : 1)
+            border.color: Theme.islandBorderWidth > 0 ? Theme.islandBorder : (Theme.isDark ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.09))
+            clip: true
 
             RowLayout {
                 id: podRightRow
@@ -916,6 +921,7 @@ Item {
         anchors.fill: parent
         visible: root.barUiStyle === "menubar"
         spacing: 10
+        clip: true
 
         // Apple/Launcher Menu Icon
         Rectangle {
@@ -1032,6 +1038,7 @@ Item {
         anchors.centerIn: root.barMode ? undefined : parent
         visible: root.barUiStyle === "classic"
         spacing: root.hasAnyClassicModule ? 8 : 0
+        clip: true
 
         // Launcher Quick Icon
         Rectangle {

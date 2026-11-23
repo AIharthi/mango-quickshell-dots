@@ -106,6 +106,7 @@ Rectangle {
     color: Theme.cardBg
     border.width: Theme.cardBorderWidth
     border.color: Theme.cardBorder
+    clip: true
 
     ColumnLayout {
         anchors.fill: parent
@@ -114,6 +115,7 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: false
 
             Text {
                 text: "󰖲  MANGOWC TAGS"

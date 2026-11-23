@@ -50,11 +50,12 @@ Rectangle {
         onTriggered: root.pendingAction = ""
     }
 
-    implicitHeight: 34
-    radius: Theme.r(12)
+    implicitHeight: 36
+    radius: Theme.r(16)
     color: Theme.cardBg
     border.width: Theme.cardBorderWidth
     border.color: Theme.cardBorder
+    clip: true
 
     RowLayout {
         anchors.fill: parent
@@ -71,8 +72,8 @@ Rectangle {
                 readonly property bool isPending: root.pendingAction === btn.modelData.id
 
                 Layout.fillWidth: true
-                Layout.preferredHeight: 24
-                radius: Theme.r(8)
+                Layout.preferredHeight: 26
+                radius: Theme.r(13)
                 color: {
                     if (btn.isPending)
                         return Theme.error;

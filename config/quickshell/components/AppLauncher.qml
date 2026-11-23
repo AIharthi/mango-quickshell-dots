@@ -635,15 +635,154 @@ ColumnLayout {
         }
     }
 
-    // --- Mode Selector Pills ---
+    // --- macOS Spotlight Search / Expression Bar ---
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.fillHeight: false
+        Layout.preferredHeight: 46
+        Layout.minimumHeight: 46
+        Layout.maximumHeight: 46
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: searchInput.activeFocus ? 1.5 : Theme.cardBorderWidth
+        border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
+
+        Behavior on border.color {
+            enabled: !Theme.isSimple
+            ColorAnimation { duration: 150 }
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 14
+            anchors.rightMargin: 12
+            spacing: 10
+
+            Text {
+                text: {
+                    if (root.effectiveMode === "clip") return "󰅌";
+                    if (root.effectiveMode === "calc") return "󰪚";
+                    if (root.effectiveMode === "cmds") return "󰘳";
+                    if (root.effectiveMode === "emoji") return "󰞅";
+                    return "󰍉";
+                }
+                font.family: Theme.iconFont
+                font.pixelSize: 18
+                color: searchInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: searchInput.text.length === 0
+                    text: {
+                        if (root.effectiveMode === "clip") return "Search clipboard history...";
+                        if (root.effectiveMode === "calc") return "Type math expression (e.g. 1920*1080, 0xff + 16, sqrt(144))...";
+                        if (root.effectiveMode === "cmds") return "Search desktop commands...";
+                        if (root.effectiveMode === "emoji") return "Search emojis & Nerd Font icons...";
+                        return "Spotlight Search  (prefixes: = calc · > cmd · : emoji · cb clip)";
+                    }
+                    elide: Text.ElideRight
+                    width: parent.width
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 12
+                    color: Theme.fgSurfaceVariant
+                }
+
+                TextInput {
+                    id: searchInput
+                    anchors.fill: parent
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: Theme.fgSurface
+                    selectionColor: Theme.primary
+                    selectedTextColor: Theme.fgPrimary
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 14
+                    clip: true
+
+                    onTextChanged: {
+                        root.query = text;
+                        root.selectedIndex = 0;
+                    }
+                    onActiveFocusChanged: root.searchFocusChanged(activeFocus)
+
+                    Keys.onUpPressed: root.moveSelection(-1)
+                    Keys.onDownPressed: root.moveSelection(1)
+                    Keys.onTabPressed: root.moveSelection(1)
+                    Keys.onBacktabPressed: root.moveSelection(-1)
+                    Keys.onReturnPressed: root.activateSelected()
+                    Keys.onEnterPressed: root.activateSelected()
+                    Keys.onEscapePressed: {
+                        if (text.length > 0)
+                            text = "";
+                        else
+                            root.closeRequested();
+                    }
+                }
+            }
+
+            Rectangle {
+                visible: searchInput.text.length > 0
+                implicitWidth: 22
+                implicitHeight: 22
+                radius: Theme.r(11)
+                color: clrSearchMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰅖"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 11
+                    color: Theme.fgSurfaceVariant
+                }
+
+                MouseArea {
+                    id: clrSearchMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        searchInput.text = "";
+                        searchInput.forceActiveFocus();
+                    }
+                }
+            }
+
+            Rectangle {
+                implicitHeight: 22
+                implicitWidth: cntBadgeLbl.implicitWidth + 12
+                radius: Theme.r(11)
+                color: Theme.subCardBg
+
+                Text {
+                    id: cntBadgeLbl
+                    anchors.centerIn: parent
+                    text: root.currentCount + (root.effectiveMode === "apps" ? " apps" : " items")
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 9
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+            }
+        }
+    }
+
+    // --- Apple Segmented Mode Bar + Contextual Hints ---
     RowLayout {
         Layout.fillWidth: true
-        spacing: 6
+        Layout.fillHeight: false
+        Layout.preferredHeight: 30
+        Layout.minimumHeight: 30
+        Layout.maximumHeight: 30
+        spacing: 8
 
         Rectangle {
-            implicitHeight: 28
+            implicitHeight: 30
             implicitWidth: modePillRow.implicitWidth + 6
-            radius: Theme.r(14)
+            radius: Theme.r(15)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
             border.color: Theme.cardBorder
@@ -667,12 +806,17 @@ ColumnLayout {
                         required property var modelData
                         readonly property bool selected: root.effectiveMode === modeBtn.modelData.id
 
-                        implicitHeight: 22
+                        implicitHeight: 24
                         implicitWidth: modeContent.implicitWidth + 12
-                        radius: Theme.r(11)
+                        radius: Theme.r(12)
                         color: modeBtn.selected
                             ? Theme.primary
                             : (modeMouse.containsMouse ? Theme.hoverBg : "transparent")
+
+                        Behavior on color {
+                            enabled: !Theme.isSimple
+                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                        }
 
                         RowLayout {
                             id: modeContent
@@ -740,94 +884,49 @@ ColumnLayout {
                 onClicked: root.runClipboardAction("clear", 0)
             }
         }
-    }
 
-    // --- Search / Expression Input Bar ---
-    Rectangle {
-        Layout.fillWidth: true
-        implicitHeight: 40
-        radius: Theme.r(14)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
-
+        // Subtle Keycap Shortcuts Hint
         RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
-            spacing: 10
+            visible: !(root.effectiveMode === "clip" && root.clipboardItems.length > 0)
+            spacing: 8
 
-            Text {
-                text: {
-                    if (root.effectiveMode === "clip") return "󰅌";
-                    if (root.effectiveMode === "calc") return "󰪚";
-                    if (root.effectiveMode === "cmds") return "󰘳";
-                    if (root.effectiveMode === "emoji") return "󰞅";
-                    return "󰍉";
-                }
-                font.family: Theme.iconFont
-                font.pixelSize: 16
-                color: searchInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
-            }
+            Repeater {
+                model: [
+                    { k: "↑↓", l: "Select" },
+                    { k: "↵",  l: "Open" },
+                    { k: "Esc",l: "Close" }
+                ]
+                delegate: RowLayout {
+                    id: khItem
+                    required property var modelData
+                    spacing: 3
 
-            Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                    Rectangle {
+                        implicitHeight: 18
+                        implicitWidth: khTxt.implicitWidth + 8
+                        radius: Theme.r(5)
+                        color: Theme.subCardBg
+                        border.width: Theme.cardBorderWidth
+                        border.color: Theme.cardBorder
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: searchInput.text.length === 0
-                    text: {
-                        if (root.effectiveMode === "clip") return "Search clipboard history...";
-                        if (root.effectiveMode === "calc") return "Type math expression (e.g. 1920*1080, 0xff + 16, sqrt(144))...";
-                        if (root.effectiveMode === "cmds") return "Search desktop commands...";
-                        if (root.effectiveMode === "emoji") return "Search emojis & Nerd Font icons...";
-                        return "Search apps...  (prefixes: = calc · > cmd · : emoji · cb clip)";
+                        Text {
+                            id: khTxt
+                            anchors.centerIn: parent
+                            text: khItem.modelData.k
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 8
+                            font.weight: Font.Bold
+                            color: Theme.fgSurface
+                        }
                     }
-                    elide: Text.ElideRight
-                    width: parent.width
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 12
-                    color: Theme.fgSurfaceVariant
-                }
 
-                TextInput {
-                    id: searchInput
-                    anchors.fill: parent
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: Theme.fgSurface
-                    selectionColor: Theme.primary
-                    selectedTextColor: Theme.fgPrimary
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 13
-                    clip: true
-
-                    onTextChanged: {
-                        root.query = text;
-                        root.selectedIndex = 0;
-                    }
-                    onActiveFocusChanged: root.searchFocusChanged(activeFocus)
-
-                    Keys.onUpPressed: root.moveSelection(-1)
-                    Keys.onDownPressed: root.moveSelection(1)
-                    Keys.onTabPressed: root.moveSelection(1)
-                    Keys.onBacktabPressed: root.moveSelection(-1)
-                    Keys.onReturnPressed: root.activateSelected()
-                    Keys.onEnterPressed: root.activateSelected()
-                    Keys.onEscapePressed: {
-                        if (text.length > 0)
-                            text = "";
-                        else
-                            root.closeRequested();
+                    Text {
+                        text: khItem.modelData.l
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 9
+                        color: Theme.fgSurfaceVariant
                     }
                 }
-            }
-
-            Text {
-                text: root.currentCount + (root.effectiveMode === "apps" ? " apps" : " items")
-                font.family: Theme.fontFamily
-                font.pixelSize: 10
-                color: Theme.fgSurfaceVariant
             }
         }
     }
@@ -836,7 +935,7 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Theme.r(16)
+        radius: Theme.r(18)
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth
         border.color: Theme.cardBorder
@@ -860,11 +959,13 @@ ColumnLayout {
                 readonly property bool isSelected: appRow.index === root.selectedIndex
 
                 width: appList.width
-                height: 44
-                radius: Theme.r(12)
+                height: 48
+                radius: Theme.r(13)
                 color: appRow.isSelected
                     ? Theme.activeBg
                     : (rowMouse.containsMouse ? Theme.hoverBg : "transparent")
+                border.width: appRow.isSelected ? 1 : 0
+                border.color: Theme.withAlpha(Theme.primary, 0.35)
 
                 RowLayout {
                     anchors.fill: parent
@@ -874,9 +975,9 @@ ColumnLayout {
 
                     Rectangle {
                         Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: 28
-                        implicitHeight: 28
-                        radius: Theme.r(8)
+                        implicitWidth: 32
+                        implicitHeight: 32
+                        radius: Theme.r(9)
                         color: appIcon.visible ? "transparent" : Theme.surfaceContainerHigh
 
                         IconImage {
@@ -893,7 +994,7 @@ ColumnLayout {
                             visible: !appIcon.visible
                             text: "󰣆"
                             font.family: Theme.iconFont
-                            font.pixelSize: 15
+                            font.pixelSize: 16
                             color: appRow.isSelected ? Theme.primary : Theme.fgSurfaceVariant
                         }
                     }
@@ -925,13 +1026,22 @@ ColumnLayout {
                         }
                     }
 
-                    Text {
+                    Rectangle {
                         visible: appRow.isSelected
-                        text: "↵"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                        color: Theme.primary
+                        implicitHeight: 22
+                        implicitWidth: openHintLbl.implicitWidth + 14
+                        radius: Theme.r(11)
+                        color: Theme.withAlpha(Theme.primary, 0.22)
+
+                        Text {
+                            id: openHintLbl
+                            anchors.centerIn: parent
+                            text: "Open ↵"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            color: Theme.primary
+                        }
                     }
                 }
 
@@ -964,11 +1074,13 @@ ColumnLayout {
                 readonly property bool isSelected: clipRow.index === root.selectedIndex
 
                 width: clipList.width
-                height: 44
-                radius: Theme.r(12)
+                height: 48
+                radius: Theme.r(13)
                 color: clipRow.isSelected
                     ? Theme.activeBg
                     : (clipMouse.containsMouse ? Theme.hoverBg : "transparent")
+                border.width: clipRow.isSelected ? 1 : 0
+                border.color: Theme.withAlpha(Theme.primary, 0.35)
 
                 MouseArea {
                     id: clipMouse
@@ -982,13 +1094,13 @@ ColumnLayout {
                 RowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: 10
-                    anchors.rightMargin: 8
-                    spacing: 8
+                    anchors.rightMargin: 10
+                    spacing: 10
 
                     Rectangle {
-                        implicitWidth: 24
-                        implicitHeight: 24
-                        radius: Theme.r(8)
+                        implicitWidth: 26
+                        implicitHeight: 26
+                        radius: Theme.r(13)
                         color: clipRow.modelData.pinned
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (pinMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
@@ -1034,9 +1146,9 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        implicitWidth: 24
-                        implicitHeight: 24
-                        radius: Theme.r(8)
+                        implicitWidth: 26
+                        implicitHeight: 26
+                        radius: Theme.r(13)
                         color: delMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : "transparent"
 
                         Text {
@@ -1077,11 +1189,13 @@ ColumnLayout {
                 readonly property bool isSelected: calcRow.index === root.selectedIndex
 
                 width: calcList.width
-                height: 54
-                radius: Theme.r(12)
+                height: 58
+                radius: Theme.r(14)
                 color: calcRow.isSelected
                     ? Theme.activeBg
                     : (calcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                border.width: calcRow.isSelected ? 1 : Theme.cardBorderWidth
+                border.color: calcRow.isSelected ? Theme.withAlpha(Theme.primary, 0.45) : Theme.cardBorder
 
                 RowLayout {
                     anchors.fill: parent
@@ -1089,11 +1203,19 @@ ColumnLayout {
                     anchors.rightMargin: 12
                     spacing: 12
 
-                    Text {
-                        text: calcRow.modelData.icon
-                        font.family: Theme.iconFont
-                        font.pixelSize: 18
-                        color: Theme.primary
+                    Rectangle {
+                        implicitWidth: 36
+                        implicitHeight: 36
+                        radius: Theme.r(18)
+                        color: Theme.withAlpha(Theme.primary, 0.16)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: calcRow.modelData.icon
+                            font.family: Theme.iconFont
+                            font.pixelSize: 17
+                            color: Theme.primary
+                        }
                     }
 
                     ColumnLayout {
@@ -1105,7 +1227,7 @@ ColumnLayout {
                             text: calcRow.modelData.title
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
-                            font.pixelSize: 16
+                            font.pixelSize: 18
                             font.weight: Font.Bold
                             color: Theme.fgSurface
                         }
@@ -1118,12 +1240,21 @@ ColumnLayout {
                         }
                     }
 
-                    Text {
-                        text: "Copy ↵"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        font.weight: Font.Bold
-                        color: Theme.primary
+                    Rectangle {
+                        implicitHeight: 24
+                        implicitWidth: copyHintLbl.implicitWidth + 14
+                        radius: Theme.r(12)
+                        color: Theme.withAlpha(Theme.primary, 0.22)
+
+                        Text {
+                            id: copyHintLbl
+                            anchors.centerIn: parent
+                            text: "Copy ↵"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: Font.Bold
+                            color: Theme.primary
+                        }
                     }
                 }
 
@@ -1159,11 +1290,13 @@ ColumnLayout {
                 readonly property bool isSelected: cmdRow.index === root.selectedIndex
 
                 width: cmdsList.width
-                height: 44
-                radius: Theme.r(12)
+                height: 46
+                radius: Theme.r(13)
                 color: cmdRow.isSelected
                     ? Theme.activeBg
                     : (cmdMouse.containsMouse ? Theme.hoverBg : "transparent")
+                border.width: cmdRow.isSelected ? 1 : 0
+                border.color: Theme.withAlpha(Theme.primary, 0.35)
 
                 RowLayout {
                     anchors.fill: parent
@@ -1172,10 +1305,10 @@ ColumnLayout {
                     spacing: 12
 
                     Rectangle {
-                        implicitWidth: 28
-                        implicitHeight: 28
-                        radius: Theme.r(8)
-                        color: Theme.subCardBg
+                        implicitWidth: 30
+                        implicitHeight: 30
+                        radius: Theme.r(15)
+                        color: cmdRow.isSelected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
 
                         Text {
                             anchors.centerIn: parent
@@ -1210,13 +1343,22 @@ ColumnLayout {
                         }
                     }
 
-                    Text {
+                    Rectangle {
                         visible: cmdRow.isSelected
-                        text: "↵"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                        color: Theme.primary
+                        implicitHeight: 22
+                        implicitWidth: runHintLbl.implicitWidth + 14
+                        radius: Theme.r(11)
+                        color: Theme.withAlpha(Theme.primary, 0.22)
+
+                        Text {
+                            id: runHintLbl
+                            anchors.centerIn: parent
+                            text: "Run ↵"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            color: Theme.primary
+                        }
                     }
                 }
 
@@ -1237,8 +1379,8 @@ ColumnLayout {
             visible: root.effectiveMode === "emoji"
             anchors.fill: parent
             anchors.margins: 10
-            cellWidth: Math.max(54, Math.floor((width) / 8))
-            cellHeight: 54
+            cellWidth: Math.max(58, Math.floor((width) / 9))
+            cellHeight: 56
             clip: true
             model: root.filteredEmojis
 
@@ -1250,18 +1392,21 @@ ColumnLayout {
 
                 width: emojiGrid.cellWidth - 4
                 height: emojiGrid.cellHeight - 4
-                radius: Theme.r(10)
+                radius: Theme.r(12)
                 color: emojiCell.isSelected
                     ? Theme.activeBg
                     : (emojiMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                 border.width: emojiCell.isSelected ? 1 : 0
                 border.color: Theme.primary
+                scale: emojiMouse.containsMouse ? 1.06 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 Text {
                     anchors.centerIn: parent
                     text: emojiCell.modelData.g
                     font.family: Theme.iconFont
-                    font.pixelSize: 20
+                    font.pixelSize: 21
                     color: Theme.fgSurface
                 }
 
@@ -1280,23 +1425,42 @@ ColumnLayout {
         }
 
         // Empty State Text
-        Text {
+        ColumnLayout {
             anchors.centerIn: parent
             visible: root.currentCount === 0
-            text: {
-                if (root.effectiveMode === "clip")
-                    return root.clipboardLoading ? "Loading clipboard..." : "Clipboard history is empty";
-                if (root.effectiveMode === "calc")
-                    return "Enter an arithmetic, hex (0xff), or Math expression";
-                if (root.effectiveMode === "cmds")
-                    return "No matching commands";
-                if (root.effectiveMode === "emoji")
-                    return "No matching emojis or glyphs";
-                return "No matching applications";
+            spacing: 6
+
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: {
+                    if (root.effectiveMode === "clip") return "󰅌";
+                    if (root.effectiveMode === "calc") return "󰪚";
+                    if (root.effectiveMode === "cmds") return "󰘳";
+                    if (root.effectiveMode === "emoji") return "󰞅";
+                    return "󰍉";
+                }
+                font.family: Theme.iconFont
+                font.pixelSize: 28
+                color: Theme.fgSurfaceVariant
             }
-            font.family: Theme.fontFamily
-            font.pixelSize: 12
-            color: Theme.fgSurfaceVariant
+
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: {
+                    if (root.effectiveMode === "clip")
+                        return root.clipboardLoading ? "Loading clipboard..." : "Clipboard history is empty";
+                    if (root.effectiveMode === "calc")
+                        return "Enter an arithmetic, hex (0xff), or Math expression";
+                    if (root.effectiveMode === "cmds")
+                        return "No matching commands";
+                    if (root.effectiveMode === "emoji")
+                        return "No matching emojis or glyphs";
+                    return "No matching applications";
+                }
+                font.family: Theme.fontFamily
+                font.pixelSize: 11
+                color: Theme.fgSurfaceVariant
+            }
         }
     }
 }

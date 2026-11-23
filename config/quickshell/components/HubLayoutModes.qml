@@ -305,17 +305,18 @@ Item {
         property string titleLabel: "CPU"
         property string detailLabel: ""
 
+        clip: true
         onPercentChanged: ringCanvas.requestPaint()
         onRingColorChanged: ringCanvas.requestPaint()
 
         ColumnLayout {
             anchors.centerIn: parent
-            spacing: 4
+            spacing: 3
 
             Item {
                 Layout.alignment: Qt.AlignHCenter
-                implicitWidth: 64
-                implicitHeight: 64
+                implicitWidth: 58
+                implicitHeight: 58
 
                 Canvas {
                     id: ringCanvas
@@ -327,11 +328,11 @@ Item {
                         ctx.clearRect(0, 0, width, height);
                         const cx = width / 2;
                         const cy = height / 2;
-                        const rad = Math.min(cx, cy) - 6;
+                        const rad = Math.min(cx, cy) - 5;
                         const trackCol = Theme.surfaceContainerHighest;
 
                         ctx.lineCap = "round";
-                        ctx.lineWidth = 6.5;
+                        ctx.lineWidth = 6.0;
 
                         ctx.beginPath();
                         ctx.arc(cx, cy, rad, 0, Math.PI * 2, false);
@@ -352,7 +353,7 @@ Item {
                     anchors.centerIn: parent
                     text: ringItem.centerLabel
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
+                    font.pixelSize: 11
                     font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
@@ -369,6 +370,8 @@ Item {
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
+                Layout.maximumWidth: Math.max(60, ringItem.width - 8)
+                elide: Text.ElideRight
                 visible: ringItem.detailLabel.length > 0
                 text: ringItem.detailLabel
                 font.family: Theme.fontFamily
@@ -390,26 +393,29 @@ Item {
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth
         border.color: Theme.cardBorder
+        clip: true
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            spacing: 8
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            spacing: 6
 
             // Unified Apple pill track wrapping 1..9 workspaces
             Rectangle {
                 Layout.fillWidth: true
+                Layout.fillHeight: false
                 implicitHeight: 30
                 radius: Theme.r(15)
                 color: Theme.subCardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                clip: true
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 3
+                    anchors.margins: 2
+                    spacing: 2
 
                     Repeater {
                         model: scRoot.model
@@ -423,7 +429,8 @@ Item {
 
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            radius: Theme.r(12)
+                            Layout.minimumWidth: 16
+                            radius: Theme.r(13)
                             color: {
                                 if (spBtn.isUrgent) return Theme.error;
                                 if (spBtn.isActive) return Theme.primary;
@@ -469,8 +476,9 @@ Item {
 
             // Layout Pill
             Rectangle {
+                Layout.fillHeight: false
                 implicitHeight: 28
-                implicitWidth: layTagTxt.implicitWidth + 14
+                implicitWidth: Math.max(24, layTagTxt.implicitWidth + 10)
                 radius: Theme.r(14)
                 color: layTagMouse.containsMouse ? Theme.activeBg : Theme.subCardBg
                 border.width: Theme.cardBorderWidth
@@ -497,8 +505,9 @@ Item {
 
             // Window Switcher Pill
             Rectangle {
+                Layout.fillHeight: false
                 implicitHeight: 28
-                implicitWidth: winPillRow.implicitWidth + 14
+                implicitWidth: winPillRow.implicitWidth + 12
                 radius: Theme.r(14)
                 color: winPillMouse.containsMouse ? Theme.withAlpha(Theme.secondary, 0.24) : Theme.subCardBg
                 border.width: Theme.cardBorderWidth
@@ -544,18 +553,24 @@ Item {
 
         // Left Column: 2x2 Connectivity/Focus Platter + MediaCard
         ColumnLayout {
-            Layout.preferredWidth: 318
+            Layout.preferredWidth: 312
+            Layout.minimumWidth: 300
+            Layout.maximumWidth: 316
             Layout.fillHeight: true
             spacing: 10
 
             // 2x2 Apple Connectivity & Focus Grid Platter
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 118
+                Layout.fillHeight: false
+                Layout.preferredHeight: 122
+                Layout.minimumHeight: 122
+                Layout.maximumHeight: 122
                 radius: Theme.r(18)
                 color: Theme.cardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                clip: true
 
                 GridLayout {
                     anchors.fill: parent
@@ -609,6 +624,7 @@ Item {
                             color: ccMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
                             border.width: ccTile.modelData.active ? 1 : Theme.cardBorderWidth
                             border.color: ccTile.modelData.active ? Theme.withAlpha(ccTile.modelData.tint, 0.55) : Theme.cardBorder
+                            clip: true
                             scale: ccMouse.pressed ? 0.95 : 1.0
 
                             Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
@@ -692,6 +708,7 @@ Item {
             MediaCard {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.minimumHeight: 200
                 player: root.player
                 active: root.active && root.layoutMode === "cupertino"
                 onSeekingChanged: seeking => root.controlInteractionChanged(seeking)
@@ -706,7 +723,10 @@ Item {
 
             QuickControls {
                 Layout.fillWidth: true
-                Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 236 : 196
+                Layout.fillHeight: false
+                Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 210
+                Layout.minimumHeight: DeviceCaps.hasExtraQuickControls ? 244 : 206
+                Layout.maximumHeight: DeviceCaps.hasExtraQuickControls ? 252 : 214
                 active: root.active && root.layoutMode === "cupertino"
                 onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
                 onOpenSettingsRequested: page => root.openSettingsRequested(page)
@@ -714,16 +734,22 @@ Item {
 
             SpacesCapsule {
                 Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.preferredHeight: 46
+                Layout.minimumHeight: 46
+                Layout.maximumHeight: 46
             }
 
             // Apple Activity Rings Telemetry Platter
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.minimumHeight: 118
                 radius: Theme.r(18)
                 color: Theme.cardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                clip: true
 
                 RowLayout {
                     anchors.fill: parent
@@ -776,7 +802,9 @@ Item {
 
         // Left Hero Stage: Large Album Art, Lyrics-feel Typography & Scrubber
         ClippingRectangle {
-            Layout.preferredWidth: 296
+            Layout.preferredWidth: 294
+            Layout.minimumWidth: 286
+            Layout.maximumWidth: 298
             Layout.fillHeight: true
             radius: Theme.r(20)
             color: Theme.cardBg
@@ -806,10 +834,11 @@ Item {
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 16
-                spacing: 12
+                spacing: 10
 
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
 
                     Rectangle {
                         implicitHeight: 20
@@ -845,9 +874,9 @@ Item {
 
                 ClippingRectangle {
                     Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: 112
-                    implicitHeight: 112
-                    radius: Theme.r(22)
+                    implicitWidth: 104
+                    implicitHeight: 104
+                    radius: Theme.r(20)
                     color: Theme.primaryContainer
                     border.width: root.isPlaying ? 2 : 0
                     border.color: Theme.primary
@@ -869,13 +898,14 @@ Item {
                         visible: !stageArtImg.visible
                         text: "󰓇"
                         font.family: Theme.iconFont
-                        font.pixelSize: 44
+                        font.pixelSize: 42
                         color: Theme.fgPrimaryContainer
                     }
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
                     spacing: 2
 
                     Text {
@@ -906,6 +936,7 @@ Item {
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
                     spacing: 4
 
                     Item {
@@ -959,6 +990,7 @@ Item {
 
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
                     spacing: 14
                     Item { Layout.fillWidth: true }
 
@@ -1001,16 +1033,24 @@ Item {
 
             SpacesCapsule {
                 Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.preferredHeight: 46
+                Layout.minimumHeight: 46
+                Layout.maximumHeight: 46
             }
 
             // Clean Audio & Action Platter
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 146
+                Layout.fillHeight: false
+                Layout.preferredHeight: 158
+                Layout.minimumHeight: 158
+                Layout.maximumHeight: 158
                 radius: Theme.r(18)
                 color: Theme.cardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                clip: true
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -1021,6 +1061,7 @@ Item {
                     Item {
                         id: stVolCap
                         Layout.fillWidth: true
+                        Layout.fillHeight: false
                         implicitHeight: 34
 
                         Rectangle {
@@ -1033,7 +1074,7 @@ Item {
 
                             Rectangle {
                                 anchors.top: parent.top; anchors.bottom: parent.bottom; anchors.left: parent.left
-                                width: Math.max(parent.height, parent.width * root.volumeLevel)
+                                width: root.volumeLevel <= 0.001 ? 0 : Math.max(parent.height, parent.width * Math.min(1.0, root.volumeLevel))
                                 radius: Theme.r(17)
                                 color: root.volumeMuted ? Theme.surfaceContainerHighest : Theme.primary
                             }
@@ -1045,7 +1086,7 @@ Item {
                                     font.family: Theme.iconFont; font.pixelSize: 15
                                     color: root.volumeMuted ? Theme.error : Theme.fgPrimary
                                 }
-                                Text { text: root.defaultSinkLabel; Layout.fillWidth: true; elide: Text.ElideRight; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: root.volumeLevel > 0.25 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface }
+                                Text { text: root.volumeMuted ? "Muted" : "Sound"; Layout.fillWidth: true; elide: Text.ElideRight; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: root.volumeLevel > 0.25 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface }
                                 Text { text: Math.round(root.volumeLevel * 100) + "%"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: root.volumeLevel > 0.88 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface }
                             }
 
@@ -1063,6 +1104,7 @@ Item {
                     // 4 Balanced Apple Action Pills
                     RowLayout {
                         Layout.fillWidth: true
+                        Layout.fillHeight: false
                         spacing: 6
 
                         Repeater {
@@ -1110,6 +1152,7 @@ Item {
                     // Bottom bar: Recording + Settings link
                     RowLayout {
                         Layout.fillWidth: true
+                        Layout.fillHeight: false
                         spacing: 6
 
                         Rectangle {
@@ -1160,10 +1203,12 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.minimumHeight: 136
                 radius: Theme.r(18)
                 color: Theme.cardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                clip: true
 
                 RowLayout {
                     anchors.fill: parent
@@ -1207,20 +1252,26 @@ Item {
         visible: root.layoutMode === "cockpit"
         spacing: 10
 
-        // Top Unified Media + Mission Control Spaces Ribbon
+        // Top Unified Media + Mission Control Spaces Ribbon (explicitly locked to 60px!)
         RowLayout {
             Layout.fillWidth: true
-            implicitHeight: 62
+            Layout.fillHeight: false
+            Layout.preferredHeight: 60
+            Layout.minimumHeight: 60
+            Layout.maximumHeight: 60
             spacing: 10
 
             // Compact Horizontal Media Capsule
             Rectangle {
-                Layout.preferredWidth: 318
+                Layout.preferredWidth: 270
+                Layout.minimumWidth: 250
+                Layout.maximumWidth: 276
                 Layout.fillHeight: true
                 radius: Theme.r(16)
                 color: Theme.cardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
+                clip: true
 
                 RowLayout {
                     anchors.fill: parent
@@ -1228,8 +1279,8 @@ Item {
                     spacing: 8
 
                     ClippingRectangle {
-                        implicitWidth: 44
-                        implicitHeight: 44
+                        implicitWidth: 42
+                        implicitHeight: 42
                         radius: Theme.r(10)
                         color: Theme.primaryContainer
                         contentUnderBorder: false
@@ -1248,7 +1299,7 @@ Item {
                             anchors.centerIn: parent
                             visible: !ckArtImg.visible
                             text: "󰓇"
-                            font.family: Theme.iconFont; font.pixelSize: 20; color: Theme.fgPrimaryContainer
+                            font.family: Theme.iconFont; font.pixelSize: 19; color: Theme.fgPrimaryContainer
                         }
                     }
 
@@ -1295,6 +1346,7 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: 240
             spacing: 10
 
             SystemMonitor {

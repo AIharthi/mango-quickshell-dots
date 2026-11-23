@@ -105,6 +105,7 @@ ClippingRectangle {
         // --- Header + Album Info ---
         RowLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: false
             spacing: 10
 
             ClippingRectangle {
@@ -236,8 +237,11 @@ ClippingRectangle {
         }
 
         // --- Interactive Track Progress Bar ---
+        Item { Layout.fillHeight: true }
+
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: false
             spacing: 4
 
             Item {
@@ -334,8 +338,11 @@ ClippingRectangle {
         }
 
         // --- Transport Controls (Prev / Play-Pause / Next) ---
+        Item { Layout.fillHeight: true }
+
         RowLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: false
             spacing: 12
 
             Item { Layout.fillWidth: true }
