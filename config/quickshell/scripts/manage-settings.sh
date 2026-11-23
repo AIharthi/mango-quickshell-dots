@@ -154,6 +154,12 @@ def default_prefs():
         "idleSuspendEnabled": False,
         "idleSuspendSeconds": 900,
         "scratchpadText": "",
+        "weatherEnabled": False,
+        "weatherLocation": "",
+        "weatherUnits": "C",
+        "barShowWeather": False,
+        "wallpaperSlideshowEnabled": False,
+        "wallpaperSlideshowMinutes": 15,
         "surfaceStyle": "default",
         "shellOpacity": 0.92,
         "cardOpacity": 0.50,
@@ -332,6 +338,12 @@ def validate_and_apply_pref(prefs, key, raw_val):
         prefs[key] = max(60, min(7200, int(prefs[key])))
     elif key == "scratchpadText":
         prefs[key] = str(prefs[key])[:16384]
+    elif key == "weatherLocation":
+        prefs[key] = str(prefs[key]).strip()[:120]
+    elif key == "weatherUnits":
+        prefs[key] = "F" if str(prefs[key]).strip().upper() == "F" else "C"
+    elif key == "wallpaperSlideshowMinutes":
+        prefs[key] = max(1, min(1440, int(prefs[key])))
     elif key == "shellOpacity":
         prefs[key] = round(max(0.40, min(1.00, float(prefs[key]))), 2)
     elif key == "cardOpacity":

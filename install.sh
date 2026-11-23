@@ -11,6 +11,7 @@ FONT_DIR="$DATA_DIR/fonts"
 BACKUP_DIR="$HOME/.config-backup-mango-$(date +%Y%m%d_%H%M%S)"
 
 INSTALL_SESSION=0
+INSTALL_SDDM=0
 NO_SYSTEM=0
 SKIP_BACKUP=0
 SKIP_BUILD=0
@@ -25,11 +26,13 @@ Usage: ./install.sh [OPTIONS]
 
 Options:
   --dry-run        Print planned actions without modifying files, building, or running sudo
-  --no-system      Skip root/system installation even if --with-session is passed
+  --no-system      Skip root/system installation even if --with-session or --with-sddm is passed
   --skip-build     Skip compiling rust/mango-fm
   --skip-fonts     Skip installing bundled fonts into ~/.local/share/fonts
   --with-session   Also install /usr/local/bin/mango-session and
                    /usr/share/wayland-sessions/mango.desktop (requires sudo/root)
+  --with-sddm      Also install matching animated SDDM theme (/usr/share/sddm/themes/mango-island)
+                   and configure /etc/sddm.conf.d/99-mango-island.conf (requires sudo/root)
   --no-backup      Overwrite existing updated files without creating a timestamped backup
   -h, --help       Show this help message
 EOF
@@ -55,6 +58,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --with-session)
             INSTALL_SESSION=1
+            shift
+            ;;
+        --with-sddm)
+            INSTALL_SDDM=1
             shift
             ;;
         --no-backup)
@@ -126,9 +133,9 @@ check_dependencies() {
         echo "      See README.md for Arch, Fedora, and Gentoo package instructions." >&2
     fi
 
-    if [[ "$INSTALL_SESSION" -eq 1 && "$NO_SYSTEM" -eq 0 && "$EUID" -ne 0 ]]; then
+    if [[ ( "$INSTALL_SESSION" -eq 1 || "$INSTALL_SDDM" -eq 1 ) && "$NO_SYSTEM" -eq 0 && "$EUID" -ne 0 ]]; then
         if ! command -v sudo >/dev/null 2>&1; then
-            missing_required+=("sudo (required for --with-session when not root; pass --no-system to skip)")
+            missing_required+=("sudo (required for --with-session/--with-sddm when not root; pass --no-system to skip)")
         fi
     fi
 
@@ -291,6 +298,48 @@ install_system_session() {
     run_cmd "${priv[@]}" install -Dm644 "$SCRIPT_DIR/system/mango.desktop" /usr/share/wayland-sessions/mango.desktop
 }
 
+install_system_sddm() {
+    if [[ "$INSTALL_SDDM" -eq 0 ]]; then
+        return 0
+    fi
+    if [[ "$NO_SYSTEM" -eq 1 ]]; then
+        echo "==> Skipping SDDM theme installation (--no-system)"
+        return 0
+    fi
+
+    echo "==> Installing animated SDDM theme (/usr/share/sddm/themes/mango-island)"
+    local priv=()
+    if [[ "$EUID" -ne 0 ]]; then
+        priv=(sudo)
+    fi
+
+    local sddm_dst="/usr/share/sddm/themes/mango-island"
+    local sddm_src="$SCRIPT_DIR/system/sddm-theme/mango-island"
+    local target_user="${SUDO_USER:-$USER}"
+
+    run_cmd "${priv[@]}" mkdir -p "$sddm_dst/fonts" /etc/sddm.conf.d
+    run_cmd "${priv[@]}" install -Dm644 "$sddm_src/metadata.desktop" "$sddm_dst/metadata.desktop"
+    run_cmd "${priv[@]}" install -Dm644 "$sddm_src/Main.qml" "$sddm_dst/Main.qml"
+    run_cmd "${priv[@]}" install -Dm644 "$sddm_src/theme.conf" "$sddm_dst/theme.conf"
+    run_cmd "${priv[@]}" install -Dm644 "$SCRIPT_DIR/fonts/JetBrainsMono/JetBrainsMono-Regular.ttf" "$sddm_dst/fonts/JetBrainsMono-Regular.ttf"
+    run_cmd "${priv[@]}" install -Dm644 "$SCRIPT_DIR/fonts/JetBrainsMono/JetBrainsMono-Bold.ttf" "$sddm_dst/fonts/JetBrainsMono-Bold.ttf"
+    run_cmd "${priv[@]}" install -Dm644 "$SCRIPT_DIR/fonts/SymbolsNerdFont/SymbolsNerdFont-Regular.ttf" "$sddm_dst/fonts/SymbolsNerdFont-Regular.ttf"
+    run_cmd "${priv[@]}" touch "$sddm_dst/background.img"
+    run_cmd "${priv[@]}" chmod 644 "$sddm_dst/theme.conf" "$sddm_dst/background.img"
+    run_cmd "${priv[@]}" chown "$target_user" "$sddm_dst/theme.conf" "$sddm_dst/background.img"
+
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "  [dry-run] write /etc/sddm.conf.d/99-mango-island.conf ([Theme] Current=mango-island)"
+        echo "  [dry-run] $CONFIG_DIR/quickshell/scripts/sync-sddm-theme.sh"
+    else
+        printf '[Theme]\nCurrent=mango-island\n' | "${priv[@]}" tee /etc/sddm.conf.d/99-mango-island.conf >/dev/null
+        "${priv[@]}" chmod 644 /etc/sddm.conf.d/99-mango-island.conf
+        if [[ -x "$CONFIG_DIR/quickshell/scripts/sync-sddm-theme.sh" ]]; then
+            "$CONFIG_DIR/quickshell/scripts/sync-sddm-theme.sh" || true
+        fi
+    fi
+}
+
 check_dependencies
 create_backups
 install_configs
@@ -298,6 +347,7 @@ build_mango_fm
 install_fonts
 init_state
 install_system_session
+install_system_sddm
 
 echo ""
 if [[ "$DRY_RUN" -eq 1 ]]; then

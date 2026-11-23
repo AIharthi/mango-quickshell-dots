@@ -56,17 +56,40 @@ Singleton {
     property int screenshotDelay: 0
     property string recordingDir: "~/Videos/Recordings"
 
-    // --- Idle Power & Scratchpad ---
+    // --- Idle Power, Weather, Slideshow & Scratchpad ---
     property bool idleLockEnabled: true
     property int idleLockSeconds: 300
     property bool idleSuspendEnabled: false
     property int idleSuspendSeconds: 900
     property string scratchpadText: ""
+    property bool weatherEnabled: false
+    property string weatherLocation: ""
+    property string weatherUnits: "C"
+    property bool barShowWeather: false
+    property bool wallpaperSlideshowEnabled: false
+    property int wallpaperSlideshowMinutes: 15
 
-    // --- Session Focus Timer & Screen Recording Status ---
+    // --- Session Focus Timer, Stopwatch, Weather, Game Mode & Screen Recording ---
     property bool timerActive: false
     property int timerDurationSec: 1500
     property int timerRemainingSec: 1500
+    property bool stopwatchActive: false
+    property int stopwatchElapsedSec: 0
+    property var stopwatchLaps: []
+    property bool weatherAvailable: false
+    property string weatherTemp: ""
+    property string weatherFeelsLike: ""
+    property string weatherCondition: ""
+    property string weatherHumidity: ""
+    property string weatherWind: ""
+    property string weatherCity: ""
+    property string weatherIcon: "󰖐"
+    property string weatherUpdated: ""
+    property bool gameModeActive: false
+    property string _preGameShellMode: "default"
+    property bool _preGameDnd: false
+    property bool _preGameKeepAwake: false
+    property string _observedShellMode: "default"
     property bool recordingActive: false
     property int recordingElapsedSec: 0
     property int _recordingStartedAt: 0
@@ -218,6 +241,17 @@ Singleton {
             if (d.idleSuspendEnabled !== undefined) root.idleSuspendEnabled = !!d.idleSuspendEnabled;
             if (d.idleSuspendSeconds !== undefined) root.idleSuspendSeconds = Math.max(60, Math.min(7200, Number(d.idleSuspendSeconds)));
             if (d.scratchpadText !== undefined) root.scratchpadText = String(d.scratchpadText);
+            if (d.weatherEnabled !== undefined) {
+                const prevW = root.weatherEnabled;
+                root.weatherEnabled = !!d.weatherEnabled;
+                if (root.weatherEnabled && !prevW)
+                    refreshWeather(false);
+            }
+            if (d.weatherLocation !== undefined) root.weatherLocation = String(d.weatherLocation);
+            if (d.weatherUnits !== undefined) root.weatherUnits = (String(d.weatherUnits).toUpperCase() === "F" ? "F" : "C");
+            if (d.barShowWeather !== undefined) root.barShowWeather = !!d.barShowWeather;
+            if (d.wallpaperSlideshowEnabled !== undefined) root.wallpaperSlideshowEnabled = !!d.wallpaperSlideshowEnabled;
+            if (d.wallpaperSlideshowMinutes !== undefined) root.wallpaperSlideshowMinutes = Math.max(1, Math.min(1440, Number(d.wallpaperSlideshowMinutes)));
             if (d.surfaceStyle !== undefined && String(d.surfaceStyle).length > 0) root.surfaceStyle = String(d.surfaceStyle);
             if (d.shellOpacity !== undefined) root.shellOpacity = Math.max(0.40, Math.min(1.0, Number(d.shellOpacity)));
             if (d.cardOpacity !== undefined) root.cardOpacity = Math.max(0.15, Math.min(1.0, Number(d.cardOpacity)));
@@ -338,6 +372,16 @@ Singleton {
         else if (key === "idleSuspendEnabled") root.idleSuspendEnabled = !!value;
         else if (key === "idleSuspendSeconds") root.idleSuspendSeconds = Math.max(60, Math.min(7200, Number(value)));
         else if (key === "scratchpadText") root.scratchpadText = String(value);
+        else if (key === "weatherEnabled") {
+            root.weatherEnabled = !!value;
+            if (root.weatherEnabled)
+                refreshWeather(false);
+        }
+        else if (key === "weatherLocation") root.weatherLocation = String(value);
+        else if (key === "weatherUnits") root.weatherUnits = (String(value).toUpperCase() === "F" ? "F" : "C");
+        else if (key === "barShowWeather") root.barShowWeather = !!value;
+        else if (key === "wallpaperSlideshowEnabled") root.wallpaperSlideshowEnabled = !!value;
+        else if (key === "wallpaperSlideshowMinutes") root.wallpaperSlideshowMinutes = Math.max(1, Math.min(1440, Number(value)));
         else if (key === "surfaceStyle") root.surfaceStyle = String(value);
         else if (key === "shellOpacity") root.shellOpacity = Math.max(0.40, Math.min(1.0, Number(value)));
         else if (key === "cardOpacity") root.cardOpacity = Math.max(0.15, Math.min(1.0, Number(value)));
@@ -700,6 +744,123 @@ Singleton {
     function syncRecordingState(): void {
         if (!recStatusProc.running)
             recStatusProc.running = true;
+    }
+
+    function toggleStopwatch(): void {
+        root.stopwatchActive = !root.stopwatchActive;
+    }
+
+    function resetStopwatch(): void {
+        root.stopwatchActive = false;
+        root.stopwatchElapsedSec = 0;
+        root.stopwatchLaps = [];
+    }
+
+    function addStopwatchLap(): void {
+        const lapStr = formatTimer(root.stopwatchElapsedSec);
+        const list = (root.stopwatchLaps || []).slice(0, 7);
+        root.stopwatchLaps = [lapStr].concat(list);
+    }
+
+    function refreshWeather(force: bool): void {
+        if (!root.weatherEnabled) {
+            root.weatherAvailable = false;
+            return;
+        }
+        if (weatherProc.running)
+            return;
+        weatherProc.command = force
+            ? [Quickshell.shellPath("scripts/fetch-weather.sh"), "--force"]
+            : [Quickshell.shellPath("scripts/fetch-weather.sh")];
+        weatherProc.running = true;
+    }
+
+    function toggleGameMode(): void {
+        if (!root.gameModeActive) {
+            root._preGameShellMode = root._observedShellMode || "default";
+            root._preGameDnd = root.dnd;
+            root._preGameKeepAwake = root.keepAwake;
+            root.gameModeActive = true;
+            setPrefsBatch({ dnd: true, keepAwake: true });
+            Quickshell.execDetached([Quickshell.shellPath("scripts/apply-mode.sh"), "simple"]);
+            Quickshell.execDetached([
+                "sh", "-c",
+                "command -v notify-send >/dev/null 2>&1 && notify-send -a 'Game Mode' 'Game Mode Enabled' 'Simple bar active, DND & Keep Awake enabled.' -t 2500"
+            ]);
+        } else {
+            root.gameModeActive = false;
+            setPrefsBatch({ dnd: root._preGameDnd, keepAwake: root._preGameKeepAwake });
+            Quickshell.execDetached([Quickshell.shellPath("scripts/apply-mode.sh"), root._preGameShellMode || "default"]);
+            Quickshell.execDetached([
+                "sh", "-c",
+                "command -v notify-send >/dev/null 2>&1 && notify-send -a 'Game Mode' 'Game Mode Disabled' 'Restored previous visual mode and preferences.' -t 2500"
+            ]);
+        }
+    }
+
+    Timer {
+        id: stopwatchTickTimer
+        interval: 1000
+        repeat: true
+        running: root.stopwatchActive
+        onTriggered: root.stopwatchElapsedSec += 1
+    }
+
+    Timer {
+        id: weatherPollTimer
+        interval: 1800000
+        repeat: true
+        running: root.weatherEnabled
+        triggeredOnStart: true
+        onTriggered: root.refreshWeather(false)
+    }
+
+    Timer {
+        id: slideshowTimer
+        interval: Math.max(1, root.wallpaperSlideshowMinutes) * 60000
+        repeat: true
+        running: root.wallpaperSlideshowEnabled
+        onTriggered: Quickshell.execDetached([Quickshell.shellPath("scripts/manage-themes.sh"), "random-wallpaper"])
+    }
+
+    Process {
+        id: weatherProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    root.weatherAvailable = !!d.available;
+                    if (root.weatherAvailable) {
+                        root.weatherTemp = String(d.temp || "");
+                        root.weatherFeelsLike = String(d.feelsLike || "");
+                        root.weatherCondition = String(d.condition || "");
+                        root.weatherHumidity = String(d.humidity || "");
+                        root.weatherWind = String(d.wind || "");
+                        root.weatherCity = String(d.location || "");
+                        root.weatherIcon = String(d.icon || "󰖐");
+                        root.weatherUpdated = String(d.updated || "");
+                    }
+                } catch (err) {}
+            }
+        }
+    }
+
+    FileView {
+        id: observedModeFile
+        path: Quickshell.shellPath("shell-mode.json")
+        watchChanges: true
+        preload: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                const d = JSON.parse(text());
+                if (d && d.mode)
+                    root._observedShellMode = String(d.mode);
+            } catch (err) {}
+        }
     }
 
     Timer {

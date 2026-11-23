@@ -16,6 +16,7 @@ RowLayout {
     // --- Calendar State ---
     property int viewYear: (new Date()).getFullYear()
     property int viewMonth: (new Date()).getMonth()    // 0..11
+    property string timerMode: "timer"               // "timer" | "stopwatch"
 
     readonly property var monthNames: [
         "January", "February", "March", "April", "May", "June",
@@ -260,14 +261,14 @@ RowLayout {
             }
         }
 
-        // --- Focus / Pomodoro Timer Card ---
+        // --- Focus / Pomodoro Timer & Stopwatch Card ---
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: timerCol.implicitHeight + 18
             radius: Theme.r(16)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
-            border.color: ShellState.timerActive ? Theme.primary : Theme.cardBorder
+            border.color: (ShellState.timerActive || ShellState.stopwatchActive) ? Theme.primary : Theme.cardBorder
 
             ColumnLayout {
                 id: timerCol
@@ -277,29 +278,70 @@ RowLayout {
 
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 4
 
-                    Text {
-                        text: "󰔛  FOCUS TIMER"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 9
-                        font.weight: Font.Bold
-                        color: ShellState.timerActive ? Theme.primary : Theme.fgSurfaceVariant
+                    Rectangle {
+                        implicitHeight: 18
+                        implicitWidth: tglTimerLbl.implicitWidth + 10
+                        radius: Theme.r(6)
+                        color: root.timerMode === "timer" ? Theme.primary : Theme.subCardBg
+
+                        Text {
+                            id: tglTimerLbl
+                            anchors.centerIn: parent
+                            text: "󰔛 Timer"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            color: root.timerMode === "timer" ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.timerMode = "timer"
+                        }
+                    }
+
+                    Rectangle {
+                        implicitHeight: 18
+                        implicitWidth: tglSwLbl.implicitWidth + 10
+                        radius: Theme.r(6)
+                        color: root.timerMode === "stopwatch" ? Theme.primary : Theme.subCardBg
+
+                        Text {
+                            id: tglSwLbl
+                            anchors.centerIn: parent
+                            text: "󱎫 Stopwatch"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            color: root.timerMode === "stopwatch" ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.timerMode = "stopwatch"
+                        }
                     }
 
                     Item { Layout.fillWidth: true }
 
                     Text {
-                        text: ShellState.formatTimer(ShellState.timerRemainingSec)
+                        text: root.timerMode === "timer"
+                            ? ShellState.formatTimer(ShellState.timerRemainingSec)
+                            : ShellState.formatTimer(ShellState.stopwatchElapsedSec)
                         font.family: Theme.fontFamily
                         font.pixelSize: 15
                         font.weight: Font.Bold
-                        color: ShellState.timerActive ? Theme.primary : Theme.fgSurface
+                        color: (root.timerMode === "timer" ? ShellState.timerActive : ShellState.stopwatchActive)
+                            ? Theme.primary
+                            : Theme.fgSurface
                     }
                 }
 
-                // Presets + Controls
+                // Timer Presets + Controls
                 RowLayout {
+                    visible: root.timerMode === "timer"
                     Layout.fillWidth: true
                     spacing: 4
 
@@ -381,6 +423,189 @@ RowLayout {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: ShellState.resetTimer(ShellState.timerDurationSec)
                         }
+                    }
+                }
+
+                // Stopwatch Controls + Laps
+                ColumnLayout {
+                    visible: root.timerMode === "stopwatch"
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 22
+                            radius: Theme.r(7)
+                            color: ShellState.stopwatchActive
+                                ? Theme.withAlpha(Theme.warning, 0.24)
+                                : Theme.primary
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: ShellState.stopwatchActive ? "Pause" : "Start"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 9
+                                font.weight: Font.Bold
+                                color: ShellState.stopwatchActive ? Theme.warning : Theme.fgPrimary
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: ShellState.toggleStopwatch()
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 22
+                            radius: Theme.r(7)
+                            color: lapMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "Lap"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 9
+                                font.weight: Font.Bold
+                                color: Theme.secondary
+                            }
+                            MouseArea {
+                                id: lapMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: ShellState.addStopwatchLap()
+                            }
+                        }
+
+                        Rectangle {
+                            implicitWidth: 22
+                            implicitHeight: 22
+                            radius: Theme.r(7)
+                            color: swRstMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰑐"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 11
+                                color: Theme.fgSurfaceVariant
+                            }
+                            MouseArea {
+                                id: swRstMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: ShellState.resetStopwatch()
+                            }
+                        }
+                    }
+
+                    Row {
+                        visible: (ShellState.stopwatchLaps || []).length > 0
+                        spacing: 4
+
+                        Repeater {
+                            model: (ShellState.stopwatchLaps || []).slice(0, 4)
+                            delegate: Rectangle {
+                                id: lapBadge
+                                required property string modelData
+                                required property int index
+                                implicitHeight: 16
+                                implicitWidth: lapTxt.implicitWidth + 8
+                                radius: Theme.r(5)
+                                color: Theme.subCardBg
+
+                                Text {
+                                    id: lapTxt
+                                    anchors.centerIn: parent
+                                    text: "#" + ((ShellState.stopwatchLaps || []).length - lapBadge.index) + " " + lapBadge.modelData
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 8
+                                    color: Theme.fgSurfaceVariant
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Opt-In Compact Weather Card ---
+        Rectangle {
+            visible: ShellState.weatherEnabled
+            Layout.fillWidth: true
+            implicitHeight: wCol.implicitHeight + 16
+            radius: Theme.r(16)
+            color: Theme.cardBg
+            border.width: Theme.cardBorderWidth
+            border.color: Theme.cardBorder
+
+            RowLayout {
+                id: wCol
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 8
+
+                Text {
+                    text: ShellState.weatherIcon
+                    font.family: Theme.iconFont
+                    font.pixelSize: 22
+                    color: Theme.primary
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+
+                    Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: ShellState.weatherAvailable
+                            ? (ShellState.weatherTemp + " · " + ShellState.weatherCondition)
+                            : "Weather unavailable"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        font.weight: Font.Bold
+                        color: Theme.fgSurface
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: ShellState.weatherAvailable
+                            ? (ShellState.weatherCity + " · 󰖎 " + ShellState.weatherHumidity + " · " + ShellState.weatherWind)
+                            : "Click refresh or check Settings → Shell"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 9
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                Rectangle {
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    radius: Theme.r(7)
+                    color: wRefMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰑐"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 11
+                        color: Theme.fgSurfaceVariant
+                    }
+
+                    MouseArea {
+                        id: wRefMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: ShellState.refreshWeather(true)
                     }
                 }
             }

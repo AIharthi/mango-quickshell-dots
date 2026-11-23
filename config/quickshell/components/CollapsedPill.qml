@@ -84,6 +84,9 @@ RowLayout {
         || ShellState.fmOpActive
         || ShellState.recordingActive
         || ShellState.timerActive
+        || ShellState.stopwatchActive
+        || ShellState.gameModeActive
+        || (ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable)
         || ShellState.unreadCount > 0
         || barMode
 
@@ -769,6 +772,102 @@ RowLayout {
                 enabled: !Theme.isSimple
                 ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
             }
+        }
+    }
+
+    // Live Game Mode Badge (click to exit)
+    Rectangle {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.gameModeActive
+        implicitHeight: 20
+        implicitWidth: gmPillRow.implicitWidth + 10
+        radius: Theme.r(7)
+        color: Theme.withAlpha(Theme.tertiary, 0.22)
+        border.width: 1
+        border.color: Theme.tertiary
+
+        RowLayout {
+            id: gmPillRow
+            anchors.centerIn: parent
+            spacing: 4
+            Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.tertiary }
+            Text {
+                text: "GAME"
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.tertiary
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: ShellState.toggleGameMode()
+        }
+    }
+
+    // Live Stopwatch Pill
+    Rectangle {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.stopwatchActive
+        implicitHeight: 20
+        implicitWidth: swPillRow.implicitWidth + 10
+        radius: Theme.r(7)
+        color: Theme.withAlpha(Theme.secondary, 0.18)
+        border.width: 1
+        border.color: Theme.withAlpha(Theme.secondary, 0.55)
+
+        RowLayout {
+            id: swPillRow
+            anchors.centerIn: parent
+            spacing: 4
+            Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.secondary }
+            Text {
+                text: ShellState.formatTimer(ShellState.stopwatchElapsedSec)
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.secondary
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.timerClicked()
+        }
+    }
+
+    // Opt-In Weather Pill
+    Rectangle {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable
+        implicitHeight: 20
+        implicitWidth: wPillRow.implicitWidth + 10
+        radius: Theme.r(7)
+        color: wPillMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+        RowLayout {
+            id: wPillRow
+            anchors.centerIn: parent
+            spacing: 4
+            Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.primary }
+            Text {
+                text: ShellState.weatherTemp
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.fgSurface
+            }
+        }
+
+        MouseArea {
+            id: wPillMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.notificationsClicked()
         }
     }
 

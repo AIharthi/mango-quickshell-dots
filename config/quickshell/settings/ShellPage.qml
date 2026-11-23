@@ -920,4 +920,198 @@ ColumnLayout {
             }
         }
     }
+
+    // --- 6. Weather Widget & Wallpaper Slideshow ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: extrasCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: extrasCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            Text {
+                text: "WEATHER WIDGET & WALLPAPER SLIDESHOW"
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text { text: "Enable Opt-In Weather Widget (wttr.in)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                    Text { text: "Caches conditions locally every 30 minutes when enabled"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.weatherEnabled
+                    onToggled: ShellState.setPref("weatherEnabled", !ShellState.weatherEnabled)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                opacity: ShellState.weatherEnabled ? 1.0 : 0.45
+
+                Text { Layout.fillWidth: true; text: "Show Compact Weather Pill in Top Bar"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch {
+                    checked: ShellState.barShowWeather
+                    onToggled: ShellState.setPref("barShowWeather", !ShellState.barShowWeather)
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                opacity: ShellState.weatherEnabled ? 1.0 : 0.45
+
+                Text {
+                    text: "City / Location"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: Theme.subCardBg
+                    border.width: locInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.color: locInput.activeFocus ? Theme.primary : Theme.cardBorder
+
+                    TextInput {
+                        id: locInput
+                        anchors.fill: parent
+                        anchors.leftMargin: 9
+                        anchors.rightMargin: 9
+                        verticalAlignment: TextInput.AlignVCenter
+                        text: ShellState.weatherLocation
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        color: Theme.fgSurface
+                        clip: true
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: locInput.text.length === 0
+                            text: "Auto-detect by IP (or enter city)"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        onAccepted: {
+                            ShellState.setPref("weatherLocation", text.trim());
+                            ShellState.refreshWeather(true);
+                        }
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 28
+                    implicitWidth: 34
+                    radius: Theme.r(8)
+                    color: unitMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "°" + ShellState.weatherUnits
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        id: unitMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            ShellState.setPref("weatherUnits", ShellState.weatherUnits === "C" ? "F" : "C");
+                            ShellState.refreshWeather(true);
+                        }
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 28
+                    implicitWidth: saveLocLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: saveLocMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: saveLocLbl
+                        anchors.centerIn: parent
+                        text: "Apply"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        id: saveLocMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            ShellState.setPref("weatherLocation", locInput.text.trim());
+                            ShellState.refreshWeather(true);
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: Theme.outlineVariant
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+                    Text { text: "Automatic Wallpaper Slideshow"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                    Text { text: "Automatically rotates wallpaper & re-themes via Matugen"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.wallpaperSlideshowEnabled
+                    onToggled: ShellState.setPref("wallpaperSlideshowEnabled", !ShellState.wallpaperSlideshowEnabled)
+                }
+            }
+
+            StepControl {
+                label: "Slideshow Rotation Interval"
+                displayValue: ShellState.wallpaperSlideshowMinutes + " min"
+                controlEnabled: ShellState.wallpaperSlideshowEnabled
+                onDecremented: ShellState.setPref("wallpaperSlideshowMinutes", Math.max(1, ShellState.wallpaperSlideshowMinutes - 5))
+                onIncremented: ShellState.setPref("wallpaperSlideshowMinutes", Math.min(240, ShellState.wallpaperSlideshowMinutes + 5))
+            }
+        }
+    }
 }

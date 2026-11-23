@@ -1073,5 +1073,8 @@ fi
 
 apply_gtk_settings
 sync_qt6ct_and_zed
+if [[ -x "$QUICKSHELL_DIR/scripts/sync-sddm-theme.sh" ]]; then
+    "$QUICKSHELL_DIR/scripts/sync-sddm-theme.sh" >/dev/null 2>&1 || true
+fi
 reload_wm_and_terminals
 write_theme_state

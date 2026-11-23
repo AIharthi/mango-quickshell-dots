@@ -14,6 +14,7 @@ Rectangle {
 
     property real volumeLevel: 0.5
     property bool volumeMuted: false
+    property bool micMuted: false
     property bool _dragging: false
 
     property real brightnessLevel: 0.8
@@ -110,15 +111,29 @@ Rectangle {
     }
 
     // --- System Queries (gated on detected hardware) ---
+    function cycleAudioSink(): void {
+        if (toggleCmdProc.running)
+            return;
+        toggleCmdProc.command = [
+            "sh", "-c",
+            "def=$(pactl get-default-sink 2>/dev/null); nxt=$(pactl list short sinks 2>/dev/null | awk -v d=\"$def\" '{a[NR]=$2; if($2==d) idx=NR} END{if(NR>0){print a[(idx%NR)+1]}}'); [ -n \"$nxt\" ] && pactl set-default-sink \"$nxt\""
+        ];
+        toggleCmdProc.running = true;
+    }
+
     Process {
         id: volReadProc
-        command: ["sh", "-c", "pactl get-sink-volume @DEFAULT_SINK@; pactl get-sink-mute @DEFAULT_SINK@"]
+        command: ["sh", "-c", "pactl get-sink-volume @DEFAULT_SINK@; pactl get-sink-mute @DEFAULT_SINK@; echo '---MIC---'; pactl get-source-mute @DEFAULT_SOURCE@ 2>/dev/null || true"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const match = text.match(/([0-9]+)%/);
+                const parts = (text || "").split("---MIC---");
+                const sinkTxt = parts[0] || "";
+                const match = sinkTxt.match(/([0-9]+)%/);
                 if (match)
                     root.volumeLevel = Math.max(0.0, Math.min(1.0, parseInt(match[1], 10) / 100.0));
-                root.volumeMuted = text.indexOf("Mute: yes") !== -1 || root.volumeLevel <= 0.001;
+                root.volumeMuted = sinkTxt.indexOf("Mute: yes") !== -1 || root.volumeLevel <= 0.001;
+                if (parts.length > 1)
+                    root.micMuted = parts[1].indexOf("Mute: yes") !== -1;
             }
         }
     }
@@ -318,13 +333,39 @@ Rectangle {
             }
 
             Text {
-                Layout.preferredWidth: 36
+                Layout.preferredWidth: 34
                 horizontalAlignment: Text.AlignRight
                 text: Math.round(root.volumeLevel * 100) + "%"
                 font.family: Theme.fontFamily
                 font.pixelSize: 11
                 font.weight: Font.Bold
                 color: Theme.fgSurface
+            }
+
+            Rectangle {
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: Theme.r(13)
+                color: micMuteArea.containsMouse ? Theme.hoverBg : Theme.surfaceContainer
+
+                Text {
+                    anchors.centerIn: parent
+                    text: root.micMuted ? "󰍭" : "󰍬"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                    color: root.micMuted ? Theme.error : Theme.secondary
+                }
+
+                MouseArea {
+                    id: micMuteArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        toggleCmdProc.command = ["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "toggle"];
+                        toggleCmdProc.running = true;
+                    }
+                }
             }
         }
 
@@ -588,6 +629,29 @@ Rectangle {
                     color: Theme.fgSurface
                 }
 
+                Rectangle {
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    radius: Theme.r(7)
+                    color: cycSinkMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰓃"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 13
+                        color: cycSinkMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+                    }
+
+                    MouseArea {
+                        id: cycSinkMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.cycleAudioSink()
+                    }
+                }
+
                 Text {
                     text: "󰒓"
                     font.family: Theme.iconFont
@@ -599,9 +663,103 @@ Rectangle {
             MouseArea {
                 id: audioSettingsArea
                 anchors.fill: parent
+                anchors.rightMargin: 28
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.openSettingsRequested("audio")
+            }
+        }
+
+        // --- Quick Desktop Actions Strip ---
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 5
+
+            Repeater {
+                model: [
+                    { id: "shot",  icon: "󰹑", active: false, accent: Theme.primary },
+                    { id: "pick",  icon: "󰈊", active: false, accent: Theme.secondary },
+                    { id: "rec",   icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
+                    { id: "game",  icon: "󰊴", active: ShellState.gameModeActive, accent: Theme.tertiary },
+                    { id: "wins",  icon: "󰖯", active: false, accent: Theme.primary },
+                    { id: "power", icon: "󰐥", active: false, accent: Theme.error }
+                ]
+
+                delegate: Rectangle {
+                    id: qaBtn
+                    required property var modelData
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(9)
+                    color: qaBtn.modelData.active
+                        ? Theme.withAlpha(qaBtn.modelData.accent, 0.24)
+                        : (qaMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                    border.width: qaBtn.modelData.active ? 1 : Theme.cardBorderWidth
+                    border.color: qaBtn.modelData.active ? qaBtn.modelData.accent : Theme.cardBorder
+                    scale: qaMouse.pressed ? 0.94 : 1.0
+
+                    Behavior on scale { enabled: !Theme.isSimple; NumberAnimation { duration: 90 } }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: qaBtn.modelData.icon
+                        font.family: Theme.iconFont
+                        font.pixelSize: 13
+                        color: (qaBtn.modelData.active || qaMouse.containsMouse) ? qaBtn.modelData.accent : Theme.fgSurfaceVariant
+                    }
+
+                    MouseArea {
+                        id: qaMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            const aid = qaBtn.modelData.id;
+                            if (aid === "shot") {
+                                Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--area"]);
+                            } else if (aid === "pick") {
+                                Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--color"]);
+                            } else if (aid === "rec") {
+                                Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "toggle", "--area"]);
+                            } else if (aid === "game") {
+                                ShellState.toggleGameMode();
+                            } else if (aid === "wins") {
+                                Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleWindowSwitcher"]);
+                            } else if (aid === "power") {
+                                Quickshell.execDetached(["qs", "ipc", "call", "island", "togglePowerOverlay"]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Night Light quick toggle (shown when wlsunset/hyprsunset/gammastep installed)
+            Rectangle {
+                visible: DeviceCaps.hasNightLight
+                Layout.fillWidth: true
+                implicitHeight: 28
+                radius: Theme.r(9)
+                color: ShellState.nightLightEnabled
+                    ? Theme.withAlpha(Theme.warning, 0.24)
+                    : (nlMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                border.width: ShellState.nightLightEnabled ? 1 : Theme.cardBorderWidth
+                border.color: ShellState.nightLightEnabled ? Theme.warning : Theme.cardBorder
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰖔"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                    color: ShellState.nightLightEnabled ? Theme.warning : Theme.fgSurfaceVariant
+                }
+
+                MouseArea {
+                    id: nlMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp)
+                }
             }
         }
 

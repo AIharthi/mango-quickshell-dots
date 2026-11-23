@@ -410,6 +410,11 @@ ColumnLayout {
         { id: "color-pick",  title: "Color Picker (Eyedropper)",    sub: "Pick pixel #RRGGBB to clipboard",    icon: "󰈊", kw: "color picker eyedropper hex" },
         { id: "record-area", title: "Toggle Screen Recording",      sub: "Start/stop wf-recorder capture",     icon: "󰑊", kw: "record screen video mp4" },
         { id: "keybinds",    title: "Keybind Cheat Sheet",          sub: "Show all MangoWC & shell shortcuts", icon: "󰌌", kw: "keybinds shortcuts help" },
+        { id: "win-switch",  title: "Window Switcher",              sub: "Jump to or close any open window",   icon: "󰖯", kw: "windows switcher focus alt tab" },
+        { id: "power-menu",  title: "Power & Session Overlay",      sub: "Lock, suspend, hibernate, reboot",   icon: "󰐥", kw: "power shutdown reboot suspend logout" },
+        { id: "game-mode",   title: "Toggle Game Mode",             sub: "Simple bar + DND + Keep Awake",      icon: "󰊴", kw: "game mode performance dnd" },
+        { id: "sync-sddm",   title: "Sync SDDM Login Theme",        sub: "Push palette & wallpaper to SDDM",   icon: "󰍹", kw: "sddm login greeter sync theme" },
+        { id: "refresh-wx",  title: "Refresh Weather Forecast",     sub: "Fetch latest conditions (wttr.in)",  icon: "󰖐", kw: "weather forecast temp refresh" },
         { id: "files",       title: "Open Dynamic File Manager",    sub: "Launch Rust-backed mango-fm",        icon: "󰉋", kw: "files manager explorer" },
         { id: "settings",    title: "Open Desktop Settings",        sub: "16-page configuration studio",       icon: "󰒓", kw: "settings preferences config" },
         { id: "reload-wm",   title: "Reload MangoWC Config",        sub: "mmsg dispatch reload_config",        icon: "󰑐", kw: "reload mango config wm" }
@@ -579,6 +584,16 @@ ColumnLayout {
             Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "toggle", "--area"]);
         } else if (cmdId === "keybinds") {
             root.openKeybindsRequested();
+        } else if (cmdId === "win-switch") {
+            Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleWindowSwitcher"]);
+        } else if (cmdId === "power-menu") {
+            Quickshell.execDetached(["qs", "ipc", "call", "island", "togglePowerOverlay"]);
+        } else if (cmdId === "game-mode") {
+            ShellState.toggleGameMode();
+        } else if (cmdId === "sync-sddm") {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/sync-sddm-theme.sh")]);
+        } else if (cmdId === "refresh-wx") {
+            ShellState.refreshWeather(true);
         } else if (cmdId === "files") {
             root.openFilesRequested("");
         } else if (cmdId === "settings") {

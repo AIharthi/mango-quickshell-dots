@@ -8,6 +8,7 @@ DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 FONT_DIR="$DATA_DIR/fonts"
 
 WITH_SESSION=0
+WITH_SDDM=0
 RESTORE_BACKUP=0
 BACKUP_PATH=""
 KEEP_FONTS=0
@@ -24,6 +25,8 @@ Options:
   --dry-run             Print planned removals/restores without modifying files
   --with-session        Also remove /usr/local/bin/mango-session and
                         /usr/share/wayland-sessions/mango.desktop (requires sudo/root)
+  --with-sddm           Also remove /usr/share/sddm/themes/mango-island and
+                        /etc/sddm.conf.d/99-mango-island.conf (requires sudo/root)
   --restore-backup      Restore the latest ~/.config-backup-mango-* backup after removal
   --backup <dir>        Restore a specific backup directory (implies --restore-backup)
   --keep-fonts          Do not remove JetBrainsMono / SymbolsNerdFont from ~/.local/share/fonts
@@ -40,6 +43,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --with-session)
             WITH_SESSION=1
+            shift
+            ;;
+        --with-sddm)
+            WITH_SDDM=1
             shift
             ;;
         --restore-backup)
@@ -125,6 +132,9 @@ fi
 if [[ "$WITH_SESSION" -eq 1 ]]; then
     echo "  Remove system: /usr/local/bin/mango-session, /usr/share/wayland-sessions/mango.desktop"
 fi
+if [[ "$WITH_SDDM" -eq 1 ]]; then
+    echo "  Remove SDDM:   /usr/share/sddm/themes/mango-island, /etc/sddm.conf.d/99-mango-island.conf"
+fi
 if [[ "$RESTORE_BACKUP" -eq 1 ]]; then
     echo "  Restore from:  $BACKUP_PATH"
 fi
@@ -183,6 +193,24 @@ if [[ "$WITH_SESSION" -eq 1 ]]; then
             run_cmd "${priv[@]}" rm -f "$sys_file"
         fi
     done
+fi
+
+if [[ "$WITH_SDDM" -eq 1 ]]; then
+    echo "==> Removing Mango Island SDDM theme"
+    priv=()
+    if [[ "$EUID" -ne 0 ]]; then
+        if ! command -v sudo >/dev/null 2>&1; then
+            echo "ERROR: 'sudo' is required to remove /usr/share/sddm files when not running as root." >&2
+            exit 1
+        fi
+        priv=(sudo)
+    fi
+    if [[ -d /usr/share/sddm/themes/mango-island ]]; then
+        run_cmd "${priv[@]}" rm -rf /usr/share/sddm/themes/mango-island
+    fi
+    if [[ -e /etc/sddm.conf.d/99-mango-island.conf ]]; then
+        run_cmd "${priv[@]}" rm -f /etc/sddm.conf.d/99-mango-island.conf
+    fi
 fi
 
 if [[ "$RESTORE_BACKUP" -eq 1 ]]; then

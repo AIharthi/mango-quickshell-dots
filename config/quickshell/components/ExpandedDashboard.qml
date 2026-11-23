@@ -452,7 +452,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 196 : 152
+                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 228 : 186
                     screenName: root.screenName
                     active: root.isOpen && root.activeTab === "overview"
                 }
@@ -461,7 +461,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 196 : 152
+                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 228 : 186
                     active: root.isOpen && root.activeTab === "overview"
                     onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
                     onOpenSettingsRequested: page => root.openSettingsRequested(page)

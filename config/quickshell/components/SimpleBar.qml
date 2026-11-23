@@ -564,6 +564,120 @@ Rectangle {
             color: Theme.outlineVariant
         }
 
+        // Live Game Mode Chip (Simple Mode)
+        Rectangle {
+            width: sbGmRow.implicitWidth + 14
+            height: parent.height
+            radius: 0
+            visible: ShellState.gameModeActive
+            color: sbGmMouse.containsMouse ? Theme.withAlpha(Theme.tertiary, 0.30) : Theme.withAlpha(Theme.tertiary, 0.18)
+
+            Row {
+                id: sbGmRow
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.tertiary }
+                Text {
+                    text: "GAME"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.tertiary
+                }
+            }
+
+            MouseArea {
+                id: sbGmMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: ShellState.toggleGameMode()
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: ShellState.gameModeActive
+            color: Theme.outlineVariant
+        }
+
+        // Live Stopwatch Chip (Simple Mode)
+        Rectangle {
+            width: sbSwRow.implicitWidth + 14
+            height: parent.height
+            radius: 0
+            visible: ShellState.stopwatchActive
+            color: sbSwMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+            Row {
+                id: sbSwRow
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.secondary }
+                Text {
+                    text: ShellState.formatTimer(ShellState.stopwatchElapsedSec)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.secondary
+                }
+            }
+
+            MouseArea {
+                id: sbSwMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.toggleNotificationsRequested()
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: ShellState.stopwatchActive
+            color: Theme.outlineVariant
+        }
+
+        // Opt-In Weather Chip (Simple Mode)
+        Rectangle {
+            width: sbWRow.implicitWidth + 14
+            height: parent.height
+            radius: 0
+            visible: ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable
+            color: sbWMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+            Row {
+                id: sbWRow
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.primary }
+                Text {
+                    text: ShellState.weatherTemp
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurface
+                }
+            }
+
+            MouseArea {
+                id: sbWMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.toggleNotificationsRequested()
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable
+            color: Theme.outlineVariant
+        }
+
         // Live Recording Chip (Simple Mode)
         Rectangle {
             width: sbRecRow.implicitWidth + 14

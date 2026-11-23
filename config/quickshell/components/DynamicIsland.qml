@@ -171,17 +171,17 @@ Item {
     }
 
     readonly property int expandedHeight: {
-        let h = 400;
+        let h = 434;
         if (root.activeTab === "launcher")
             h = 472;
         else if (root.activeTab === "notifications")
-            h = 468;
+            h = 474;
         else if (root.activeTab === "files")
             h = 444;
         else if (root.activeTab === "themes")
             h = 440;
         else
-            h = DeviceCaps.hasExtraQuickControls ? 444 : 400;
+            h = DeviceCaps.hasExtraQuickControls ? 474 : 434;
         return h + (root.powerMenuOpen ? 46 : 0);
     }
 

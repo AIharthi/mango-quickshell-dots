@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Widgets
 import Quickshell.Services.Pam
 import Quickshell.Services.Mpris
 import ".."
@@ -12,6 +13,9 @@ Item {
     id: root
 
     property bool locked: false
+    property bool _revealed: false
+    property bool _unlocking: false
+    property bool showPassword: false
     property string errorText: ""
     property bool authenticating: false
     property string currentUser: String(Quickshell.env("USER") || Quickshell.env("LOGNAME") || "user")
@@ -19,6 +23,7 @@ Item {
     property string _pendingPwd: ""
 
     signal clearInputs()
+    signal authFailedShake()
 
     readonly property var activePlayer: {
         const players = Mpris.players.values;
@@ -37,35 +42,70 @@ Item {
         return null;
     }
 
+    function greetingText(dt: var): string {
+        const hr = dt ? dt.getHours() : (new Date()).getHours();
+        const prefix = hr < 12 ? "Good Morning" : (hr < 18 ? "Good Afternoon" : "Good Evening");
+        return prefix + ", " + root.currentUser;
+    }
+
     function lock(): void {
         if (root.locked)
             return;
+        unlockDelayTimer.stop();
         root.errorText = "";
         root.authenticating = false;
         root._pendingPwd = "";
+        root._unlocking = false;
+        root._revealed = false;
+        root.showPassword = false;
         root.clearInputs();
         root.locked = true;
         if (!kbProc.running)
             kbProc.running = true;
         if (!pam.active)
             pam.start();
+        if (Theme.reducedMotion)
+            root._revealed = true;
+        else
+            revealTimer.restart();
     }
 
     function unlock(): void {
+        revealTimer.stop();
+        unlockDelayTimer.stop();
         root._pendingPwd = "";
         root.authenticating = false;
         root.errorText = "";
         root.clearInputs();
         if (pam.active)
             pam.abort();
-        root.locked = false;
+        if (Theme.reducedMotion) {
+            root._revealed = false;
+            root._unlocking = false;
+            root.locked = false;
+        } else {
+            root._unlocking = true;
+            unlockDelayTimer.restart();
+        }
+    }
+
+    function finishAuthUnlock(): void {
+        if (Theme.reducedMotion) {
+            root._revealed = false;
+            root._unlocking = false;
+            root.locked = false;
+        } else {
+            root._unlocking = true;
+            unlockDelayTimer.restart();
+        }
     }
 
     function submitPassword(pwd: string): void {
-        if (root.authenticating)
+        if (root.authenticating || root._unlocking)
             return;
         if (!pwd || pwd.length === 0) {
             root.errorText = "Enter your password";
+            root.authFailedShake();
             return;
         }
         root.errorText = "";
@@ -80,8 +120,45 @@ Item {
                     root.authenticating = false;
                     root._pendingPwd = "";
                     root.errorText = "Unable to start PAM authentication";
+                    root.authFailedShake();
                 }
             }
+        }
+    }
+
+    function cycleKeyboardLayout(): void {
+        Quickshell.execDetached(["mmsg", "dispatch", "switch_keyboard_layout"]);
+        kbRefreshDelay.restart();
+    }
+
+    Timer {
+        id: revealTimer
+        interval: 25
+        repeat: false
+        onTriggered: {
+            if (root.locked && !root._unlocking)
+                root._revealed = true;
+        }
+    }
+
+    Timer {
+        id: unlockDelayTimer
+        interval: 210
+        repeat: false
+        onTriggered: {
+            root._revealed = false;
+            root._unlocking = false;
+            root.locked = false;
+        }
+    }
+
+    Timer {
+        id: kbRefreshDelay
+        interval: 120
+        repeat: false
+        onTriggered: {
+            if (!kbProc.running)
+                kbProc.running = true;
         }
     }
 
@@ -143,11 +220,12 @@ Item {
             if (result === PamResult.Success) {
                 root.errorText = "";
                 root.clearInputs();
-                root.locked = false;
+                root.finishAuthUnlock();
             } else {
                 root.errorText = (result === PamResult.MaxTries)
                     ? "Too many attempts — wait a moment"
-                    : "Authentication failed — try again";
+                    : "Incorrect password — try again";
+                root.authFailedShake();
                 if (root.locked && !pam.active)
                     pam.start();
             }
@@ -157,6 +235,7 @@ Item {
             root.authenticating = false;
             root._pendingPwd = "";
             root.errorText = "PAM error: " + PamError.toString(err);
+            root.authFailedShake();
         }
     }
 
@@ -194,7 +273,8 @@ Item {
             id: lockSurf
             color: Theme.surfaceContainerLowest
 
-            property bool confirmPoweroff: false
+            property string confirmPowerAction: ""
+            readonly property bool cardVisible: root._revealed && !root._unlocking
 
             SystemClock {
                 id: lockClock
@@ -205,6 +285,11 @@ Item {
                 target: root
                 function onClearInputs(): void {
                     pwdInput.text = "";
+                }
+                function onAuthFailedShake(): void {
+                    if (!Theme.reducedMotion)
+                        shakeAnim.restart();
+                    pwdInput.forceActiveFocus();
                 }
             }
 
@@ -225,13 +310,13 @@ Item {
             }
 
             Timer {
-                id: poweroffConfirmTimer
+                id: powerConfirmTimer
                 interval: 4000
                 repeat: false
-                onTriggered: lockSurf.confirmPoweroff = false
+                onTriggered: lockSurf.confirmPowerAction = ""
             }
 
-            // Wallpaper Layer
+            // Wallpaper Layer with smooth entrance zoom-out
             Image {
                 anchors.fill: parent
                 visible: !Theme.isSimple && ShellState.surfaceStyle !== "oled" && Theme.wallpaperPath.length > 0
@@ -239,11 +324,23 @@ Item {
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 sourceSize: Qt.size(Math.max(1, lockSurf.width), Math.max(1, lockSurf.height))
+                opacity: lockSurf.cardVisible ? 1.0 : 0.0
+                scale: Theme.reducedMotion ? 1.0 : (root._unlocking ? 1.04 : (root._revealed ? 1.0 : 1.07))
+
+                Behavior on opacity {
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 480; easing.type: Easing.OutCubic }
+                }
             }
 
             // Ambient Theme Scrim
             Rectangle {
                 anchors.fill: parent
+                opacity: lockSurf.cardVisible ? 1.0 : 0.0
                 color: {
                     if (Theme.isSimple || ShellState.surfaceStyle === "oled")
                         return Theme.surfaceContainerLowest;
@@ -251,34 +348,105 @@ Item {
                         ? Qt.rgba(0.03, 0.03, 0.06, 0.72)
                         : Qt.rgba(0.94, 0.94, 0.97, 0.68);
                 }
+
+                Behavior on opacity {
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+                }
             }
 
-            // Main Lock Card
+            // Main Lock Card with entrance/exit choreography
             Rectangle {
+                id: mainCard
                 anchors.centerIn: parent
-                width: Math.min(440, Math.max(300, lockSurf.width - 48))
+                width: Math.min(450, Math.max(310, lockSurf.width - 48))
                 implicitHeight: cardCol.implicitHeight + 52
                 radius: Theme.r(28)
                 color: Theme.notchBg
                 border.width: Math.max(1, Theme.islandBorderWidth)
                 border.color: root.errorText.length > 0 ? Theme.error : Theme.islandBorder
+                clip: true
+
+                opacity: lockSurf.cardVisible ? 1.0 : 0.0
+                scale: Theme.reducedMotion ? 1.0 : (root._unlocking ? 1.04 : (root._revealed ? 1.0 : 0.93))
+                transform: Translate {
+                    y: Theme.reducedMotion ? 0 : (root._unlocking ? -14 : (root._revealed ? 0 : 26))
+                    Behavior on y {
+                        enabled: !Theme.reducedMotion
+                        NumberAnimation { duration: 340; easing.type: Easing.OutCubic }
+                    }
+                }
+
+                Behavior on opacity {
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 340; easing.type: Easing.OutCubic }
+                }
+                Behavior on border.color {
+                    enabled: !Theme.reducedMotion
+                    ColorAnimation { duration: 160 }
+                }
+
+                // Subtle glass specular top sheen
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    height: 52
+                    radius: parent.radius
+                    visible: Theme.showGlassSheen
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.34) }
+                        GradientStop { position: 1.0; color: "transparent" }
+                    }
+                }
+
+                // Ambient auth pulse bar at top of card
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    height: 3
+                    radius: 1.5
+                    visible: root.authenticating
+                    width: parent.width * 0.55
+                    color: Theme.primary
+
+                    SequentialAnimation on opacity {
+                        running: root.authenticating && !Theme.reducedMotion
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.25; duration: 420; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1.0; duration: 420; easing.type: Easing.InOutSine }
+                    }
+                }
 
                 ColumnLayout {
                     id: cardCol
                     anchors.fill: parent
                     anchors.margins: 26
-                    spacing: 14
+                    spacing: 13
 
-                    // Clock & Date
+                    // Greeting + Clock + Date
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 2
 
                         Text {
                             Layout.alignment: Qt.AlignHCenter
+                            text: root.greetingText(lockClock.date)
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            color: Theme.primary
+                        }
+
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
                             text: ShellState.formatTime(lockClock.date)
                             font.family: Theme.fontFamily
-                            font.pixelSize: 48
+                            font.pixelSize: 50
                             font.weight: Font.Bold
                             color: Theme.fgSurface
                         }
@@ -293,7 +461,7 @@ Item {
                         }
                     }
 
-                    // Status Pill Strip (User, Layout, Battery, DND)
+                    // Status Pill Strip (User, Layout Switcher, Battery, DND)
                     Flow {
                         Layout.alignment: Qt.AlignHCenter
                         spacing: 6
@@ -332,7 +500,7 @@ Item {
                             implicitHeight: 24
                             implicitWidth: kbChipRow.implicitWidth + 14
                             radius: Theme.r(12)
-                            color: Theme.cardBg
+                            color: kbChipMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
                             border.width: Theme.cardBorderWidth
                             border.color: Theme.cardBorder
 
@@ -354,6 +522,14 @@ Item {
                                     font.weight: Font.Bold
                                     color: Theme.fgSurface
                                 }
+                            }
+
+                            MouseArea {
+                                id: kbChipMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.cycleKeyboardLayout()
                             }
                         }
 
@@ -408,11 +584,11 @@ Item {
                         }
                     }
 
-                    // Active Media Pill (when music is loaded/playing)
+                    // Active Media Pill with Album Art + Transport Controls
                     Rectangle {
                         visible: root.activePlayer !== null && (root.activePlayer.trackTitle || "").length > 0
                         Layout.fillWidth: true
-                        implicitHeight: 44
+                        implicitHeight: 50
                         radius: Theme.r(14)
                         color: Theme.cardBg
                         border.width: Theme.cardBorderWidth
@@ -420,20 +596,39 @@ Item {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 10
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
                             spacing: 10
 
-                            Text {
-                                text: (root.activePlayer && root.activePlayer.isPlaying) ? "󰎈" : "󰏤"
-                                font.family: Theme.iconFont
-                                font.pixelSize: 15
-                                color: Theme.primary
+                            ClippingRectangle {
+                                implicitWidth: 34
+                                implicitHeight: 34
+                                radius: Theme.r(9)
+                                color: Theme.primaryContainer
+
+                                Image {
+                                    id: lockArtImg
+                                    anchors.fill: parent
+                                    source: (root.activePlayer && root.activePlayer.trackArtUrl) ? root.activePlayer.trackArtUrl : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    sourceSize: Qt.size(64, 64)
+                                    visible: source.toString().length > 0 && status === Image.Ready
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    visible: !lockArtImg.visible
+                                    text: (root.activePlayer && root.activePlayer.isPlaying) ? "󰎈" : "󰏤"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 16
+                                    color: Theme.primary
+                                }
                             }
 
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: 0
+                                spacing: 1
 
                                 Text {
                                     Layout.fillWidth: true
@@ -441,7 +636,7 @@ Item {
                                     elide: Text.ElideRight
                                     font.family: Theme.fontFamily
                                     font.pixelSize: 11
-                                    font.weight: Font.DemiBold
+                                    font.weight: Font.Bold
                                     color: Theme.fgSurface
                                 }
                                 Text {
@@ -455,44 +650,121 @@ Item {
                                 }
                             }
 
-                            Rectangle {
-                                implicitWidth: 26
-                                implicitHeight: 26
-                                radius: Theme.r(13)
-                                color: mediaMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                            RowLayout {
+                                spacing: 4
 
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: (root.activePlayer && root.activePlayer.isPlaying) ? "󰏤" : "󰐊"
-                                    font.family: Theme.iconFont
-                                    font.pixelSize: 12
-                                    color: Theme.fgSurface
+                                Rectangle {
+                                    implicitWidth: 24
+                                    implicitHeight: 24
+                                    radius: Theme.r(12)
+                                    color: prevMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰒮"
+                                        font.family: Theme.iconFont
+                                        font.pixelSize: 11
+                                        color: Theme.fgSurface
+                                    }
+
+                                    MouseArea {
+                                        id: prevMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (root.activePlayer && root.activePlayer.canGoPrevious)
+                                                root.activePlayer.previous();
+                                        }
+                                    }
                                 }
 
-                                MouseArea {
-                                    id: mediaMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        if (root.activePlayer && root.activePlayer.canTogglePlaying)
-                                            root.activePlayer.togglePlaying();
+                                Rectangle {
+                                    implicitWidth: 28
+                                    implicitHeight: 28
+                                    radius: Theme.r(14)
+                                    color: mediaMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: (root.activePlayer && root.activePlayer.isPlaying) ? "󰏤" : "󰐊"
+                                        font.family: Theme.iconFont
+                                        font.pixelSize: 13
+                                        color: Theme.fgPrimary
+                                    }
+
+                                    MouseArea {
+                                        id: mediaMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (root.activePlayer && root.activePlayer.canTogglePlaying)
+                                                root.activePlayer.togglePlaying();
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    implicitWidth: 24
+                                    implicitHeight: 24
+                                    radius: Theme.r(12)
+                                    color: nextMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰒭"
+                                        font.family: Theme.iconFont
+                                        font.pixelSize: 11
+                                        color: Theme.fgSurface
+                                    }
+
+                                    MouseArea {
+                                        id: nextMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (root.activePlayer && root.activePlayer.canGoNext)
+                                                root.activePlayer.next();
+                                        }
                                     }
                                 }
                             }
                         }
                     }
 
-                    // Password Input Box
+                    // Password Input Box with horizontal failure shake
                     Rectangle {
+                        id: pwdBox
                         Layout.fillWidth: true
                         implicitHeight: 44
                         radius: Theme.r(14)
                         color: Theme.cardBg
-                        border.width: 1
-                        border.color: pwdInput.activeFocus
-                            ? Theme.primary
-                            : (root.errorText.length > 0 ? Theme.error : Theme.cardBorder)
+                        border.width: pwdInput.activeFocus || root.errorText.length > 0 ? 1.5 : 1
+                        border.color: root.errorText.length > 0
+                            ? Theme.error
+                            : (pwdInput.activeFocus ? Theme.primary : Theme.cardBorder)
+
+                        Behavior on border.color {
+                            enabled: !Theme.reducedMotion
+                            ColorAnimation { duration: 150 }
+                        }
+
+                        transform: Translate {
+                            id: pwdShake
+                            x: 0
+                        }
+
+                        SequentialAnimation {
+                            id: shakeAnim
+                            NumberAnimation { target: pwdShake; property: "x"; to: -12; duration: 42; easing.type: Easing.InOutQuad }
+                            NumberAnimation { target: pwdShake; property: "x"; to: 12;  duration: 42; easing.type: Easing.InOutQuad }
+                            NumberAnimation { target: pwdShake; property: "x"; to: -9;  duration: 42; easing.type: Easing.InOutQuad }
+                            NumberAnimation { target: pwdShake; property: "x"; to: 9;   duration: 42; easing.type: Easing.InOutQuad }
+                            NumberAnimation { target: pwdShake; property: "x"; to: -4;  duration: 42; easing.type: Easing.InOutQuad }
+                            NumberAnimation { target: pwdShake; property: "x"; to: 0;   duration: 42; easing.type: Easing.InOutQuad }
+                        }
 
                         RowLayout {
                             anchors.fill: parent
@@ -501,10 +773,25 @@ Item {
                             spacing: 8
 
                             Text {
+                                id: lockIconGlyph
                                 text: root.authenticating ? "󰦖" : "󰌾"
                                 font.family: Theme.iconFont
                                 font.pixelSize: 15
-                                color: pwdInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
+                                color: root.errorText.length > 0
+                                    ? Theme.error
+                                    : (pwdInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant)
+
+                                RotationAnimation on rotation {
+                                    from: 0
+                                    to: 360
+                                    duration: 900
+                                    loops: Animation.Infinite
+                                    running: root.authenticating && !Theme.reducedMotion
+                                    onRunningChanged: {
+                                        if (!running)
+                                            lockIconGlyph.rotation = 0;
+                                    }
+                                }
                             }
 
                             Item {
@@ -524,8 +811,8 @@ Item {
                                     id: pwdInput
                                     anchors.fill: parent
                                     verticalAlignment: TextInput.AlignVCenter
-                                    echoMode: TextInput.Password
-                                    enabled: !root.authenticating
+                                    echoMode: root.showPassword ? TextInput.Normal : TextInput.Password
+                                    enabled: !root.authenticating && !root._unlocking
                                     color: Theme.fgSurface
                                     selectionColor: Theme.primary
                                     selectedTextColor: Theme.fgPrimary
@@ -533,9 +820,43 @@ Item {
                                     font.pixelSize: 13
                                     clip: true
 
+                                    onTextEdited: {
+                                        if (root.errorText.length > 0)
+                                            root.errorText = "";
+                                    }
                                     Keys.onReturnPressed: root.submitPassword(text)
                                     Keys.onEnterPressed: root.submitPassword(text)
-                                    Keys.onEscapePressed: text = ""
+                                    Keys.onEscapePressed: {
+                                        text = "";
+                                        root.errorText = "";
+                                    }
+                                }
+                            }
+
+                            // Show/Hide password toggle
+                            Rectangle {
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                radius: Theme.r(9)
+                                color: eyeMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: root.showPassword ? "󰈉" : "󰈈"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 13
+                                    color: root.showPassword ? Theme.primary : Theme.fgSurfaceVariant
+                                }
+
+                                MouseArea {
+                                    id: eyeMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.showPassword = !root.showPassword;
+                                        pwdInput.forceActiveFocus();
+                                    }
                                 }
                             }
 
@@ -544,6 +865,12 @@ Item {
                                 implicitHeight: 30
                                 radius: Theme.r(10)
                                 color: submitMouse.containsMouse ? Theme.primary : Theme.subCardBg
+                                scale: submitMouse.pressed ? 0.92 : 1.0
+
+                                Behavior on scale {
+                                    enabled: !Theme.reducedMotion
+                                    NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                                }
 
                                 Text {
                                     anchors.centerIn: parent
@@ -577,12 +904,24 @@ Item {
                 }
             }
 
-            // Bottom-Right Quick Session Power Controls
+            // Bottom-Right Animated Session Power Controls
             RowLayout {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.margins: 24
                 spacing: 8
+                opacity: lockSurf.cardVisible ? 1.0 : 0.0
+                transform: Translate {
+                    y: Theme.reducedMotion ? 0 : (lockSurf.cardVisible ? 0 : 16)
+                    Behavior on y {
+                        enabled: !Theme.reducedMotion
+                        NumberAnimation { duration: 360; easing.type: Easing.OutCubic }
+                    }
+                }
+                Behavior on opacity {
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+                }
 
                 Rectangle {
                     implicitHeight: 34
@@ -591,6 +930,9 @@ Item {
                     color: suspMouse.containsMouse ? Theme.hoverBg : Theme.notchBg
                     border.width: Math.max(1, Theme.cardBorderWidth)
                     border.color: Theme.cardBorder
+                    scale: suspMouse.pressed ? 0.94 : 1.0
+
+                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                     RowLayout {
                         id: suspRow
@@ -622,14 +964,70 @@ Item {
                 }
 
                 Rectangle {
+                    id: rebootBtn
+                    readonly property bool isPending: lockSurf.confirmPowerAction === "reboot"
+                    implicitHeight: 34
+                    implicitWidth: rebRow.implicitWidth + 20
+                    radius: Theme.r(17)
+                    color: rebootBtn.isPending
+                        ? Theme.warning
+                        : (rebMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.22) : Theme.notchBg)
+                    border.width: Math.max(1, Theme.cardBorderWidth)
+                    border.color: rebootBtn.isPending ? Theme.warning : Theme.cardBorder
+                    scale: rebMouse.pressed ? 0.94 : 1.0
+
+                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                    RowLayout {
+                        id: rebRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Text {
+                            text: "󰜉"
+                            font.family: Theme.iconFont
+                            font.pixelSize: 13
+                            color: rebootBtn.isPending ? Theme.fgPrimary : Theme.warning
+                        }
+                        Text {
+                            text: rebootBtn.isPending ? "Confirm Reboot?" : "Reboot"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            color: rebootBtn.isPending ? Theme.fgPrimary : Theme.fgSurface
+                        }
+                    }
+
+                    MouseArea {
+                        id: rebMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (lockSurf.confirmPowerAction !== "reboot") {
+                                lockSurf.confirmPowerAction = "reboot";
+                                powerConfirmTimer.restart();
+                            } else {
+                                Quickshell.execDetached(["loginctl", "reboot"]);
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: powerBtn
+                    readonly property bool isPending: lockSurf.confirmPowerAction === "poweroff"
                     implicitHeight: 34
                     implicitWidth: pwrRow.implicitWidth + 20
                     radius: Theme.r(17)
-                    color: lockSurf.confirmPoweroff
+                    color: powerBtn.isPending
                         ? Theme.error
                         : (pwrMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.notchBg)
                     border.width: Math.max(1, Theme.cardBorderWidth)
-                    border.color: lockSurf.confirmPoweroff ? Theme.error : Theme.cardBorder
+                    border.color: powerBtn.isPending ? Theme.error : Theme.cardBorder
+                    scale: pwrMouse.pressed ? 0.94 : 1.0
+
+                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                     RowLayout {
                         id: pwrRow
@@ -640,14 +1038,14 @@ Item {
                             text: "󰐥"
                             font.family: Theme.iconFont
                             font.pixelSize: 13
-                            color: lockSurf.confirmPoweroff ? Theme.fgError : Theme.error
+                            color: powerBtn.isPending ? Theme.fgError : Theme.error
                         }
                         Text {
-                            text: lockSurf.confirmPoweroff ? "Confirm Poweroff?" : "Poweroff"
+                            text: powerBtn.isPending ? "Confirm Poweroff?" : "Poweroff"
                             font.family: Theme.fontFamily
                             font.pixelSize: 11
                             font.weight: Font.Medium
-                            color: lockSurf.confirmPoweroff ? Theme.fgError : Theme.fgSurface
+                            color: powerBtn.isPending ? Theme.fgError : Theme.fgSurface
                         }
                     }
 
@@ -657,9 +1055,9 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            if (!lockSurf.confirmPoweroff) {
-                                lockSurf.confirmPoweroff = true;
-                                poweroffConfirmTimer.restart();
+                            if (lockSurf.confirmPowerAction !== "poweroff") {
+                                lockSurf.confirmPowerAction = "poweroff";
+                                powerConfirmTimer.restart();
                             } else {
                                 Quickshell.execDetached(["loginctl", "poweroff"]);
                             }

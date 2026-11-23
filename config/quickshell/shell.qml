@@ -22,6 +22,12 @@ ShellRoot {
     property bool keybindsOpen: false
     property bool _keybindsLoaded: false
 
+    property bool windowSwitcherOpen: false
+    property bool _windowSwitcherLoaded: false
+
+    property bool powerOverlayOpen: false
+    property bool _powerOverlayLoaded: false
+
     function primaryIsland(): var {
         const list = screenVariants.instances;
         if (!list || list.length === 0)
@@ -45,6 +51,9 @@ ShellRoot {
 
     function openSettings(page: string): void {
         root.closeFiles();
+        root.closeKeybinds();
+        root.closeWindowSwitcher();
+        root.closePowerOverlay();
         root.settingsPage = (page && page.length > 0) ? page : "appearance";
         root.collapseAll();
         settingsUnloadTimer.stop();
@@ -67,6 +76,9 @@ ShellRoot {
 
     function openFiles(startPath: string): void {
         root.closeSettings();
+        root.closeKeybinds();
+        root.closeWindowSwitcher();
+        root.closePowerOverlay();
         root.filesStartPath = (startPath && startPath.length > 0) ? startPath : "";
         root.collapseAll();
         filesUnloadTimer.stop();
@@ -90,6 +102,8 @@ ShellRoot {
     function openKeybinds(): void {
         root.closeSettings();
         root.closeFiles();
+        root.closeWindowSwitcher();
+        root.closePowerOverlay();
         root.collapseAll();
         keybindsUnloadTimer.stop();
         root._keybindsLoaded = true;
@@ -107,6 +121,54 @@ ShellRoot {
             root.closeKeybinds();
         else
             root.openKeybinds();
+    }
+
+    function openWindowSwitcher(): void {
+        root.closeSettings();
+        root.closeFiles();
+        root.closeKeybinds();
+        root.closePowerOverlay();
+        root.collapseAll();
+        switcherUnloadTimer.stop();
+        root._windowSwitcherLoaded = true;
+        root.windowSwitcherOpen = true;
+    }
+
+    function closeWindowSwitcher(): void {
+        root.windowSwitcherOpen = false;
+        if (root._windowSwitcherLoaded)
+            switcherUnloadTimer.restart();
+    }
+
+    function toggleWindowSwitcher(): void {
+        if (root.windowSwitcherOpen)
+            root.closeWindowSwitcher();
+        else
+            root.openWindowSwitcher();
+    }
+
+    function openPowerOverlay(): void {
+        root.closeSettings();
+        root.closeFiles();
+        root.closeKeybinds();
+        root.closeWindowSwitcher();
+        root.collapseAll();
+        powerUnloadTimer.stop();
+        root._powerOverlayLoaded = true;
+        root.powerOverlayOpen = true;
+    }
+
+    function closePowerOverlay(): void {
+        root.powerOverlayOpen = false;
+        if (root._powerOverlayLoaded)
+            powerUnloadTimer.restart();
+    }
+
+    function togglePowerOverlay(): void {
+        if (root.powerOverlayOpen)
+            root.closePowerOverlay();
+        else
+            root.openPowerOverlay();
     }
 
     Timer {
@@ -136,6 +198,26 @@ ShellRoot {
         onTriggered: {
             if (!root.keybindsOpen)
                 root._keybindsLoaded = false;
+        }
+    }
+
+    Timer {
+        id: switcherUnloadTimer
+        interval: Theme.reducedMotion ? 10 : 170
+        repeat: false
+        onTriggered: {
+            if (!root.windowSwitcherOpen)
+                root._windowSwitcherLoaded = false;
+        }
+    }
+
+    Timer {
+        id: powerUnloadTimer
+        interval: Theme.reducedMotion ? 10 : 170
+        repeat: false
+        onTriggered: {
+            if (!root.powerOverlayOpen)
+                root._powerOverlayLoaded = false;
         }
     }
 
@@ -313,6 +395,29 @@ ShellRoot {
         }
     }
 
+    // Window Switcher Modal (lazy-loaded on demand)
+    LazyLoader {
+        id: switcherLoader
+        active: root._windowSwitcherLoaded
+
+        WindowSwitcher {
+            isOpen: root.windowSwitcherOpen
+            onCloseRequested: root.closeWindowSwitcher()
+        }
+    }
+
+    // Full-Screen Power & Session Overlay (lazy-loaded on demand)
+    LazyLoader {
+        id: powerOverlayLoader
+        active: root._powerOverlayLoaded
+
+        PowerOverlay {
+            isOpen: root.powerOverlayOpen
+            onCloseRequested: root.closePowerOverlay()
+            onLockRequested: lockScreen.lock()
+        }
+    }
+
     // Native Polkit Authentication Agent Modal
     PolkitModal {}
 
@@ -329,7 +434,29 @@ ShellRoot {
             root.closeSettings();
             root.closeFiles();
             root.closeKeybinds();
+            root.closeWindowSwitcher();
+            root.closePowerOverlay();
             lockScreen.lock();
+        }
+
+        function toggleWindowSwitcher(): void {
+            root.toggleWindowSwitcher();
+        }
+
+        function togglePowerOverlay(): void {
+            root.togglePowerOverlay();
+        }
+
+        function toggleGameMode(): void {
+            ShellState.toggleGameMode();
+        }
+
+        function refreshWeather(): void {
+            ShellState.refreshWeather(true);
+        }
+
+        function syncSddmTheme(): void {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/sync-sddm-theme.sh")]);
         }
 
         function toggleLauncher(): void {

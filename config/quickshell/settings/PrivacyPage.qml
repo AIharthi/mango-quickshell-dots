@@ -17,6 +17,9 @@ ColumnLayout {
     property bool recentExists: false
     property real recentSizeKb: 0.0
     property bool disableMiddlePaste: false
+    property bool sddmInstalled: false
+    property bool sddmWritable: false
+    property bool sddmActive: false
     property string statusMsg: ""
 
     function refresh(): void {
@@ -24,6 +27,8 @@ ColumnLayout {
             privProc.running = true;
         if (!localProc.running)
             localProc.running = true;
+        if (!sddmStatusProc.running)
+            sddmStatusProc.running = true;
     }
 
     function setPrivacy(key: string, val: bool): void {
@@ -104,6 +109,36 @@ ColumnLayout {
                 root.applyPrivPayload(text);
                 root.statusMsg = "Recently opened files log wiped";
             }
+        }
+    }
+
+    Process {
+        id: sddmStatusProc
+        command: [Quickshell.shellPath("scripts/sync-sddm-theme.sh"), "--status"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    root.sddmInstalled = !!d.installed;
+                    root.sddmWritable = !!d.writable;
+                    root.sddmActive = !!d.active;
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: sddmSyncProc
+        command: [Quickshell.shellPath("scripts/sync-sddm-theme.sh")]
+        onExited: exitCode => {
+            root.statusMsg = (exitCode === 0)
+                ? "SDDM Mango Island theme synced with current wallpaper & palette"
+                : "Unable to sync SDDM theme (check permissions)";
+            if (!sddmStatusProc.running)
+                sddmStatusProc.running = true;
         }
     }
 
@@ -458,7 +493,7 @@ ColumnLayout {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
+                implicitHeight: 1
                 color: Theme.outlineVariant
             }
 
@@ -530,6 +565,68 @@ ColumnLayout {
                 controlEnabled: ShellState.idleSuspendEnabled
                 onDecremented: ShellState.setPref("idleSuspendSeconds", Math.max(120, ShellState.idleSuspendSeconds - 60))
                 onIncremented: ShellState.setPref("idleSuspendSeconds", Math.min(7200, ShellState.idleSuspendSeconds + 60))
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: Theme.outlineVariant
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        text: "SDDM Login Theme Sync (mango-island)"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        color: Theme.fgSurface
+                    }
+                    Text {
+                        text: root.sddmInstalled
+                            ? ((root.sddmActive ? "Active · " : "Installed · ") + (root.sddmWritable ? "Auto-syncing theme & wallpaper" : "Run install.sh --with-sddm to enable user sync"))
+                            : "Not installed yet — run ./install.sh --with-sddm"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                Rectangle {
+                    visible: root.sddmInstalled && root.sddmWritable
+                    implicitHeight: 28
+                    implicitWidth: syncSddmLbl.implicitWidth + 16
+                    radius: Theme.r(8)
+                    color: syncSddmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: syncSddmLbl
+                        anchors.centerIn: parent
+                        text: "Sync SDDM Now"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        id: syncSddmMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (!sddmSyncProc.running)
+                                sddmSyncProc.running = true;
+                        }
+                    }
+                }
             }
 
             Text {

@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+Name=Mango Island
+Description=Animated glassmorphic SDDM theme matching MangoWC + Quickshell Dynamic Island LockScreen
+Author=AIharthi
+License=MIT
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=mango-island
+Theme-API=2.0
+QtVersion=6

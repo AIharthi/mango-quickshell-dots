@@ -12,8 +12,11 @@ Default compositor keybindings live in [`config/mango/config.conf`](../config/ma
 | `Super + B` | Open default browser (`launch-app.sh browser`) |
 | `Super + Z` | Open default editor (`launch-app.sh editor`) |
 | `Super + A` / `Super + Space` | Toggle Multi-Mode Launcher (`Apps`, `=` Calc, `>` Commands, `:` Emoji, `cb ` Clipboard) |
+| `Super + W` | Toggle Open Window Switcher (`WindowSwitcher.qml` via `mmsg get all-clients`) |
+| `Super + Escape` | Toggle Full-Screen Power Overlay (`Lock`, `Suspend`, `Hibernate`, `Logout`, `Reboot`, `Poweroff`) |
+| `Super + Shift + G` | Toggle Game Mode (switches bar to Minimal Pill + pauses slideshow & idle auto-lock) |
 | `Super + V` | Toggle Clipboard History Manager (`manage-clipboard.sh`) |
-| `Super + Shift + N` | Toggle Alerts & Agenda Hub (Notifications, Calendar, Focus Timer, Scratchpad) |
+| `Super + Shift + N` | Toggle Alerts & Agenda Hub (Notifications, Calendar, Timer/Stopwatch, Weather, Scratchpad) |
 | `Super + /` | Toggle Interactive Keybind Cheat Sheet Modal |
 | `Super + D` | Toggle Dynamic Island Hub |
 | `Super + S` | Toggle Built-in Settings App (`16` hardware-aware pages) |
@@ -107,14 +110,19 @@ Default compositor keybindings live in [`config/mango/config.conf`](../config/ma
 ## Quickshell IPC Commands (`qs ipc call island ...`)
 
 ```bash
-# Drawers, Launcher, Lock, Settings & Files
+# Drawers, Launcher, Lock, Power, Switcher, Settings & Files
 qs ipc call island lockSession
 qs ipc call island toggleLauncher
+qs ipc call island toggleWindowSwitcher
+qs ipc call island togglePowerOverlay
+qs ipc call island toggleGameMode
 qs ipc call island toggleClipboard
 qs ipc call island toggleNotifications
 qs ipc call island toggleKeybindSheet
 qs ipc call island toggleThemeTab
 qs ipc call island toggleDashboard
+qs ipc call island refreshWeather
+qs ipc call island syncSddmTheme
 qs ipc call island collapse
 qs ipc call island showOsd <volume|mute|brightness|mic|kb|media-play|media-next|media-prev>
 qs ipc call island syncRecordingState
