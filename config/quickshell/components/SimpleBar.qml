@@ -543,11 +543,11 @@ Rectangle {
             color: Theme.outlineVariant
         }
 
-        // System Tray (shown only when tray apps exist)
+        // System Tray (shown only when tray module enabled and tray apps exist)
         Item {
             width: trayStrip.implicitWidth + 10
             height: parent.height
-            visible: trayStrip.hasItems
+            visible: ShellState.barShowTray && trayStrip.hasItems
 
             SystemTrayStrip {
                 id: trayStrip
@@ -559,7 +559,7 @@ Rectangle {
         Rectangle {
             width: 1
             height: parent.height
-            visible: trayStrip.hasItems
+            visible: ShellState.barShowTray && trayStrip.hasItems
             color: Theme.outlineVariant
         }
 

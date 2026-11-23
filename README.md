@@ -6,8 +6,6 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 
 ## Visual Showcase
 
-> Drop screenshots or GIFs under `docs/assets/` using the filenames below to populate the gallery.
-
 | Default Mode (Dynamic Island) | Simple Mode (Square Full-Width Bar) | Blur Mode (Frosted Glass) |
 | --- | --- | --- |
 | ![Default Mode](docs/assets/showcase-default.png) | ![Simple Mode](docs/assets/showcase-simple.png) | ![Blur Mode](docs/assets/showcase-blur.png) |
