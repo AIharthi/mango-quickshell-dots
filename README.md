@@ -19,7 +19,7 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 ## Highlights
 
 - **Hardware & Init-System Aware (`DeviceCaps`)**: Automatically adapts controls and Settings tabs to actual hardware (multi-battery aggregation `BAT0`+`BAT1` with low/critical battery alerts, `/sys/class/backlight`, `/sys/class/ieee80211` Wi-Fi, Bluetooth, audio, `wlsunset`/`gammastep` night light) and works across **systemd** (`loginctl` / `systemctl`) and **OpenRC + elogind** (`loginctl`, `dbus-run-session`, non-systemd PipeWire fallback).
-- **Dynamic Island & 3 Visual Modes (`default` / `simple` / `blur`)**: Morphs smoothly between Floating Pill, Top Notch, Full-Width Bar, and `28px` Square Bar, with modular bar widgets (`Minimal Pill`, `Balanced Island`, `Full Desktop Bar`), live **Stopwatch**, **Game Mode (`Super + Shift + G`)**, opt-in **Weather pill**, **Quick Controls** (mic mute, sink cycler, Night Light, 6-action Quick Strip), multi-type OSD, and Notification Server.
+- **Dynamic Island & 7 Visual Modes (`Island`, `Frosted`, `Cyber`, `Zen`, `Tactile`, `Obsidian`, `Simple`)**: Morphs smoothly between Floating Pill, Top Notch, Full-Width Bar, and `28px` Square Bar, with human-crafted visual modes (Frosted visionOS glass, Cyber neon HUD, Zen Dieter Rams matte, Tactile neo-brutalist, Obsidian pure AMOLED, Balanced Island, Flat Simple), modular bar widgets, live **Stopwatch**, **Game Mode (`Super + Shift + G`)**, opt-in **Weather pill**, **Media Card** (faded cover backdrop + equalizer), **System Monitor** (live CPU sparkline + Temp/Load/Disk chips), **Quick Controls** (mic mute, sink cycler, Night Light, 7-mode dock), multi-type OSD, and Notification Server.
 - **Multi-Mode Launcher (`Super + Space` / `Super + V`)**: Fuzzy App Launcher plus built-in **Clipboard History Manager** (`cb ` / `Super + V` with pinning & password-manager exclusion), **Inline Calculator / Hex / Binary Converter** (`=`), **Quick Desktop Commands** (`>`), and **Emoji / Nerd Font Glyph Picker** (`:`).
 - **Open Window Switcher (`Super + W`) & Power Overlay (`Super + Escape`)**: Fast client switcher across monitors/tags via `mmsg get all-clients` with search, focus, and close actions; full-screen 3x2 animated Power Overlay (`Lock`, `Suspend`, `Hibernate`, `Logout`, `Reboot`, `Poweroff`) with keyboard shortcuts (`L/S/H/E/R/P`) and confirmation guard.
 - **Alerts & Agenda Hub (`Super + Shift + N`)**: Unified Notification Center with unread pill badge, interactive **Month Calendar**, **Focus Timer & Lap Stopwatch** docked live in the bar, compact opt-in **Weather Card** (`wttr.in`, 30-min cache), and persistent **Quick Scratchpad**.
@@ -35,7 +35,7 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 <details>
 <summary><strong>Explore Deep-Dive Documentation (Themes, Vibes, File Manager & Keybinds)</strong></summary>
 
-- **[Theming, 3 Modes, 8 Vibes & 16 Presets](docs/THEMING.md)** — Complete Matugen pipeline, wallpaper engine selection, palette validation, and CLI flags.
+- **[Theming, 7 Modes, 8 Vibes & 16 Presets](docs/THEMING.md)** — Complete Matugen pipeline, wallpaper engine selection, palette validation, and CLI flags.
 - **[Dynamic File Manager (`rust/mango-fm`)](docs/FILE_MANAGER.md)** — Workflow presets (`Finder Columns`, `Minimal Zen`, `Media Gallery`, `Commander`), CLI subcommands, and NDJSON `serve` protocol.
 - **[Keybindings & Quickshell IPC](docs/KEYBINDS.md)** — Full MangoWC keyboard/mouse/touchpad table, PiP controls, and `qs ipc call island ...` commands.
 

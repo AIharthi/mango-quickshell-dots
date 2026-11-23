@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Io
@@ -12,11 +13,18 @@ Rectangle {
     property real cpuPercent: 0
     property real _prevTotal: 0
     property real _prevIdle: 0
+    property var cpuHistory: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     // RAM State
     property real ramPercent: 0
     property real ramUsedGb: 0
     property real ramTotalGb: 0
+
+    // Telemetry Footer State
+    property int cpuTempC: -1
+    property string uptimeLabel: "--"
+    property string loadAvgLabel: "0.00"
+    property string diskUsedLabel: "--%"
 
     function parseMeminfo(raw: string): void {
         if (!raw)
@@ -81,15 +89,59 @@ Rectangle {
             const idleDelta = idleAll - root._prevIdle;
             const usage = ((totalDelta - idleDelta) / totalDelta) * 100;
             root.cpuPercent = Math.max(0, Math.min(100, usage));
+            const nextHist = (root.cpuHistory || []).slice(-23);
+            nextHist.push(root.cpuPercent);
+            root.cpuHistory = nextHist;
+            cpuSpark.requestPaint();
         }
 
         root._prevTotal = totalAll;
         root._prevIdle = idleAll;
     }
 
+    function parseMeta(raw: string): void {
+        if (!raw)
+            return;
+        const lines = raw.split("\n");
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line)
+                continue;
+            if (line.startsWith("UP:")) {
+                const secs = Math.floor(parseFloat(line.slice(3)) || 0);
+                const d = Math.floor(secs / 86400);
+                const h = Math.floor((secs % 86400) / 3600);
+                const m = Math.floor((secs % 3600) / 60);
+                if (d > 0)
+                    root.uptimeLabel = d + "d " + h + "h";
+                else if (h > 0)
+                    root.uptimeLabel = h + "h " + m + "m";
+                else
+                    root.uptimeLabel = Math.max(1, m) + "m";
+            } else if (line.startsWith("LOAD:")) {
+                root.loadAvgLabel = line.slice(5).trim();
+            } else if (line.startsWith("DISK:")) {
+                root.diskUsedLabel = line.slice(5).trim();
+            } else if (line.startsWith("TEMP:")) {
+                const rawT = parseInt(line.slice(5), 10) || 0;
+                const deg = rawT > 1000 ? Math.round(rawT / 1000) : Math.round(rawT);
+                if (deg > 0 && deg < 150)
+                    root.cpuTempC = deg;
+            }
+        }
+    }
+
     Process {
         id: sysProc
-        command: ["sh", "-c", "head -n 1 /proc/stat; echo '---'; grep -E '^(MemTotal|MemAvailable|MemFree|Buffers|Cached):' /proc/meminfo"]
+        command: [
+            "sh", "-c",
+            "head -n 1 /proc/stat; echo '---'; grep -E '^(MemTotal|MemAvailable|MemFree|Buffers|Cached):' /proc/meminfo; echo '---'; " +
+            "awk '{print \"UP:\" $1}' /proc/uptime 2>/dev/null || true; " +
+            "awk '{print \"LOAD:\" $1}' /proc/loadavg 2>/dev/null || true; " +
+            "df -P / 2>/dev/null | awk 'NR==2{print \"DISK:\" $5}' || true; " +
+            "for t in /sys/class/hwmon/hwmon*/temp1_input /sys/class/thermal/thermal_zone*/temp; do " +
+            "[ -r \"$t\" ] && v=$(cat \"$t\" 2>/dev/null) && [ -n \"$v\" ] && [ \"$v\" -gt 10000 ] 2>/dev/null && echo \"TEMP:$v\" && break; done || true"
+        ]
         stdout: StdioCollector {
             onStreamFinished: {
                 const parts = text.split("---");
@@ -97,12 +149,15 @@ Rectangle {
                     root.parseCpuStat(parts[0].trim());
                     root.parseMeminfo(parts[1].trim());
                 }
+                if (parts.length >= 3) {
+                    root.parseMeta(parts[2].trim());
+                }
             }
         }
     }
 
     Timer {
-        interval: 1800
+        interval: 1500
         repeat: true
         running: root.active
         triggeredOnStart: true
@@ -120,10 +175,11 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 12
-        spacing: DeviceCaps.hasBattery ? 7 : 10
+        spacing: DeviceCaps.hasBattery ? 6 : 8
 
         RowLayout {
             Layout.fillWidth: true
+            spacing: 6
 
             Text {
                 text: "󰍛  SYSTEM MONITOR"
@@ -137,26 +193,53 @@ Rectangle {
 
             Rectangle {
                 implicitHeight: 16
-                implicitWidth: liveText.implicitWidth + 10
+                implicitWidth: upTxt.implicitWidth + 10
+                radius: Theme.r(8)
+                color: Theme.subCardBg
+
+                Text {
+                    id: upTxt
+                    anchors.centerIn: parent
+                    text: "up " + root.uptimeLabel
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 9
+                    color: Theme.fgSurfaceVariant
+                }
+            }
+
+            Rectangle {
+                implicitHeight: 16
+                implicitWidth: liveRow.implicitWidth + 10
                 radius: Theme.r(8)
                 color: Theme.withAlpha(Theme.success, 0.18)
 
-                Text {
-                    id: liveText
+                RowLayout {
+                    id: liveRow
                     anchors.centerIn: parent
-                    text: "LIVE"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 9
-                    font.weight: Font.Bold
-                    color: Theme.success
+                    spacing: 4
+
+                    Rectangle {
+                        implicitWidth: 5
+                        implicitHeight: 5
+                        radius: 2.5
+                        color: Theme.success
+                    }
+
+                    Text {
+                        text: "LIVE"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 9
+                        font.weight: Font.Bold
+                        color: Theme.success
+                    }
                 }
             }
         }
 
-        // --- CPU Usage ---
+        // --- CPU Usage + Live Rolling Sparkline ---
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 5
+            spacing: 4
 
             RowLayout {
                 Layout.fillWidth: true
@@ -164,7 +247,7 @@ Rectangle {
                 Text {
                     text: "CPU Load"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
+                    font.pixelSize: 11
                     font.weight: Font.DemiBold
                     color: Theme.fgSurface
                 }
@@ -174,7 +257,7 @@ Rectangle {
                 Text {
                     text: Math.round(root.cpuPercent) + "%"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
+                    font.pixelSize: 11
                     font.weight: Font.Bold
                     color: root.cpuPercent > 85 ? Theme.error : Theme.primary
                 }
@@ -182,20 +265,64 @@ Rectangle {
 
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 8
-                radius: Theme.r(4)
+                implicitHeight: 6
+                radius: Theme.r(3)
                 color: Theme.surfaceContainerHighest
 
                 Rectangle {
                     height: parent.height
-                    radius: Theme.r(4)
+                    radius: Theme.r(3)
                     width: parent.width * (Math.max(0, Math.min(100, root.cpuPercent)) / 100.0)
                     color: root.cpuPercent > 85 ? Theme.error : Theme.primary
 
                     Behavior on width {
                         enabled: !Theme.isSimple
-                        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                        NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
                     }
+                }
+            }
+
+            Canvas {
+                id: cpuSpark
+                Layout.fillWidth: true
+                Layout.preferredHeight: DeviceCaps.hasBattery ? 18 : 26
+                antialiasing: true
+
+                readonly property color strokeCol: root.cpuPercent > 85 ? Theme.error : Theme.primary
+                onStrokeColChanged: requestPaint()
+
+                onPaint: {
+                    const ctx = getContext("2d");
+                    ctx.clearRect(0, 0, width, height);
+                    const pts = root.cpuHistory || [];
+                    if (pts.length < 2 || width <= 4 || height <= 4)
+                        return;
+
+                    const padY = 2;
+                    const usableH = height - padY * 2;
+                    const stepX = width / Math.max(1, pts.length - 1);
+
+                    ctx.beginPath();
+                    for (let i = 0; i < pts.length; i++) {
+                        const x = i * stepX;
+                        const y = height - padY - (Math.max(0, Math.min(100, pts[i])) / 100.0) * usableH;
+                        if (i === 0)
+                            ctx.moveTo(x, y);
+                        else
+                            ctx.lineTo(x, y);
+                    }
+                    ctx.strokeStyle = strokeCol;
+                    ctx.lineWidth = 1.6;
+                    ctx.stroke();
+
+                    ctx.lineTo(width, height);
+                    ctx.lineTo(0, height);
+                    ctx.closePath();
+                    const grad = ctx.createLinearGradient(0, 0, 0, height);
+                    grad.addColorStop(0, Qt.rgba(strokeCol.r, strokeCol.g, strokeCol.b, 0.30));
+                    grad.addColorStop(1, Qt.rgba(strokeCol.r, strokeCol.g, strokeCol.b, 0.02));
+                    ctx.fillStyle = grad;
+                    ctx.fill();
                 }
             }
         }
@@ -299,6 +426,61 @@ Rectangle {
             }
         }
 
-        Item { Layout.fillHeight: true }
+        // --- Telemetry Chip Strip (Temp, Load Avg, Root Disk) ---
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+
+            Repeater {
+                model: [
+                    {
+                        icon: "󰔏",
+                        lbl: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : "--°C",
+                        col: root.cpuTempC >= 80 ? Theme.error : Theme.warning
+                    },
+                    {
+                        icon: "󰓅",
+                        lbl: "Load " + root.loadAvgLabel,
+                        col: Theme.secondary
+                    },
+                    {
+                        icon: "󰋊",
+                        lbl: "Root " + root.diskUsedLabel,
+                        col: Theme.primary
+                    }
+                ]
+
+                delegate: Rectangle {
+                    id: metaChip
+                    required property var modelData
+                    Layout.fillWidth: true
+                    implicitHeight: 22
+                    radius: Theme.r(8)
+                    color: Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 4
+
+                        Text {
+                            text: metaChip.modelData.icon
+                            font.family: Theme.iconFont
+                            font.pixelSize: 11
+                            color: metaChip.modelData.col
+                        }
+
+                        Text {
+                            text: metaChip.modelData.lbl
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: Font.DemiBold
+                            color: Theme.fgSurface
+                        }
+                    }
+                }
+            }
+        }
     }
 }

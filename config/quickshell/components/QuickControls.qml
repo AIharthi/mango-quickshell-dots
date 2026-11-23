@@ -27,6 +27,7 @@ Rectangle {
     property string btDevice: "Off"
 
     property string defaultSinkLabel: "Audio Output"
+    property string hoveredActionLabel: ""
 
     onActiveChanged: {
         if (active)
@@ -677,12 +678,12 @@ Rectangle {
 
             Repeater {
                 model: [
-                    { id: "shot",  icon: "󰹑", active: false, accent: Theme.primary },
-                    { id: "pick",  icon: "󰈊", active: false, accent: Theme.secondary },
-                    { id: "rec",   icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
-                    { id: "game",  icon: "󰊴", active: ShellState.gameModeActive, accent: Theme.tertiary },
-                    { id: "wins",  icon: "󰖯", active: false, accent: Theme.primary },
-                    { id: "power", icon: "󰐥", active: false, accent: Theme.error }
+                    { id: "shot",  label: "Screenshot",   icon: "󰹑", active: false, accent: Theme.primary },
+                    { id: "pick",  label: "Color Picker", icon: "󰈊", active: false, accent: Theme.secondary },
+                    { id: "rec",   label: "Record",       icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
+                    { id: "game",  label: "Game Mode",    icon: "󰊴", active: ShellState.gameModeActive, accent: Theme.tertiary },
+                    { id: "wins",  label: "Windows",      icon: "󰖯", active: false, accent: Theme.primary },
+                    { id: "power", label: "Power",        icon: "󰐥", active: false, accent: Theme.error }
                 ]
 
                 delegate: Rectangle {
@@ -698,7 +699,7 @@ Rectangle {
                     border.color: qaBtn.modelData.active ? qaBtn.modelData.accent : Theme.cardBorder
                     scale: qaMouse.pressed ? 0.94 : 1.0
 
-                    Behavior on scale { enabled: !Theme.isSimple; NumberAnimation { duration: 90 } }
+                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                     Text {
                         anchors.centerIn: parent
@@ -713,6 +714,11 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
+                        onEntered: root.hoveredActionLabel = qaBtn.modelData.label
+                        onExited: {
+                            if (root.hoveredActionLabel === qaBtn.modelData.label)
+                                root.hoveredActionLabel = "";
+                        }
                         onClicked: {
                             const aid = qaBtn.modelData.id;
                             if (aid === "shot") {
@@ -758,123 +764,128 @@ Rectangle {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    onEntered: root.hoveredActionLabel = "Night Light"
+                    onExited: {
+                        if (root.hoveredActionLabel === "Night Light")
+                            root.hoveredActionLabel = "";
+                    }
                     onClicked: ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp)
                 }
             }
         }
 
-        // --- MangoWC & Quickshell Mode Toggles (Simple / Blur) ---
-        RowLayout {
+        // --- Tactile 7-Mode Visual Style Dock ---
+        ColumnLayout {
+            id: modeDockCol
             Layout.fillWidth: true
-            spacing: 8
+            spacing: 4
 
-            // Simple Mode (Everything Square + Minimal Bar)
-            Rectangle {
+            property var hoveredMode: null
+
+            RowLayout {
                 Layout.fillWidth: true
-                implicitHeight: 36
-                radius: Theme.r(12)
-                color: Theme.isSimple
-                    ? Theme.withAlpha(Theme.primary, 0.24)
-                    : (simpleArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: Theme.isSimple ? 1 : Theme.cardBorderWidth
-                border.color: Theme.isSimple ? Theme.primary : Theme.cardBorder
-                scale: simpleArea.pressed ? 0.97 : 1.0
+                spacing: 6
 
-                Behavior on color {
-                    enabled: !Theme.isSimple
-                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
-                }
-                Behavior on scale {
-                    enabled: !Theme.isSimple
-                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                Text {
+                    text: root.hoveredActionLabel.length > 0 ? "ACTION" : "STYLE"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 9
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
                 }
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    spacing: 6
-
-                    Text {
-                        text: Theme.isSimple ? "󰝤" : "󰝣"
-                        font.family: Theme.iconFont
-                        font.pixelSize: 15
-                        color: Theme.isSimple ? Theme.primary : Theme.fgSurfaceVariant
+                Text {
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: {
+                        if (root.hoveredActionLabel.length > 0)
+                            return root.hoveredActionLabel;
+                        if (modeDockCol.hoveredMode)
+                            return modeDockCol.hoveredMode.label + " · " + modeDockCol.hoveredMode.vibe;
+                        const modes = Theme.availableModes;
+                        for (let i = 0; i < modes.length; i++) {
+                            if (modes[i].id === Theme.shellMode)
+                                return modes[i].label + " · " + modes[i].vibe;
+                        }
+                        return "Island · Balanced";
                     }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: Theme.isSimple ? "Simple · On" : "Simple"
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                        font.weight: Theme.isSimple ? Font.Bold : Font.DemiBold
-                        color: Theme.isSimple ? Theme.primary : Theme.fgSurface
-                    }
-                }
-
-                MouseArea {
-                    id: simpleArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Theme.toggleShellMode("simple")
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 9
+                    font.weight: Font.Bold
+                    color: Theme.primary
+                    horizontalAlignment: Text.AlignRight
                 }
             }
 
-            // Blur Mode (Dynamic Island + Frosted Blurry Windows)
-            Rectangle {
+            RowLayout {
                 Layout.fillWidth: true
-                implicitHeight: 36
-                radius: Theme.r(12)
-                color: Theme.isBlur
-                    ? Theme.withAlpha(Theme.secondary, 0.24)
-                    : (blurArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: Theme.isBlur ? 1 : Theme.cardBorderWidth
-                border.color: Theme.isBlur ? Theme.secondary : Theme.cardBorder
-                scale: blurArea.pressed ? 0.97 : 1.0
+                spacing: 4
 
-                Behavior on color {
-                    enabled: !Theme.isSimple
-                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
-                }
-                Behavior on scale {
-                    enabled: !Theme.isSimple
-                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-                }
+                Repeater {
+                    model: Theme.availableModes
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    spacing: 6
+                    delegate: Rectangle {
+                        id: modeTile
+                        required property var modelData
+                        readonly property bool isCurrent: Theme.shellMode === modeTile.modelData.id
 
-                    Text {
-                        text: Theme.isBlur ? "󰂵" : "󰂷"
-                        font.family: Theme.iconFont
-                        font.pixelSize: 15
-                        color: Theme.isBlur ? Theme.secondary : Theme.fgSurfaceVariant
-                    }
-
-                    Text {
                         Layout.fillWidth: true
-                        text: Theme.isBlur ? "Blur · On" : "Blur"
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                        font.weight: Theme.isBlur ? Font.Bold : Font.DemiBold
-                        color: Theme.isBlur ? Theme.secondary : Theme.fgSurface
-                    }
-                }
+                        implicitHeight: 34
+                        radius: Theme.r(10)
+                        color: modeTile.isCurrent
+                            ? Theme.withAlpha(Theme.primary, 0.24)
+                            : (modeTileMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: modeTile.isCurrent ? 1 : Theme.cardBorderWidth
+                        border.color: modeTile.isCurrent ? Theme.primary : Theme.cardBorder
+                        scale: modeTileMouse.pressed ? 0.93 : 1.0
 
-                MouseArea {
-                    id: blurArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Theme.toggleShellMode("blur")
+                        Behavior on color {
+                            enabled: !Theme.reducedMotion
+                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: !Theme.reducedMotion
+                            NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            anchors.verticalCenterOffset: modeTile.isCurrent ? -2 : 0
+                            text: modeTile.modelData.icon
+                            font.family: Theme.iconFont
+                            font.pixelSize: 14
+                            color: (modeTile.isCurrent || modeTileMouse.containsMouse) ? Theme.primary : Theme.fgSurfaceVariant
+                        }
+
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 4
+                            width: modeTile.isCurrent ? 12 : 0
+                            height: 2
+                            radius: Theme.r(1)
+                            color: Theme.primary
+                            visible: modeTile.isCurrent
+
+                            Behavior on width {
+                                enabled: !Theme.reducedMotion
+                                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                            }
+                        }
+
+                        MouseArea {
+                            id: modeTileMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onEntered: modeDockCol.hoveredMode = modeTile.modelData
+                            onExited: {
+                                if (modeDockCol.hoveredMode && modeDockCol.hoveredMode.id === modeTile.modelData.id)
+                                    modeDockCol.hoveredMode = null;
+                            }
+                            onClicked: Theme.setShellMode(modeTile.modelData.id)
+                        }
+                    }
                 }
             }
         }

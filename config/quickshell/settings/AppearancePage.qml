@@ -301,82 +301,141 @@ ColumnLayout {
                 }
             }
 
-            RowLayout {
+            GridLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                columns: 2
+                rowSpacing: 8
+                columnSpacing: 8
 
                 Repeater {
-                    model: [
-                        { id: "default", title: "Default", desc: "Dynamic Island & rounded windows", icon: "󰕮" },
-                        { id: "simple",  title: "Simple",  desc: "0px square, flat bar, zero gaps",  icon: "󰝤" },
-                        { id: "blur",    title: "Blur",    desc: "Frosted glass & blurry windows",   icon: "󰂵" }
-                    ]
+                    model: Theme.availableModes
 
                     delegate: Rectangle {
                         id: modeCard
                         required property var modelData
-                        readonly property bool selected: Theme.shellMode === modeCard.modelData.id
+                        readonly property string mid: modeCard.modelData.id
+                        readonly property bool selected: Theme.shellMode === mid
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 74
-                        radius: Theme.r(12)
+                        Layout.preferredHeight: 68
+                        radius: {
+                            if (mid === "simple") return 0;
+                            if (mid === "retro") return 4;
+                            if (mid === "neon") return 8;
+                            return Theme.r(12);
+                        }
                         color: modeCard.selected
                             ? Theme.withAlpha(Theme.primary, 0.22)
                             : (modeCardMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: modeCard.selected ? 1 : Theme.cardBorderWidth
-                        border.color: modeCard.selected ? Theme.primary : Theme.cardBorder
+                        border.width: modeCard.selected || mid === "retro" || mid === "neon" ? (mid === "retro" || mid === "neon" ? 2 : 1) : Theme.cardBorderWidth
+                        border.color: modeCard.selected ? Theme.primary : (mid === "neon" ? Theme.withAlpha(Theme.primary, 0.45) : Theme.cardBorder)
                         scale: modeCardMouse.pressed ? 0.97 : 1.0
 
                         Behavior on color {
-                            enabled: !Theme.isSimple
-                            ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                            enabled: !Theme.reducedMotion
+                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                         }
                         Behavior on scale {
-                            enabled: !Theme.isSimple
-                            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                            enabled: !Theme.reducedMotion
+                            NumberAnimation { duration: 95; easing.type: Easing.OutCubic }
                         }
 
-                        ColumnLayout {
+                        RowLayout {
                             anchors.fill: parent
                             anchors.margins: 10
-                            spacing: 4
+                            spacing: 10
 
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 6
+                            // Miniature Live-Styled Preview Frame
+                            Rectangle {
+                                implicitWidth: 42
+                                implicitHeight: 42
+                                radius: {
+                                    if (modeCard.mid === "simple") return 0;
+                                    if (modeCard.mid === "retro") return 3;
+                                    if (modeCard.mid === "neon") return 6;
+                                    return 10;
+                                }
+                                color: {
+                                    if (modeCard.mid === "oled") return "#000000";
+                                    if (modeCard.mid === "neon") return "#080810";
+                                    if (modeCard.mid === "blur") return Theme.withAlpha(Theme.surfaceContainerHigh, 0.48);
+                                    if (modeCard.mid === "retro") return Theme.surfaceContainer;
+                                    return Theme.surfaceContainerLowest;
+                                }
+                                border.width: (modeCard.mid === "retro" || modeCard.mid === "neon" || modeCard.mid === "simple") ? 2 : 1
+                                border.color: (modeCard.mid === "neon" || modeCard.mid === "oled")
+                                    ? Theme.primary
+                                    : (modeCard.mid === "retro" ? Theme.fgSurface : Theme.outline)
+                                clip: true
+
+                                // Mode signature top flourish inside miniature preview
+                                Rectangle {
+                                    anchors.top: parent.top
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    height: modeCard.mid === "retro" ? 4 : (modeCard.mid === "neon" ? 3 : 2)
+                                    visible: modeCard.mid === "neon" || modeCard.mid === "retro" || modeCard.mid === "blur"
+                                    gradient: Gradient {
+                                        orientation: Gradient.Horizontal
+                                        GradientStop { position: 0.0; color: modeCard.mid === "blur" ? Qt.rgba(1, 1, 1, 0.45) : Theme.primary }
+                                        GradientStop { position: 1.0; color: modeCard.mid === "neon" ? Theme.secondary : (modeCard.mid === "blur" ? Qt.rgba(1, 1, 1, 0.12) : Theme.primary) }
+                                    }
+                                }
 
                                 Text {
+                                    anchors.centerIn: parent
                                     text: modeCard.modelData.icon
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 15
-                                    color: modeCard.selected ? Theme.primary : Theme.fgSurfaceVariant
+                                    font.pixelSize: 16
+                                    color: modeCard.selected || modeCard.mid === "neon" ? Theme.primary : Theme.fgSurface
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
+
+                                    Text {
+                                        text: modeCard.modelData.label
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: 12
+                                        font.weight: Font.Bold
+                                        color: modeCard.selected ? Theme.primary : Theme.fgSurface
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: "· " + modeCard.modelData.vibe
+                                        elide: Text.ElideRight
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: 9
+                                        font.weight: Font.DemiBold
+                                        color: Theme.fgSurfaceVariant
+                                    }
+
+                                    Text {
+                                        visible: modeCard.selected
+                                        text: "󰄬"
+                                        font.family: Theme.iconFont
+                                        font.pixelSize: 13
+                                        color: Theme.primary
+                                    }
                                 }
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: modeCard.modelData.title
+                                    text: modeCard.modelData.shortDesc
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 2
+                                    wrapMode: Text.WordWrap
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 12
-                                    font.weight: Font.Bold
-                                    color: modeCard.selected ? Theme.primary : Theme.fgSurface
+                                    font.pixelSize: 9
+                                    color: Theme.fgSurfaceVariant
                                 }
-
-                                Text {
-                                    visible: modeCard.selected
-                                    text: "󰄬"
-                                    font.family: Theme.iconFont
-                                    font.pixelSize: 13
-                                    color: Theme.primary
-                                }
-                            }
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: modeCard.modelData.desc
-                                wrapMode: Text.WordWrap
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 10
-                                color: Theme.fgSurfaceVariant
                             }
                         }
 
@@ -385,7 +444,7 @@ ColumnLayout {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: Theme.setShellMode(modeCard.modelData.id)
+                            onClicked: Theme.setShellMode(modeCard.mid)
                         }
                     }
                 }

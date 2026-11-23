@@ -513,6 +513,10 @@ ShellRoot {
             Theme.toggleShellMode(mode);
         }
 
+        function cycleShellMode(): void {
+            Theme.cycleShellMode();
+        }
+
         function toggleSettings(): void {
             root.toggleSettings();
         }

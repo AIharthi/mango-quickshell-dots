@@ -12,6 +12,13 @@ Rectangle {
     property string screenName: ""
     property string monitorName: ""
     property string currentLayout: "T"
+    readonly property int totalClients: {
+        let sum = 0;
+        const arr = root.tagsModel || [];
+        for (let i = 0; i < arr.length; i++)
+            sum += (arr[i].client_count || 0);
+        return sum;
+    }
     property var tagsModel: [
         { index: 1, is_active: true,  is_urgent: false, client_count: 0 },
         { index: 2, is_active: false, is_urgent: false, client_count: 0 },
@@ -147,7 +154,7 @@ Rectangle {
             }
         }
 
-        // Interactive 1-9 Tag Pills Grid
+        // Interactive 1-9 Tag Pills + Windows/Overview 10th Tile (2x5 symmetric grid)
         GridLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -166,8 +173,15 @@ Rectangle {
                     readonly property bool isOccupied: tagBtn.modelData.client_count > 0
 
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 38
+                    Layout.fillHeight: true
+                    Layout.preferredHeight: 40
                     radius: Theme.r(12)
+                    scale: tagMouse.pressed ? 0.92 : 1.0
+
+                    Behavior on scale {
+                        enabled: !Theme.reducedMotion
+                        NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                    }
 
                     color: {
                         if (tagBtn.isUrgent)
@@ -181,7 +195,7 @@ Rectangle {
                         return Theme.subCardBg;
                     }
 
-                    border.width: Theme.cardBorderWidth
+                    border.width: tagBtn.isActive ? 1 : Theme.cardBorderWidth
                     border.color: tagBtn.isActive ? Theme.primary : Theme.cardBorder
 
                     Behavior on color {
@@ -208,10 +222,10 @@ Rectangle {
                             }
                         }
 
-                        // Client occupancy indicator dot
+                        // Client occupancy indicator dot / bar
                         Rectangle {
                             Layout.alignment: Qt.AlignHCenter
-                            implicitWidth: tagBtn.isActive ? 10 : 5
+                            implicitWidth: tagBtn.isActive ? 12 : (tagBtn.modelData.client_count > 1 ? 10 : 5)
                             implicitHeight: 3
                             radius: Theme.r(1.5)
                             visible: tagBtn.isOccupied || tagBtn.isActive
@@ -231,6 +245,61 @@ Rectangle {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + tagBtn.modelData.index + ",0"])
+                    }
+                }
+            }
+
+            // 10th Tile: Open Window Switcher (LMB) / Overview Grid (RMB)
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredHeight: 40
+                radius: Theme.r(12)
+                color: winTileMouse.containsMouse
+                    ? Theme.withAlpha(Theme.secondary, 0.24)
+                    : Theme.withAlpha(Theme.secondary, 0.12)
+                border.width: Math.max(1, Theme.cardBorderWidth)
+                border.color: winTileMouse.containsMouse ? Theme.secondary : Theme.withAlpha(Theme.secondary, 0.38)
+                scale: winTileMouse.pressed ? 0.92 : 1.0
+
+                Behavior on scale {
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                }
+
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: 1
+
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "󰖯"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 13
+                        color: Theme.secondary
+                    }
+
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: root.totalClients > 0 ? String(root.totalClients) : "Wins"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 8
+                        font.weight: Font.Bold
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                MouseArea {
+                    id: winTileMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton)
+                            Quickshell.execDetached(["mmsg", "dispatch", "toggleoverview"]);
+                        else
+                            Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleWindowSwitcher"]);
                     }
                 }
             }

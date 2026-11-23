@@ -180,6 +180,21 @@ create_backups() {
     fi
 }
 
+atomic_copy_file() {
+    local src="$1"
+    local dst="$2"
+    local dst_dir
+    dst_dir="$(dirname "$dst")"
+    mkdir -p "$dst_dir"
+    if [[ -f "$dst" && ! -L "$dst" ]] && command -v cmp >/dev/null 2>&1 && cmp -s "$src" "$dst"; then
+        return 1
+    fi
+    local tmp="${dst}.tmp.$$"
+    cp -a "$src" "$tmp"
+    mv -f "$tmp" "$dst"
+    return 0
+}
+
 install_configs() {
     echo "==> Installing dotfiles to $CONFIG_DIR (preserving user state & local.conf)"
     run_cmd mkdir -p "$CONFIG_DIR" "$HOME/Pictures/Wallpapers" "$HOME/Pictures/Screenshots" "$HOME/Videos/Recordings"
@@ -196,10 +211,12 @@ install_configs() {
             fi
             if [[ "$DRY_RUN" -eq 1 ]]; then
                 echo "  [dry-run] copy $rel -> $dst"
-            else
+            elif [[ -L "$src" ]]; then
                 dst_dir="$(dirname "$dst")"
                 mkdir -p "$dst_dir"
                 cp -a "$src" "$dst"
+            else
+                atomic_copy_file "$src" "$dst" || true
             fi
         done < <(cd "$SCRIPT_DIR/config" && find "$d" \( -type f -o -type l \) -print0)
     done
@@ -253,14 +270,22 @@ install_fonts() {
 
     echo "==> Installing bundled fonts (JetBrains Mono & Symbols Nerd Font) to $FONT_DIR"
     if [[ "$DRY_RUN" -eq 1 ]]; then
-        echo "  [dry-run] install fonts to $FONT_DIR/{JetBrainsMono,SymbolsNerdFont} and refresh fc-cache"
+        echo "  [dry-run] install fonts atomically to $FONT_DIR/{JetBrainsMono,SymbolsNerdFont} and refresh fc-cache if changed"
         return 0
     fi
 
     mkdir -p "$FONT_DIR/JetBrainsMono" "$FONT_DIR/SymbolsNerdFont"
-    cp -a "$SCRIPT_DIR/fonts/JetBrainsMono/." "$FONT_DIR/JetBrainsMono/"
-    cp -a "$SCRIPT_DIR/fonts/SymbolsNerdFont/." "$FONT_DIR/SymbolsNerdFont/"
-    if command -v fc-cache >/dev/null 2>&1; then
+    local changed=0
+    local fam f dst
+    for fam in JetBrainsMono SymbolsNerdFont; do
+        while IFS= read -r -d '' f; do
+            dst="$FONT_DIR/$fam/$(basename "$f")"
+            if atomic_copy_file "$f" "$dst"; then
+                changed=1
+            fi
+        done < <(find "$SCRIPT_DIR/fonts/$fam" -maxdepth 1 \( -type f -o -type l \) -print0)
+    done
+    if [[ "$changed" -eq 1 ]] && command -v fc-cache >/dev/null 2>&1; then
         fc-cache -f "$FONT_DIR" >/dev/null 2>&1 || true
     fi
 }
@@ -316,14 +341,26 @@ install_system_sddm() {
     local sddm_dst="/usr/share/sddm/themes/mango-island"
     local sddm_src="$SCRIPT_DIR/system/sddm-theme/mango-island"
     local target_user="${SUDO_USER:-$USER}"
+    local font_pairs=(
+        "fonts/JetBrainsMono/JetBrainsMono-Regular.ttf:$sddm_dst/fonts/JetBrainsMono-Regular.ttf"
+        "fonts/JetBrainsMono/JetBrainsMono-Bold.ttf:$sddm_dst/fonts/JetBrainsMono-Bold.ttf"
+        "fonts/SymbolsNerdFont/SymbolsNerdFont-Regular.ttf:$sddm_dst/fonts/SymbolsNerdFont-Regular.ttf"
+    )
+    local pair src_rel dst_font
 
     run_cmd "${priv[@]}" mkdir -p "$sddm_dst/fonts" /etc/sddm.conf.d
     run_cmd "${priv[@]}" install -Dm644 "$sddm_src/metadata.desktop" "$sddm_dst/metadata.desktop"
     run_cmd "${priv[@]}" install -Dm644 "$sddm_src/Main.qml" "$sddm_dst/Main.qml"
     run_cmd "${priv[@]}" install -Dm644 "$sddm_src/theme.conf" "$sddm_dst/theme.conf"
-    run_cmd "${priv[@]}" install -Dm644 "$SCRIPT_DIR/fonts/JetBrainsMono/JetBrainsMono-Regular.ttf" "$sddm_dst/fonts/JetBrainsMono-Regular.ttf"
-    run_cmd "${priv[@]}" install -Dm644 "$SCRIPT_DIR/fonts/JetBrainsMono/JetBrainsMono-Bold.ttf" "$sddm_dst/fonts/JetBrainsMono-Bold.ttf"
-    run_cmd "${priv[@]}" install -Dm644 "$SCRIPT_DIR/fonts/SymbolsNerdFont/SymbolsNerdFont-Regular.ttf" "$sddm_dst/fonts/SymbolsNerdFont-Regular.ttf"
+    for pair in "${font_pairs[@]}"; do
+        src_rel="${pair%%:*}"
+        dst_font="${pair#*:}"
+        if [[ -f "$dst_font" ]] && command -v cmp >/dev/null 2>&1 && cmp -s "$SCRIPT_DIR/$src_rel" "$dst_font"; then
+            continue
+        fi
+        run_cmd "${priv[@]}" install -Dm644 "$SCRIPT_DIR/$src_rel" "${dst_font}.tmp.$$"
+        run_cmd "${priv[@]}" mv -f "${dst_font}.tmp.$$" "$dst_font"
+    done
     run_cmd "${priv[@]}" touch "$sddm_dst/background.img"
     run_cmd "${priv[@]}" chmod 644 "$sddm_dst/theme.conf" "$sddm_dst/background.img"
     run_cmd "${priv[@]}" chown "$target_user" "$sddm_dst/theme.conf" "$sddm_dst/background.img"

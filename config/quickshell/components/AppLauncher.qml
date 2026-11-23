@@ -396,9 +396,14 @@ ColumnLayout {
         { id: "lock",        title: "Lock Screen",                  sub: "Lock current Wayland session",       icon: "󰌾", kw: "lock screen security" },
         { id: "dark-light",  title: "Toggle Dark / Light Scheme",   sub: "Switch Material theme polarity",     icon: "󰔎", kw: "theme dark light polarity" },
         { id: "rand-wp",     title: "Random Wallpaper & Theme",     sub: "Pick random wallpaper and re-theme", icon: "󰸉", kw: "wallpaper random matugen" },
-        { id: "mode-default",title: "Visual Mode: Dynamic Island",  sub: "Floating pill with soft shadows",    icon: "󰕮", kw: "mode default island" },
+        { id: "mode-cycle",  title: "Cycle Visual Mode",            sub: "Step through all 7 visual styles", icon: "󰚗", kw: "mode cycle switch visual style" },
+        { id: "mode-default",title: "Visual Mode: Island (Default)",sub: "Balanced Dynamic Island & shadows", icon: "󰕮", kw: "mode default island" },
+        { id: "mode-blur",   title: "Visual Mode: Frosted Glass",   sub: "visionOS frosted aero glass + blur", icon: "󰂵", kw: "mode blur glass frosted" },
+        { id: "mode-neon",   title: "Visual Mode: Cyber Neon",      sub: "Obsidian HUD + glowing neon rim",    icon: "󱐋", kw: "mode cyber neon hud" },
+        { id: "mode-minimal",title: "Visual Mode: Zen Matte",       sub: "Calm matte surfaces & wide gaps",    icon: "󰋑", kw: "mode minimal zen matte" },
+        { id: "mode-retro",  title: "Visual Mode: Tactile Brutalist",sub: "Bold borders & 4px hardware chamfer",icon: "󰚗", kw: "mode retro tactile brutalist" },
+        { id: "mode-oled",   title: "Visual Mode: Obsidian OLED",   sub: "True #000 pitch black + thin rim",   icon: "󰖔", kw: "mode oled pitch obsidian" },
         { id: "mode-simple", title: "Visual Mode: Simple Bar",      sub: "Crisp 28px square top bar",          icon: "󰘔", kw: "mode simple bar square" },
-        { id: "mode-blur",   title: "Visual Mode: Frosted Blur",    sub: "Translucent scenefx blur glass",     icon: "󰂵", kw: "mode blur glass frosted" },
         { id: "vibe-aurora", title: "Vibe: Aurora Glass",           sub: "Blur + Catppuccin Mocha glass",      icon: "󰏘", kw: "vibe aurora glass" },
         { id: "vibe-oled",   title: "Vibe: OLED Stealth",           sub: "Pitch black notch layout",           icon: "󰽥", kw: "vibe oled stealth dark" },
         { id: "vibe-neon",   title: "Vibe: Neon Cyber",             sub: "Glowing cyberpunk blur theme",       icon: "󱐋", kw: "vibe neon cyberpunk" },
@@ -556,12 +561,22 @@ ColumnLayout {
             Theme.toggleScheme();
         } else if (cmdId === "rand-wp") {
             Theme.randomWallpaper();
+        } else if (cmdId === "mode-cycle") {
+            Theme.cycleShellMode();
         } else if (cmdId === "mode-default") {
             Theme.setShellMode("default");
-        } else if (cmdId === "mode-simple") {
-            Theme.setShellMode("simple");
         } else if (cmdId === "mode-blur") {
             Theme.setShellMode("blur");
+        } else if (cmdId === "mode-neon") {
+            Theme.setShellMode("neon");
+        } else if (cmdId === "mode-minimal") {
+            Theme.setShellMode("minimal");
+        } else if (cmdId === "mode-retro") {
+            Theme.setShellMode("retro");
+        } else if (cmdId === "mode-oled") {
+            Theme.setShellMode("oled");
+        } else if (cmdId === "mode-simple") {
+            Theme.setShellMode("simple");
         } else if (cmdId === "vibe-aurora") {
             Theme.applyVibe("aurora-glass");
         } else if (cmdId === "vibe-oled") {

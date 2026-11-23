@@ -1,9 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Widgets
 import ".."
 
-Rectangle {
+ClippingRectangle {
     id: root
 
     property var player: null
@@ -16,6 +17,14 @@ Rectangle {
     readonly property bool isPlaying: root.player !== null && root.player.isPlaying
     readonly property real trackLength: (root.player && root.player.length > 0) ? root.player.length : 0
     readonly property string artUrl: (root.player && root.player.trackArtUrl) ? root.player.trackArtUrl : ""
+
+    property int _eqPhase: 0
+    Timer {
+        interval: 260
+        repeat: true
+        running: root.active && root.isPlaying && !Theme.reducedMotion
+        onTriggered: root._eqPhase = (root._eqPhase + 1) % 6
+    }
 
     function formatTime(secs: real): string {
         if (!secs || secs < 0 || isNaN(secs))
@@ -64,6 +73,29 @@ Rectangle {
     color: Theme.cardBg
     border.width: Theme.cardBorderWidth
     border.color: Theme.cardBorder
+    contentUnderBorder: false
+    contentInsideBorder: true
+
+    // Soft faded album art atmosphere
+    Image {
+        anchors.fill: parent
+        source: root.artUrl
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        sourceSize: Qt.size(96, 96)
+        opacity: (root.artUrl.length > 0 && status === Image.Ready && !Theme.isSimple && !Theme.isRetro) ? 0.14 : 0.0
+        visible: opacity > 0.01
+    }
+
+    // Subtle top ambient gradient wash
+    Rectangle {
+        anchors.fill: parent
+        visible: !Theme.isSimple
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Theme.withAlpha(Theme.primary, root.isPlaying ? 0.15 : 0.07) }
+            GradientStop { position: 0.65; color: "transparent" }
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -80,6 +112,10 @@ Rectangle {
                 implicitHeight: 56
                 radius: Theme.r(12)
                 color: Theme.primaryContainer
+                border.width: root.isPlaying ? 1 : 0
+                border.color: Theme.withAlpha(Theme.primary, 0.72)
+                contentUnderBorder: false
+                contentInsideBorder: true
 
                 Image {
                     id: coverImg
@@ -114,15 +150,17 @@ Rectangle {
                         implicitWidth: badgeText.implicitWidth + 10
                         radius: Theme.r(8)
                         color: root.isPlaying
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : Theme.surfaceContainerHighest
+                            ? Theme.withAlpha(Theme.primary, 0.24)
+                            : Theme.subCardBg
+                        border.width: root.isPlaying ? 1 : 0
+                        border.color: Theme.withAlpha(Theme.primary, 0.45)
 
                         Text {
                             id: badgeText
                             anchors.centerIn: parent
                             text: root.hasPlayer
                                 ? (root.player.identity || "MEDIA").toUpperCase()
-                                : "NO PLAYER"
+                                : "MPRIS READY"
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold
@@ -131,6 +169,37 @@ Rectangle {
                     }
 
                     Item { Layout.fillWidth: true }
+
+                    // 4-Bar Animated Equalizer when playing
+                    Row {
+                        visible: root.isPlaying
+                        spacing: 2
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Repeater {
+                            model: [
+                                [5, 11, 8, 13, 6, 10],
+                                [10, 6, 13, 8, 12, 5],
+                                [7, 13, 6, 11, 8, 13],
+                                [12, 8, 10, 5, 13, 7]
+                            ]
+
+                            delegate: Rectangle {
+                                id: eqBar
+                                required property var modelData
+                                width: 2.5
+                                height: Theme.reducedMotion ? 9 : eqBar.modelData[root._eqPhase % 6]
+                                anchors.verticalCenter: parent.verticalCenter
+                                radius: Theme.r(1.5)
+                                color: Theme.primary
+
+                                Behavior on height {
+                                    enabled: !Theme.reducedMotion
+                                    NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Text {
@@ -276,8 +345,13 @@ Rectangle {
                 implicitWidth: 34
                 implicitHeight: 34
                 radius: Theme.r(17)
-                color: prevArea.containsMouse ? Theme.hoverBg : Theme.surfaceContainer
-                opacity: (root.hasPlayer && root.player.canGoPrevious) ? 1.0 : 0.4
+                color: prevArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.cardBorder
+                opacity: (root.hasPlayer && root.player.canGoPrevious) ? 1.0 : 0.45
+                scale: prevArea.pressed ? 0.90 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 Text {
                     anchors.centerIn: parent
@@ -299,11 +373,14 @@ Rectangle {
 
             // Play / Pause
             Rectangle {
-                implicitWidth: 42
+                implicitWidth: 44
                 implicitHeight: 36
                 radius: Theme.r(18)
                 color: playArea.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-                opacity: (root.hasPlayer && root.player.canTogglePlaying) ? 1.0 : 0.45
+                opacity: (root.hasPlayer && root.player.canTogglePlaying) ? 1.0 : 0.50
+                scale: playArea.pressed ? 0.90 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 Text {
                     anchors.centerIn: parent
@@ -328,8 +405,13 @@ Rectangle {
                 implicitWidth: 34
                 implicitHeight: 34
                 radius: Theme.r(17)
-                color: nextArea.containsMouse ? Theme.hoverBg : Theme.surfaceContainer
-                opacity: (root.hasPlayer && root.player.canGoNext) ? 1.0 : 0.4
+                color: nextArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.cardBorder
+                opacity: (root.hasPlayer && root.player.canGoNext) ? 1.0 : 0.45
+                scale: nextArea.pressed ? 0.90 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 Text {
                     anchors.centerIn: parent

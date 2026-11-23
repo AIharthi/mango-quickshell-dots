@@ -65,8 +65,8 @@ ColumnLayout {
         // Segmented Tab Switcher
         Rectangle {
             Layout.alignment: Qt.AlignVCenter
-            height: 30
-            width: tabRow.implicitWidth + 6
+            implicitHeight: 30
+            implicitWidth: tabRow.implicitWidth + 6
             radius: Theme.r(15)
             color: Theme.cardBg
             border.width: Theme.cardBorderWidth
@@ -434,7 +434,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: 162
+                    Layout.preferredHeight: 174
                     player: root.player
                     active: root.isOpen && root.activeTab === "overview"
                     onSeekingChanged: seeking => root.controlInteractionChanged(seeking)
@@ -444,7 +444,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: 162
+                    Layout.preferredHeight: 174
                     active: root.isOpen && root.activeTab === "overview"
                 }
 
@@ -452,7 +452,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 228 : 186
+                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 208
                     screenName: root.screenName
                     active: root.isOpen && root.activeTab === "overview"
                 }
@@ -461,7 +461,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 228 : 186
+                    Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 248 : 208
                     active: root.isOpen && root.activeTab === "overview"
                     onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
                     onOpenSettingsRequested: page => root.openSettingsRequested(page)

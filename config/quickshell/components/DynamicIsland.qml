@@ -167,11 +167,11 @@ Item {
             return 700;
         if (root.activeTab === "themes")
             return 700;
-        return 700;
+        return 720;
     }
 
     readonly property int expandedHeight: {
-        let h = 434;
+        let h = 464;
         if (root.activeTab === "launcher")
             h = 472;
         else if (root.activeTab === "notifications")
@@ -181,7 +181,7 @@ Item {
         else if (root.activeTab === "themes")
             h = 440;
         else
-            h = DeviceCaps.hasExtraQuickControls ? 474 : 434;
+            h = DeviceCaps.hasExtraQuickControls ? 504 : 464;
         return h + (root.powerMenuOpen ? 46 : 0);
     }
 
@@ -319,18 +319,73 @@ Item {
             }
         }
 
-        // Subtle glass specular top sheen in Blur / Glass / Glow mode
+        // Signature Visual Mode Finishes (Frosted Glass, Cyber Neon, Tactile Stripe, Obsidian Rim)
         Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            height: Math.min(parent.height, 44)
+            height: Math.min(parent.height, 48)
             radius: parent.radius
             visible: Theme.showGlassSheen
             gradient: Gradient {
-                GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.35) }
+                GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.11) : Qt.rgba(1, 1, 1, 0.40) }
                 GradientStop { position: 1.0; color: "transparent" }
             }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                height: 1
+                color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.18) : Qt.rgba(1, 1, 1, 0.60)
+            }
+        }
+
+        // Cyber Neon HUD ambient wash + prismatic top energy line
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: Math.min(parent.height, 56)
+            radius: parent.radius
+            visible: Theme.showNeonAccentBar
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: Theme.withAlpha(Theme.primary, 0.14) }
+                GradientStop { position: 1.0; color: "transparent" }
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                height: 2
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: Theme.primary }
+                    GradientStop { position: 0.5; color: Theme.secondary }
+                    GradientStop { position: 1.0; color: Theme.tertiary }
+                }
+            }
+        }
+
+        // Tactile / Neo-Brutalist bold top hardware accent band
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 3
+            visible: Theme.showRetroStripe
+            color: Theme.primary
+        }
+
+        // Obsidian OLED top hairline rim
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 1
+            visible: Theme.showOledRim
+            color: Theme.withAlpha(Theme.primary, 0.35)
         }
 
         // Subtle urgent bottom accent for critical notifications (no outer outline)

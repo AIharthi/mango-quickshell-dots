@@ -819,7 +819,7 @@ Singleton {
         id: slideshowTimer
         interval: Math.max(1, root.wallpaperSlideshowMinutes) * 60000
         repeat: true
-        running: root.wallpaperSlideshowEnabled
+        running: root.wallpaperSlideshowEnabled && !root.gameModeActive
         onTriggered: Quickshell.execDetached([Quickshell.shellPath("scripts/manage-themes.sh"), "random-wallpaper"])
     }
 

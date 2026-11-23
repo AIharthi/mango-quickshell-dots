@@ -135,9 +135,10 @@ qs ipc call island closeFiles
 qs ipc call island toggleFilesTab
 qs ipc call island resetFiles
 
-# Visual Modes & Live Theming
-qs ipc call island setShellMode <default|simple|blur>
-qs ipc call island toggleShellMode <default|simple|blur>
+# Visual Modes (Island, Frosted, Cyber, Zen, Tactile, Obsidian, Simple) & Live Theming
+qs ipc call island setShellMode <default|blur|neon|minimal|retro|oled|simple>
+qs ipc call island toggleShellMode <blur|neon|minimal|retro|oled|simple>
+qs ipc call island cycleShellMode
 qs ipc call island applyVibe <aurora-glass|minimal-square|oled-stealth|neon-cyber|cozy-paper|full-dock-bar|warm-gruvbox|dracula-notch>
 qs ipc call island applyPreset <preset-id>
 qs ipc call island applyAccent "#cba6f7"
