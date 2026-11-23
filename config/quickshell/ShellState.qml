@@ -89,7 +89,41 @@ Singleton {
     property bool barShowKbLayout: false
     property bool barShowTray: false
     property bool barShowQuickIcons: false
+    property bool barShowFiles: true
     property bool barShowBattery: true
+
+    // --- Dynamic File Manager Preferences (Rust Backend) ---
+    property string fmViewMode: "list"           // "list" | "grid" | "miller"
+    property string fmDensity: "cozy"            // "compact" | "cozy" | "spacious"
+    property int fmGridSize: 116
+    property string fmIconStyle: "category"      // "category" | "accent" | "mono" | "vivid"
+    property string fmSurfacePreset: "inherit"   // "inherit" | "glass" | "solid" | "oled" | "tinted"
+    property real fmOpacity: 0.94
+    property string fmAccentOverride: ""
+    property string fmHeaderStyle: "pill"        // "pill" | "minimal" | "underline"
+    property bool fmSidebarVisible: true
+    property string fmSidebarStyle: "standard"   // "standard" | "compact" | "icons"
+    property bool fmPreviewVisible: true
+    property bool fmDualPane: false
+    property bool fmShowHidden: false
+    property bool fmShowThumbnails: true
+    property bool fmShowSizes: true
+    property bool fmShowDates: true
+    property bool fmShowPerms: false
+    property bool fmDirsFirst: true
+    property string fmSortBy: "name"             // "name" | "size" | "mtime" | "ext"
+    property bool fmSortDesc: false
+    property string fmWindowSize: "balanced"     // "compact" | "balanced" | "wide" | "max"
+    property bool fmRowAlternating: false
+    property bool fmShowCheckboxes: false
+    property string fmStartDir: "~"
+    property string fmLastDir: "~"
+
+    // --- Live File Operation Status (Session only) ---
+    property bool fmOpActive: false
+    property string fmOpLabel: ""
+    property real fmOpProgress: 0.0
+    property string fmOpCurrent: ""
 
     // --- Picture-in-Picture (PiP) ---
     property bool pipAutoManage: true
@@ -193,7 +227,33 @@ Singleton {
             if (d.barShowKbLayout !== undefined) root.barShowKbLayout = !!d.barShowKbLayout;
             if (d.barShowTray !== undefined) root.barShowTray = !!d.barShowTray;
             if (d.barShowQuickIcons !== undefined) root.barShowQuickIcons = !!d.barShowQuickIcons;
+            if (d.barShowFiles !== undefined) root.barShowFiles = !!d.barShowFiles;
             if (d.barShowBattery !== undefined) root.barShowBattery = !!d.barShowBattery;
+            if (d.fmViewMode !== undefined && String(d.fmViewMode).length > 0) root.fmViewMode = String(d.fmViewMode);
+            if (d.fmDensity !== undefined && String(d.fmDensity).length > 0) root.fmDensity = String(d.fmDensity);
+            if (d.fmGridSize !== undefined) root.fmGridSize = Math.max(84, Math.min(164, Number(d.fmGridSize)));
+            if (d.fmIconStyle !== undefined && String(d.fmIconStyle).length > 0) root.fmIconStyle = String(d.fmIconStyle);
+            if (d.fmSurfacePreset !== undefined && String(d.fmSurfacePreset).length > 0) root.fmSurfacePreset = String(d.fmSurfacePreset);
+            if (d.fmOpacity !== undefined) root.fmOpacity = Math.max(0.55, Math.min(1.0, Number(d.fmOpacity)));
+            if (d.fmAccentOverride !== undefined) root.fmAccentOverride = String(d.fmAccentOverride);
+            if (d.fmHeaderStyle !== undefined && String(d.fmHeaderStyle).length > 0) root.fmHeaderStyle = String(d.fmHeaderStyle);
+            if (d.fmSidebarVisible !== undefined) root.fmSidebarVisible = !!d.fmSidebarVisible;
+            if (d.fmSidebarStyle !== undefined && String(d.fmSidebarStyle).length > 0) root.fmSidebarStyle = String(d.fmSidebarStyle);
+            if (d.fmPreviewVisible !== undefined) root.fmPreviewVisible = !!d.fmPreviewVisible;
+            if (d.fmDualPane !== undefined) root.fmDualPane = !!d.fmDualPane;
+            if (d.fmShowHidden !== undefined) root.fmShowHidden = !!d.fmShowHidden;
+            if (d.fmShowThumbnails !== undefined) root.fmShowThumbnails = !!d.fmShowThumbnails;
+            if (d.fmShowSizes !== undefined) root.fmShowSizes = !!d.fmShowSizes;
+            if (d.fmShowDates !== undefined) root.fmShowDates = !!d.fmShowDates;
+            if (d.fmShowPerms !== undefined) root.fmShowPerms = !!d.fmShowPerms;
+            if (d.fmDirsFirst !== undefined) root.fmDirsFirst = !!d.fmDirsFirst;
+            if (d.fmSortBy !== undefined && String(d.fmSortBy).length > 0) root.fmSortBy = String(d.fmSortBy);
+            if (d.fmSortDesc !== undefined) root.fmSortDesc = !!d.fmSortDesc;
+            if (d.fmWindowSize !== undefined && String(d.fmWindowSize).length > 0) root.fmWindowSize = String(d.fmWindowSize);
+            if (d.fmRowAlternating !== undefined) root.fmRowAlternating = !!d.fmRowAlternating;
+            if (d.fmShowCheckboxes !== undefined) root.fmShowCheckboxes = !!d.fmShowCheckboxes;
+            if (d.fmStartDir !== undefined && String(d.fmStartDir).length > 0) root.fmStartDir = String(d.fmStartDir);
+            if (d.fmLastDir !== undefined && String(d.fmLastDir).length > 0) root.fmLastDir = String(d.fmLastDir);
             if (d.pipAutoManage !== undefined) root.pipAutoManage = !!d.pipAutoManage;
             if (d.pipSticky !== undefined) root.pipSticky = !!d.pipSticky;
             if (d.pipAlwaysOnTop !== undefined) root.pipAlwaysOnTop = !!d.pipAlwaysOnTop;
@@ -206,7 +266,7 @@ Singleton {
         }
     }
 
-    function setPref(key: string, value): void {
+    function _assignPrefLocal(key: string, value): void {
         if (key === "dnd") root.dnd = !!value;
         else if (key === "dndAllowCritical") root.dndAllowCritical = !!value;
         else if (key === "notifSoundEnabled") root.notifSoundEnabled = !!value;
@@ -281,17 +341,57 @@ Singleton {
         else if (key === "barShowKbLayout") root.barShowKbLayout = !!value;
         else if (key === "barShowTray") root.barShowTray = !!value;
         else if (key === "barShowQuickIcons") root.barShowQuickIcons = !!value;
+        else if (key === "barShowFiles") root.barShowFiles = !!value;
         else if (key === "barShowBattery") root.barShowBattery = !!value;
+        else if (key === "fmViewMode") root.fmViewMode = String(value);
+        else if (key === "fmDensity") root.fmDensity = String(value);
+        else if (key === "fmGridSize") root.fmGridSize = Math.max(84, Math.min(164, Number(value)));
+        else if (key === "fmIconStyle") root.fmIconStyle = String(value);
+        else if (key === "fmSurfacePreset") root.fmSurfacePreset = String(value);
+        else if (key === "fmOpacity") root.fmOpacity = Math.max(0.55, Math.min(1.0, Number(value)));
+        else if (key === "fmAccentOverride") root.fmAccentOverride = String(value);
+        else if (key === "fmHeaderStyle") root.fmHeaderStyle = String(value);
+        else if (key === "fmSidebarVisible") root.fmSidebarVisible = !!value;
+        else if (key === "fmSidebarStyle") root.fmSidebarStyle = String(value);
+        else if (key === "fmPreviewVisible") root.fmPreviewVisible = !!value;
+        else if (key === "fmDualPane") root.fmDualPane = !!value;
+        else if (key === "fmShowHidden") root.fmShowHidden = !!value;
+        else if (key === "fmShowThumbnails") root.fmShowThumbnails = !!value;
+        else if (key === "fmShowSizes") root.fmShowSizes = !!value;
+        else if (key === "fmShowDates") root.fmShowDates = !!value;
+        else if (key === "fmShowPerms") root.fmShowPerms = !!value;
+        else if (key === "fmDirsFirst") root.fmDirsFirst = !!value;
+        else if (key === "fmSortBy") root.fmSortBy = String(value);
+        else if (key === "fmSortDesc") root.fmSortDesc = !!value;
+        else if (key === "fmWindowSize") root.fmWindowSize = String(value);
+        else if (key === "fmRowAlternating") root.fmRowAlternating = !!value;
+        else if (key === "fmShowCheckboxes") root.fmShowCheckboxes = !!value;
+        else if (key === "fmStartDir") root.fmStartDir = String(value);
+        else if (key === "fmLastDir") root.fmLastDir = String(value);
         else if (key === "pipAutoManage") root.pipAutoManage = !!value;
         else if (key === "pipSticky") root.pipSticky = !!value;
         else if (key === "pipAlwaysOnTop") root.pipAlwaysOnTop = !!value;
         else if (key === "pipCorner") root.pipCorner = String(value);
         else if (key === "pipWidthPct") root.pipWidthPct = Math.max(18, Math.min(45, Number(value)));
         else if (key === "pipMargin") root.pipMargin = Math.max(6, Math.min(64, Number(value)));
+    }
 
+    function setPref(key: string, value): void {
+        _assignPrefLocal(key, value);
         Quickshell.execDetached([
             Quickshell.shellPath("scripts/manage-settings.sh"),
             "prefs-set", key, String(value)
+        ]);
+    }
+
+    function setPrefsBatch(map: var): void {
+        if (!map)
+            return;
+        for (const k in map)
+            _assignPrefLocal(k, map[k]);
+        Quickshell.execDetached([
+            Quickshell.shellPath("scripts/manage-settings.sh"),
+            "prefs-set-batch", JSON.stringify(map)
         ]);
     }
 
@@ -327,6 +427,83 @@ Singleton {
         _runResetCmd("reset-bar");
     }
 
+    function resetFiles(): void {
+        _runResetCmd("reset-files");
+    }
+
+    function applyFmPreset(preset: string): void {
+        let map = null;
+        if (preset === "finder") {
+            map = {
+                fmViewMode: "miller",
+                fmDensity: "cozy",
+                fmIconStyle: "category",
+                fmSurfacePreset: "inherit",
+                fmHeaderStyle: "pill",
+                fmSidebarVisible: true,
+                fmSidebarStyle: "standard",
+                fmPreviewVisible: true,
+                fmDualPane: false,
+                fmRowAlternating: false,
+                fmShowSizes: true,
+                fmShowDates: true,
+                fmShowPerms: false,
+                fmWindowSize: "wide"
+            };
+        } else if (preset === "minimal") {
+            map = {
+                fmViewMode: "list",
+                fmDensity: "compact",
+                fmIconStyle: "mono",
+                fmSurfacePreset: "oled",
+                fmOpacity: 0.96,
+                fmHeaderStyle: "minimal",
+                fmSidebarVisible: false,
+                fmPreviewVisible: false,
+                fmDualPane: false,
+                fmRowAlternating: false,
+                fmShowDates: false,
+                fmShowPerms: false,
+                fmWindowSize: "compact"
+            };
+        } else if (preset === "gallery") {
+            map = {
+                fmViewMode: "grid",
+                fmDensity: "spacious",
+                fmGridSize: 138,
+                fmIconStyle: "vivid",
+                fmSurfacePreset: "glass",
+                fmOpacity: 0.90,
+                fmHeaderStyle: "pill",
+                fmSidebarVisible: true,
+                fmSidebarStyle: "compact",
+                fmPreviewVisible: true,
+                fmDualPane: false,
+                fmShowThumbnails: true,
+                fmWindowSize: "wide"
+            };
+        } else if (preset === "commander") {
+            map = {
+                fmViewMode: "list",
+                fmDensity: "compact",
+                fmIconStyle: "accent",
+                fmSurfacePreset: "solid",
+                fmHeaderStyle: "underline",
+                fmSidebarVisible: true,
+                fmSidebarStyle: "icons",
+                fmPreviewVisible: false,
+                fmDualPane: true,
+                fmRowAlternating: true,
+                fmShowSizes: true,
+                fmShowDates: true,
+                fmShowPerms: true,
+                fmWindowSize: "max"
+            };
+        }
+        if (map)
+            setPrefsBatch(map);
+    }
+
     function resetAllSettings(): void {
         _runResetCmd("reset-all");
     }
@@ -345,6 +522,7 @@ Singleton {
                 barShowKbLayout: false,
                 barShowTray: false,
                 barShowQuickIcons: false,
+                barShowFiles: false,
                 pillShowMedia: true
             };
         } else if (preset === "balanced") {
@@ -359,6 +537,7 @@ Singleton {
                 barShowKbLayout: false,
                 barShowTray: false,
                 barShowQuickIcons: false,
+                barShowFiles: true,
                 pillShowMedia: true
             };
         } else if (preset === "full") {
@@ -373,29 +552,12 @@ Singleton {
                 barShowKbLayout: false,
                 barShowTray: true,
                 barShowQuickIcons: true,
+                barShowFiles: true,
                 pillShowMedia: true
             };
         }
-        if (!map)
-            return;
-
-        const cmds = [];
-        for (const k in map) {
-            const v = map[k];
-            if (k === "islandStyle") root.islandStyle = String(v);
-            else if (k === "barShowDate") root.barShowDate = !!v;
-            else if (k === "barShowWindow") root.barShowWindow = !!v;
-            else if (k === "barShowWorkspaces") root.barShowWorkspaces = !!v;
-            else if (k === "barShowLayout") root.barShowLayout = !!v;
-            else if (k === "barShowSystem") root.barShowSystem = !!v;
-            else if (k === "barShowVolume") root.barShowVolume = !!v;
-            else if (k === "barShowKbLayout") root.barShowKbLayout = !!v;
-            else if (k === "barShowTray") root.barShowTray = !!v;
-            else if (k === "barShowQuickIcons") root.barShowQuickIcons = !!v;
-            else if (k === "pillShowMedia") root.pillShowMedia = !!v;
-            cmds.push('"$1" prefs-set ' + k + " " + String(v) + " >/dev/null");
-        }
-        Quickshell.execDetached(["sh", "-c", cmds.join(" && "), "_", Quickshell.shellPath("scripts/manage-settings.sh")]);
+        if (map)
+            setPrefsBatch(map);
     }
 
     function setFont(family: string, size: int): void {

@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import "components"
 import "settings"
+import "files"
 
 ShellRoot {
     id: root
@@ -13,6 +14,10 @@ ShellRoot {
     property bool settingsOpen: false
     property bool _settingsLoaded: false
     property string settingsPage: "appearance"
+
+    property bool filesOpen: false
+    property bool _filesLoaded: false
+    property string filesStartPath: ""
 
     function primaryIsland(): var {
         const list = screenVariants.instances;
@@ -36,6 +41,7 @@ ShellRoot {
     }
 
     function openSettings(page: string): void {
+        root.closeFiles();
         root.settingsPage = (page && page.length > 0) ? page : "appearance";
         root.collapseAll();
         settingsUnloadTimer.stop();
@@ -56,6 +62,28 @@ ShellRoot {
             root.openSettings("appearance");
     }
 
+    function openFiles(startPath: string): void {
+        root.closeSettings();
+        root.filesStartPath = (startPath && startPath.length > 0) ? startPath : "";
+        root.collapseAll();
+        filesUnloadTimer.stop();
+        root._filesLoaded = true;
+        root.filesOpen = true;
+    }
+
+    function closeFiles(): void {
+        root.filesOpen = false;
+        if (root._filesLoaded)
+            filesUnloadTimer.restart();
+    }
+
+    function toggleFiles(): void {
+        if (root.filesOpen)
+            root.closeFiles();
+        else
+            root.openFiles("");
+    }
+
     Timer {
         id: settingsUnloadTimer
         interval: Theme.reducedMotion ? 10 : 150
@@ -63,6 +91,16 @@ ShellRoot {
         onTriggered: {
             if (!root.settingsOpen)
                 root._settingsLoaded = false;
+        }
+    }
+
+    Timer {
+        id: filesUnloadTimer
+        interval: Theme.reducedMotion ? 10 : 150
+        repeat: false
+        onTriggered: {
+            if (!root.filesOpen)
+                root._filesLoaded = false;
         }
     }
 
@@ -153,6 +191,7 @@ ShellRoot {
                         onToggleDashboardRequested: islandItem.toggleDashboard()
                         onToggleLauncherRequested: islandItem.toggleLauncher()
                         onToggleSettingsRequested: root.toggleSettings()
+                        onToggleFilesRequested: root.toggleFiles()
                     }
                 }
             }
@@ -194,6 +233,7 @@ ShellRoot {
                     anchors.fill: parent
                     screenName: screenScope.modelData ? screenScope.modelData.name : ""
                     onOpenSettingsRequested: page => root.openSettings(page)
+                    onOpenFilesRequested: path => root.openFiles(path)
                 }
             }
         }
@@ -209,6 +249,19 @@ ShellRoot {
             activePage: root.settingsPage
             onPageSelected: page => { root.settingsPage = page; }
             onCloseRequested: root.closeSettings()
+        }
+    }
+
+    // Rust-Backed Dynamic File Manager Window (lazy-loaded on demand, zero idle daemon)
+    LazyLoader {
+        id: filesLoader
+        active: root._filesLoaded
+
+        FileManagerWindow {
+            isOpen: root.filesOpen
+            initialPath: root.filesStartPath
+            onCloseRequested: root.closeFiles()
+            onOpenSettingsRequested: page => root.openSettings(page)
         }
     }
 
@@ -259,6 +312,28 @@ ShellRoot {
 
         function closeSettings(): void {
             root.closeSettings();
+        }
+
+        function toggleFiles(): void {
+            root.toggleFiles();
+        }
+
+        function openFiles(path: string): void {
+            root.openFiles(path);
+        }
+
+        function closeFiles(): void {
+            root.closeFiles();
+        }
+
+        function toggleFilesTab(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleFilesTab();
+        }
+
+        function resetFiles(): void {
+            ShellState.resetFiles();
         }
 
         function toggleDnd(): void {

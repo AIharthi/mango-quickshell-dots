@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import ".."
 
 ColumnLayout {
@@ -270,6 +271,13 @@ ColumnLayout {
                 spacing: 10
                 Text { Layout.fillWidth: true; text: "App Launcher & Settings Shortcut Icons"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowQuickIcons; onToggled: ShellState.setPref("barShowQuickIcons", !ShellState.barShowQuickIcons) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Files Manager Shortcut Icon (Island / Simple Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowFiles; onToggled: ShellState.setPref("barShowFiles", !ShellState.barShowFiles) }
             }
 
             RowLayout {
@@ -752,6 +760,163 @@ ColumnLayout {
                     checked: ShellState.highContrast
                     onToggled: ShellState.setPref("highContrast", !ShellState.highContrast)
                 }
+            }
+        }
+    }
+
+    // --- 5. Dynamic File Manager (Rust Backend) ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: fmCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: fmCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "DYNAMIC FILE MANAGER (RUST BACKEND)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: openFmLbl.implicitWidth + 14
+                    radius: Theme.r(7)
+                    color: openFmMouse.containsMouse ? Theme.primary : Theme.withAlpha(Theme.primary, 0.20)
+                    border.width: 1
+                    border.color: Theme.primary
+
+                    Text {
+                        id: openFmLbl
+                        anchors.centerIn: parent
+                        text: "󰉋 Open Files"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: openFmMouse.containsMouse ? Theme.fgPrimary : Theme.primary
+                    }
+                    MouseArea {
+                        id: openFmMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleFiles"])
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: rstFmLbl.implicitWidth + 12
+                    radius: Theme.r(7)
+                    color: rstFmMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.22) : Theme.subCardBg
+                    border.width: 1
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: rstFmLbl
+                        anchors.centerIn: parent
+                        text: "Reset Style"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.warning
+                    }
+                    MouseArea {
+                        id: rstFmMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            ShellState.resetFiles();
+                            root.barStatusMsg = "File Manager appearance reset to defaults";
+                            barStatusTimer.restart();
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 110
+                    text: "Default View Mode"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "list",   label: "List" },
+                        { id: "grid",   label: "Grid" },
+                        { id: "miller", label: "Miller Columns" }
+                    ]
+                    delegate: Rectangle {
+                        id: fmVmBtn
+                        required property var modelData
+                        readonly property bool sel: ShellState.fmViewMode === fmVmBtn.modelData.id
+                        Layout.fillWidth: true
+                        implicitHeight: 26
+                        radius: Theme.r(8)
+                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmVmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: 1
+                        border.color: sel ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: fmVmBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: fmVmBtn.sel ? Font.Bold : Font.Medium
+                            color: fmVmBtn.sel ? Theme.primary : Theme.fgSurface
+                        }
+                        MouseArea {
+                            id: fmVmMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("fmViewMode", fmVmBtn.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Dual-Pane Split by Default (F3)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.fmDualPane; onToggled: ShellState.setPref("fmDualPane", !ShellState.fmDualPane) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Show Live Inspector / Preview Pane"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.fmPreviewVisible; onToggled: ShellState.setPref("fmPreviewVisible", !ShellState.fmPreviewVisible) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Show Hidden Dotfiles by Default (Ctrl+H)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.fmShowHidden; onToggled: ShellState.setPref("fmShowHidden", !ShellState.fmShowHidden) }
             }
         }
     }

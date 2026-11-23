@@ -3,13 +3,14 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import ".."
+import "../files"
 
 ColumnLayout {
     id: root
 
     property bool isOpen: false
     property string screenName: ""
-    property string activeTab: "overview"       // "overview" | "themes" | "launcher"
+    property string activeTab: "overview"       // "overview" | "files" | "themes" | "launcher"
     property bool pinnedOpen: false
     property bool powerMenuOpen: false
     property var player: null
@@ -18,6 +19,7 @@ ColumnLayout {
     signal togglePinRequested()
     signal togglePowerMenuRequested()
     signal openSettingsRequested(string page)
+    signal openFilesRequested(string path)
     signal closeRequested()
     signal searchFocusChanged(bool focused)
     signal controlInteractionChanged(bool interacting)
@@ -74,6 +76,7 @@ ColumnLayout {
                 Repeater {
                     model: [
                         { id: "overview", icon: "󰕮", label: "Hub" },
+                        { id: "files",    icon: "󰉋", label: "Files" },
                         { id: "themes",   icon: "󰏘", label: "Themes" },
                         { id: "launcher", icon: "󰀻", label: "Apps" }
                     ]
@@ -376,7 +379,7 @@ ColumnLayout {
             _fadingTab = _prevTab;
             _prevTab = activeTab;
             tabUnloadTimer.restart();
-            if (activeTab !== "launcher")
+            if (activeTab !== "launcher" && activeTab !== "files")
                 searchFocusChanged(false);
         }
     }
@@ -449,7 +452,29 @@ ColumnLayout {
             }
         }
 
-        // Tab 2: Theme & Wallpaper Switcher
+        // Tab 2: Quick File Browser (Rust Backend)
+        Loader {
+            id: filesTabLoader
+            anchors.fill: parent
+            active: root.activeTab === "files" || root._fadingTab === "files"
+            visible: opacity > 0.01
+            opacity: root.activeTab === "files" ? 1.0 : 0.0
+
+            Behavior on opacity {
+                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+            }
+
+            sourceComponent: QuickFilesTab {
+                active: root.isOpen && root.activeTab === "files"
+                onSearchFocusChanged: focused => root.searchFocusChanged(focused)
+                onOpenFullManagerRequested: path => {
+                    root.closeRequested();
+                    root.openFilesRequested(path);
+                }
+            }
+        }
+
+        // Tab 3: Theme & Wallpaper Switcher
         Loader {
             id: themesLoader
             anchors.fill: parent

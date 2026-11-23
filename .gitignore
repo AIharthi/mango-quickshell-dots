@@ -3,3 +3,8 @@
 .DS_Store
 *~
 local.conf
+rust/**/target/
+config/quickshell/bin/
+fm-bookmarks.json
+shell-prefs.json
+custom-themes/

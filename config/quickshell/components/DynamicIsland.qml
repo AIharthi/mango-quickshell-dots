@@ -17,6 +17,7 @@ Item {
     property bool interactiveControlActive: false
 
     signal openSettingsRequested(string page)
+    signal openFilesRequested(string path)
 
     readonly property bool needsKeyboardFocus:
         (islandState === "expanded" && activeTab === "launcher") || launcherSearchFocused
@@ -94,6 +95,10 @@ Item {
         toggleTab("themes");
     }
 
+    function toggleFilesTab(): void {
+        toggleTab("files");
+    }
+
     function toggleDashboard(): void {
         if (root.islandState === "expanded")
             collapse();
@@ -136,6 +141,8 @@ Item {
     readonly property int expandedWidth: {
         if (root.activeTab === "launcher")
             return 620;
+        if (root.activeTab === "files")
+            return 680;
         if (root.activeTab === "themes")
             return 690;
         return 670;
@@ -145,6 +152,8 @@ Item {
         let h = 400;
         if (root.activeTab === "launcher")
             h = 456;
+        else if (root.activeTab === "files")
+            h = 444;
         else if (root.activeTab === "themes")
             h = 440;
         else
@@ -356,6 +365,7 @@ Item {
 
             onLauncherClicked: root.toggleLauncher()
             onSettingsClicked: root.openSettingsRequested("appearance")
+            onFilesClicked: root.openFilesRequested("")
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion
@@ -440,6 +450,7 @@ Item {
                 onTogglePinRequested: root.pinnedOpen = !root.pinnedOpen
                 onTogglePowerMenuRequested: root.powerMenuOpen = !root.powerMenuOpen
                 onOpenSettingsRequested: page => root.openSettingsRequested(page)
+                onOpenFilesRequested: path => root.openFilesRequested(path)
                 onCloseRequested: root.collapse()
                 onSearchFocusChanged: focused => { root.launcherSearchFocused = focused; }
                 onControlInteractionChanged: interacting => {

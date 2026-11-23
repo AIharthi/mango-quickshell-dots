@@ -16,6 +16,7 @@ RowLayout {
 
     signal launcherClicked()
     signal settingsClicked()
+    signal filesClicked()
 
     // --- Live Modular Widget State ---
     property string monitorName: ""
@@ -77,6 +78,8 @@ RowLayout {
         || (ShellState.barShowKbLayout && kbLayoutShort.length > 0)
         || hasTrayChip
         || ShellState.barShowQuickIcons
+        || ShellState.barShowFiles
+        || ShellState.fmOpActive
         || barMode
 
     spacing: hasAnyModule ? 8 : 0
@@ -764,12 +767,70 @@ RowLayout {
         }
     }
 
+    // Live File Manager Operation Progress Pill (only during copy/move/compress/extract)
+    Rectangle {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.fmOpActive
+        implicitHeight: 20
+        implicitWidth: fmOpRow.implicitWidth + 10
+        radius: Theme.r(7)
+        color: Theme.withAlpha(Theme.primary, 0.22)
+        border.width: 1
+        border.color: Theme.primary
+
+        RowLayout {
+            id: fmOpRow
+            anchors.centerIn: parent
+            spacing: 4
+            Text { text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.primary }
+            Text {
+                text: Math.round(ShellState.fmOpProgress * 100) + "%"
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.primary
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.filesClicked()
+        }
+    }
+
     // Inline System Tray (when enabled & populated)
     SystemTrayStrip {
         id: trayStrip
         Layout.alignment: Qt.AlignVCenter
         visible: root.hasTrayChip
         compact: true
+    }
+
+    // Quick Files Manager Icon
+    Rectangle {
+        Layout.alignment: Qt.AlignVCenter
+        visible: ShellState.barShowFiles || ShellState.barShowQuickIcons
+        implicitWidth: 22
+        implicitHeight: 22
+        radius: Theme.r(7)
+        color: filesBtnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+
+        Text {
+            anchors.centerIn: parent
+            text: "󰉋"
+            font.family: Theme.iconFont
+            font.pixelSize: 12
+            color: filesBtnMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+        }
+
+        MouseArea {
+            id: filesBtnMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.filesClicked()
+        }
     }
 
     // Quick Settings Icon

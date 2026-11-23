@@ -72,6 +72,22 @@ done
 chmod +x "$CONFIG_DIR/mango/autostart.sh"
 chmod +x "$CONFIG_DIR/quickshell/scripts/"*.sh
 
+if [[ -f "$SCRIPT_DIR/rust/mango-fm/Cargo.toml" ]]; then
+    if command -v cargo >/dev/null 2>&1; then
+        echo "==> Building zero-dependency Rust file manager backend (mango-fm)"
+        if cargo build --release --manifest-path "$SCRIPT_DIR/rust/mango-fm/Cargo.toml"; then
+            mkdir -p "$CONFIG_DIR/quickshell/bin"
+            install -Dm755 "$SCRIPT_DIR/rust/mango-fm/target/release/mango-fm" "$CONFIG_DIR/quickshell/bin/mango-fm"
+            echo "==> Installed $CONFIG_DIR/quickshell/bin/mango-fm"
+        else
+            echo "WARNING: Failed to compile rust/mango-fm; file manager backend unavailable until rebuilt." >&2
+        fi
+    else
+        echo "NOTE: 'cargo' not found — skipping mango-fm Rust backend build." >&2
+        echo "      Install Rust/Cargo (Arch: 'pacman -S rust', Fedora: 'dnf install cargo', Gentoo: 'emerge dev-lang/rust') and re-run ./install.sh." >&2
+    fi
+fi
+
 if [[ -f "$CONFIG_DIR/mango/local.conf" ]]; then
     echo "==> Preserving existing per-device overrides in $CONFIG_DIR/mango/local.conf"
 fi
@@ -100,5 +116,6 @@ echo ""
 echo "Done! Next steps:"
 echo "  1. Drop wallpapers into ~/Pictures/Wallpapers/ for the Theme Switcher & Matugen."
 echo "  2. Press Super+S anytime to open Settings (16 categories: Appearance, Themes & Colors, Shell, Windows, Audio, Displays, Network, Bluetooth, Input, Terminals, Notifications, Apps, Shortcuts, Privacy, Monitor, System)."
-echo "  3. Per-device overrides are saved to ~/.config/mango/local.conf and preferences to ~/.config/quickshell/shell-prefs.json."
-echo "  4. Log in to MangoWC (or run 'mmsg dispatch reload_config' if already in MangoWC)."
+echo "  3. Press Super+Shift+E to open the Rust-backed Dynamic File Manager (or Super+Alt+E for the Dynamic Island Files tab)."
+echo "  4. Per-device overrides are saved to ~/.config/mango/local.conf and preferences to ~/.config/quickshell/shell-prefs.json."
+echo "  5. Log in to MangoWC (or run 'mmsg dispatch reload_config' if already in MangoWC)."

@@ -12,6 +12,10 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
     - **Laptops** automatically surface live **Battery % / charging status** (in the Dynamic Island pill, Simple Bar, and System Monitor), **Backlight brightness**, **Wi-Fi**, **Bluetooth**, and **Touchpad** settings.
   - **Multi-Monitor Support**: Wraps `PanelWindow`s in Quickshell `Variants` over `Quickshell.screens`, syncing per-monitor MangoWC tags across all connected displays.
   - **Per-Device MangoWC Overrides (`~/.config/mango/local.conf`)**: Included via `source_optional=~/.config/mango/local.conf` (ignored by Git and preserved across `./install.sh` re-runs), so every machine can pull the same dotfiles while keeping its own monitor rules, keyboard layout, and touchpad settings.
+- **Dynamic File Manager (Rust Backend — `Super + Shift + E` / `Super + Alt + E`)**
+  - **Zero-Dependency Pure-Rust Engine (`rust/mango-fm`)**: Compiles offline into a tiny `~555 KB` native binary running at `~2.3 MB` RSS with `~1 ms` directory listing and zero idle processes (unloads automatically when closed). Supports both fast CLI subcommands and a persistent NDJSON `serve` daemon with threaded recursive search & async copy/move progress events piped live into the Dynamic Island pill.
+  - **Customizability & Workflow Views**: Switch seamlessly between **List**, **Grid** (with async cached image thumbnails & adjustable tile size), and **3-Column Miller View** (`Parent | Current | Child`), plus optional **Dual-Pane Split (`F3`)**, **Multi-Tab** browsing (`Ctrl+T`/`Ctrl+W`), collapsible **Sidebar** (`Full`/`Slim`/`Icons`), live **Inspector / Preview Pane**, and an in-app **Customize Drawer** with **4 one-click presets** (*Finder Columns*, *Minimal Zen*, *Media Gallery*, *Commander*) and live overrides for surface finish (`Inherit`/`Glass`/`Solid`/`OLED`/`Tinted`), opacity, accent swatches, icon color palettes, header chrome, row density, zebra rows, and columns.
+  - **Full Desktop & Shell Integration**: Pure-Rust XDG Trash & restore, `/proc/mounts` + `df` mounted drive usage bars, custom bookmarks (`fm-bookmarks.json`), Wayland `text/uri-list` clipboard copy (`wl-copy`), 1-click **Set Wallpaper / Matugen Dynamic Theme** on images, 1-click **Import as Shell Theme** on theme JSONs, archive inspect & extract/compress, inline `chmod +x` toggle, clickable bar icon + live **Files** tab inside the Dynamic Island and Simple Bar.
 - **Built-in Quickshell Settings App (`Super + S`)** *(16 hardware-aware categories with live sidebar search, smooth transitions & persistent per-device config)*
   - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), Dark/Light scheme, **Shell Surface Finish & Transparency** (`Default` / `Frosted Glass` / `OLED Black` / `Flat Minimal` / `Accent Tinted`, panel/card opacity sliders, corner roundness scale `Sharp`–`Pill`, border accent styles `None` / `Subtle` / `Accent` / `Glow`, border width), **Dynamic Island Shape & Text Scale** (`Floating Pill`, `Top Notch`, `Full-Width Bar`, pill height, top margin, `85%`–`120%` UI text scale), `awww`/`swww` wallpaper transitions, **Typography & System Font** (synced across Quickshell, GTK, Foot & Kitty), **GTK, Icons & Font Rendering**, **Cursor Theme & Size**, and full MangoWC compositor effects.
   - **Themes & Colors Studio**: Full appearance customization hub with **8 One-Click Aesthetic Vibes** (*Aurora Glass*, *Minimal Square*, *OLED Stealth*, *Neon Cyber*, *Cozy Paper*, *Full Dock Bar*, *Warm Gruvbox*, *Dracula Notch*), **16 Curated Dark/Light Presets** (*Catppuccin*, *Tokyo Night*, *Gruvbox*, *Nord*, *Rose Pine*, *Dracula*, *Everforest*, *Kanagawa*, *Solarized*, *One Dark*, *Ayu Mirage*, *Oxocarbon*, *Synthwave*, *OLED Pitch*, *Sakura*, *Cyberpunk*), **Seed Accent Color Generator** (`matugen color hex` + RGB channel mixer), **Wallpaper Studio** (folder picker, thumbnail gallery, Random shuffle, Solid color backdrop clear, **Extracted Dominant Source Color** picker, all 10 Matugen scheme algorithms, `--prefer`, contrast, dark/light surface lightness), **Live 10-Slot Palette Editor & Custom Theme Manager** (save, apply, export & import JSON themes), and **MangoWC Window Color & Shadow Overrides** (focused/unfocused border hex overrides, **Accent-Colored Window Shadows**, shadow opacity & dim strength).
@@ -46,12 +50,15 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 
 ```text
 .
-├── install.sh                    # Backup-safe installer script (configs + bundled fonts; preserves local.conf)
+├── install.sh                    # Backup-safe installer script (configs, bundled fonts & builds rust/mango-fm; preserves local.conf)
 ├── fonts/                        # Bundled JetBrains Mono & Symbols Nerd Font
+├── rust/
+│   └── mango-fm/                 # Zero-dependency pure-Rust file manager backend (built cleanly into ~/.config/quickshell/bin/mango-fm)
 ├── config/
 │   ├── mango/                    # MangoWC config, mode.conf, theme.conf, autostart.sh
 │   ├── quickshell/               # ShellRoot, Theme, DeviceCaps & ShellState singletons, JSON state
 │   │   ├── components/           # DynamicIsland, SimpleBar, QuickControls, SystemTrayStrip, PowerMenu, etc.
+│   │   ├── files/                # Dynamic File Manager UI (FileManagerWindow, FilePaneView, QuickFilesTab, FilesBackend, etc.)
 │   │   ├── settings/             # Modular Settings app (16 pages: Appearance, Themes & Colors, Shell, Windows .. Monitor, System)
 │   │   └── scripts/              # apply-mode.sh, apply-theme.sh, manage-themes.sh, manage-settings.sh, manage-system.sh, launch-app.sh, etc.
 │   ├── matugen/                  # Matugen config & templates (QS, GTK3/4, Mango, Foot, Kitty)
@@ -84,7 +91,7 @@ sudo pacman -S --needed \
   wlr-randr grim slurp wl-clipboard brightnessctl libnotify \
   pipewire wireplumber pipewire-pulse \
   xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
-  polkit-gnome python adw-gtk-theme \
+  polkit-gnome python adw-gtk-theme rust \
   ttf-jetbrains-mono ttf-nerd-fonts-symbols \
   qt6-svg qt6-imageformats qt6-multimedia qt6-5compat
 
@@ -116,7 +123,7 @@ sudo dnf install -y \
   qt6-qtsvg qt6-qtimageformats qt6-qtmultimedia qt6-qt5compat
 # Optional: swaylock, pavucontrol
 
-# Install Matugen (via Cargo if not available in DNF/COPR)
+# Install Cargo (also compiles the bundled rust/mango-fm backend in ./install.sh) and Matugen
 sudo dnf install -y cargo
 cargo install matugen
 # Make sure ~/.cargo/bin is in your PATH
@@ -169,7 +176,8 @@ sudo emerge --ask --verbose \
   gui-libs/xdg-desktop-portal-wlr \
   sys-apps/xdg-desktop-portal-gtk \
   gnome-extra/polkit-gnome \
-  media-video/pipewire
+  media-video/pipewire \
+  dev-lang/rust
 # Optional: gui-apps/swaylock, media-sound/pavucontrol
 ```
 
@@ -208,6 +216,8 @@ cd mango-quickshell-dots
 | `Super + B` / `Super + Z` | Open default browser / editor (`launch-app.sh browser` / `editor`) |
 | `Super + Space` / `Super + A` | Toggle Quickshell App Launcher |
 | `Super + D` | Toggle Dynamic Island Hub |
+| `Super + Shift + E` | Toggle Rust-Backed Dynamic File Manager |
+| `Super + Alt + E` | Toggle Dynamic Island Quick Files Tab |
 | `Super + S` | Toggle Built-in Settings App |
 | `Super + Shift + T` | Toggle Theme & Wallpaper Switcher |
 | `Super + Shift + L` | Lock screen (`hyprlock` / `swaylock` / `waylock`) |
@@ -248,6 +258,11 @@ qs ipc call island clearClipboard
 qs ipc call island resetAppearance
 qs ipc call island resetBar
 qs ipc call island resetAllSettings
+qs ipc call island toggleFiles
+qs ipc call island openFiles "~/Pictures"
+qs ipc call island closeFiles
+qs ipc call island toggleFilesTab
+qs ipc call island resetFiles
 qs ipc call island togglePip
 qs ipc call island cyclePipCorner
 qs ipc call island snapPip

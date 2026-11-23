@@ -35,6 +35,7 @@ Rectangle {
     signal toggleDashboardRequested()
     signal toggleLauncherRequested()
     signal toggleSettingsRequested()
+    signal toggleFilesRequested()
 
     color: Theme.surfaceContainerLowest
     radius: 0
@@ -664,6 +665,38 @@ Rectangle {
             width: 1
             height: parent.height
             visible: DeviceCaps.hasBattery && ShellState.barShowBattery
+            color: Theme.outlineVariant
+        }
+
+        // File Manager Toggle
+        Rectangle {
+            width: 30
+            height: parent.height
+            radius: 0
+            visible: ShellState.barShowFiles || ShellState.barShowQuickIcons
+            color: filesSbMouse.containsMouse ? Theme.hoverBg : "transparent"
+
+            Text {
+                anchors.centerIn: parent
+                text: "󰉋"
+                font.family: Theme.iconFont
+                font.pixelSize: 13
+                color: filesSbMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+            }
+
+            MouseArea {
+                id: filesSbMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.toggleFilesRequested()
+            }
+        }
+
+        Rectangle {
+            width: 1
+            height: parent.height
+            visible: ShellState.barShowFiles || ShellState.barShowQuickIcons
             color: Theme.outlineVariant
         }
 

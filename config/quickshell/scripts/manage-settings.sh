@@ -10,10 +10,10 @@ MANGO_CONF="$HOME/.config/mango/config.conf"
 AUTOSTART_SH="$HOME/.config/mango/autostart.sh"
 
 case "$CMD" in
-    prefs-get|prefs-set|prefs-reset|reset-appearance|reset-bar|reset-all|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
+    prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-files|reset-all|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
         ;;
     *)
-        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-reset|reset-appearance|reset-bar|reset-all|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
+        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-files|reset-all|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
         exit 1
         ;;
 esac
@@ -107,7 +107,33 @@ def default_prefs():
         "barShowKbLayout": False,
         "barShowTray": False,
         "barShowQuickIcons": False,
+        "barShowFiles": True,
         "barShowBattery": True,
+        "fmViewMode": "list",
+        "fmDensity": "cozy",
+        "fmGridSize": 116,
+        "fmIconStyle": "category",
+        "fmSurfacePreset": "inherit",
+        "fmOpacity": 0.94,
+        "fmAccentOverride": "",
+        "fmHeaderStyle": "pill",
+        "fmSidebarVisible": True,
+        "fmSidebarStyle": "standard",
+        "fmPreviewVisible": True,
+        "fmDualPane": False,
+        "fmShowHidden": False,
+        "fmShowThumbnails": True,
+        "fmShowSizes": True,
+        "fmShowDates": True,
+        "fmShowPerms": False,
+        "fmDirsFirst": True,
+        "fmSortBy": "name",
+        "fmSortDesc": False,
+        "fmWindowSize": "balanced",
+        "fmRowAlternating": False,
+        "fmShowCheckboxes": False,
+        "fmStartDir": "~",
+        "fmLastDir": "~",
         "pipAutoManage": True,
         "pipSticky": True,
         "pipAlwaysOnTop": True,
@@ -259,14 +285,9 @@ def cmd_prefs_get():
     print(json.dumps(load_prefs(True)))
 
 
-def cmd_prefs_set():
-    if len(args) < 2:
-        sys.exit("Usage: manage-settings.sh prefs-set <key> <value>")
-    key = args[0]
-    raw_val = " ".join(args[1:])
-    prefs = load_prefs(True)
+def validate_and_apply_pref(prefs, key, raw_val):
     if key not in prefs:
-        sys.exit(f"Unknown preference key: {key}")
+        return False
     prefs[key] = coerce_value(key, raw_val, prefs[key])
     if key == "notifTimeoutMs":
         prefs[key] = max(1500, min(15000, int(prefs[key])))
@@ -332,6 +353,48 @@ def cmd_prefs_set():
         prefs[key] = max(18, min(45, int(prefs[key])))
     elif key == "pipMargin":
         prefs[key] = max(6, min(64, int(prefs[key])))
+    elif key == "fmViewMode":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("list", "grid", "miller") else "list"
+    elif key == "fmDensity":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("compact", "cozy", "spacious") else "cozy"
+    elif key == "fmGridSize":
+        prefs[key] = max(84, min(164, int(prefs[key])))
+    elif key == "fmIconStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("category", "accent", "mono", "vivid") else "category"
+    elif key == "fmSurfacePreset":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("inherit", "glass", "solid", "oled", "tinted") else "inherit"
+    elif key == "fmOpacity":
+        prefs[key] = round(max(0.55, min(1.00, float(prefs[key]))), 2)
+    elif key == "fmAccentOverride":
+        v = str(prefs[key]).strip()
+        prefs[key] = v if re.match(r"^#[0-9a-fA-F]{6}$", v) else ""
+    elif key == "fmHeaderStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("pill", "minimal", "underline") else "pill"
+    elif key == "fmSidebarStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("standard", "compact", "icons") else "standard"
+    elif key == "fmSortBy":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("name", "size", "mtime", "ext") else "name"
+    elif key == "fmWindowSize":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("compact", "balanced", "wide", "max") else "balanced"
+    return True
+
+
+def cmd_prefs_set():
+    if len(args) < 2:
+        sys.exit("Usage: manage-settings.sh prefs-set <key> <value>")
+    key = args[0]
+    raw_val = " ".join(args[1:])
+    prefs = load_prefs(True)
+    if not validate_and_apply_pref(prefs, key, raw_val):
+        sys.exit(f"Unknown preference key: {key}")
 
     if shutil.which("gsettings"):
         if key == "clock24h":
@@ -341,6 +404,21 @@ def cmd_prefs_set():
         elif key == "highContrast":
             subprocess.run(["gsettings", "set", "org.gnome.desktop.a11y.interface", "high-contrast", "true" if prefs[key] else "false"], stderr=subprocess.DEVNULL)
 
+    print(json.dumps(save_prefs(prefs)))
+
+
+def cmd_prefs_set_batch():
+    if len(args) < 1:
+        sys.exit("Usage: manage-settings.sh prefs-set-batch <json>")
+    try:
+        patch = json.loads(" ".join(args))
+    except Exception as exc:
+        sys.exit(f"Invalid JSON batch: {exc}")
+    if not isinstance(patch, dict):
+        sys.exit("Batch payload must be a JSON object")
+    prefs = load_prefs(True)
+    for key, val in patch.items():
+        validate_and_apply_pref(prefs, key, val)
     print(json.dumps(save_prefs(prefs)))
 
 
@@ -448,7 +526,7 @@ def cmd_reset_bar():
         "simpleBarHeight", "simpleBarPosition", "simpleBarShowLayout", "simpleBarShowDate",
         "barShowDate", "barShowWindow", "barShowWorkspaces", "barShowLayout",
         "barShowSystem", "barShowVolume", "barShowKbLayout", "barShowTray",
-        "barShowQuickIcons", "barShowBattery",
+        "barShowQuickIcons", "barShowFiles", "barShowBattery",
         "screenshotDir", "screenshotCopyClipboard", "screenshotNotify", "screenshotDelay",
         "reducedMotion", "highContrast",
     )
@@ -459,6 +537,16 @@ def cmd_reset_bar():
     if shutil.which("gsettings"):
         subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "enable-animations", "true"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(["gsettings", "set", "org.gnome.desktop.a11y.interface", "high-contrast", "false"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(json.dumps(prefs))
+
+
+def cmd_reset_files():
+    defaults = default_prefs()
+    prefs = load_prefs(True)
+    for k in defaults:
+        if k.startswith("fm"):
+            prefs[k] = defaults[k]
+    save_prefs(prefs)
     print(json.dumps(prefs))
 
 
@@ -1037,9 +1125,11 @@ def cmd_hidden_apps_remove():
 DISPATCH = {
     "prefs-get": cmd_prefs_get,
     "prefs-set": cmd_prefs_set,
+    "prefs-set-batch": cmd_prefs_set_batch,
     "prefs-reset": cmd_prefs_reset,
     "reset-appearance": cmd_reset_appearance,
     "reset-bar": cmd_reset_bar,
+    "reset-files": cmd_reset_files,
     "reset-all": cmd_reset_all,
     "set-font": cmd_set_font,
     "list-fonts": cmd_list_fonts,
