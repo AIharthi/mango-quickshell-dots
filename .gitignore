@@ -1,10 +1,15 @@
 *.bak
 *.tmp*
+*.log
 .DS_Store
 *~
+.cache/
+thumbnails/
 local.conf
 rust/**/target/
 config/quickshell/bin/
+config/gtk-3.0/
+config/gtk-4.0/
 fm-bookmarks.json
 shell-prefs.json
 custom-themes/

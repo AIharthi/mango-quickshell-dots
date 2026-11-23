@@ -4,10 +4,11 @@ set -euo pipefail
 CMD="${1:-}"
 shift || true
 
-PREFS_FILE="$HOME/.config/quickshell/shell-prefs.json"
-LOCAL_CONF="$HOME/.config/mango/local.conf"
-MANGO_CONF="$HOME/.config/mango/config.conf"
-AUTOSTART_SH="$HOME/.config/mango/autostart.sh"
+CONFIG_BASE="${XDG_CONFIG_HOME:-$HOME/.config}"
+PREFS_FILE="${CONFIG_BASE}/quickshell/shell-prefs.json"
+LOCAL_CONF="${CONFIG_BASE}/mango/local.conf"
+MANGO_CONF="${CONFIG_BASE}/mango/config.conf"
+AUTOSTART_SH="${CONFIG_BASE}/mango/autostart.sh"
 
 case "$CMD" in
     prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-files|reset-all|set-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
@@ -231,7 +232,8 @@ def update_ini_font(path, font_spec):
 
 
 def update_foot_font(family, size):
-    path = os.path.expanduser("~/.config/foot/foot.ini")
+    cfg_dir = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
+    path = os.path.join(cfg_dir, "foot", "foot.ini")
     if not os.path.exists(path):
         return
     try:
@@ -253,7 +255,8 @@ def update_foot_font(family, size):
 
 
 def update_kitty_font(family, size):
-    path = os.path.expanduser("~/.config/kitty/kitty.conf")
+    cfg_dir = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
+    path = os.path.join(cfg_dir, "kitty", "kitty.conf")
     if not os.path.exists(path):
         return
     try:
@@ -471,8 +474,9 @@ def reset_appearance_impl(prefs):
     save_prefs(prefs)
 
     font_spec = "JetBrains Mono 10"
-    update_ini_font(os.path.expanduser("~/.config/gtk-3.0/settings.ini"), font_spec)
-    update_ini_font(os.path.expanduser("~/.config/gtk-4.0/settings.ini"), font_spec)
+    cfg_dir = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
+    update_ini_font(os.path.join(cfg_dir, "gtk-3.0", "settings.ini"), font_spec)
+    update_ini_font(os.path.join(cfg_dir, "gtk-4.0", "settings.ini"), font_spec)
     update_foot_font("JetBrains Mono", 10)
     update_kitty_font("JetBrains Mono", 10)
 
@@ -575,8 +579,9 @@ def cmd_set_font():
     save_prefs(prefs)
 
     font_spec = f"{family} {size}"
-    update_ini_font(os.path.expanduser("~/.config/gtk-3.0/settings.ini"), font_spec)
-    update_ini_font(os.path.expanduser("~/.config/gtk-4.0/settings.ini"), font_spec)
+    cfg_dir = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
+    update_ini_font(os.path.join(cfg_dir, "gtk-3.0", "settings.ini"), font_spec)
+    update_ini_font(os.path.join(cfg_dir, "gtk-4.0", "settings.ini"), font_spec)
     if shutil.which("gsettings"):
         subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "font-name", font_spec], stderr=subprocess.DEVNULL)
         subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "monospace-font-name", font_spec], stderr=subprocess.DEVNULL)
@@ -614,8 +619,9 @@ def cmd_list_fonts():
 
 
 def scan_desktop_apps():
+    data_dir = os.path.expanduser(os.environ.get("XDG_DATA_HOME", "~/.local/share"))
     dirs = [
-        os.path.expanduser("~/.local/share/applications"),
+        os.path.join(data_dir, "applications"),
         "/usr/local/share/applications",
         "/usr/share/applications",
     ]

@@ -299,7 +299,13 @@ ColumnLayout {
 
         FolderListModel {
             id: wallpaperFolder
-            folder: "file://" + Quickshell.env("HOME") + "/Pictures/Wallpapers"
+            readonly property string rawDir: (ShellState.wallpaperDir && ShellState.wallpaperDir.length > 0)
+                ? ShellState.wallpaperDir
+                : "~/Pictures/Wallpapers"
+            readonly property string expandedDir: rawDir.startsWith("~/")
+                ? (Quickshell.env("HOME") + rawDir.slice(1))
+                : (rawDir === "~" ? Quickshell.env("HOME") : rawDir)
+            folder: "file://" + expandedDir.replace(/%/g, "%25").replace(/#/g, "%23").replace(/\?/g, "%3F")
             nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.PNG", "*.JPG", "*.JPEG", "*.WEBP"]
             showDirs: false
             sortField: FolderListModel.Name

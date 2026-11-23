@@ -1,48 +1,40 @@
 # MangoWC + Quickshell Dynamic Island Dotfiles
 
-A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` + `scenefx`) and **Quickshell**, designed to adapt automatically across **desktops and laptops** (including multi-monitor setups), with live **Matugen** wallpaper theming, **three instant visual modes**, and a **built-in Quickshell Settings app**.
+A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` + `scenefx`) and **Quickshell**, hardened for **Arch Linux, Fedora, and Gentoo** (`systemd` and `OpenRC + elogind`), across both **desktop PCs and laptops** with multi-monitor support.
 
 ---
 
-## Features
+## Visual Showcase
 
-- **Hardware-Aware Multi-Device Adaptation (`DeviceCaps`)**
-  - Automatically probes your machine at startup (`detect-hardware.sh`) and adapts the shell UI to the hardware actually present:
-    - **Desktop PCs** without Wi-Fi, Bluetooth, backlight, battery, or touchpad automatically hide those unused controls and tabs — replacing clutter with a clean **Audio Output & Settings** shortcut.
-    - **Laptops** automatically surface live **Battery % / charging status** (in the Dynamic Island pill, Simple Bar, and System Monitor), **Backlight brightness**, **Wi-Fi**, **Bluetooth**, and **Touchpad** settings.
-  - **Multi-Monitor Support**: Wraps `PanelWindow`s in Quickshell `Variants` over `Quickshell.screens`, syncing per-monitor MangoWC tags across all connected displays.
-  - **Per-Device MangoWC Overrides (`~/.config/mango/local.conf`)**: Included via `source_optional=~/.config/mango/local.conf` (ignored by Git and preserved across `./install.sh` re-runs), so every machine can pull the same dotfiles while keeping its own monitor rules, keyboard layout, and touchpad settings.
-- **Dynamic File Manager (Rust Backend — `Super + Shift + E` / `Super + Alt + E`)**
-  - **Zero-Dependency Pure-Rust Engine (`rust/mango-fm`)**: Compiles offline into a tiny `~555 KB` native binary running at `~2.3 MB` RSS with `~1 ms` directory listing and zero idle processes (unloads automatically when closed). Supports both fast CLI subcommands and a persistent NDJSON `serve` daemon with threaded recursive search & async copy/move progress events piped live into the Dynamic Island pill.
-  - **Customizability & Workflow Views**: Switch seamlessly between **List**, **Grid** (with async cached image thumbnails & adjustable tile size), and **3-Column Miller View** (`Parent | Current | Child`), plus optional **Dual-Pane Split (`F3`)**, **Multi-Tab** browsing (`Ctrl+T`/`Ctrl+W`), collapsible **Sidebar** (`Full`/`Slim`/`Icons`), live **Inspector / Preview Pane**, and an in-app **Customize Drawer** with **4 one-click presets** (*Finder Columns*, *Minimal Zen*, *Media Gallery*, *Commander*) and live overrides for surface finish (`Inherit`/`Glass`/`Solid`/`OLED`/`Tinted`), opacity, accent swatches, icon color palettes, header chrome, row density, zebra rows, and columns.
-  - **Full Desktop & Shell Integration**: Pure-Rust XDG Trash & restore, `/proc/mounts` + `df` mounted drive usage bars, custom bookmarks (`fm-bookmarks.json`), Wayland `text/uri-list` clipboard copy (`wl-copy`), 1-click **Set Wallpaper / Matugen Dynamic Theme** on images, 1-click **Import as Shell Theme** on theme JSONs, archive inspect & extract/compress, inline `chmod +x` toggle, clickable bar icon + live **Files** tab inside the Dynamic Island and Simple Bar.
-- **Built-in Quickshell Settings App (`Super + S`)** *(16 hardware-aware categories with live sidebar search, smooth transitions & persistent per-device config)*
-  - **Appearance**: Switch visual modes (`Default` / `Simple` / `Blur`), Dark/Light scheme, **Shell Surface Finish & Transparency** (`Default` / `Frosted Glass` / `OLED Black` / `Flat Minimal` / `Accent Tinted`, panel/card opacity sliders, corner roundness scale `Sharp`–`Pill`, border accent styles `None` / `Subtle` / `Accent` / `Glow`, border width), **Dynamic Island Shape & Text Scale** (`Floating Pill`, `Top Notch`, `Full-Width Bar`, pill height, top margin, `85%`–`120%` UI text scale), `awww`/`swww` wallpaper transitions, **Typography & System Font** (synced across Quickshell, GTK, Foot & Kitty), **GTK, Icons & Font Rendering**, **Cursor Theme & Size**, and full MangoWC compositor effects.
-  - **Themes & Colors Studio**: Full appearance customization hub with **8 One-Click Aesthetic Vibes** (*Aurora Glass*, *Minimal Square*, *OLED Stealth*, *Neon Cyber*, *Cozy Paper*, *Full Dock Bar*, *Warm Gruvbox*, *Dracula Notch*), **16 Curated Dark/Light Presets** (*Catppuccin*, *Tokyo Night*, *Gruvbox*, *Nord*, *Rose Pine*, *Dracula*, *Everforest*, *Kanagawa*, *Solarized*, *One Dark*, *Ayu Mirage*, *Oxocarbon*, *Synthwave*, *OLED Pitch*, *Sakura*, *Cyberpunk*), **Seed Accent Color Generator** (`matugen color hex` + RGB channel mixer), **Wallpaper Studio** (folder picker, thumbnail gallery, Random shuffle, Solid color backdrop clear, **Extracted Dominant Source Color** picker, all 10 Matugen scheme algorithms, `--prefer`, contrast, dark/light surface lightness), **Live 10-Slot Palette Editor & Custom Theme Manager** (save, apply, export & import JSON themes), and **MangoWC Window Color & Shadow Overrides** (focused/unfocused border hex overrides, **Accent-Colored Window Shadows**, shadow opacity & dim strength).
-  - **Shell & Bar**: **Modular Bar Widgets & Presets** (`Minimal Pill`, `Balanced Island`, `Full Desktop Bar`) — toggle **Date**, **Active Window Title**, **Workspaces / Tags**, **Window Layout Badge (`[T]`)**, **Now-Playing Media**, **CPU & RAM**, **Volume (click mute / scroll ±5%)**, **Keyboard Layout (`US` / `AR`)**, **System Tray**, **Launcher & Settings shortcut icons**, and **Battery** across the Dynamic Island (Pill / Notch / Full-Width Bar) and Simple Bar, plus Dynamic Island hover/collapse delays, OSD controls, Screenshot settings, and global Reduced Motion / High-Contrast options.
-  - **Windows**: **Picture-in-Picture (PiP)** controller (cross-browser auto-float/sticky/always-on-top across Firefox, Helium, Chromium, Brave, Zen & Discord Popout including delayed titles, resolution-relative 16:9 sizing, 4-corner snap & margin controls, plus universal `Super + P` PiP toggle), smart floating rules for portals/dialogs/utilities, Focus follows mouse (`sloppy_focus`), cursor warp, border drag resize hitbox, Scroller/Master/Dwindle/Monocle options, cross-monitor/tag focus, Overview gaps & Hot Corners (`hotarea`), Allow Fullscreen Tearing, **Per-Tag Default Layouts (Tags 1–9)** (`tag_rule`), and a live `mango -p`-validated **Custom Window Rules** (`window_rule`) builder (including `Global` & `Overlay` flags).
-  - **Audio**: Output & mic sliders (with optional **150% Over-Amplification** boost), mute toggles, live default sink/source switching, **Speaker Left/Right/Stereo Channel Test**, **Application Mixer** (per-stream volume & mute), **Hardware Audio Card Profiles**, and `pavucontrol`.
-  - **Displays**: Connected outputs (`wlr-randr`), enable/disable output toggle, resolution, refresh rate, fractional scaling, **Multi-Monitor Relative Positioning**, **Orientation / Rotation** (`0°`–`270°`), **Adaptive Sync (VRR)**, persistent `monitor_rule` export, conditional **Brightness** (`brightnessctl` / `ddcutil`), and conditional **Night Light** (`hyprsunset`/`wlsunset`/`gammastep`).
-  - **Network & Bluetooth**: Always-on **Network Interfaces, IP, Gateway & DNS** status (`ip` / `/sys/class/net`), **NetworkManager Profiles & Quick DNS Presets** (Auto / Cloudflare / Google / Quad9), plus hardware-gated **Wi-Fi** scanning/connect and **Bluetooth** device pairing.
-  - **Input**: Per-device keyboard hardware model (`pc104`/`pc105`/`macbook79`), layouts (`xkb_rules_layout`), switch shortcuts, repeat rate/delay + **Live Key Repeat & Layout Test Sandbox**, NumLock, extended Mouse & **Touchpad** gestures/click/scroll/speed controls.
-  - **Terminals**: Native Foot (`foot.ini`) & Kitty (`kitty.conf`) editors for opacity, padding, cursor shape/blink, scrollback lines, and confirm close (gated on installed terminals).
-  - **Notifications**: **Do Not Disturb**, Allow Critical Alerts in DND, popup duration, desktop sound alerts, history capacity, Test Notification, and dismissible session Notification History.
-  - **Apps & Startup**: Configure **Quick-Launch Keybind Apps** (`Super + Return` / `B` / `Z` via `launch-app.sh`), system **XDG Default Apps** (`xdg-mime`), `exec_once` **Startup Applications**, **App Launcher Visibility** (`hidden-apps.json`), and **Session Environment Variables** (`env=` in `local.conf`).
-  - **Shortcuts**: Searchable, categorized **MangoWC Shortcuts** viewer plus inline `mango -p`-validated **Custom Shortcut Builder** (`bind=` in `local.conf`).
-  - **Privacy**: One-click **Clear Wayland Clipboard**, middle-click primary paste sync, recent files history toggle & wipe, portal identity privacy, camera/mic hardware portal disables (+ mic mute sync), and quick Wayland screen lock.
-  - **Monitor**: Live `/sys/class/hwmon` thermal sensors (4s refresh), live top **Processes** (`CPU %` / `RAM MB` sort, filter, SIGTERM/SIGKILL), and **OpenRC / systemd Services** inspector.
-  - **System**: CPU, GPU, RAM, uptime, **Disk Storage** usage bars, **Date & Time** format + timezone, **Keep Screen Awake** (`Wayland IdleInhibitor`), conditional **Power Profiles**, detected hardware capability matrix, User Account readout, Power Menu, **Export Backup (`.tar.gz`)**, and **Reset & Recovery Controls** (`Reset Appearance`, `Reset Bar & Shell`, and `Factory Reset All` with 2-click safety confirmation, also accessible directly in the Settings sidebar, Appearance, Themes & Shell pages).
-- **Morphing Dynamic Island (`Quickshell`)**
-  - Compact top pill showing time, optional battery indicator, and collapsible Spotify/MPRIS mini-player with spinning album art and equalizer bars.
-  - Hover or press `Super + D` to open the **Hub**: MPRIS Media Card, live CPU/RAM (+ optional Battery) System Monitor, interactive MangoWC Tags (`1`–`9`) + layout switcher, hardware-aware Quick Controls, and collapsible **Power Menu** (Lock, Suspend, Logout, Reboot, Poweroff with confirmation).
-  - Built-in **Fuzzy App Launcher** (`Super + Space` / `Super + A`) with desktop entry filtering (`hidden-apps.json`).
-  - Built-in **Theme & Wallpaper Switcher** (`Super + Shift + T`): live **Matugen** Material You extraction from `~/Pictures/Wallpapers`, **16 Dark/Light presets**, **Seed Accent** quick swatches, **Random** wallpaper button, direct link to the **Themes & Colors Studio**, and instant Dark/Light switching synced across Quickshell, MangoWC, GTK 3/4, Foot, and Kitty.
-  - Integrated **OSD** (volume, mute, brightness) and **Notification Server** with action buttons and critical urgency accents.
-- **3 Live Visual Modes (MangoWC + Quickshell synced)**
-  - **Default**: Floating rounded Dynamic Island, soft shadows, smooth animations, opaque windows.
-  - **Simple Mode** (*everything square*): Flat, 28px full-width square top bar (`SimpleBar`), `0px` border radius everywhere, zero gaps, no blur/shadows/animations, and crisp `2px` square focus borders.
-  - **Blur Mode** (*frosted glass*): Keeps the Dynamic Island with translucent glass surfaces, subtle borders, and top sheen while enabling rich `scenefx` window blur, translucent windows, and unfocused dimming.
-- **Wayland Screenshots & Screen Lock**: Area (`Super + =`) and fullscreen (`Super + Shift + =`) capture via `grim` + `slurp` + `wl-copy`, plus lock screen (`Super + Shift + L`) using `hyprlock` / `swaylock` / `waylock`.
+> Drop screenshots or GIFs under `docs/assets/` using the filenames below to populate the gallery.
+
+| Default Mode (Dynamic Island) | Simple Mode (Square Full-Width Bar) | Blur Mode (Frosted Glass) |
+| --- | --- | --- |
+| ![Default Mode](docs/assets/showcase-default.png) | ![Simple Mode](docs/assets/showcase-simple.png) | ![Blur Mode](docs/assets/showcase-blur.png) |
+
+| Built-in Settings (`Super + S`) | Rust Dynamic File Manager (`Super + Shift + E`) |
+| --- | --- |
+| ![Settings App](docs/assets/showcase-settings.png) | ![mango-fm](docs/assets/showcase-files.png) |
+
+---
+
+## Highlights
+
+- **Hardware & Init-System Aware (`DeviceCaps`)**: Automatically adapts controls and Settings tabs to actual hardware (multi-battery aggregation `BAT0`+`BAT1`, `/sys/class/backlight`, `/sys/class/ieee80211` Wi-Fi, Bluetooth, audio) and works across **systemd** (`loginctl` / `systemctl`) and **OpenRC + elogind** (`loginctl`, `dbus-run-session`, non-systemd PipeWire fallback).
+- **Dynamic Island & 3 Visual Modes (`default` / `simple` / `blur`)**: Morphs smoothly between Floating Pill, Top Notch, Full-Width Bar, and `28px` Square Bar, with modular bar widgets (`Minimal Pill`, `Balanced Island`, `Full Desktop Bar`), OSD, Notification Server, and fuzzy App Launcher (`Super + Space`).
+- **Live Matugen & Preset Theming**: Syncs wallpapers (`awww` or `swww` auto-detected), 16 dark/light presets, 8 one-click vibes, seed accent generator, and JSON custom theme import across Quickshell, MangoWC, GTK 3/4, Foot, and Kitty (`flock`-serialized updates). See [`docs/THEMING.md`](docs/THEMING.md).
+- **Built-in 16-Page Settings App (`Super + S`)**: Covers Appearance, Themes & Colors Studio, Shell & Bar, Windows & cross-browser Picture-in-Picture (`Super + P`), Audio, Displays (`wlr-randr`), Network/DNS, Bluetooth, Input & Touchpad, Foot/Kitty Terminals, Notifications/DND, Apps & Startup, live `mango -p`-validated Shortcuts, Privacy, Thermal/Process/Service Monitor, System Backup & Safe Resets.
+- **Zero-Dependency Rust File Manager (`rust/mango-fm`)**: `std`-only pure Rust backend (`Cargo.lock` tracked) + customizable Quickshell UI (`List`, async thumbnail `Grid`, 3-column `Miller`, `Dual-Pane F3`, multi-tab, XDG Trash, mounts, bookmarks, Zip/Tar Slip & flag-injection hardened). See [`docs/FILE_MANAGER.md`](docs/FILE_MANAGER.md).
+- **Idempotent Multi-Machine Configs**: Machine-specific overrides stay in `~/.config/mango/local.conf` (`source_optional`) and `~/.config/quickshell/shell-prefs.json` — preserved cleanly across `./install.sh` re-runs.
+
+<details>
+<summary><strong>Explore Deep-Dive Documentation (Themes, Vibes, File Manager & Keybinds)</strong></summary>
+
+- **[Theming, 3 Modes, 8 Vibes & 16 Presets](docs/THEMING.md)** — Complete Matugen pipeline, wallpaper engine selection, palette validation, and CLI flags.
+- **[Dynamic File Manager (`rust/mango-fm`)](docs/FILE_MANAGER.md)** — Workflow presets (`Finder Columns`, `Minimal Zen`, `Media Gallery`, `Commander`), CLI subcommands, and NDJSON `serve` protocol.
+- **[Keybindings & Quickshell IPC](docs/KEYBINDS.md)** — Full MangoWC keyboard/mouse/touchpad table, PiP controls, and `qs ipc call island ...` commands.
+
+</details>
 
 ---
 
@@ -50,39 +42,42 @@ A reactive, hardware-aware Wayland desktop built around **MangoWC** (`mangowm` +
 
 ```text
 .
-├── install.sh                    # Backup-safe installer script (configs, bundled fonts & builds rust/mango-fm; preserves local.conf)
-├── fonts/                        # Bundled JetBrains Mono & Symbols Nerd Font
-├── rust/
-│   └── mango-fm/                 # Zero-dependency pure-Rust file manager backend (built cleanly into ~/.config/quickshell/bin/mango-fm)
+├── install.sh                    # Hardened idempotent installer (--dry-run, --no-system, --skip-build, --skip-fonts)
+├── uninstall.sh                  # Clean uninstaller (--dry-run, --with-session, --restore-backup)
+├── fonts/                        # Bundled JetBrains Mono (OFL 1.1) & Symbols Nerd Font (MIT) + THIRD_PARTY_LICENSES.md
+├── docs/                         # Detailed guides (THEMING.md, FILE_MANAGER.md, KEYBINDS.md)
+├── rust/mango-fm/                # Zero-dependency std-only Rust file manager backend (built into ~/.config/quickshell/bin/mango-fm)
 ├── config/
 │   ├── mango/                    # MangoWC config, mode.conf, theme.conf, autostart.sh
-│   ├── quickshell/               # ShellRoot, Theme, DeviceCaps & ShellState singletons, JSON state
-│   │   ├── components/           # DynamicIsland, SimpleBar, QuickControls, SystemTrayStrip, PowerMenu, etc.
-│   │   ├── files/                # Dynamic File Manager UI (FileManagerWindow, FilePaneView, QuickFilesTab, FilesBackend, etc.)
-│   │   ├── settings/             # Modular Settings app (16 pages: Appearance, Themes & Colors, Shell, Windows .. Monitor, System)
-│   │   └── scripts/              # apply-mode.sh, apply-theme.sh, manage-themes.sh, manage-settings.sh, manage-system.sh, launch-app.sh, etc.
-│   ├── matugen/                  # Matugen config & templates (QS, GTK3/4, Mango, Foot, Kitty)
-│   ├── foot/                     # Foot terminal config + synced colors
-│   ├── kitty/                    # Kitty terminal config + synced colors
-│   └── xdg-desktop-portal/       # Wayland screencast/screenshot portal config
+│   ├── quickshell/               # shell.qml, Theme, DeviceCaps, ShellState, components/, files/, settings/, scripts/
+│   ├── matugen/                  # Matugen config & templates (Quickshell, GTK 3/4, MangoWC, Foot, Kitty)
+│   ├── foot/                     # Foot terminal config + live color palette
+│   ├── kitty/                    # Kitty terminal config + live color palette
+│   └── xdg-desktop-portal/       # Wayland screencast/screenshot portal configuration
 └── system/
-    ├── mango-session             # Optional /usr/local/bin/mango-session wrapper
+    ├── mango-session             # Optional /usr/local/bin/mango-session wrapper (auto dbus-run-session fallback)
     └── mango.desktop             # Optional /usr/share/wayland-sessions/mango.desktop
 ```
 
 ---
 
-## Installation Guide
+## Dependencies
 
-### 1. Install Dependencies
+### Required vs. Optional Matrix
 
-Choose your distribution below to install **MangoWC**, **Quickshell**, **Matugen**, **awww** (or `swww`), `wlr-randr`, and desktop utilities.
+| Category | Tools / Packages | Purpose |
+| --- | --- | --- |
+| **Core (Required)** | `mango` (`mangowm` + `scenefx`), `quickshell` (`qs`), `python3`, `qt6-svg`, `qt6-imageformats`, `qt6-5compat` | Compositor, QML bar/island/settings, helper backend scripts |
+| **Build (`mango-fm`)** | `cargo` + `rustc` (`>= 1.70`) | Compiles zero-dependency `rust/mango-fm` cleanly offline |
+| **Theming & Wallpapers** | `matugen`, `awww` (or `swww`), `adw-gtk-theme` / `adw-gtk3` | Material You wallpaper extraction & Wayland wallpaper transitions |
+| **Audio & Displays** | `pipewire`, `wireplumber`, `pipewire-pulse` (`pactl`), `wlr-randr` | Volume/mixer sliders, per-monitor layout, scaling, rotation, VRR |
+| **Utilities (Recommended)** | `grim`, `slurp`, `wl-clipboard` (`wl-copy`), `libnotify`, `polkit-gnome`, `xdg-desktop-portal{,-wlr,-gtk}`, `foot` or `kitty` | Area/fullscreen screenshots, URI/clipboard, polkit auth prompts, screencasts |
+| **Laptop & Extras (Optional)** | `brightnessctl`, `networkmanager` (`nmcli`), `bluez` (`bluetoothctl`), `playerctl`, `hyprlock`/`swaylock`/`waylock`, `pavucontrol`, `zip`, `tar`, `unzip` | Backlight slider, Wi-Fi/BT UI, media controls, lock screen, archives |
 
----
+<details>
+<summary><strong>Distro Package Install Commands (Arch Linux, Fedora & Gentoo)</strong></summary>
 
 #### Arch Linux
-
-Requires an AUR helper such as `paru` or `yay`.
 
 ```bash
 # Official repositories
@@ -97,22 +92,16 @@ sudo pacman -S --needed \
 
 # AUR packages (Quickshell + awww wallpaper daemon)
 yay -S --needed quickshell awww-git
-# Optional: swaylock (or hyprlock), pavucontrol, catppuccin-cursors-mocha
+# Optional: swaylock (or hyprlock), pavucontrol, playerctl, bluez, networkmanager, zip, unzip
 ```
-
-> **Note:** If `mangowm` is not yet in your mirror's official repos, install `mangowm-git` from the AUR (`yay -S mangowm-git`).
-
----
 
 #### Fedora
 
 ```bash
-# Enable required COPR repositories
 sudo dnf copr enable -y dennemann/MangoWC
 sudo dnf copr enable -y errornointernet/quickshell
 sudo dnf copr enable -y scottames/awww
 
-# Install compositor, shell, and desktop utilities
 sudo dnf install -y \
   mangowc quickshell awww \
   foot kitty wlr-randr grim slurp wl-clipboard brightnessctl libnotify \
@@ -120,156 +109,109 @@ sudo dnf install -y \
   xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
   polkit-gnome python3 adw-gtk3-theme \
   jetbrains-mono-fonts \
-  qt6-qtsvg qt6-qtimageformats qt6-qtmultimedia qt6-qt5compat
-# Optional: swaylock, pavucontrol
+  qt6-qtsvg qt6-qtimageformats qt6-qtmultimedia qt6-qt5compat \
+  cargo rust
 
-# Install Cargo (also compiles the bundled rust/mango-fm backend in ./install.sh) and Matugen
-sudo dnf install -y cargo
 cargo install matugen
-# Make sure ~/.cargo/bin is in your PATH
+# Ensure ~/.cargo/bin is in your PATH
+# Optional: swaylock, pavucontrol, playerctl, bluez-tools, NetworkManager, zip, unzip
 ```
 
-> **Bundled Fonts:** Both **JetBrains Mono** and **Symbols Nerd Font** are included in `fonts/` and automatically installed to `~/.local/share/fonts/` by `./install.sh` (with `fc-cache`), so you don't need to download Nerd Fonts manually on Fedora, Arch, or Gentoo.
+#### Gentoo (`systemd` or `OpenRC + elogind`)
 
----
-
-#### Gentoo
-
-Enable the **GURU** community overlay first (provides `mangowm`, `scenefx`, `quickshell`, `matugen`, `awww`, and `wlr-randr`):
-
-```bash
-sudo emerge --ask --verbose app-eselect/eselect-repository
-sudo eselect repository enable guru
-sudo emaint sync -r guru
-```
-
-Unmask testing keywords (e.g., `/etc/portage/package.accept_keywords/mango-desktop`):
-
-```text
-gui-libs/scenefx ~amd64
-gui-wm/mangowm ~amd64
-gui-apps/quickshell ~amd64
-x11-misc/matugen ~amd64
-gui-apps/awww ~amd64
-gui-apps/wlr-randr ~amd64
-```
-
-Install all packages:
+Enable the **GURU** overlay (`eselect repository enable guru && emaint sync -r guru`) and accept `~amd64` keywords for `gui-libs/scenefx`, `gui-wm/mangowm`, `gui-apps/quickshell`, `x11-misc/matugen`, `gui-apps/awww`, and `gui-apps/wlr-randr`:
 
 ```bash
 sudo emerge --ask --verbose \
-  gui-wm/mangowm \
-  gui-apps/quickshell \
-  x11-misc/matugen \
-  gui-apps/awww \
-  gui-apps/wlr-randr \
-  gui-apps/foot \
-  gui-apps/grim \
-  gui-apps/slurp \
-  gui-apps/wl-clipboard \
-  app-misc/brightnessctl \
-  x11-libs/libnotify \
-  media-fonts/jetbrains-mono \
-  media-fonts/symbols-nerd-font \
-  x11-themes/adw-gtk3 \
-  sys-apps/xdg-desktop-portal \
-  gui-libs/xdg-desktop-portal-wlr \
-  sys-apps/xdg-desktop-portal-gtk \
-  gnome-extra/polkit-gnome \
-  media-video/pipewire \
+  gui-wm/mangowm gui-apps/quickshell x11-misc/matugen gui-apps/awww \
+  gui-apps/wlr-randr gui-apps/foot gui-apps/grim gui-apps/slurp \
+  gui-apps/wl-clipboard app-misc/brightnessctl x11-libs/libnotify \
+  media-fonts/jetbrains-mono media-fonts/symbols-nerd-font \
+  x11-themes/adw-gtk3 sys-apps/xdg-desktop-portal \
+  gui-libs/xdg-desktop-portal-wlr sys-apps/xdg-desktop-portal-gtk \
+  gnome-extra/polkit-gnome media-video/pipewire media-video/wireplumber \
   dev-lang/rust
-# Optional: gui-apps/swaylock, media-sound/pavucontrol
+# Optional: gui-apps/swaylock, media-sound/pavucontrol, media-sound/playerctl, app-arch/zip, app-arch/unzip
+# OpenRC users: ensure sys-auth/elogind is installed & enabled; media-video/pipewire provides gentoo-pipewire-launcher or WirePlumber.
 ```
 
-> Ensure `dev-qt/qtsvg`, `dev-qt/qtimageformats`, and `dev-qt/qt5compat` are installed (usually pulled in by `gui-apps/quickshell`), and `pactl` is available (`media-sound/pulseaudio-daemon` or `media-libs/libpulse`).
+</details>
 
 ---
 
-### 2. Clone & Install the Dotfiles
+## Installation & Removal
+
+### Install
 
 ```bash
 git clone https://github.com/AIharthi/mango-quickshell-dots.git
 cd mango-quickshell-dots
 
-# Install user configs & fonts into ~/.config and ~/.local/share/fonts
-# (automatically backs up existing configs and preserves any existing ~/.config/mango/local.conf)
+# Preview everything first (makes zero disk changes)
+./install.sh --dry-run
+
+# Standard user install (backs up existing ~/.config entries, preserves local.conf & saved theme/prefs, builds mango-fm, installs fonts)
 ./install.sh
 
-# Or also install /usr/local/bin/mango-session and the display manager entry:
-./install.sh --with-session
+# Optional flags:
+#   --with-session   Also install /usr/local/bin/mango-session and /usr/share/wayland-sessions/mango.desktop (requires sudo)
+#   --no-system      Never touch root/system paths (even with --with-session)
+#   --skip-build     Skip compiling rust/mango-fm
+#   --skip-fonts     Skip copying bundled fonts (if using distro packages)
+#   --no-backup      Skip timestamped backup
 ```
 
-### 3. Add Wallpapers & Per-Device Setup
+### Uninstall
 
-1. Place your wallpapers in `~/Pictures/Wallpapers/` (`.png`, `.jpg`, `.jpeg`, `.webp`).
-2. Open the Theme Switcher (`Super + Shift + T`), select **Dynamic (Matugen)** or **Presets**, and click any wallpaper to apply it live.
-3. Press `Super + S` to open **Settings** and configure fonts, displays, audio mixer, notifications, default apps/startup entries, or per-device hardware rules — hardware overrides are written cleanly to `~/.config/mango/local.conf` and UI/default-app preferences to `~/.config/quickshell/shell-prefs.json`.
-4. Optional: customize `Super + Return / B / Z` default terminal/browser/editor directly inside **Settings → Apps & Startup** (powered by `launch-app.sh`).
+```bash
+# Preview removals
+./uninstall.sh --dry-run
+
+# Remove installed configs and bundled fonts (prompts for confirmation, or pass --yes)
+./uninstall.sh --with-session --restore-backup
+```
+
+`--restore-backup` restores the most recent `~/.config-backup-mango-*` backup (or pass `--backup <dir>`). Pass `--keep-fonts` to keep bundled fonts.
 
 ---
 
-## Keybindings
+## Quick Start & Keybinds Overview
+
+1. Drop wallpapers into `~/Pictures/Wallpapers/` and open **Theme Switcher (`Super + Shift + T`)**.
+2. Press **`Super + S`** to open **Settings** (`16` pages; per-machine overrides go to `~/.config/mango/local.conf`).
+3. Press **`Super + Shift + E`** for the Rust-backed **Dynamic File Manager** (or **`Super + Alt + E`** for Dynamic Island Quick Files).
+
+<details>
+<summary><strong>Essential Shortcuts (see docs/KEYBINDS.md for all bindings & IPC)</strong></summary>
 
 | Shortcut | Action |
 | --- | --- |
-| `Super + Return` | Open default terminal (`launch-app.sh terminal`) |
-| `Super + B` / `Super + Z` | Open default browser / editor (`launch-app.sh browser` / `editor`) |
-| `Super + Space` / `Super + A` | Toggle Quickshell App Launcher |
-| `Super + D` | Toggle Dynamic Island Hub |
-| `Super + Shift + E` | Toggle Rust-Backed Dynamic File Manager |
-| `Super + Alt + E` | Toggle Dynamic Island Quick Files Tab |
-| `Super + S` | Toggle Built-in Settings App |
-| `Super + Shift + T` | Toggle Theme & Wallpaper Switcher |
-| `Super + Shift + L` | Lock screen (`hyprlock` / `swaylock` / `waylock`) |
+| `Super + Return` / `B` / `Z` | Default terminal / browser / editor (`launch-app.sh`) |
+| `Super + Space` / `Super + A` | App Launcher |
+| `Super + D` | Dynamic Island Hub |
+| `Super + Shift + E` / `Super + Alt + E` | File Manager / Dynamic Island Quick Files |
+| `Super + S` | Settings App |
+| `Super + Shift + T` | Theme & Wallpaper Switcher |
+| `Super + P` / `Shift + P` / `Alt + P` | Toggle Picture-in-Picture / Cycle Corner / Re-Snap |
 | `Super + =` / `Super + Shift + =` | Area / Fullscreen Screenshot |
-| `Super + Q` | Close focused window |
-| `Super + 1..9` | Switch to tag `1`–`9` |
-| `Super + Shift + 1..9` | Move window to tag `1`–`9` |
-| `Super + N` | Cycle MangoWC layout |
-| `Super + T` | Force current tag & window back to tiled mode |
-| `Super + \` | Toggle floating |
-| `Super + F` | Toggle fullscreen |
-| `Super + P` | Toggle any window into Picture-in-Picture (floating + sticky + overlay) |
-| `Super + Shift + P` | Move active PiP window to next screen corner |
-| `Super + Alt + P` | Re-snap active PiP window to configured size & corner |
-| `Super + R` | Reload MangoWC config |
-| `Super + M` | Quit MangoWC |
+| `Super + Shift + L` | Lock Screen |
+| `Super + Q` / `Super + 1..9` / `Super + N` | Close window / Switch tag / Cycle layout |
+| `Super + R` / `Super + M` | Reload MangoWC / Quit session |
 
-### CLI / IPC Controls
+</details>
 
-```bash
-# Visual Modes & Live Theming IPC
-qs ipc call island setShellMode default
-qs ipc call island setShellMode simple
-qs ipc call island setShellMode blur
-qs ipc call island applyVibe aurora-glass    # aurora-glass | minimal-square | oled-stealth | neon-cyber | cozy-paper | full-dock-bar | warm-gruvbox | dracula-notch
-qs ipc call island applyPreset tokyo-night
-qs ipc call island applyAccent "#ff6b6b"
-qs ipc call island randomWallpaper
-qs ipc call island toggleDarkLight
+---
 
-# Settings Window & Toggles
-qs ipc call island toggleSettings
-qs ipc call island openSettings themes    # appearance | themes | shell | windows | audio | displays | network | bluetooth | input | terminals | notifications | apps | shortcuts | privacy | monitor | system
-qs ipc call island closeSettings
-qs ipc call island toggleDnd
-qs ipc call island toggleKeepAwake
-qs ipc call island clearClipboard
-qs ipc call island resetAppearance
-qs ipc call island resetBar
-qs ipc call island resetAllSettings
-qs ipc call island toggleFiles
-qs ipc call island openFiles "~/Pictures"
-qs ipc call island closeFiles
-qs ipc call island toggleFilesTab
-qs ipc call island resetFiles
-qs ipc call island togglePip
-qs ipc call island cyclePipCorner
-qs ipc call island snapPip
-```
+## Troubleshooting
+
+- **OpenRC / Gentoo startup (`dbus`, PipeWire, Power menu)**: Launch via `mango-session` (automatically wraps with `dbus-run-session` when `$DBUS_SESSION_BUS_ADDRESS` is unset). `autostart.sh` launches `gentoo-pipewire-launcher` if present, otherwise starts `pipewire`, `pipewire-pulse`, and `wireplumber` without requiring `systemctl --user`. Ensure `sys-auth/elogind` is running so `loginctl` power/lock actions work.
+- **Desktop Portals (`xdg-desktop-portal-wlr`)**: Screen sharing and screenshots require `$XDG_CURRENT_DESKTOP=mango` and a running DBus user session; `config/xdg-desktop-portal/mango-portals.conf` is copied to `~/.config/xdg-desktop-portal/`.
+- **`awww` vs `swww` wallpapers**: Both `awww` and `swww` are supported automatically (`awww` takes precedence if both exist). On fresh boot with zero wallpapers or without `matugen`, `apply-theme.sh --init` automatically renders the built-in `catppuccin-mocha` dark palette so the shell never starts unstyled.
+- **File Manager (`mango-fm`) missing**: Ensure `cargo` and `rustc` are installed and run `cargo build --release --manifest-path rust/mango-fm/Cargo.toml && install -Dm755 rust/mango-fm/target/release/mango-fm ~/.config/quickshell/bin/mango-fm` (or re-run `./install.sh`).
 
 ---
 
 ## License
 
-[MIT](LICENSE)
+- Dotfiles, QML components, shell scripts, and `rust/mango-fm`: [MIT License](LICENSE)
+- Bundled fonts (`fonts/JetBrainsMono/` SIL OFL 1.1 & `fonts/SymbolsNerdFont/` MIT): see [`fonts/THIRD_PARTY_LICENSES.md`](fonts/THIRD_PARTY_LICENSES.md)

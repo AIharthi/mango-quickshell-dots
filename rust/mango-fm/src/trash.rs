@@ -1,12 +1,15 @@
 use std::fs;
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::json::JsonOut;
 use crate::util::{
     classify_file, data_dir, expand_path, human_size, natural_cmp, now_unix_secs, percent_decode,
     percent_encode_path, unix_secs_to_iso,
 };
+
+static TRASH_TMP_SEQ: AtomicU64 = AtomicU64::new(0);
 
 fn trash_dirs() -> Result<(PathBuf, PathBuf), String> {
     let base = data_dir().join("Trash");
@@ -18,7 +21,11 @@ fn trash_dirs() -> Result<(PathBuf, PathBuf), String> {
 }
 
 fn unique_trash_name(files_dir: &Path, info_dir: &Path, base_name: &str) -> String {
-    let clean = if base_name.is_empty() { "item" } else { base_name };
+    let clean = if base_name.is_empty() {
+        "item"
+    } else {
+        base_name
+    };
     let stem_ext = match clean.rfind('.') {
         Some(idx) if idx > 0 => (&clean[..idx], Some(&clean[idx..])),
         _ => (clean, None),
@@ -43,6 +50,16 @@ fn unique_trash_name(files_dir: &Path, info_dir: &Path, base_name: &str) -> Stri
 
 pub fn trash_paths(raw_paths: &[String]) -> Result<String, String> {
     let (files_dir, info_dir) = trash_dirs()?;
+    trash_paths_in(&files_dir, &info_dir, raw_paths)
+}
+
+pub(crate) fn trash_paths_in(
+    files_dir: &Path,
+    info_dir: &Path,
+    raw_paths: &[String],
+) -> Result<String, String> {
+    fs::create_dir_all(files_dir).map_err(|e| format!("create trash files dir: {e}"))?;
+    fs::create_dir_all(info_dir).map_err(|e| format!("create trash info dir: {e}"))?;
     let mut trashed = 0u64;
     let mut last_err = None;
 
@@ -58,7 +75,7 @@ pub fn trash_paths(raw_paths: &[String]) -> Result<String, String> {
             .and_then(|n| n.to_str())
             .unwrap_or("item")
             .to_string();
-        let trash_name = unique_trash_name(&files_dir, &info_dir, &fname);
+        let trash_name = unique_trash_name(files_dir, info_dir, &fname);
         let info_path = info_dir.join(format!("{trash_name}.trashinfo"));
         let dest_path = files_dir.join(&trash_name);
 
@@ -71,11 +88,22 @@ pub fn trash_paths(raw_paths: &[String]) -> Result<String, String> {
         let del_date = unix_secs_to_iso(now_unix_secs());
         let info_body = format!("[Trash Info]\nPath={encoded_path}\nDeletionDate={del_date}\n");
 
+        let seq = TRASH_TMP_SEQ.fetch_add(1, Ordering::Relaxed);
+        let tmp_info = info_dir.join(format!(".tmp_{}_{}.trashinfo", std::process::id(), seq));
         {
-            let mut f = fs::File::create(&info_path)
-                .map_err(|e| format!("write trashinfo '{}': {e}", info_path.display()))?;
-            f.write_all(info_body.as_bytes())
-                .map_err(|e| format!("write trashinfo body: {e}"))?;
+            let mut f = fs::File::create(&tmp_info)
+                .map_err(|e| format!("write trashinfo '{}': {e}", tmp_info.display()))?;
+            if let Err(e) = f
+                .write_all(info_body.as_bytes())
+                .and_then(|()| f.sync_all())
+            {
+                let _ = fs::remove_file(&tmp_info);
+                return Err(format!("write trashinfo body: {e}"));
+            }
+        }
+        if let Err(e) = fs::rename(&tmp_info, &info_path) {
+            let _ = fs::remove_file(&tmp_info);
+            return Err(format!("commit trashinfo '{}': {e}", info_path.display()));
         }
 
         if let Err(e) = crate::ops::move_single(&src, &dest_path) {
@@ -200,10 +228,23 @@ pub fn trash_list() -> Result<String, String> {
 }
 
 pub fn trash_restore(trash_name: &str) -> Result<String, String> {
-    if trash_name.is_empty() || trash_name.contains('/') || trash_name == "." || trash_name == ".." {
+    let (files_dir, info_dir) = trash_dirs()?;
+    trash_restore_in(&files_dir, &info_dir, trash_name)
+}
+
+pub(crate) fn trash_restore_in(
+    files_dir: &Path,
+    info_dir: &Path,
+    trash_name: &str,
+) -> Result<String, String> {
+    if trash_name.is_empty()
+        || trash_name.contains('/')
+        || trash_name.contains('\0')
+        || trash_name == "."
+        || trash_name == ".."
+    {
         return Err("Invalid trash item name".to_string());
     }
-    let (files_dir, info_dir) = trash_dirs()?;
     let src = files_dir.join(trash_name);
     let info_path = info_dir.join(format!("{trash_name}.trashinfo"));
     if fs::symlink_metadata(&src).is_err() {
@@ -214,6 +255,9 @@ pub fn trash_restore(trash_name: &str) -> Result<String, String> {
         return Err("Missing original path in .trashinfo".to_string());
     }
     let mut dest = PathBuf::from(&orig_path_str);
+    if !dest.is_absolute() {
+        return Err("Invalid non-absolute restore path in .trashinfo".to_string());
+    }
     if let Some(parent) = dest.parent() {
         fs::create_dir_all(parent)
             .map_err(|e| format!("create restore parent '{}': {e}", parent.display()))?;
@@ -251,4 +295,51 @@ pub fn trash_empty() -> Result<String, String> {
     out.kv_u64("removed", removed);
     out.obj_end();
     Ok(out.finish())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn xdg_trashinfo_and_restore_roundtrip() {
+        let base = std::env::temp_dir().join(format!("mango_fm_trash_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base);
+        let work = base.join("work");
+        let files_dir = base.join("Trash/files");
+        let info_dir = base.join("Trash/info");
+        fs::create_dir_all(&work).unwrap();
+
+        let f1 = work.join("my doc #1%.txt");
+        let f2 = work.join("my doc #1%.txt");
+        fs::write(&f1, b"first").unwrap();
+        trash_paths_in(&files_dir, &info_dir, &[f1.to_string_lossy().into_owned()])
+            .expect("first trash ok");
+        assert!(!f1.exists());
+        assert!(files_dir.join("my doc #1%.txt").is_file());
+
+        // Check .trashinfo XDG format & RFC 3986 percent encoding
+        let raw_info = fs::read_to_string(info_dir.join("my doc #1%.txt.trashinfo")).unwrap();
+        assert!(raw_info.starts_with("[Trash Info]\nPath=/"));
+        assert!(raw_info.contains("%20"));
+        assert!(raw_info.contains("%231%25.txt\nDeletionDate="));
+
+        // Collision naming when trashing same filename twice
+        fs::write(&f2, b"second").unwrap();
+        trash_paths_in(&files_dir, &info_dir, &[f2.to_string_lossy().into_owned()])
+            .expect("second trash ok");
+        assert!(files_dir.join("my doc #1%.1.txt").is_file());
+        assert!(info_dir.join("my doc #1%.1.txt.trashinfo").is_file());
+
+        // Restore first back to original location
+        trash_restore_in(&files_dir, &info_dir, "my doc #1%.txt").expect("restore ok");
+        assert_eq!(fs::read(&f1).unwrap(), b"first");
+        assert!(!info_dir.join("my doc #1%.txt.trashinfo").exists());
+
+        // Restore second gets collision-safe name since f1 exists again
+        trash_restore_in(&files_dir, &info_dir, "my doc #1%.1.txt").expect("restore 2 ok");
+        assert!(work.join("my doc #1% (copy).txt").is_file());
+
+        let _ = fs::remove_dir_all(&base);
+    }
 }

@@ -11,7 +11,7 @@ mod util;
 
 use std::env;
 use std::io::{self, BufRead, BufWriter, Stdout, Write};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
@@ -27,15 +27,25 @@ fn print_err_exit(msg: &str) -> ! {
     std::process::exit(1);
 }
 
-fn write_line(writer: &Arc<Mutex<BufWriter<Stdout>>>, line: &str) {
-    if let Ok(mut w) = writer.lock() {
-        let _ = w.write_all(line.as_bytes());
-        let _ = w.write_all(b"\n");
-        let _ = w.flush();
+fn write_line(writer: &Arc<Mutex<BufWriter<Stdout>>>, shutdown: &AtomicBool, line: &str) -> bool {
+    let Ok(mut w) = writer.lock() else {
+        shutdown.store(true, Ordering::Relaxed);
+        return false;
+    };
+    if w.write_all(line.as_bytes()).is_err() || w.write_all(b"\n").is_err() || w.flush().is_err() {
+        // BrokenPipe or closed stdout: signal background tasks to stop cleanly.
+        shutdown.store(true, Ordering::Relaxed);
+        return false;
     }
+    true
 }
 
-fn send_reply(writer: &Arc<Mutex<BufWriter<Stdout>>>, id: u64, res: Result<String, String>) {
+fn send_reply(
+    writer: &Arc<Mutex<BufWriter<Stdout>>>,
+    shutdown: &AtomicBool,
+    id: u64,
+    res: Result<String, String>,
+) -> bool {
     let mut o = JsonOut::with_capacity(256);
     o.obj_start();
     o.kv_u64("id", id);
@@ -50,17 +60,18 @@ fn send_reply(writer: &Arc<Mutex<BufWriter<Stdout>>>, id: u64, res: Result<Strin
         }
     }
     o.obj_end();
-    write_line(writer, &o.finish());
+    write_line(writer, shutdown, &o.finish())
 }
 
 fn send_progress(
     writer: &Arc<Mutex<BufWriter<Stdout>>>,
+    shutdown: &AtomicBool,
     id: u64,
     label: &str,
     done: usize,
     total: usize,
     current: &str,
-) {
+) -> bool {
     let pct = if total == 0 {
         100u64
     } else {
@@ -76,7 +87,7 @@ fn send_progress(
     o.kv_u64("pct", pct.min(100));
     o.kv_str("current", current);
     o.obj_end();
-    write_line(writer, &o.finish());
+    write_line(writer, shutdown, &o.finish())
 }
 
 fn collect_paths(req: &JsonVal) -> Vec<String> {
@@ -95,6 +106,7 @@ fn serve_loop() {
     let stdin = io::stdin();
     let writer = Arc::new(Mutex::new(BufWriter::new(io::stdout())));
     let search_token = Arc::new(AtomicU64::new(0));
+    let shutdown = Arc::new(AtomicBool::new(false));
 
     // Signal readiness to Quickshell SplitParser immediately
     let mut ready = JsonOut::new();
@@ -102,9 +114,14 @@ fn serve_loop() {
     ready.kv_str("event", "ready");
     ready.kv_str("version", env!("CARGO_PKG_VERSION"));
     ready.obj_end();
-    write_line(&writer, &ready.finish());
+    if !write_line(&writer, &shutdown, &ready.finish()) {
+        return;
+    }
 
     for line_res in stdin.lock().lines() {
+        if shutdown.load(Ordering::Relaxed) {
+            break;
+        }
         let Ok(line) = line_res else { break };
         let trimmed = line.trim();
         if trimmed.is_empty() {
@@ -113,43 +130,57 @@ fn serve_loop() {
         let req = match json::parse(trimmed) {
             Ok(v) => v,
             Err(e) => {
-                send_reply(&writer, 0, Err(format!("Invalid JSON request: {e}")));
+                if !send_reply(
+                    &writer,
+                    &shutdown,
+                    0,
+                    Err(format!("Invalid JSON request: {e}")),
+                ) {
+                    break;
+                }
                 continue;
             }
         };
         let id = req.get_u64("id").unwrap_or(0);
         let Some(op) = req.get_str("op") else {
-            send_reply(&writer, id, Err("Missing 'op'".to_string()));
+            if !send_reply(&writer, &shutdown, id, Err("Missing 'op'".to_string())) {
+                break;
+            }
             continue;
         };
 
-        match op {
-            "ping" => send_reply(&writer, id, Ok("{\"pong\":true}".to_string())),
+        let alive = match op {
+            "ping" => send_reply(&writer, &shutdown, id, Ok("{\"pong\":true}".to_string())),
             "list" => {
                 let path = req.get_str("path").unwrap_or("~");
                 let hidden = req.get_bool("hidden").unwrap_or(false);
                 let sort = req.get_str("sort").unwrap_or("name");
                 let desc = req.get_bool("desc").unwrap_or(false);
                 let dirs_first = req.get_bool("dirsFirst").unwrap_or(true);
-                send_reply(&writer, id, list::list_dir(path, hidden, sort, desc, dirs_first));
+                send_reply(
+                    &writer,
+                    &shutdown,
+                    id,
+                    list::list_dir(path, hidden, sort, desc, dirs_first),
+                )
             }
             "dir_stamp" => {
                 let path = req.get_str("path").unwrap_or("~");
-                send_reply(&writer, id, list::dir_stamp(path));
+                send_reply(&writer, &shutdown, id, list::dir_stamp(path))
             }
-            "places" => send_reply(&writer, id, places::get_places()),
+            "places" => send_reply(&writer, &shutdown, id, places::get_places()),
             "bookmark_add" => {
                 let path = req.get_str("path").unwrap_or("");
                 let name = req.get_str("name");
-                send_reply(&writer, id, places::bookmark_add(path, name));
+                send_reply(&writer, &shutdown, id, places::bookmark_add(path, name))
             }
             "bookmark_remove" => {
                 let path = req.get_str("path").unwrap_or("");
-                send_reply(&writer, id, places::bookmark_remove(path));
+                send_reply(&writer, &shutdown, id, places::bookmark_remove(path))
             }
             "preview" => {
                 let path = req.get_str("path").unwrap_or("");
-                send_reply(&writer, id, preview::preview_path(path));
+                send_reply(&writer, &shutdown, id, preview::preview_path(path))
             }
             "search" => {
                 let path = req.get_str("path").unwrap_or("~").to_string();
@@ -159,25 +190,29 @@ fn serve_loop() {
                 let my_tok = search_token.fetch_add(1, Ordering::Relaxed) + 1;
                 let tok = Arc::clone(&search_token);
                 let w = Arc::clone(&writer);
+                let sd = Arc::clone(&shutdown);
                 thread::spawn(move || {
-                    let res = search::search_dir(&path, &query, hidden, max_res, &tok, my_tok);
-                    send_reply(&w, id, res);
+                    let res = search::search_dir(&path, &query, hidden, max_res, &tok, my_tok, &sd);
+                    if !sd.load(Ordering::Relaxed) {
+                        send_reply(&w, &sd, id, res);
+                    }
                 });
+                true
             }
             "mkdir" => {
                 let path = req.get_str("path").unwrap_or("");
                 let name = req.get_str("name");
-                send_reply(&writer, id, ops::mkdir(path, name));
+                send_reply(&writer, &shutdown, id, ops::mkdir(path, name))
             }
             "touch" => {
                 let path = req.get_str("path").unwrap_or("");
                 let name = req.get_str("name");
-                send_reply(&writer, id, ops::touch(path, name));
+                send_reply(&writer, &shutdown, id, ops::touch(path, name))
             }
             "rename" => {
                 let path = req.get_str("path").unwrap_or("");
                 let new_name = req.get_str("newName").unwrap_or("");
-                send_reply(&writer, id, ops::rename_item(path, new_name));
+                send_reply(&writer, &shutdown, id, ops::rename_item(path, new_name))
             }
             "copy" | "move" => {
                 let is_move = op == "move";
@@ -185,37 +220,46 @@ fn serve_loop() {
                 let dest = req.get_str("dest").unwrap_or("").to_string();
                 let overwrite = req.get_bool("overwrite").unwrap_or(false);
                 let w = Arc::clone(&writer);
+                let sd = Arc::clone(&shutdown);
                 let label = if is_move { "Moving" } else { "Copying" };
                 thread::spawn(move || {
                     let w_prog = Arc::clone(&w);
+                    let sd_prog = Arc::clone(&sd);
                     let res = ops::copy_or_move(&sources, &dest, is_move, overwrite, |d, t, c| {
-                        send_progress(&w_prog, id, label, d, t, c);
+                        let _ = send_progress(&w_prog, &sd_prog, id, label, d, t, c);
                     });
-                    send_reply(&w, id, res);
+                    if !sd.load(Ordering::Relaxed) {
+                        send_reply(&w, &sd, id, res);
+                    }
                 });
+                true
             }
             "trash" => {
                 let paths = collect_paths(&req);
-                send_reply(&writer, id, trash::trash_paths(&paths));
+                send_reply(&writer, &shutdown, id, trash::trash_paths(&paths))
             }
-            "trash_list" => send_reply(&writer, id, trash::trash_list()),
+            "trash_list" => send_reply(&writer, &shutdown, id, trash::trash_list()),
             "trash_restore" => {
                 let name = req.get_str("trashName").unwrap_or("");
-                send_reply(&writer, id, trash::trash_restore(name));
+                send_reply(&writer, &shutdown, id, trash::trash_restore(name))
             }
-            "trash_empty" => send_reply(&writer, id, trash::trash_empty()),
+            "trash_empty" => send_reply(&writer, &shutdown, id, trash::trash_empty()),
             "delete" => {
                 let paths = collect_paths(&req);
                 let w = Arc::clone(&writer);
+                let sd = Arc::clone(&shutdown);
                 thread::spawn(move || {
                     let res = ops::delete_paths(&paths);
-                    send_reply(&w, id, res);
+                    if !sd.load(Ordering::Relaxed) {
+                        send_reply(&w, &sd, id, res);
+                    }
                 });
+                true
             }
             "chmod" => {
                 let path = req.get_str("path").unwrap_or("");
                 let mode = req.get_str("mode").unwrap_or("");
-                send_reply(&writer, id, ops::chmod_path(path, mode));
+                send_reply(&writer, &shutdown, id, ops::chmod_path(path, mode))
             }
             "compress" => {
                 let sources = collect_paths(&req);
@@ -223,53 +267,67 @@ fn serve_loop() {
                 let name = req.get_str("name").unwrap_or("archive").to_string();
                 let fmt = req.get_str("format").unwrap_or("tar.gz").to_string();
                 let w = Arc::clone(&writer);
+                let sd = Arc::clone(&shutdown);
                 thread::spawn(move || {
-                    send_progress(&w, id, "Compressing", 0, 1, &name);
+                    let _ = send_progress(&w, &sd, id, "Compressing", 0, 1, &name);
                     let res = ops::compress_paths(&sources, &dest, &name, &fmt);
-                    send_progress(&w, id, "Compressing", 1, 1, "");
-                    send_reply(&w, id, res);
+                    let _ = send_progress(&w, &sd, id, "Compressing", 1, 1, "");
+                    if !sd.load(Ordering::Relaxed) {
+                        send_reply(&w, &sd, id, res);
+                    }
                 });
+                true
             }
             "extract" => {
                 let path = req.get_str("path").unwrap_or("").to_string();
                 let dest = req.get_str("destDir").map(str::to_string);
                 let w = Arc::clone(&writer);
+                let sd = Arc::clone(&shutdown);
                 thread::spawn(move || {
-                    send_progress(&w, id, "Extracting", 0, 1, &path);
+                    let _ = send_progress(&w, &sd, id, "Extracting", 0, 1, &path);
                     let res = ops::extract_archive(&path, dest.as_deref());
-                    send_progress(&w, id, "Extracting", 1, 1, "");
-                    send_reply(&w, id, res);
+                    let _ = send_progress(&w, &sd, id, "Extracting", 1, 1, "");
+                    if !sd.load(Ordering::Relaxed) {
+                        send_reply(&w, &sd, id, res);
+                    }
                 });
+                true
             }
             "copy_uri" => {
                 let paths = collect_paths(&req);
-                send_reply(&writer, id, ops::copy_uri(&paths));
+                send_reply(&writer, &shutdown, id, ops::copy_uri(&paths))
             }
             "copy_text" => {
                 let text = req.get_str("text").unwrap_or("");
-                send_reply(&writer, id, ops::copy_text(text));
+                send_reply(&writer, &shutdown, id, ops::copy_text(text))
             }
             "open" => {
                 let path = req.get_str("path").unwrap_or("");
-                send_reply(&writer, id, ops::open_path(path));
+                send_reply(&writer, &shutdown, id, ops::open_path(path))
             }
             "open_with" => {
                 let path = req.get_str("path").unwrap_or("");
                 let app = req.get_str("app").unwrap_or("");
-                send_reply(&writer, id, ops::open_with(path, app));
+                send_reply(&writer, &shutdown, id, ops::open_with(path, app))
             }
             "terminal" => {
                 let path = req.get_str("path").unwrap_or("~");
                 let term = req.get_str("terminal");
-                send_reply(&writer, id, ops::open_terminal(path, term));
+                send_reply(&writer, &shutdown, id, ops::open_terminal(path, term))
             }
             "quit" => {
-                send_reply(&writer, id, Ok("{\"bye\":true}".to_string()));
+                let _ = send_reply(&writer, &shutdown, id, Ok("{\"bye\":true}".to_string()));
                 break;
             }
-            other => send_reply(&writer, id, Err(format!("Unknown op '{other}'"))),
+            other => send_reply(&writer, &shutdown, id, Err(format!("Unknown op '{other}'"))),
+        };
+        if !alive {
+            break;
         }
     }
+
+    shutdown.store(true, Ordering::Relaxed);
+    search_token.fetch_add(1, Ordering::Relaxed);
 }
 
 fn main() {
@@ -281,7 +339,10 @@ fn main() {
 
     match args[0].as_str() {
         "version" => {
-            println!("{{\"name\":\"mango-fm\",\"version\":\"{}\"}}", env!("CARGO_PKG_VERSION"));
+            println!(
+                "{{\"name\":\"mango-fm\",\"version\":\"{}\"}}",
+                env!("CARGO_PKG_VERSION")
+            );
         }
         "list" => {
             let mut path = "~";
@@ -338,7 +399,8 @@ fn main() {
                 i += 1;
             }
             let tok = AtomicU64::new(1);
-            match search::search_dir(path, query, hidden, max_res, &tok, 1) {
+            let shutdown = AtomicBool::new(false);
+            match search::search_dir(path, query, hidden, max_res, &tok, 1, &shutdown) {
                 Ok(out) => println!("{out}"),
                 Err(e) => print_err_exit(&e),
             }

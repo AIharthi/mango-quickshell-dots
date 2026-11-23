@@ -72,7 +72,7 @@ ColumnLayout {
     Timer {
         interval: 4000
         repeat: true
-        running: true
+        running: root.visible
         onTriggered: root.refreshFast()
     }
 

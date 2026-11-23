@@ -15,6 +15,13 @@ MANGO_MODE_CONF="$MANGO_DIR/mode.conf"
 
 mkdir -p "$QUICKSHELL_DIR" "$MANGO_DIR"
 
+if [[ "${MANGO_MODE_LOCKED:-0}" != "1" ]] && command -v flock >/dev/null 2>&1; then
+    LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/mango-mode-$(id -u).lock"
+    exec 8>"$LOCK_FILE"
+    flock -x 8
+    export MANGO_MODE_LOCKED=1
+fi
+
 atomic_write() {
     local target="$1"
     local tmp="${target}.tmp.$$"

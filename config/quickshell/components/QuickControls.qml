@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -36,14 +37,14 @@ Rectangle {
             refreshAll();
     }
 
-    function dbusHasOwnerCmd(serviceName: string): string {
-        return "dbus-send --system --dest=org.freedesktop.DBus --type=method_call --print-reply=literal /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:" + serviceName + " 2>/dev/null | grep -q true";
-    }
-
-    function runDbusGuardedToggle(serviceName: string, commandStr: string): void {
+    function runDbusGuardedToggle(serviceName: string, cmdArgs: list<string>): void {
         if (toggleCmdProc.running)
             return;
-        toggleCmdProc.command = ["sh", "-c", dbusHasOwnerCmd(serviceName) + " && " + commandStr];
+        toggleCmdProc.command = [
+            "sh", "-c",
+            "svc=\"$1\"; shift; if dbus-send --system --dest=org.freedesktop.DBus --type=method_call --print-reply=literal /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner \"string:$svc\" 2>/dev/null | grep -q true; then exec \"$@\"; fi",
+            "_", serviceName
+        ].concat(cmdArgs);
         toggleCmdProc.running = true;
     }
 
@@ -164,7 +165,7 @@ Rectangle {
         id: wifiReadProc
         command: [
             "sh", "-c",
-            "if ! " + root.dbusHasOwnerCmd("org.freedesktop.NetworkManager") + "; then echo 'disabled|'; exit 0; fi; radio=$(timeout 1 nmcli radio wifi </dev/null 2>/dev/null || echo disabled); ssid=$(timeout 1 nmcli -t -f ACTIVE,SSID dev wifi </dev/null 2>/dev/null | awk -F: '$1==\"yes\"{print $2; exit}'); echo \"$radio|$ssid\""
+            "if ! dbus-send --system --dest=org.freedesktop.DBus --type=method_call --print-reply=literal /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.NetworkManager 2>/dev/null | grep -q true; then echo 'disabled|'; exit 0; fi; radio=$(timeout 1 nmcli radio wifi </dev/null 2>/dev/null || echo disabled); ssid=$(timeout 1 nmcli -t -f ACTIVE,SSID dev wifi </dev/null 2>/dev/null | awk -F: '$1==\"yes\"{print $2; exit}'); echo \"$radio|$ssid\""
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -181,7 +182,7 @@ Rectangle {
         id: btReadProc
         command: [
             "sh", "-c",
-            "if ! " + root.dbusHasOwnerCmd("org.bluez") + "; then echo 'no|'; exit 0; fi; pwr=$(timeout 1 bluetoothctl show </dev/null 2>/dev/null | awk '/Powered:/{print $2; exit}'); dev=$(timeout 1 bluetoothctl devices Connected </dev/null 2>/dev/null | head -n1 | cut -d' ' -f3-); echo \"${pwr:-no}|$dev\""
+            "if ! dbus-send --system --dest=org.freedesktop.DBus --type=method_call --print-reply=literal /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.bluez 2>/dev/null | grep -q true; then echo 'no|'; exit 0; fi; pwr=$(timeout 1 bluetoothctl show </dev/null 2>/dev/null | awk '/Powered:/{print $2; exit}'); dev=$(timeout 1 bluetoothctl devices Connected </dev/null 2>/dev/null | head -n1 | cut -d' ' -f3-); echo \"${pwr:-no}|$dev\""
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -472,7 +473,7 @@ Rectangle {
                             root.openSettingsRequested("network");
                         } else {
                             const target = root.wifiEnabled ? "off" : "on";
-                            root.runDbusGuardedToggle("org.freedesktop.NetworkManager", "timeout 2 nmcli radio wifi " + target + " </dev/null");
+                            root.runDbusGuardedToggle("org.freedesktop.NetworkManager", ["timeout", "2", "nmcli", "radio", "wifi", target]);
                         }
                     }
                 }
@@ -536,7 +537,7 @@ Rectangle {
                             root.openSettingsRequested("bluetooth");
                         } else {
                             const target = root.btEnabled ? "off" : "on";
-                            root.runDbusGuardedToggle("org.bluez", "timeout 2 bluetoothctl power " + target + " </dev/null");
+                            root.runDbusGuardedToggle("org.bluez", ["timeout", "2", "bluetoothctl", "power", target]);
                         }
                     }
                 }

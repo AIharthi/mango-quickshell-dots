@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import ".."
@@ -35,11 +36,11 @@ RowLayout {
         scale: minusMouse.pressed ? 0.92 : 1.0
 
         Behavior on color {
-            enabled: !Theme.isSimple
+            enabled: !Theme.reducedMotion
             ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
         }
         Behavior on scale {
-            enabled: !Theme.isSimple
+            enabled: !Theme.reducedMotion
             NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
         }
 
@@ -82,11 +83,11 @@ RowLayout {
         scale: plusMouse.pressed ? 0.92 : 1.0
 
         Behavior on color {
-            enabled: !Theme.isSimple
+            enabled: !Theme.reducedMotion
             ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
         }
         Behavior on scale {
-            enabled: !Theme.isSimple
+            enabled: !Theme.reducedMotion
             NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
         }
 

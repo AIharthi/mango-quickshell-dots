@@ -101,6 +101,12 @@ ColumnLayout {
         return /^#[0-9a-fA-F]{6}$/.test(prefixed) ? prefixed.toLowerCase() : fallback;
     }
 
+    function fileUrl(p: string): string {
+        if (!p || p.length === 0)
+            return "";
+        return "file://" + String(p).replace(/%/g, "%25").replace(/#/g, "%23").replace(/\?/g, "%3F");
+    }
+
     function colorToHex(col: color): string {
         const toByte = x => Math.max(0, Math.min(255, Math.round(x * 255)));
         const toHex2 = n => (n < 16 ? "0" : "") + n.toString(16);
@@ -1288,7 +1294,7 @@ ColumnLayout {
 
                             Image {
                                 anchors.fill: parent
-                                source: "file://" + wpTile.modelData.path
+                                source: root.fileUrl(wpTile.modelData.path)
                                 asynchronous: true
                                 cache: true
                                 fillMode: Image.PreserveAspectCrop

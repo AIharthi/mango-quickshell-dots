@@ -5,10 +5,10 @@ CMD="${1:-}"
 shift || true
 
 case "$CMD" in
-    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|user-info|backup-settings)
+    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|user-info|backup-settings)
         ;;
     *)
-        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|user-info|backup-settings> [args...]" >&2
+        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|user-info|backup-settings> [args...]" >&2
         exit 1
         ;;
 esac
@@ -31,8 +31,10 @@ import time
 cmd = sys.argv[1]
 args = sys.argv[2:]
 
-QS_DIR = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config") + "/quickshell")
-MANGO_DIR = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config") + "/mango")
+CONFIG_DIR = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
+DATA_DIR = os.path.expanduser(os.environ.get("XDG_DATA_HOME", "~/.local/share"))
+QS_DIR = os.path.join(CONFIG_DIR, "quickshell")
+MANGO_DIR = os.path.join(CONFIG_DIR, "mango")
 PREFS_FILE = os.path.join(QS_DIR, "shell-prefs.json")
 
 
@@ -80,7 +82,7 @@ def gsettings_get(schema, key, fallback):
 
 def list_icon_themes():
     themes = set()
-    for base in (os.path.expanduser("~/.local/share/icons"), "/usr/share/icons"):
+    for base in (os.path.join(DATA_DIR, "icons"), "/usr/share/icons"):
         if not os.path.isdir(base):
             continue
         try:
@@ -189,8 +191,8 @@ def cmd_gtk_set():
     if shutil.which("gsettings"):
         subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", key, clean_val], stderr=subprocess.DEVNULL)
 
-    gtk3 = os.path.expanduser("~/.config/gtk-3.0/settings.ini")
-    gtk4 = os.path.expanduser("~/.config/gtk-4.0/settings.ini")
+    gtk3 = os.path.join(CONFIG_DIR, "gtk-3.0", "settings.ini")
+    gtk4 = os.path.join(CONFIG_DIR, "gtk-4.0", "settings.ini")
     if key == "icon-theme":
         for p in (gtk3, gtk4):
             update_ini_kv(p, "gtk-icon-theme-name", clean_val)
@@ -348,8 +350,8 @@ def update_kitty_kv(path, key, value):
 
 
 def cmd_terminal_get():
-    foot_path = os.path.expanduser("~/.config/foot/foot.ini")
-    kitty_path = os.path.expanduser("~/.config/kitty/kitty.conf")
+    foot_path = os.path.join(CONFIG_DIR, "foot", "foot.ini")
+    kitty_path = os.path.join(CONFIG_DIR, "kitty", "kitty.conf")
     print(json.dumps({"foot": parse_foot_ini(foot_path), "kitty": parse_kitty_conf(kitty_path)}))
 
 
@@ -358,7 +360,7 @@ def cmd_terminal_set():
         sys.exit("Usage: manage-system.sh terminal-set <foot|kitty> <key> <value>")
     term, key, val = args[0].lower(), args[1], args[2]
     if term == "foot":
-        foot_path = os.path.expanduser("~/.config/foot/foot.ini")
+        foot_path = os.path.join(CONFIG_DIR, "foot", "foot.ini")
         if key == "alpha":
             v = f"{max(0.50, min(1.00, float(val))):.2f}"
             update_ini_section_kv(foot_path, "colors", "alpha", v)
@@ -378,7 +380,7 @@ def cmd_terminal_set():
         else:
             sys.exit(f"Unsupported foot key: {key}")
     elif term == "kitty":
-        kitty_path = os.path.expanduser("~/.config/kitty/kitty.conf")
+        kitty_path = os.path.join(CONFIG_DIR, "kitty", "kitty.conf")
         if key == "opacity":
             v = f"{max(0.50, min(1.00, float(val))):.2f}"
             update_kitty_kv(kitty_path, "background_opacity", v)
@@ -429,8 +431,10 @@ def cmd_network_info():
                     pass
                 rx_mb, tx_mb = 0.0, 0.0
                 try:
-                    rx_mb = round(int(open(f"{sys_base}/statistics/rx_bytes").read().strip()) / (1024 ** 2), 1)
-                    tx_mb = round(int(open(f"{sys_base}/statistics/tx_bytes").read().strip()) / (1024 ** 2), 1)
+                    with open(f"{sys_base}/statistics/rx_bytes", "r", encoding="utf-8") as rf:
+                        rx_mb = round(int(rf.read().strip()) / (1024 ** 2), 1)
+                    with open(f"{sys_base}/statistics/tx_bytes", "r", encoding="utf-8") as tf:
+                        tx_mb = round(int(tf.read().strip()) / (1024 ** 2), 1)
                 except Exception:
                     pass
                 is_wifi = os.path.isdir(f"{sys_base}/wireless") or os.path.isdir(f"{sys_base}/phy80211")
@@ -493,25 +497,60 @@ def cmd_network_info():
 def cmd_network_action():
     if not shutil.which("nmcli"):
         sys.exit("nmcli is not available")
+    if len(args) < 1:
+        sys.exit("Usage: manage-system.sh network-action <up|down|dns|wifi-disconnect> [conn] [dns_servers]")
+    act = args[0]
+    if act == "wifi-disconnect":
+        dev_raw = run_out(["nmcli", "-t", "-f", "DEVICE,TYPE,STATE", "dev"], timeout=3.0)
+        for line in dev_raw.splitlines():
+            parts = line.split(":")
+            if len(parts) >= 2 and parts[1] == "wifi" and (len(parts) < 3 or parts[2] == "connected"):
+                subprocess.run(["timeout", "5", "nmcli", "dev", "disconnect", parts[0]], stderr=subprocess.DEVNULL)
+                break
+        cmd_network_info()
+        return
     if len(args) < 2:
-        sys.exit("Usage: manage-system.sh network-action <up|down|dns> <conn> [dns_servers]")
-    act, conn = args[0], args[1]
+        sys.exit("Missing connection name")
+    conn = args[1]
     if act == "up":
-        subprocess.run(["timeout", "8", "nmcli", "connection", "up", conn], stderr=subprocess.DEVNULL)
+        subprocess.run(["timeout", "8", "nmcli", "connection", "up", "id", conn], stderr=subprocess.DEVNULL)
     elif act == "down":
-        subprocess.run(["timeout", "8", "nmcli", "connection", "down", conn], stderr=subprocess.DEVNULL)
+        subprocess.run(["timeout", "8", "nmcli", "connection", "down", "id", conn], stderr=subprocess.DEVNULL)
     elif act == "dns":
         dns_val = " ".join(args[2:]).strip() if len(args) >= 3 else "auto"
         if dns_val == "auto" or not dns_val:
-            subprocess.run(["nmcli", "connection", "modify", conn, "ipv4.ignore-auto-dns", "no", "ipv4.dns", ""], stderr=subprocess.DEVNULL)
+            subprocess.run(["nmcli", "connection", "modify", "id", conn, "ipv4.ignore-auto-dns", "no", "ipv4.dns", ""], stderr=subprocess.DEVNULL)
         else:
             if not re.match(r"^[0-9a-fA-F.: ]+$", dns_val):
                 sys.exit("Invalid DNS IP list")
-            subprocess.run(["nmcli", "connection", "modify", conn, "ipv4.ignore-auto-dns", "yes", "ipv4.dns", dns_val], stderr=subprocess.DEVNULL)
-        subprocess.run(["timeout", "8", "nmcli", "connection", "up", conn], stderr=subprocess.DEVNULL)
+            subprocess.run(["nmcli", "connection", "modify", "id", conn, "ipv4.ignore-auto-dns", "yes", "ipv4.dns", dns_val], stderr=subprocess.DEVNULL)
+        subprocess.run(["timeout", "8", "nmcli", "connection", "up", "id", conn], stderr=subprocess.DEVNULL)
     else:
         sys.exit(f"Unknown network action: {act}")
     cmd_network_info()
+
+
+def cmd_power_action():
+    if len(args) < 1 or args[0] not in ("suspend", "reboot", "poweroff"):
+        sys.exit("Usage: manage-system.sh power-action <suspend|reboot|poweroff>")
+    act = args[0]
+    if shutil.which("loginctl"):
+        res = subprocess.run(["loginctl", act], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if res.returncode == 0:
+            return
+    if shutil.which("systemctl") and os.path.isdir("/run/systemd/system"):
+        subprocess.Popen(["systemctl", act], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return
+    fallback_map = {
+        "suspend": ["zzz"],
+        "reboot": ["reboot"],
+        "poweroff": ["poweroff"],
+    }
+    for exe in fallback_map[act]:
+        if shutil.which(exe):
+            subprocess.Popen([exe], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return
+    sys.exit(f"No supported power backend found for '{act}'")
 
 
 def cmd_audio_cards():
@@ -567,7 +606,7 @@ def cmd_audio_test():
 
 
 def cmd_privacy_get():
-    xbel = os.path.expanduser("~/.local/share/recently-used.xbel")
+    xbel = os.path.join(DATA_DIR, "recently-used.xbel")
     xbel_kb = round(os.path.getsize(xbel) / 1024.0, 1) if os.path.isfile(xbel) else 0.0
     print(json.dumps({
         "hasGsettings": bool(shutil.which("gsettings")),
@@ -604,7 +643,7 @@ def cmd_clear_clipboard():
 
 
 def cmd_clear_recent():
-    xbel = os.path.expanduser("~/.local/share/recently-used.xbel")
+    xbel = os.path.join(DATA_DIR, "recently-used.xbel")
     if os.path.isfile(xbel):
         os.remove(xbel)
     cmd_privacy_get()
@@ -614,25 +653,29 @@ def cmd_hwmon():
     sensors = []
     for hw in sorted(glob.glob("/sys/class/hwmon/hwmon*")):
         try:
-            chip = open(os.path.join(hw, "name"), "r").read().strip()
+            with open(os.path.join(hw, "name"), "r", encoding="utf-8", errors="ignore") as nf:
+                chip = nf.read().strip()
         except Exception:
             chip = os.path.basename(hw)
         for inp in sorted(glob.glob(os.path.join(hw, "temp*_input"))):
             base = inp[:-6]
             try:
-                val = int(open(inp, "r").read().strip()) / 1000.0
+                with open(inp, "r", encoding="utf-8", errors="ignore") as vf:
+                    val = int(vf.read().strip()) / 1000.0
             except Exception:
                 continue
             if val < -20 or val > 180:
                 continue
             lbl = ""
             try:
-                lbl = open(base + "_label", "r").read().strip()
+                with open(base + "_label", "r", encoding="utf-8", errors="ignore") as lf:
+                    lbl = lf.read().strip()
             except Exception:
                 lbl = os.path.basename(base)
             crit = 100.0
             try:
-                cval = int(open(base + "_crit", "r").read().strip()) / 1000.0
+                with open(base + "_crit", "r", encoding="utf-8", errors="ignore") as cf:
+                    cval = int(cf.read().strip()) / 1000.0
                 if 30.0 <= cval <= 150.0:
                     crit = cval
             except Exception:
@@ -679,7 +722,8 @@ def cmd_kill_proc():
         sys.exit("Refusing to signal protected PID")
     comm = ""
     try:
-        comm = open(f"/proc/{pid}/comm", "r").read().strip()
+        with open(f"/proc/{pid}/comm", "r", encoding="utf-8", errors="ignore") as cf:
+            comm = cf.read().strip()
     except Exception:
         pass
     if comm in ("mango", "qs", "quickshell", "systemd", "openrc-init", "init"):
@@ -763,6 +807,7 @@ DISPATCH = {
     "terminal-set": cmd_terminal_set,
     "network-info": cmd_network_info,
     "network-action": cmd_network_action,
+    "power-action": cmd_power_action,
     "audio-cards": cmd_audio_cards,
     "audio-set-profile": cmd_audio_set_profile,
     "audio-test": cmd_audio_test,

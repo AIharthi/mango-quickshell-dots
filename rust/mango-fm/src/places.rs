@@ -3,9 +3,12 @@ use std::fs;
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::json::{self, JsonOut, JsonVal};
 use crate::util::{config_dir, data_dir, expand_path, home_dir, human_size};
+
+static BOOKMARK_TMP_SEQ: AtomicU64 = AtomicU64::new(0);
 
 fn bookmarks_path() -> PathBuf {
     config_dir().join("quickshell").join("fm-bookmarks.json")
@@ -78,13 +81,19 @@ pub fn save_bookmarks(items: &[BookmarkItem]) -> Result<(), String> {
     let mut text = out.finish();
     text.push('\n');
 
-    let tmp = parent.join(format!(".tmp_bookmarks_{}", std::process::id()));
+    let seq = BOOKMARK_TMP_SEQ.fetch_add(1, Ordering::Relaxed);
+    let tmp = parent.join(format!(".tmp_bookmarks_{}_{}", std::process::id(), seq));
     {
         let mut f = fs::File::create(&tmp).map_err(|e| format!("create tmp bookmarks: {e}"))?;
-        f.write_all(text.as_bytes())
-            .map_err(|e| format!("write tmp bookmarks: {e}"))?;
+        if let Err(e) = f.write_all(text.as_bytes()).and_then(|()| f.sync_all()) {
+            let _ = fs::remove_file(&tmp);
+            return Err(format!("write tmp bookmarks: {e}"));
+        }
     }
-    fs::rename(&tmp, &bp).map_err(|e| format!("save bookmarks: {e}"))?;
+    if let Err(e) = fs::rename(&tmp, &bp) {
+        let _ = fs::remove_file(&tmp);
+        return Err(format!("save bookmarks: {e}"));
+    }
     Ok(())
 }
 
@@ -128,7 +137,9 @@ fn unescape_mount_field(s: &str) -> String {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i] == b'\\' && i + 3 < bytes.len() {
-            if let Ok(code) = u8::from_str_radix(std::str::from_utf8(&bytes[i + 1..i + 4]).unwrap_or(""), 8) {
+            if let Ok(code) =
+                u8::from_str_radix(std::str::from_utf8(&bytes[i + 1..i + 4]).unwrap_or(""), 8)
+            {
                 out.push(code as char);
                 i += 4;
                 continue;
@@ -159,9 +170,15 @@ fn df_usage_map() -> HashMap<String, (u64, u64, u64, u64)> {
         if cols.len() < 6 {
             continue;
         }
-        let Ok(total_kb) = cols[1].parse::<u64>() else { continue };
-        let Ok(used_kb) = cols[2].parse::<u64>() else { continue };
-        let Ok(avail_kb) = cols[3].parse::<u64>() else { continue };
+        let Ok(total_kb) = cols[1].parse::<u64>() else {
+            continue;
+        };
+        let Ok(used_kb) = cols[2].parse::<u64>() else {
+            continue;
+        };
+        let Ok(avail_kb) = cols[3].parse::<u64>() else {
+            continue;
+        };
         let pct_str = cols[4].trim_end_matches('%');
         let pct = pct_str.parse::<u64>().unwrap_or(0);
         let mnt = cols[5..].join(" ");
@@ -198,10 +215,33 @@ fn list_drives() -> Vec<DriveEntry> {
     let mut seen_mounts = HashSet::new();
     let mut drives = Vec::new();
     let ignored_fs = [
-        "proc", "sysfs", "tmpfs", "devtmpfs", "devpts", "cgroup", "cgroup2", "pstore", "bpf",
-        "tracefs", "debugfs", "securityfs", "configfs", "fusectl", "mqueue", "hugetlbfs",
-        "ramfs", "autofs", "efivarfs", "binfmt_misc", "squashfs", "overlay", "rpc_pipefs",
-        "nfsd", "fuse.portal", "fuse.gvfsd-fuse", "nsfs",
+        "proc",
+        "sysfs",
+        "tmpfs",
+        "devtmpfs",
+        "devpts",
+        "cgroup",
+        "cgroup2",
+        "pstore",
+        "bpf",
+        "tracefs",
+        "debugfs",
+        "securityfs",
+        "configfs",
+        "fusectl",
+        "mqueue",
+        "hugetlbfs",
+        "ramfs",
+        "autofs",
+        "efivarfs",
+        "binfmt_misc",
+        "squashfs",
+        "overlay",
+        "rpc_pipefs",
+        "nfsd",
+        "fuse.portal",
+        "fuse.gvfsd-fuse",
+        "nsfs",
     ];
 
     for line in mounts_raw.lines() {

@@ -144,7 +144,7 @@ ShellRoot {
                 if (ShellState.notifSoundEnabled && !ShellState.dnd) {
                     Quickshell.execDetached([
                         "sh", "-c",
-                        "for s in /usr/share/sounds/freedesktop/stereo/message-new-instant.oga /usr/share/sounds/freedesktop/stereo/message.oga /usr/share/sounds/freedesktop/stereo/bell.oga; do [ -f \"$s\" ] && { command -v paplay >/dev/null && paplay \"$s\" || command -v pw-play >/dev/null && pw-play \"$s\"; } && break; done"
+                        "for s in /usr/share/sounds/freedesktop/stereo/message-new-instant.oga /usr/share/sounds/freedesktop/stereo/message.oga /usr/share/sounds/freedesktop/stereo/bell.oga; do [ -f \"$s\" ] || continue; if command -v paplay >/dev/null 2>&1; then paplay \"$s\"; elif command -v pw-play >/dev/null 2>&1; then pw-play \"$s\"; fi; break; done"
                     ]);
                 }
             }
@@ -206,8 +206,8 @@ ShellRoot {
                     right: true
                 }
 
-                // Fixed 40px exclusive zone in Default/Blur modes; 0 in Simple Mode (SimpleBar owns the 28px zone).
-                exclusiveZone: Theme.isSimple ? 0 : (ShellState.pillHeight + (ShellState.islandStyle === "notch" ? 2 : ShellState.islandTopMargin + 2))
+                // Reserve top bar space cleanly: full-width/notch flush modes omit floating pill top margin
+                exclusiveZone: Theme.isSimple ? 0 : (ShellState.pillHeight + ((ShellState.islandStyle === "notch" || ShellState.islandStyle === "bar") ? 2 : ShellState.islandTopMargin + 2))
                 exclusionMode: ExclusionMode.Normal
                 implicitHeight: 540
                 color: "transparent"

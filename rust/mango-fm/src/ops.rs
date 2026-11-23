@@ -42,8 +42,8 @@ pub fn unique_dest_path(target: &Path) -> PathBuf {
 }
 
 pub fn remove_any(path: &Path) -> Result<(), String> {
-    let lmeta = fs::symlink_metadata(path)
-        .map_err(|e| format!("Cannot stat '{}': {e}", path.display()))?;
+    let lmeta =
+        fs::symlink_metadata(path).map_err(|e| format!("Cannot stat '{}': {e}", path.display()))?;
     if lmeta.file_type().is_symlink() || !lmeta.is_dir() {
         fs::remove_file(path).map_err(|e| format!("Remove '{}': {e}", path.display()))
     } else {
@@ -52,8 +52,7 @@ pub fn remove_any(path: &Path) -> Result<(), String> {
 }
 
 pub fn copy_recursive_raw(src: &Path, dst: &Path) -> Result<u64, String> {
-    let lmeta = fs::symlink_metadata(src)
-        .map_err(|e| format!("Stat '{}': {e}", src.display()))?;
+    let lmeta = fs::symlink_metadata(src).map_err(|e| format!("Stat '{}': {e}", src.display()))?;
     if lmeta.file_type().is_symlink() {
         let link_target =
             fs::read_link(src).map_err(|e| format!("Read symlink '{}': {e}", src.display()))?;
@@ -93,7 +92,11 @@ pub fn move_single(src: &Path, dst: &Path) -> Result<(), String> {
             remove_any(src)?;
             Ok(())
         }
-        Err(e) => Err(format!("Move '{}' -> '{}': {e}", src.display(), dst.display())),
+        Err(e) => Err(format!(
+            "Move '{}' -> '{}': {e}",
+            src.display(),
+            dst.display()
+        )),
     }
 }
 
@@ -189,8 +192,8 @@ pub fn delete_paths(raw_paths: &[String]) -> Result<String, String> {
 pub fn chmod_path(raw_path: &str, mode_str: &str) -> Result<String, String> {
     let target = expand_path(raw_path);
     let clean = mode_str.trim().trim_start_matches("0o");
-    let mode = u32::from_str_radix(clean, 8)
-        .map_err(|_| format!("Invalid octal mode '{mode_str}'"))?;
+    let mode =
+        u32::from_str_radix(clean, 8).map_err(|_| format!("Invalid octal mode '{mode_str}'"))?;
     let mut perms = fs::metadata(&target)
         .map_err(|e| format!("Stat '{}': {e}", target.display()))?
         .permissions();
@@ -217,7 +220,10 @@ where
 {
     let dest_dir = expand_path(raw_dest_dir);
     if !dest_dir.is_dir() {
-        return Err(format!("Destination is not a directory: {}", dest_dir.display()));
+        return Err(format!(
+            "Destination is not a directory: {}",
+            dest_dir.display()
+        ));
     }
     let total = raw_sources.len();
     let mut last_emit = Instant::now() - Duration::from_secs(1);
@@ -281,6 +287,170 @@ where
     Ok(out.finish())
 }
 
+pub fn validate_archive_member(member: &str) -> Result<(), String> {
+    if member.is_empty() {
+        return Ok(());
+    }
+    if member.contains('\0') {
+        return Err("Archive contains NUL byte in entry name".to_string());
+    }
+    if member.starts_with('/') || member.starts_with('\\') {
+        return Err(format!("Unsafe absolute path in archive: {member}"));
+    }
+    let bytes = member.as_bytes();
+    if bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':' {
+        return Err(format!("Unsafe drive path in archive: {member}"));
+    }
+    for comp in member.split(['/', '\\']) {
+        if comp == ".." {
+            return Err(format!("Unsafe parent traversal in archive: {member}"));
+        }
+    }
+    Ok(())
+}
+
+pub fn check_relative_within_root(member_path: &str, target: &str) -> Result<(), String> {
+    if target.contains('\0') {
+        return Err("Archive contains NUL byte in link target".to_string());
+    }
+    if target.starts_with('/') || target.starts_with('\\') {
+        return Err(format!("Unsafe absolute link target in archive: {target}"));
+    }
+    let bytes = target.as_bytes();
+    if bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':' {
+        return Err(format!("Unsafe drive link target in archive: {target}"));
+    }
+    let parent = Path::new(member_path)
+        .parent()
+        .unwrap_or_else(|| Path::new(""));
+    let mut depth: isize = 0;
+    for comp in parent.components() {
+        match comp {
+            std::path::Component::Normal(_) => depth += 1,
+            std::path::Component::CurDir => {}
+            _ => return Err(format!("Unsafe archive member path: {member_path}")),
+        }
+    }
+    for comp in target.split(['/', '\\']) {
+        if comp.is_empty() || comp == "." {
+            continue;
+        }
+        if comp == ".." {
+            depth -= 1;
+            if depth < 0 {
+                return Err(format!(
+                    "Unsafe link target escapes archive root: {member_path} -> {target}"
+                ));
+            }
+        } else {
+            depth += 1;
+        }
+    }
+    Ok(())
+}
+
+fn validate_archive_before_extract(archive: &Path, is_zip: bool) -> Result<(), String> {
+    if is_zip {
+        let list_out = Command::new("unzip")
+            .args(["-Z1", "--"])
+            .arg(archive)
+            .stdin(Stdio::null())
+            .stderr(Stdio::piped())
+            .output()
+            .map_err(|e| format!("Failed to inspect zip archive: {e}"))?;
+        if !list_out.status.success() {
+            let msg = String::from_utf8_lossy(&list_out.stderr).trim().to_string();
+            return Err(if msg.is_empty() {
+                "Failed to list zip archive entries".to_string()
+            } else {
+                msg
+            });
+        }
+        let text = String::from_utf8_lossy(&list_out.stdout);
+        for line in text.lines() {
+            let m = line.trim_end_matches('\r');
+            validate_archive_member(m)?;
+        }
+        // Reject symlinks inside untrusted zip archives if zipinfo shows symlink mode.
+        if let Ok(detail_out) = Command::new("unzip")
+            .args(["-Z", "--"])
+            .arg(archive)
+            .stdin(Stdio::null())
+            .stderr(Stdio::null())
+            .output()
+        {
+            if detail_out.status.success() {
+                let dtxt = String::from_utf8_lossy(&detail_out.stdout);
+                for line in dtxt.lines() {
+                    let trimmed = line.trim_start();
+                    if let Some(first_tok) = trimmed.split_whitespace().next() {
+                        if first_tok.len() == 10 && first_tok.starts_with('l') {
+                            return Err("Refusing to extract symlink from zip archive".to_string());
+                        }
+                    }
+                }
+            }
+        }
+        return Ok(());
+    }
+
+    let tf_out = Command::new("tar")
+        .arg("-tf")
+        .arg(archive)
+        .stdin(Stdio::null())
+        .stderr(Stdio::piped())
+        .output()
+        .map_err(|e| format!("Failed to inspect tar archive: {e}"))?;
+    if !tf_out.status.success() {
+        let msg = String::from_utf8_lossy(&tf_out.stderr).trim().to_string();
+        return Err(if msg.is_empty() {
+            "Failed to list tar archive entries".to_string()
+        } else {
+            msg
+        });
+    }
+    let tf_text = String::from_utf8_lossy(&tf_out.stdout);
+    let tf_lines: Vec<&str> = tf_text.lines().collect();
+    for m in &tf_lines {
+        validate_archive_member(m)?;
+    }
+
+    let tvf_out = Command::new("tar")
+        .arg("-tvf")
+        .arg(archive)
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .map_err(|e| format!("Failed to verify tar archive links: {e}"))?;
+    if tvf_out.status.success() {
+        let tvf_text = String::from_utf8_lossy(&tvf_out.stdout);
+        let tvf_lines: Vec<&str> = tvf_text.lines().collect();
+        for (idx, line) in tvf_lines.iter().enumerate() {
+            if line.starts_with('l') {
+                let member_opt = tf_lines.get(idx).copied();
+                let target_opt = member_opt
+                    .and_then(|m| {
+                        let pat = format!(" {m} -> ");
+                        line.find(&pat).map(|pos| &line[pos + pat.len()..])
+                    })
+                    .or_else(|| line.rsplit_once(" -> ").map(|(_, t)| t));
+                if let Some(target) = target_opt {
+                    if let Some(m) = member_opt {
+                        check_relative_within_root(m, target)?;
+                    } else {
+                        validate_archive_member(target)?;
+                    }
+                }
+            } else if line.starts_with('h') {
+                if let Some((_, target)) = line.rsplit_once(" link to ") {
+                    validate_archive_member(target)?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 pub fn compress_paths(
     raw_sources: &[String],
     raw_dest_dir: &str,
@@ -291,7 +461,13 @@ pub fn compress_paths(
         return Err("No items selected to compress".to_string());
     }
     let clean_name = archive_name.trim();
-    if clean_name.is_empty() || clean_name.contains('/') {
+    if clean_name.is_empty()
+        || clean_name == "."
+        || clean_name == ".."
+        || clean_name.starts_with('-')
+        || clean_name.contains('/')
+        || clean_name.contains('\0')
+    {
         return Err("Invalid archive name".to_string());
     }
     let dest_dir = expand_path(raw_dest_dir);
@@ -315,17 +491,26 @@ pub fn compress_paths(
     let mut rel_items = Vec::with_capacity(raw_sources.len());
     for raw in raw_sources {
         let p = expand_path(raw);
+        if fs::symlink_metadata(&p).is_err() {
+            return Err(format!("Source not found: {}", p.display()));
+        }
         let rel = p
             .strip_prefix(base_dir)
             .map(|r| r.to_string_lossy().into_owned())
             .unwrap_or_else(|_| p.to_string_lossy().into_owned());
-        rel_items.push(rel);
+        let safe_rel = if rel.starts_with('-') {
+            format!("./{rel}")
+        } else {
+            rel
+        };
+        rel_items.push(safe_rel);
     }
 
     let status = if use_zip {
         Command::new("zip")
             .arg("-rq")
             .arg(&archive_path)
+            .arg("--")
             .args(&rel_items)
             .current_dir(base_dir)
             .stdin(Stdio::null())
@@ -336,6 +521,7 @@ pub fn compress_paths(
         Command::new("tar")
             .arg("-czf")
             .arg(&archive_path)
+            .arg("--")
             .args(&rel_items)
             .current_dir(base_dir)
             .stdin(Stdio::null())
@@ -366,6 +552,16 @@ pub fn extract_archive(raw_archive: &str, raw_dest_dir: Option<&str>) -> Result<
     if !archive.is_file() {
         return Err(format!("Archive does not exist: {}", archive.display()));
     }
+    let fname = archive
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("extracted");
+    let lower = fname.to_ascii_lowercase();
+    let is_zip = lower.ends_with(".zip");
+
+    // Pre-validate against Zip Slip / Tar Slip path traversal and symlink escapes.
+    validate_archive_before_extract(&archive, is_zip)?;
+
     let parent = match raw_dest_dir.map(str::trim).filter(|s| !s.is_empty()) {
         Some(d) => expand_path(d),
         None => archive
@@ -373,10 +569,6 @@ pub fn extract_archive(raw_archive: &str, raw_dest_dir: Option<&str>) -> Result<
             .unwrap_or_else(|| Path::new("/"))
             .to_path_buf(),
     };
-    let fname = archive
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("extracted");
     let folder_stem = fname
         .strip_suffix(".tar.gz")
         .or_else(|| fname.strip_suffix(".tar.xz"))
@@ -386,13 +578,18 @@ pub fn extract_archive(raw_archive: &str, raw_dest_dir: Option<&str>) -> Result<
         .or_else(|| fname.strip_suffix(".zip"))
         .or_else(|| fname.strip_suffix(".tar"))
         .unwrap_or("extracted");
-    let out_dir = unique_dest_path(&parent.join(folder_stem));
+    let safe_stem = if folder_stem.is_empty() || folder_stem == "." || folder_stem == ".." {
+        "extracted"
+    } else {
+        folder_stem
+    };
+    let out_dir = unique_dest_path(&parent.join(safe_stem));
     fs::create_dir_all(&out_dir).map_err(|e| format!("Create extract dir: {e}"))?;
 
-    let lower = fname.to_ascii_lowercase();
-    let res = if lower.ends_with(".zip") {
+    let res = if is_zip {
         Command::new("unzip")
             .arg("-oq")
+            .arg("--")
             .arg(&archive)
             .arg("-d")
             .arg(&out_dir)
@@ -402,7 +599,7 @@ pub fn extract_archive(raw_archive: &str, raw_dest_dir: Option<&str>) -> Result<
             .output()
     } else {
         Command::new("tar")
-            .arg("-xf")
+            .args(["--no-same-owner", "--no-same-permissions", "-xf"])
             .arg(&archive)
             .arg("-C")
             .arg(&out_dir)
@@ -410,11 +607,19 @@ pub fn extract_archive(raw_archive: &str, raw_dest_dir: Option<&str>) -> Result<
             .stdout(Stdio::null())
             .stderr(Stdio::piped())
             .output()
-    }
-    .map_err(|e| format!("Failed to invoke extractor: {e}"))?;
+    };
 
-    if !res.status.success() {
-        let msg = String::from_utf8_lossy(&res.stderr).trim().to_string();
+    let output = match res {
+        Ok(o) => o,
+        Err(e) => {
+            let _ = fs::remove_dir(&out_dir);
+            return Err(format!("Failed to invoke extractor: {e}"));
+        }
+    };
+
+    if !output.status.success() {
+        let _ = fs::remove_dir(&out_dir);
+        let msg = String::from_utf8_lossy(&output.stderr).trim().to_string();
         return Err(if msg.is_empty() {
             "Extraction failed".to_string()
         } else {
@@ -488,6 +693,9 @@ pub fn open_with(raw_path: &str, program: &str) -> Result<String, String> {
     let Some((exe, args)) = parts.split_first() else {
         return Err("No application configured".to_string());
     };
+    if exe.starts_with('-') {
+        return Err("Invalid application executable".to_string());
+    }
     Command::new(exe)
         .args(args)
         .arg(&target)
@@ -502,10 +710,21 @@ pub fn open_with(raw_path: &str, program: &str) -> Result<String, String> {
 pub fn open_terminal(raw_dir: &str, preferred: Option<&str>) -> Result<String, String> {
     let dir = expand_path(raw_dir);
     let mut candidates: Vec<&str> = Vec::new();
-    if let Some(p) = preferred.map(str::trim).filter(|s| !s.is_empty()) {
+    if let Some(p) = preferred
+        .map(str::trim)
+        .filter(|s| !s.is_empty() && !s.starts_with('-') && !s.contains('/'))
+    {
         candidates.push(p);
     }
-    for fb in ["foot", "kitty", "alacritty", "wezterm", "ghostty", "konsole", "xterm"] {
+    for fb in [
+        "foot",
+        "kitty",
+        "alacritty",
+        "wezterm",
+        "ghostty",
+        "konsole",
+        "xterm",
+    ] {
         if !candidates.contains(&fb) {
             candidates.push(fb);
         }
@@ -550,4 +769,94 @@ pub fn open_terminal(raw_dir: &str, preferred: Option<&str>) -> Result<String, S
         }
     }
     Err("No terminal emulator found".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static TMP_SEQ: AtomicU64 = AtomicU64::new(0);
+
+    fn make_temp_dir(tag: &str) -> PathBuf {
+        let seq = TMP_SEQ.fetch_add(1, Ordering::Relaxed);
+        let dir =
+            std::env::temp_dir().join(format!("mango_fm_ops_{tag}_{}_{seq}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("create temp dir");
+        dir
+    }
+
+    #[test]
+    fn archive_member_security_checks() {
+        assert!(validate_archive_member("folder/file.txt").is_ok());
+        assert!(validate_archive_member("a..b/c.txt").is_ok());
+        assert!(validate_archive_member("/etc/passwd").is_err());
+        assert!(validate_archive_member("\\Windows\\System32").is_err());
+        assert!(validate_archive_member("C:evil.txt").is_err());
+        assert!(validate_archive_member("../escape.txt").is_err());
+        assert!(validate_archive_member("sub/../../escape.txt").is_err());
+        assert!(validate_archive_member("bad\0name").is_err());
+
+        assert!(check_relative_within_root("usr/bin/app", "../lib/libfoo.so").is_ok());
+        assert!(check_relative_within_root("bin/app", "../../etc/passwd").is_err());
+        assert!(check_relative_within_root("app", "/etc/passwd").is_err());
+    }
+
+    #[test]
+    fn compress_rejects_flag_archive_name() {
+        let res = compress_paths(&["/tmp/a".to_string()], "/tmp", "--checkpoint=1", "tar.gz");
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn cross_dir_copy_move_and_unique_dest() {
+        let base = make_temp_dir("copy_move");
+        let src_dir = base.join("src");
+        let dst_dir = base.join("dst");
+        fs::create_dir_all(src_dir.join("nested")).unwrap();
+        fs::create_dir_all(&dst_dir).unwrap();
+        fs::write(src_dir.join("hello.txt"), b"world").unwrap();
+        fs::write(src_dir.join("nested/inner.txt"), b"42").unwrap();
+
+        let srcs = vec![
+            src_dir.join("hello.txt").to_string_lossy().into_owned(),
+            src_dir.join("nested").to_string_lossy().into_owned(),
+        ];
+        copy_or_move(
+            &srcs,
+            &dst_dir.to_string_lossy(),
+            false,
+            false,
+            |_, _, _| {},
+        )
+        .expect("copy succeeds");
+        assert_eq!(fs::read(dst_dir.join("hello.txt")).unwrap(), b"world");
+        assert_eq!(fs::read(dst_dir.join("nested/inner.txt")).unwrap(), b"42");
+
+        // Second copy without overwrite gets unique "(copy)" suffix
+        copy_or_move(
+            &[src_dir.join("hello.txt").to_string_lossy().into_owned()],
+            &dst_dir.to_string_lossy(),
+            false,
+            false,
+            |_, _, _| {},
+        )
+        .expect("unique copy succeeds");
+        assert!(dst_dir.join("hello (copy).txt").is_file());
+
+        // Move removes original file
+        copy_or_move(
+            &[src_dir.join("hello.txt").to_string_lossy().into_owned()],
+            &dst_dir.to_string_lossy(),
+            true,
+            true,
+            |_, _, _| {},
+        )
+        .expect("move with overwrite succeeds");
+        assert!(!src_dir.join("hello.txt").exists());
+        assert_eq!(fs::read(dst_dir.join("hello.txt")).unwrap(), b"world");
+
+        let _ = fs::remove_dir_all(&base);
+    }
 }

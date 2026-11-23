@@ -166,8 +166,9 @@ pub fn classify_file(name: &str, is_dir: bool, is_exec: bool) -> (&'static str, 
         | "fish" | "c" | "h" | "cpp" | "hpp" | "go" | "java" | "kt" | "lua" | "rb" | "php"
         | "css" | "scss" | "html" | "htm" | "xml" | "json" | "jsonc" | "toml" | "yaml" | "yml"
         | "ini" | "conf" | "cfg" | "nix" | "sql" | "vim" | "glsl" | "frag" | "vert" => "code",
-        "md" | "txt" | "rst" | "org" | "log" | "csv" | "tsv" | "rtf" | "doc" | "docx"
-        | "odt" => "doc",
+        "md" | "txt" | "rst" | "org" | "log" | "csv" | "tsv" | "rtf" | "doc" | "docx" | "odt" => {
+            "doc"
+        }
         _ if lower_name == "makefile"
             || lower_name == "dockerfile"
             || lower_name == "cmakelists.txt"
@@ -377,8 +378,10 @@ pub fn image_dimensions(path: &Path) -> Option<(u32, u32)> {
             if seg_len < 2 || i + seg_len > buf.len() {
                 break;
             }
-            if matches!(marker, 0xC0 | 0xC1 | 0xC2 | 0xC3 | 0xC5 | 0xC6 | 0xC7 | 0xC9 | 0xCA | 0xCB)
-                && seg_len >= 7
+            if matches!(
+                marker,
+                0xC0 | 0xC1 | 0xC2 | 0xC3 | 0xC5 | 0xC6 | 0xC7 | 0xC9 | 0xCA | 0xCB
+            ) && seg_len >= 7
             {
                 let h = u16::from_be_bytes([buf[i + 3], buf[i + 4]]) as u32;
                 let w = u16::from_be_bytes([buf[i + 5], buf[i + 6]]) as u32;
@@ -408,13 +411,17 @@ mod tests {
     fn natural_sorting() {
         let mut items = ["img10.png", "img2.png", "img1.png", "Alpha.txt", "beta.txt"];
         items.sort_by(|a, b| natural_cmp(a, b));
-        assert_eq!(items, ["Alpha.txt", "beta.txt", "img1.png", "img2.png", "img10.png"]);
+        assert_eq!(
+            items,
+            ["Alpha.txt", "beta.txt", "img1.png", "img2.png", "img10.png"]
+        );
     }
 
     #[test]
     fn percent_roundtrip() {
-        let orig = "/home/test/My Folder/hello world #1 (test)%.png";
+        let orig = "/tmp/mango-test/My Folder/hello world #1 (test)%\n\u{00E9}.png";
         let enc = percent_encode_path(orig);
+        assert!(!enc.contains(' ') && !enc.contains('#') && !enc.contains('\n'));
         assert_eq!(percent_decode(&enc), orig);
     }
 

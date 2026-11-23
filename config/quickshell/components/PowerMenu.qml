@@ -21,13 +21,13 @@ Rectangle {
         if (actionId === "lock") {
             Quickshell.execDetached([Quickshell.shellPath("scripts/lock.sh")]);
         } else if (actionId === "suspend") {
-            Quickshell.execDetached(["loginctl", "suspend"]);
+            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "power-action", "suspend"]);
         } else if (actionId === "logout") {
             Quickshell.execDetached(["mmsg", "dispatch", "quit"]);
         } else if (actionId === "reboot") {
-            Quickshell.execDetached(["loginctl", "reboot"]);
+            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "power-action", "reboot"]);
         } else if (actionId === "poweroff") {
-            Quickshell.execDetached(["loginctl", "poweroff"]);
+            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "power-action", "poweroff"]);
         }
     }
 

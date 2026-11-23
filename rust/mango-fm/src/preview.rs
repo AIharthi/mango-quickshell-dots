@@ -89,7 +89,10 @@ pub fn preview_path(raw_path: &str) -> Result<String, String> {
             out.kv_u64("width", w as u64);
             out.kv_u64("height", h as u64);
         }
-        let wp_ok = matches!(info.ext.as_str(), "png" | "jpg" | "jpeg" | "webp" | "gif" | "bmp");
+        let wp_ok = matches!(
+            info.ext.as_str(),
+            "png" | "jpg" | "jpeg" | "webp" | "gif" | "bmp"
+        );
         out.kv_bool("isWallpaperCandidate", wp_ok);
         out.obj_end();
         return Ok(out.finish());
@@ -154,12 +157,15 @@ pub fn preview_path(raw_path: &str) -> Result<String, String> {
 fn list_archive_entries(path: &Path, ext: &str) -> (Vec<String>, bool) {
     let out = if ext == "zip" {
         Command::new("unzip")
-            .arg("-Z1")
+            .args(["-Z1", "--"])
             .arg(path)
             .stdin(Stdio::null())
             .stderr(Stdio::null())
             .output()
-    } else if matches!(ext, "tar" | "gz" | "tgz" | "bz2" | "tbz2" | "xz" | "txz" | "zst") {
+    } else if matches!(
+        ext,
+        "tar" | "gz" | "tgz" | "bz2" | "tbz2" | "xz" | "txz" | "zst"
+    ) {
         Command::new("tar")
             .arg("-tf")
             .arg(path)

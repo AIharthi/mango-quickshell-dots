@@ -31,7 +31,7 @@ PanelWindow {
     FileStyleHelper { id: fstyle }
     FilesBackend {
         id: backend
-        active: true
+        active: root.isOpen
         onReadyChanged: {
             if (ready) {
                 refreshPlaces();

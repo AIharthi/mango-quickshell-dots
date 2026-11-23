@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  shell-checks:
+    name: Shell Syntax, ShellCheck & Embedded Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check POSIX / Bash syntax
+        run: |
+          sh -n system/mango-session
+          bash -n install.sh uninstall.sh config/mango/autostart.sh config/quickshell/scripts/*.sh
+      - name: Run ShellCheck
+        run: |
+          shellcheck -S warning \
+            install.sh \
+            uninstall.sh \
+            system/mango-session \
+            config/mango/autostart.sh \
+            config/quickshell/scripts/*.sh
+      - name: Check embedded Python heredoc syntax
+        run: |
+          python3 - <<'PY'
+          import ast, glob, re, sys
+          errs = 0
+          for p in sorted(glob.glob("config/quickshell/scripts/*.sh")):
+              with open(p, encoding="utf-8") as f:
+                  txt = f.read()
+              for i, m in enumerate(re.finditer(r"<<'PY'\n(.*?)\nPY\b", txt, re.S)):
+                  try:
+                      ast.parse(m.group(1), filename=f"{p}#PY{i}")
+                  except SyntaxError as e:
+                      print(f"SYNTAX ERROR in {p} block {i}: {e}")
+                      errs += 1
+          sys.exit(errs)
+          PY
+
+  rust-mango-fm:
+    name: Rust File Manager (std-only)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust/mango-fm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Enforce zero external crate dependencies & tracked Cargo.lock
+        run: |
+          test -f Cargo.lock
+          python3 - <<'PY'
+          import sys
+          txt = open("Cargo.toml", encoding="utf-8").read()
+          if "[dependencies]" in txt or "[dev-dependencies]" in txt or "[build-dependencies]" in txt:
+              print("ERROR: External crate dependency section found in rust/mango-fm/Cargo.toml")
+              sys.exit(1)
+          print("Zero-dependency Cargo.toml verified.")
+          PY
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Run Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Run unit tests
+        run: cargo test --verbose
+
+  repo-hygiene:
+    name: Portability & Installer Smoke Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail on hardcoded /home/ paths
+        run: |
+          if grep -rn --exclude-dir=target --exclude-dir=.git "/home/" config/ system/ install.sh uninstall.sh rust/; then
+            echo "ERROR: Found hardcoded /home/ path!"
+            exit 1
+          fi
+      - name: Dry-run installer and uninstaller
+        run: |
+          ./install.sh --dry-run --no-system --skip-build
+          ./uninstall.sh --dry-run

@@ -420,7 +420,8 @@ mod tests {
 
     #[test]
     fn parse_roundtrip() {
-        let src = r#"{"id":42,"op":"copy","hidden":false,"ratio":0.75,"paths":["a\"b","c\nd","\u0041"]}"#;
+        let src =
+            r#"{"id":42,"op":"copy","hidden":false,"ratio":0.75,"paths":["a\"b","c\nd","\u0041"]}"#;
         let v = parse(src).expect("parse ok");
         assert_eq!(v.get_u64("id"), Some(42));
         assert_eq!(v.get_str("op"), Some("copy"));
@@ -435,13 +436,17 @@ mod tests {
     fn encode_escaped() {
         let mut o = JsonOut::new();
         o.obj_start();
-        o.kv_str("msg", "hello\n\"rust\"\t\\end\x07");
+        o.kv_str("msg", "hello\n\"rust\"\t\\end\x07\x00");
         o.kv_u64("count", 3);
         o.kv_bool("ok", true);
         o.obj_end();
         let s = o.finish();
+        assert!(!s.contains('\n') && !s.contains('\r'));
         let parsed = parse(&s).expect("valid encoded json");
-        assert_eq!(parsed.get_str("msg"), Some("hello\n\"rust\"\t\\end\x07"));
+        assert_eq!(
+            parsed.get_str("msg"),
+            Some("hello\n\"rust\"\t\\end\x07\x00")
+        );
         assert_eq!(parsed.get_u64("count"), Some(3));
         assert_eq!(parsed.get_bool("ok"), Some(true));
     }

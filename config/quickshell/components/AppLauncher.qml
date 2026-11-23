@@ -232,7 +232,7 @@ ColumnLayout {
         if (!entry)
             return;
         if (entry.runInTerminal && entry.command && entry.command.length > 0) {
-            Quickshell.execDetached(["foot", "-e"].concat(entry.command));
+            Quickshell.execDetached([Quickshell.shellPath("scripts/launch-app.sh"), "terminal-exec"].concat(entry.command));
         } else {
             entry.execute();
         }

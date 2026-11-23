@@ -25,7 +25,8 @@ import time
 cmd = sys.argv[1]
 args = sys.argv[2:]
 
-PREFS_PATH = os.path.expanduser("~/.config/quickshell/shell-prefs.json")
+CONFIG_DIR = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
+PREFS_PATH = os.path.join(CONFIG_DIR, "quickshell", "shell-prefs.json")
 CORNER_ORDER = ("bottom-right", "bottom-left", "top-left", "top-right")
 PIP_TITLE_RE = re.compile(
     r"^(picture[- ]in[- ]picture|picture in picture|discord popout|صورة داخل صورة|bild-im-bild|incrustation( vidéo)?|imagen en imagen|画中画|картинка в картинке|resim içinde resim|obraz w obrazie|ピクチャー.*イン.*ピクチャー)$",

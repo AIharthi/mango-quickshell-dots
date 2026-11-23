@@ -39,11 +39,19 @@ Item {
     function refreshOsdValue(kind: string): void {
         const normalized = (kind || root.osdType || "volume").toLowerCase();
         if (normalized === "brightness") {
+            if (!DeviceCaps.hasBacklight) {
+                root.osdSupported = false;
+                return;
+            }
             if (brightnessProc.running)
                 root._brightRefreshPending = true;
             else
                 brightnessProc.running = true;
         } else {
+            if (!DeviceCaps.hasAudio) {
+                root.osdSupported = false;
+                return;
+            }
             if (volumeProc.running)
                 root._volRefreshPending = true;
             else
@@ -248,6 +256,7 @@ Item {
                 anchors.centerIn: parent
                 width: 24
                 height: 24
+                asynchronous: true
                 readonly property string resolvedIcon: (root.currentNotif && root.currentNotif.appIcon)
                     ? Quickshell.iconPath(root.currentNotif.appIcon, true)
                     : ""

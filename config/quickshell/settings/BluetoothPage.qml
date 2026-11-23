@@ -22,7 +22,7 @@ ColumnLayout {
             return;
         const target = root.powered ? "off" : "on";
         root.statusMsg = "Turning Bluetooth " + target + "...";
-        btActionProc.command = ["sh", "-c", "timeout 3 bluetoothctl power " + target + " </dev/null"];
+        btActionProc.command = ["timeout", "3", "bluetoothctl", "power", target];
         btActionProc.running = true;
     }
 
@@ -30,16 +30,21 @@ ColumnLayout {
         if (btActionProc.running)
             return;
         root.statusMsg = "Scanning for 6 seconds...";
-        btActionProc.command = ["sh", "-c", "timeout 6 bluetoothctl --timeout 6 scan on </dev/null || true"];
+        btActionProc.command = ["timeout", "7", "bluetoothctl", "--timeout", "6", "scan", "on"];
         btActionProc.running = true;
     }
 
     function toggleDevice(mac: string, connected: bool): void {
         if (btActionProc.running)
             return;
+        const cleanMac = (mac || "").trim();
+        if (!/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(cleanMac)) {
+            root.statusMsg = "Invalid Bluetooth MAC address";
+            return;
+        }
         const op = connected ? "disconnect" : "connect";
-        root.statusMsg = (connected ? "Disconnecting " : "Connecting ") + mac + "...";
-        btActionProc.command = ["sh", "-c", "timeout 10 bluetoothctl " + op + " \"$1\" </dev/null", "_", mac];
+        root.statusMsg = (connected ? "Disconnecting " : "Connecting ") + cleanMac + "...";
+        btActionProc.command = ["timeout", "10", "bluetoothctl", op, cleanMac];
         btActionProc.running = true;
     }
 

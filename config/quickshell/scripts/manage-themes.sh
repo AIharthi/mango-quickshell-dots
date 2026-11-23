@@ -618,7 +618,9 @@ def apply_mango_color_overrides(do_reload=False):
     final_border = border_ov.lstrip("#") if border_ov else default_border
     shadow_rgb = default_focus if shadow_tint else "000000"
 
-    lines = open(MANGO_THEME, "r", encoding="utf-8", errors="ignore").readlines()
+    lines = []
+    with open(MANGO_THEME, "r", encoding="utf-8", errors="ignore") as f:
+        lines = f.readlines()
     out = []
     seen = set()
     for line in lines:
@@ -656,11 +658,12 @@ def push_terminal_osc_and_reload():
     foot_ini = os.path.join(FOOT_DIR, "colors.ini")
     if os.path.isfile(foot_ini):
         vals = {}
-        for raw in open(foot_ini, "r", encoding="utf-8", errors="ignore"):
-            line = raw.strip()
-            if "=" in line and not line.startswith("[") and not line.startswith("#"):
-                k, v = [x.strip() for x in line.split("=", 1)]
-                vals[k] = v
+        with open(foot_ini, "r", encoding="utf-8", errors="ignore") as f:
+            for raw in f:
+                line = raw.strip()
+                if "=" in line and not line.startswith("[") and not line.startswith("#"):
+                    k, v = [x.strip() for x in line.split("=", 1)]
+                    vals[k] = v
         out = []
         if "foreground" in vals: out.append(f"\033]10;#{vals['foreground']}\033\\")
         if "background" in vals: out.append(f"\033]11;#{vals['background']}\033\\")
@@ -671,7 +674,17 @@ def push_terminal_osc_and_reload():
             if f"bright{idx}" in vals: out.append(f"\033]4;{idx + 8};#{vals[f'bright{idx}']}\033\\")
         seq = "".join(out)
         if seq:
-            for pts in glob.glob("/dev/pts/[0-9]*"):
+            ttys = set()
+            try:
+                uid_str = str(os.getuid())
+                ps_out = subprocess.check_output(["ps", "-eo", "uid=,tty=,comm="], text=True, stderr=subprocess.DEVNULL, timeout=2.0)
+                for row in ps_out.splitlines():
+                    parts = row.split()
+                    if len(parts) >= 3 and parts[0] == uid_str and parts[1].startswith("pts/") and parts[2] in ("bash", "zsh", "fish", "sh", "nu"):
+                        ttys.add("/dev/" + parts[1])
+            except Exception:
+                pass
+            for pts in sorted(ttys):
                 try:
                     with open(pts, "w", encoding="utf-8") as f:
                         f.write(seq)
@@ -835,13 +848,56 @@ def cmd_custom_import():
     src = os.path.expanduser(" ".join(args).strip())
     if not os.path.isfile(src):
         sys.exit(f"File not found: {src}")
-    d = load_json_dict(src)
-    if "primary" not in d or "surface" not in d:
-        sys.exit("Invalid theme JSON (must contain 'primary' and 'surface')")
-    base_name = d.get("_name") or os.path.basename(src).replace(".json", "")
-    slug = slugify(base_name)
-    d["_name"] = str(base_name)
-    atomic_write(os.path.join(CUSTOM_DIR, f"{slug}.json"), json.dumps(d, indent=2) + "\n")
+    if os.path.getsize(src) > 262144:
+        sys.exit("Theme JSON file exceeds 256 KB limit")
+    try:
+        with open(src, "r", encoding="utf-8") as f:
+            d = json.load(f)
+    except Exception as exc:
+        sys.exit(f"Invalid JSON file: {exc}")
+    if not isinstance(d, dict):
+        sys.exit("Invalid theme JSON (root must be an object)")
+
+    strict_hex_re = re.compile(r"^#?[0-9a-fA-F]{6}$")
+    for req_key in ("primary", "surface"):
+        val = d.get(req_key)
+        if not isinstance(val, str) or not strict_hex_re.match(val.strip()):
+            sys.exit(f"Invalid theme JSON: '{req_key}' must be a #RRGGBB hex color")
+
+    palette_keys = {
+        "primary", "onPrimary", "primaryContainer", "onPrimaryContainer",
+        "secondary", "onSecondary", "secondaryContainer", "onSecondaryContainer",
+        "tertiary", "onTertiary", "tertiaryContainer", "onTertiaryContainer",
+        "background", "onBackground", "surface", "surfaceDim", "surfaceBright",
+        "surfaceContainerLowest", "surfaceContainerLow", "surfaceLow",
+        "surfaceContainer", "surfaceContainerHigh", "surfaceHigh",
+        "surfaceContainerHighest", "surfaceHighest",
+        "onSurface", "onSurfaceVariant", "outline", "outlineVariant",
+        "error", "onError", "success", "warning", "info", "shadow",
+    }
+    cleaned = {}
+    for k, v in d.items():
+        if k in palette_keys:
+            if not isinstance(v, str) or not strict_hex_re.match(v.strip()):
+                sys.exit(f"Invalid hex color for '{k}'")
+            cleaned[k] = "#" + v.strip().lstrip("#").lower()
+    if isinstance(d.get("ansi"), list) and len(d["ansi"]) == 16:
+        ansi_clean = []
+        for idx, item in enumerate(d["ansi"]):
+            if not isinstance(item, str) or not strict_hex_re.match(item.strip()):
+                sys.exit(f"Invalid hex color in ansi[{idx}]")
+            ansi_clean.append("#" + item.strip().lstrip("#").lower())
+        cleaned["ansi"] = ansi_clean
+
+    raw_dark = d.get("isDark", True)
+    is_dark = raw_dark if isinstance(raw_dark, bool) else str(raw_dark).strip().lower() != "false"
+    raw_name = d.get("_name") or os.path.basename(src).replace(".json", "")
+    safe_name = re.sub(r"[\x00-\x1f\x7f]+", "", str(raw_name)).strip()[:64] or "custom-theme"
+    slug = slugify(safe_name)
+
+    validated = complete_palette(cleaned, is_dark)
+    validated["_name"] = safe_name
+    atomic_write(os.path.join(CUSTOM_DIR, f"{slug}.json"), json.dumps(validated, indent=2) + "\n")
     print(json.dumps({"imported": slug, "themes": read_custom_themes()}))
 
 
@@ -876,6 +932,21 @@ def cmd_wallpapers_list():
     print(json.dumps({"dir": wdir, "wallpapers": items}))
 
 
+def resolve_wp_engine():
+    # Match apply-theme.sh & autostart.sh resolution: running daemon first, else awww -> swww
+    awww_up = subprocess.run(["pgrep", "-x", "awww-daemon"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+    swww_up = subprocess.run(["pgrep", "-x", "swww-daemon"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+    if awww_up and shutil.which("awww"):
+        return "awww", "awww-daemon"
+    if swww_up and shutil.which("swww"):
+        return "swww", "swww-daemon"
+    if shutil.which("awww"):
+        return "awww", "awww-daemon"
+    if shutil.which("swww"):
+        return "swww", "swww-daemon"
+    return "", ""
+
+
 def cmd_solid_wallpaper():
     if len(args) < 1:
         sys.exit("Usage: manage-themes.sh solid-wallpaper <hex>")
@@ -884,8 +955,15 @@ def cmd_solid_wallpaper():
     prefs["solidWallpaperColor"] = h
     if os.path.isfile(PREFS_JSON):
         atomic_write(PREFS_JSON, json.dumps(prefs, indent=2) + "\n")
-    wp_cmd = "awww" if shutil.which("awww") else ("swww" if shutil.which("swww") else "")
+    wp_cmd, daemon_cmd = resolve_wp_engine()
     if wp_cmd:
+        if subprocess.run([wp_cmd, "query"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0 and shutil.which(daemon_cmd):
+            subprocess.Popen([daemon_cmd], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+            import time as _t
+            for _ in range(25):
+                if subprocess.run([wp_cmd, "query"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+                    break
+                _t.sleep(0.1)
         subprocess.run([wp_cmd, "clear", h.lstrip("#")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print(json.dumps({"solid": h}))
 
@@ -963,6 +1041,36 @@ def cmd_apply_vibe():
     print(json.dumps({"vibe": args[0]}))
 
 
+MUTATING_CMDS = {
+    "render-preset",
+    "apply-mango-overrides",
+    "tweak-colors",
+    "custom-save",
+    "custom-apply",
+    "custom-delete",
+    "custom-import",
+    "solid-wallpaper",
+    "random-wallpaper",
+    "apply-vibe",
+}
+_LOCK_FH = None
+
+
+def acquire_theme_lock():
+    global _LOCK_FH
+    if cmd not in MUTATING_CMDS or os.environ.get("MANGO_THEME_LOCKED") == "1":
+        return
+    try:
+        import fcntl
+        rdir = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+        lpath = os.path.join(rdir, f"mango-theme-{os.getuid()}.lock")
+        _LOCK_FH = open(lpath, "w", encoding="utf-8")
+        fcntl.flock(_LOCK_FH.fileno(), fcntl.LOCK_EX)
+        os.environ["MANGO_THEME_LOCKED"] = "1"
+    except Exception:
+        pass
+
+
 DISPATCH = {
     "list-presets": cmd_list_presets,
     "render-preset": cmd_render_preset,
@@ -981,5 +1089,6 @@ DISPATCH = {
     "apply-vibe": cmd_apply_vibe,
 }
 
+acquire_theme_lock()
 DISPATCH[cmd]()
 PY

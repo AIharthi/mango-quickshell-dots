@@ -9,10 +9,12 @@ Singleton {
     // --- Hardware Capability Flags (populated by scripts/detect-hardware.sh) ---
     property bool probed: false
     property bool hasWifi: false
+    property bool hasWifiHw: false
     property bool hasBluetooth: false
     property bool hasBacklight: false
     property bool hasBattery: false
     property string batteryPath: ""
+    property var batteryPaths: []
     property bool hasTouchpad: false
     property bool hasWlrRandr: false
     property bool hasAudio: false
@@ -63,16 +65,10 @@ Singleton {
     }
 
     function refreshBattery(): void {
-        if (!root.hasBattery || root.batteryPath.length === 0)
+        if (!root.hasBattery)
             return;
-        if (!batteryProc.running) {
-            batteryProc.command = [
-                "sh", "-c",
-                "cat \"$1/capacity\" 2>/dev/null; echo '---'; cat \"$1/status\" 2>/dev/null",
-                "_", root.batteryPath
-            ];
+        if (!batteryProc.running)
             batteryProc.running = true;
-        }
     }
 
     onHasBatteryChanged: {
@@ -100,10 +96,12 @@ Singleton {
                     const data = JSON.parse(raw);
                     root.probed = !!data.probed;
                     root.hasWifi = !!data.hasWifi;
+                    root.hasWifiHw = !!data.hasWifiHw;
                     root.hasBluetooth = !!data.hasBluetooth;
                     root.hasBacklight = !!data.hasBacklight;
                     root.hasBattery = !!data.hasBattery;
                     root.batteryPath = data.batteryPath || "";
+                    root.batteryPaths = Array.isArray(data.batteryPaths) ? data.batteryPaths : [];
                     root.hasTouchpad = !!data.hasTouchpad;
                     root.hasWlrRandr = !!data.hasWlrRandr;
                     root.hasAudio = !!data.hasAudio;
@@ -136,19 +134,22 @@ Singleton {
 
     Process {
         id: batteryProc
+        command: [Quickshell.shellPath("scripts/detect-hardware.sh"), "--battery"]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
-                const parts = (text || "").split("---");
-                if (parts.length < 2)
+                const raw = (text || "").trim();
+                if (raw.length === 0)
                     return;
-                const cap = parseInt(parts[0].trim(), 10);
-                const status = parts[1].trim() || "Unknown";
-                if (!isNaN(cap))
-                    root.batteryPercent = Math.max(0, Math.min(100, cap));
-                root.batteryStatus = status;
-                root.batteryCharging = (status === "Charging" || status === "Full");
-                root.batteryLow = (!root.batteryCharging && root.batteryPercent <= 20);
+                try {
+                    const d = JSON.parse(raw);
+                    if (typeof d.percent === "number")
+                        root.batteryPercent = Math.max(0, Math.min(100, Math.round(d.percent)));
+                    const st = String(d.status || "Unknown");
+                    root.batteryStatus = st;
+                    root.batteryCharging = (d.charging !== undefined) ? !!d.charging : (st === "Charging" || st === "Full");
+                    root.batteryLow = (!root.batteryCharging && root.batteryPercent <= 20);
+                } catch (err) {}
             }
         }
     }
@@ -156,7 +157,7 @@ Singleton {
     Timer {
         interval: 20000
         repeat: true
-        running: root.hasBattery && root.batteryPath.length > 0
+        running: root.hasBattery
         triggeredOnStart: true
         onTriggered: root.refreshBattery()
     }

@@ -44,7 +44,7 @@ ColumnLayout {
         const target = root.wifiEnabled ? "off" : "on";
         root.busy = true;
         root.statusMsg = "Turning Wi-Fi " + target + "...";
-        nmActionProc.command = ["sh", "-c", "timeout 4 nmcli radio wifi " + target + " </dev/null"];
+        nmActionProc.command = ["timeout", "4", "nmcli", "radio", "wifi", target];
         nmActionProc.running = true;
     }
 
@@ -53,7 +53,7 @@ ColumnLayout {
             return;
         root.busy = true;
         root.statusMsg = "Scanning nearby networks...";
-        nmActionProc.command = ["sh", "-c", "timeout 8 nmcli dev wifi rescan </dev/null || true"];
+        nmActionProc.command = ["timeout", "8", "nmcli", "dev", "wifi", "rescan"];
         nmActionProc.running = true;
     }
 
@@ -65,7 +65,7 @@ ColumnLayout {
         root.statusMsg = "Connecting to " + ssid + "...";
         nmConnectProc.lastTriedSsid = ssid;
         nmConnectProc.lastSecurity = security;
-        nmConnectProc.command = ["sh", "-c", "timeout 12 nmcli dev wifi connect \"$1\" </dev/null", "_", ssid];
+        nmConnectProc.command = ["timeout", "12", "nmcli", "dev", "wifi", "connect", ssid];
         nmConnectProc.running = true;
     }
 
@@ -77,26 +77,19 @@ ColumnLayout {
         root.statusMsg = "Authenticating to " + ssid + "...";
         nmConnectProc.lastTriedSsid = ssid;
         nmConnectProc.lastSecurity = "WPA";
-        nmConnectProc.command = [
-            "sh", "-c",
-            "timeout 15 nmcli dev wifi connect \"$1\" password \"$2\" </dev/null",
-            "_", ssid, pwdInput.text
-        ];
+        nmConnectProc.command = ["timeout", "15", "nmcli", "dev", "wifi", "connect", ssid, "password", pwdInput.text];
         pwdInput.text = "";
         root.pendingSsid = "";
         nmConnectProc.running = true;
     }
 
     function disconnectWifi(): void {
-        if (nmActionProc.running)
+        if (netActProc.running)
             return;
         root.busy = true;
         root.statusMsg = "Disconnecting...";
-        nmActionProc.command = [
-            "sh", "-c",
-            "dev=$(nmcli -t -f DEVICE,TYPE dev | awk -F: '$2==\"wifi\"{print $1; exit}'); [ -n \"$dev\" ] && timeout 5 nmcli dev disconnect \"$dev\" </dev/null"
-        ];
-        nmActionProc.running = true;
+        netActProc.command = [Quickshell.shellPath("scripts/manage-system.sh"), "network-action", "wifi-disconnect"];
+        netActProc.running = true;
     }
 
     Component.onCompleted: refresh()

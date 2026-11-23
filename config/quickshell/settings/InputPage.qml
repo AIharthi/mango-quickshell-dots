@@ -9,7 +9,7 @@ ColumnLayout {
     id: root
     spacing: 12
 
-    property string kbLayout: "us,ara"
+    property string kbLayout: "us"
     property string kbOptions: "grp:alt_shift_toggle"
     property string kbModel: "pc105"
     property bool numlockOn: false

@@ -12,7 +12,7 @@ Singleton {
     property string presetName: "catppuccin-mocha"
     property string accentColor: "#cba6f7"
     property string customTheme: ""
-    property string wallpaperPath: Quickshell.env("HOME") + "/Pictures/Wallpapers/aurora_evening.jpg"
+    property string wallpaperPath: ""
     property string lastError: ""
     readonly property bool applyingTheme: applyProcess.running
 

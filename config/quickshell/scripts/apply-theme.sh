@@ -17,11 +17,18 @@ KITTY_DIR="$CONFIG_DIR/kitty"
 
 mkdir -p "$QUICKSHELL_DIR" "$CONFIG_DIR/mango" "$GTK3_DIR" "$GTK4_DIR" "$FOOT_DIR" "$KITTY_DIR"
 
+if [[ "${MANGO_THEME_LOCKED:-0}" != "1" ]] && command -v flock >/dev/null 2>&1; then
+    LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/mango-theme-$(id -u).lock"
+    exec 9>"$LOCK_FILE"
+    flock -x 9
+    export MANGO_THEME_LOCKED=1
+fi
+
 # --- Read Existing State Defaults ---
 DEFAULT_MODE="preset"
 DEFAULT_SCHEME="dark"
 DEFAULT_PRESET="catppuccin-mocha"
-DEFAULT_WALLPAPER="$HOME/Pictures/Wallpapers/aurora_evening.jpg"
+DEFAULT_WALLPAPER=""
 DEFAULT_ACCENT="#cba6f7"
 DEFAULT_CUSTOM=""
 
@@ -129,46 +136,59 @@ atomic_write() {
     mv -f "$tmp" "$target"
 }
 
-# --- Wallpaper Engine (swww with awww fallback) ---
+# --- Wallpaper Engine (running daemon first, else awww -> swww) ---
 apply_wallpaper() {
     local img="$1"
     [[ -f "$img" ]] || return 0
 
     local wp_cmd=""
     local daemon_cmd=""
-    if command -v swww >/dev/null 2>&1; then
+    if pgrep -x awww-daemon >/dev/null 2>&1 && command -v awww >/dev/null 2>&1; then
+        wp_cmd="awww"
+        daemon_cmd="awww-daemon"
+    elif pgrep -x swww-daemon >/dev/null 2>&1 && command -v swww >/dev/null 2>&1; then
         wp_cmd="swww"
         daemon_cmd="swww-daemon"
     elif command -v awww >/dev/null 2>&1; then
         wp_cmd="awww"
         daemon_cmd="awww-daemon"
+    elif command -v swww >/dev/null 2>&1; then
+        wp_cmd="swww"
+        daemon_cmd="swww-daemon"
     else
-        echo "Warning: neither swww nor awww found in PATH; skipping wallpaper update." >&2
+        echo "Warning: neither awww nor swww found in PATH; skipping wallpaper update." >&2
         return 0
     fi
 
     if ! "$wp_cmd" query >/dev/null 2>&1; then
         if command -v "$daemon_cmd" >/dev/null 2>&1; then
             nohup "$daemon_cmd" >/dev/null 2>&1 &
-            sleep 0.5
+            local _i
+            for _i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25; do
+                if "$wp_cmd" query >/dev/null 2>&1; then
+                    break
+                fi
+                sleep 0.1
+            done
         fi
     fi
 
     local wp_trans="grow" wp_fps="60" wp_dur="0.85" wp_resize="crop"
     local prefs_file="$QUICKSHELL_DIR/shell-prefs.json"
-    if [[ -f "$prefs_file" ]]; then
-        read -r wp_trans wp_fps wp_dur wp_resize < <(
-            python3 - "$prefs_file" <<'PY' 2>/dev/null || echo "grow 60 0.85 crop"
+    if [[ -f "$prefs_file" ]] && command -v python3 >/dev/null 2>&1; then
+        IFS=$'\t' read -r wp_trans wp_fps wp_dur wp_resize < <(
+            python3 - "$prefs_file" <<'PY' 2>/dev/null || printf 'grow\t60\t0.85\tcrop\n'
 import json, sys
 try:
-    d = json.load(open(sys.argv[1], "r", encoding="utf-8"))
+    with open(sys.argv[1], "r", encoding="utf-8") as f:
+        d = json.load(f)
     tr = str(d.get("wallpaperTransition", "grow")).strip() or "grow"
     fps = max(24, min(240, int(d.get("wallpaperFps", 60))))
     dur = max(0.1, min(3.0, float(d.get("wallpaperDuration", 0.85))))
     rz = str(d.get("wallpaperResize", "crop")).strip() or "crop"
-    print(tr, fps, f"{dur:.2f}", rz)
+    print(f"{tr}\t{fps}\t{dur:.2f}\t{rz}")
 except Exception:
-    print("grow 60 0.85 crop")
+    print("grow\t60\t0.85\tcrop")
 PY
         )
     fi
@@ -677,7 +697,8 @@ apply_gtk_settings() {
         theme_name="adw-gtk3"
     fi
 
-    if [[ ! -d "/usr/share/themes/${theme_name}" && ! -d "$HOME/.local/share/themes/${theme_name}" ]]; then
+    local data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
+    if [[ ! -d "/usr/share/themes/${theme_name}" && ! -d "${data_home}/themes/${theme_name}" ]]; then
         if [[ "$SCHEME" == "dark" ]]; then
             theme_name="Adwaita-dark"
         else
@@ -699,7 +720,7 @@ apply_gtk_settings() {
 
     local font_name="JetBrains Mono 10"
     local icon_theme="Adwaita"
-    local prefs_file="$HOME/.config/quickshell/shell-prefs.json"
+    local prefs_file="$QUICKSHELL_DIR/shell-prefs.json"
     if [[ -f "$prefs_file" ]]; then
         local parsed_font parsed_icon
         IFS=$'\t' read -r parsed_icon parsed_font < <(python3 - "$prefs_file" <<'PY' 2>/dev/null || true
@@ -830,6 +851,37 @@ os.replace(tmp, target)
 PY
 }
 
+# On first-run --init, gracefully fall back to first available wallpaper or curated preset
+if [[ "$INIT_ONLY" -eq 1 && "$MODE" == "dynamic" ]]; then
+    if [[ -z "$WALLPAPER" || ! -f "$WALLPAPER" ]]; then
+        WP_DIR="$HOME/Pictures/Wallpapers"
+        if [[ -f "$QUICKSHELL_DIR/shell-prefs.json" ]] && command -v python3 >/dev/null 2>&1; then
+            WP_DIR=$(python3 - "$QUICKSHELL_DIR/shell-prefs.json" <<'PY' 2>/dev/null || echo "$HOME/Pictures/Wallpapers"
+import json, os, sys
+try:
+    with open(sys.argv[1], "r", encoding="utf-8") as f:
+        d = json.load(f)
+    print(os.path.expanduser(str(d.get("wallpaperDir", "~/Pictures/Wallpapers")).strip() or "~/Pictures/Wallpapers"))
+except Exception:
+    print(os.path.expanduser("~/Pictures/Wallpapers"))
+PY
+)
+        fi
+        FIRST_WP=""
+        if [[ -d "$WP_DIR" ]]; then
+            FIRST_WP=$(find "$WP_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -n 1 || true)
+        fi
+        if [[ -n "$FIRST_WP" && -f "$FIRST_WP" ]]; then
+            WALLPAPER="$FIRST_WP"
+        else
+            MODE="preset"
+        fi
+    fi
+    if [[ "$MODE" == "dynamic" ]] && ! command -v matugen >/dev/null 2>&1; then
+        MODE="preset"
+    fi
+fi
+
 # --- Main Pipeline ---
 ensure_terminal_includes
 
@@ -845,20 +897,21 @@ MAT_LDARK="0.00"
 MAT_LLIGHT="0.00"
 PREFS_FILE="$QUICKSHELL_DIR/shell-prefs.json"
 if [[ -f "$PREFS_FILE" ]] && command -v python3 >/dev/null 2>&1; then
-    read -r MAT_TYPE MAT_CONTRAST MAT_SRC_IDX MAT_PREFER MAT_LDARK MAT_LLIGHT < <(
-        python3 - "$PREFS_FILE" <<'PY' 2>/dev/null || echo "scheme-tonal-spot 0.00 0 saturation 0.00 0.00"
+    IFS=$'\t' read -r MAT_TYPE MAT_CONTRAST MAT_SRC_IDX MAT_PREFER MAT_LDARK MAT_LLIGHT < <(
+        python3 - "$PREFS_FILE" <<'PY' 2>/dev/null || printf 'scheme-tonal-spot\t0.00\t0\tsaturation\t0.00\t0.00\n'
 import json, sys
 try:
-    d = json.load(open(sys.argv[1], "r", encoding="utf-8"))
+    with open(sys.argv[1], "r", encoding="utf-8") as f:
+        d = json.load(f)
     t = str(d.get("matugenType", "scheme-tonal-spot")).strip() or "scheme-tonal-spot"
     c = max(-1.0, min(1.0, float(d.get("matugenContrast", 0.0))))
     s = max(0, min(4, int(d.get("matugenSourceIndex", 0))))
     p = str(d.get("matugenPrefer", "saturation")).strip() or "saturation"
     ld = max(-0.8, min(0.8, float(d.get("matugenLightnessDark", 0.0))))
     ll = max(-0.8, min(0.8, float(d.get("matugenLightnessLight", 0.0))))
-    print(t, f"{c:.2f}", s, p, f"{ld:.2f}", f"{ll:.2f}")
+    print(f"{t}\t{c:.2f}\t{s}\t{p}\t{ld:.2f}\t{ll:.2f}")
 except Exception:
-    print("scheme-tonal-spot 0.00 0 saturation 0.00 0.00")
+    print("scheme-tonal-spot\t0.00\t0\tsaturation\t0.00\t0.00")
 PY
     )
 fi

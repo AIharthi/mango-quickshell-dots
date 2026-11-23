@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import ".."
 
@@ -19,11 +20,11 @@ Rectangle {
     scale: swMouse.pressed ? 0.94 : 1.0
 
     Behavior on color {
-        enabled: !Theme.isSimple
+        enabled: !Theme.reducedMotion
         ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
     }
     Behavior on scale {
-        enabled: !Theme.isSimple
+        enabled: !Theme.reducedMotion
         NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
     }
 
@@ -37,7 +38,7 @@ Rectangle {
         color: root.checked ? Theme.fgPrimary : Theme.fgSurfaceVariant
 
         Behavior on x {
-            enabled: !Theme.isSimple
+            enabled: !Theme.reducedMotion
             NumberAnimation {
                 duration: 180
                 easing.type: Easing.OutBack
@@ -45,7 +46,7 @@ Rectangle {
             }
         }
         Behavior on color {
-            enabled: !Theme.isSimple
+            enabled: !Theme.reducedMotion
             ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
         }
     }

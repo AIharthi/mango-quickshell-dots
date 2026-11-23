@@ -120,7 +120,7 @@ DEFAULTS = {
     "trackpad_natural_scrolling": False,
     "trackpad_disable_while_typing": True,
     "disable_trackpad": False,
-    "xkb_rules_layout": "us,ara",
+    "xkb_rules_layout": "us",
     "xkb_rules_options": "grp:alt_shift_toggle",
     "numlock_on": False,
     "repeat_rate": 30,

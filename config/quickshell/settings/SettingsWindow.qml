@@ -27,9 +27,15 @@ PanelWindow {
         onTriggered: root.confirmFactoryReset = false
     }
 
-    Component.onCompleted: Qt.callLater(() => { root._entered = true; })
+    Component.onCompleted: Qt.callLater(() => {
+        root._entered = true;
+        if (root.isOpen)
+            settingsFocusScope.forceActiveFocus();
+    })
     onIsOpenChanged: {
-        if (!isOpen) {
+        if (isOpen) {
+            Qt.callLater(() => settingsFocusScope.forceActiveFocus());
+        } else {
             searchQuery = "";
             resetMenuOpen = false;
             confirmFactoryReset = false;
@@ -151,6 +157,7 @@ PanelWindow {
         : WlrKeyboardFocus.None
 
     FocusScope {
+        id: settingsFocusScope
         anchors.fill: parent
         focus: root.isOpen
 
@@ -852,7 +859,7 @@ PanelWindow {
                             anchors.fill: parent
                             clip: true
                             contentWidth: width
-                            contentHeight: pageLoader.item ? pageLoader.item.implicitHeight : 0
+                            contentHeight: pageLoader.implicitHeight
                             boundsBehavior: Flickable.StopAtBounds
 
                             Loader {
