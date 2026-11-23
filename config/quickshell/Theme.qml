@@ -37,8 +37,9 @@ Singleton {
         { id: "simple",  label: "Simple",   vibe: "0px Flat Bar",        shortDesc: "Square corners, edge bar & zero gaps/shadows/motion",         icon: "󰝤" }
     ]
 
-    property real blurFocusedOpacity: 0.86
-    property real blurUnfocusedOpacity: 0.76
+    property bool blurEnabled: false
+    property real blurFocusedOpacity: 1.00
+    property real blurUnfocusedOpacity: 1.00
     property int blurRadius: 5
     property int blurPasses: 2
     property real blurSaturation: 1.20
@@ -141,39 +142,42 @@ Singleton {
     readonly property bool showOledRim: isOled
 
     readonly property color notchBg: {
-        if (isSimple)
-            return withAlpha(surfaceContainerLowest, Math.max(0.96, ShellState.shellOpacity));
-        if (isOled)
-            return withAlpha("#000000", 0.97);
-        if (isNeon)
-            return isDark
-                ? withAlpha(Qt.tint("#07070c", withAlpha(primaryContainer, 0.16)), 0.96)
-                : withAlpha(surface, 0.97);
-        if (isRetro)
-            return isDark ? surfaceContainerLow : surface;
-        if (isMinimal)
-            return withAlpha(surfaceContainerLowest, 0.97);
-        if (isBlur)
-            return isDark
-                ? withAlpha(surfaceContainerLowest, Math.min(0.86, Math.max(0.70, ShellState.shellOpacity * 0.82)))
-                : withAlpha(surface, Math.min(0.89, ShellState.shellOpacity * 0.85));
+        const sOp = ShellState.shellOpacity;
         if (ShellState.surfaceStyle === "flat")
-            return withAlpha(surfaceContainerLowest, Math.max(0.95, ShellState.shellOpacity));
+            return withAlpha(surfaceContainerLowest, Math.max(0.70, sOp));
         if (ShellState.surfaceStyle === "oled")
-            return withAlpha("#000000", Math.max(0.94, ShellState.shellOpacity));
+            return withAlpha("#000000", Math.max(0.70, sOp));
         if (ShellState.surfaceStyle === "tinted")
-            return withAlpha(primaryContainer, Math.max(0.90, Math.min(0.97, ShellState.shellOpacity * 0.94)));
+            return withAlpha(primaryContainer, Math.max(0.68, Math.min(0.98, sOp * 0.94)));
         if (ShellState.surfaceStyle === "glass")
             return isDark
-                ? withAlpha(surfaceContainerLowest, Math.min(0.88, ShellState.shellOpacity * 0.84))
-                : withAlpha(surface, Math.min(0.91, ShellState.shellOpacity * 0.87));
+                ? withAlpha(surfaceContainerLowest, Math.min(0.92, Math.max(0.60, sOp * 0.84)))
+                : withAlpha(surface, Math.min(0.94, Math.max(0.65, sOp * 0.87)));
+        if (isSimple)
+            return withAlpha(surfaceContainerLowest, Math.max(0.72, sOp));
+        if (isOled)
+            return withAlpha("#000000", Math.max(0.72, sOp));
+        if (isNeon)
+            return isDark
+                ? withAlpha(Qt.tint("#07070c", withAlpha(primaryContainer, 0.16)), Math.max(0.70, sOp))
+                : withAlpha(surface, Math.max(0.75, sOp));
+        if (isRetro)
+            return withAlpha(isDark ? surfaceContainerLow : surface, Math.max(0.75, sOp));
+        if (isMinimal)
+            return withAlpha(surfaceContainerLowest, Math.max(0.72, sOp));
+        if (isBlur)
+            return isDark
+                ? withAlpha(surfaceContainerLowest, Math.min(0.90, Math.max(0.60, sOp * 0.84)))
+                : withAlpha(surface, Math.min(0.92, Math.max(0.65, sOp * 0.86)));
         return isDark
-            ? withAlpha(Qt.tint("#07070b", withAlpha(surfaceContainerLowest, 0.30)), Math.max(0.95, ShellState.shellOpacity))
-            : withAlpha(surface, Math.max(0.96, ShellState.shellOpacity));
+            ? withAlpha(Qt.tint("#07070b", withAlpha(surfaceContainerLowest, 0.30)), Math.max(0.70, sOp))
+            : withAlpha(surface, Math.max(0.75, sOp));
     }
     readonly property color islandBg: notchBg
     readonly property color islandBorder: {
-        if (ShellState.highContrast || isNeon || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow")
+        if (ShellState.borderStyle === "none")
+            return "transparent";
+        if (ShellState.highContrast || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow" || isNeon)
             return primary;
         if (isRetro)
             return isDark ? withAlpha(fgSurface, 0.45) : outline;
@@ -185,72 +189,84 @@ Singleton {
             return outlineVariant;
         if (isBlur || ShellState.surfaceStyle === "glass")
             return isDark ? withAlpha(fgSurface, 0.22) : withAlpha(outline, 0.32);
-        if (ShellState.borderStyle === "none")
-            return "transparent";
-        return withAlpha(fgSurface, 0.12);
+        return withAlpha(fgSurface, 0.14);
     }
     readonly property int islandBorderWidth: {
-        if (ShellState.highContrast)
-            return Math.max(1, ShellState.uiBorderWidth);
-        if (isNeon || isRetro)
-            return 2;
-        if (isSimple)
-            return Math.max(1, ShellState.uiBorderWidth);
-        if (isOled || isMinimal || isBlur)
-            return 1;
-        if (ShellState.borderStyle === "none")
+        if (ShellState.borderStyle === "none" || ShellState.uiBorderWidth <= 0)
             return 0;
-        return Math.max(1, ShellState.uiBorderWidth);
+        return ShellState.uiBorderWidth;
     }
     readonly property color cardBg: {
+        const cOp = ShellState.cardOpacity;
+        if (ShellState.surfaceStyle === "oled")
+            return withAlpha("#0a0a0f", Math.max(0.35, Math.min(0.99, cOp + 0.36)));
+        if (ShellState.surfaceStyle === "tinted")
+            return withAlpha(surfaceContainerHigh, Math.max(0.35, Math.min(0.98, cOp + 0.32)));
+        if (ShellState.surfaceStyle === "flat")
+            return withAlpha(surfaceContainerLow, Math.max(0.45, Math.min(1.0, cOp + 0.44)));
+        if (ShellState.surfaceStyle === "glass")
+            return withAlpha(surfaceContainerHigh, Math.max(0.28, Math.min(0.92, cOp * 0.92)));
         if (isSimple)
-            return surfaceContainerLow;
+            return withAlpha(surfaceContainerLow, Math.max(0.45, Math.min(1.0, cOp + 0.45)));
         if (isOled)
-            return withAlpha("#09090e", 0.96);
+            return withAlpha("#09090e", Math.max(0.45, Math.min(0.99, cOp + 0.42)));
         if (isNeon)
             return isDark
-                ? withAlpha(Qt.tint("#0c0d14", withAlpha(primaryContainer, 0.18)), 0.94)
-                : withAlpha(surfaceContainerHigh, 0.95);
+                ? withAlpha(Qt.tint("#0c0d14", withAlpha(primaryContainer, 0.18)), Math.max(0.40, Math.min(0.98, cOp + 0.38)))
+                : withAlpha(surfaceContainerHigh, Math.max(0.45, Math.min(0.98, cOp + 0.40)));
         if (isRetro)
-            return isDark ? surfaceContainer : surfaceDim;
+            return withAlpha(isDark ? surfaceContainer : surfaceDim, Math.max(0.45, Math.min(1.0, cOp + 0.45)));
         if (isMinimal)
-            return isDark ? withAlpha(surfaceContainer, 0.96) : withAlpha(surfaceContainerLow, 0.98);
+            return isDark
+                ? withAlpha(surfaceContainer, Math.max(0.45, Math.min(0.98, cOp + 0.42)))
+                : withAlpha(surfaceContainerLow, Math.max(0.50, Math.min(0.99, cOp + 0.44)));
         if (isBlur)
             return isDark
-                ? withAlpha(surfaceContainerHigh, Math.max(0.60, ShellState.cardOpacity * 0.92))
-                : withAlpha(surfaceContainerHigh, 0.82);
-        if (ShellState.surfaceStyle === "oled")
-            return withAlpha("#0a0a0f", Math.max(0.86, ShellState.cardOpacity));
-        if (ShellState.surfaceStyle === "tinted")
-            return withAlpha(surfaceContainerHigh, Math.max(0.82, ShellState.cardOpacity * 0.94));
+                ? withAlpha(surfaceContainerHigh, Math.max(0.28, Math.min(0.94, cOp * 0.92)))
+                : withAlpha(surfaceContainerHigh, Math.max(0.35, Math.min(0.95, cOp + 0.25)));
         return isDark
-            ? withAlpha(surfaceContainer, Math.max(0.88, Math.min(0.97, ShellState.cardOpacity + 0.38)))
-            : withAlpha(surfaceContainerHigh, Math.min(1.0, ShellState.cardOpacity + 0.36));
+            ? withAlpha(surfaceContainer, Math.max(0.35, Math.min(0.98, cOp + 0.38)))
+            : withAlpha(surfaceContainerHigh, Math.max(0.40, Math.min(1.0, cOp + 0.36)));
     }
     readonly property color subCardBg: {
+        const cOp = ShellState.cardOpacity;
+        if (ShellState.surfaceStyle === "oled")
+            return withAlpha("#12121a", Math.max(0.30, Math.min(0.96, cOp + 0.28)));
+        if (ShellState.surfaceStyle === "tinted")
+            return withAlpha(primaryContainer, Math.max(0.25, Math.min(0.90, cOp * 0.75)));
+        if (ShellState.surfaceStyle === "flat")
+            return withAlpha(surfaceContainer, Math.max(0.40, Math.min(0.98, cOp + 0.38)));
+        if (ShellState.surfaceStyle === "glass")
+            return withAlpha(surfaceContainerHighest, Math.max(0.22, Math.min(0.88, cOp * 0.78)));
         if (isSimple)
-            return surfaceContainer;
+            return withAlpha(surfaceContainer, Math.max(0.40, Math.min(1.0, cOp + 0.40)));
         if (isOled)
-            return withAlpha("#12121a", 0.94);
+            return withAlpha("#12121a", Math.max(0.38, Math.min(0.96, cOp + 0.36)));
         if (isNeon)
-            return isDark ? withAlpha(primaryContainer, 0.36) : withAlpha(surfaceContainerHigh, 0.90);
+            return isDark
+                ? withAlpha(primaryContainer, Math.max(0.22, Math.min(0.85, cOp * 0.72)))
+                : withAlpha(surfaceContainerHigh, Math.max(0.40, Math.min(0.96, cOp + 0.35)));
         if (isRetro)
-            return isDark ? surfaceContainerHigh : surfaceContainer;
+            return withAlpha(isDark ? surfaceContainerHigh : surfaceContainer, Math.max(0.42, Math.min(1.0, cOp + 0.42)));
         if (isMinimal)
-            return isDark ? withAlpha(surfaceContainerHigh, 0.74) : withAlpha(surfaceContainer, 0.90);
+            return isDark
+                ? withAlpha(surfaceContainerHigh, Math.max(0.35, Math.min(0.92, cOp + 0.24)))
+                : withAlpha(surfaceContainer, Math.max(0.45, Math.min(0.96, cOp + 0.36)));
         if (isBlur)
             return isDark
-                ? withAlpha(surfaceContainerHighest, Math.max(0.46, ShellState.cardOpacity * 0.78))
-                : withAlpha(surfaceContainer, 0.80);
-        if (ShellState.surfaceStyle === "oled")
-            return withAlpha("#12121a", Math.max(0.78, ShellState.cardOpacity));
+                ? withAlpha(surfaceContainerHighest, Math.max(0.22, Math.min(0.88, cOp * 0.78)))
+                : withAlpha(surfaceContainer, Math.max(0.32, Math.min(0.92, cOp + 0.24)));
         return isDark
-            ? withAlpha(surfaceContainerHigh, Math.max(0.76, Math.min(0.94, ShellState.cardOpacity + 0.28)))
-            : withAlpha(surfaceContainer, Math.min(1.0, ShellState.cardOpacity + 0.42));
+            ? withAlpha(surfaceContainerHigh, Math.max(0.32, Math.min(0.95, cOp + 0.28)))
+            : withAlpha(surfaceContainer, Math.max(0.40, Math.min(1.0, cOp + 0.42)));
     }
     readonly property color cardBorder: {
+        if (ShellState.borderStyle === "none")
+            return "transparent";
         if (ShellState.highContrast)
             return outline;
+        if (ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow")
+            return withAlpha(primary, 0.55);
         if (isNeon)
             return withAlpha(primary, 0.48);
         if (isRetro)
@@ -263,22 +279,12 @@ Singleton {
             return isDark ? withAlpha(fgSurface, 0.16) : withAlpha(outline, 0.25);
         if (isSimple)
             return outlineVariant;
-        if (ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow")
-            return withAlpha(primary, 0.55);
-        if (ShellState.borderStyle === "none")
-            return "transparent";
         return isDark ? withAlpha(fgSurface, 0.12) : withAlpha(outline, 0.22);
     }
     readonly property int cardBorderWidth: {
-        if (ShellState.highContrast)
-            return Math.max(1, ShellState.uiBorderWidth);
-        if (isRetro)
-            return 2;
-        if (isSimple || isNeon || isBlur || isMinimal || isOled)
-            return 1;
-        if (ShellState.borderStyle === "none")
+        if (ShellState.borderStyle === "none" || ShellState.uiBorderWidth <= 0)
             return 0;
-        return Math.max(1, ShellState.uiBorderWidth);
+        return ShellState.uiBorderWidth;
     }
     readonly property color hoverBg: withAlpha(primary, 0.14)
     readonly property color activeBg: withAlpha(primary, 0.22)
@@ -319,10 +325,14 @@ Singleton {
     }
 
     function r(val: real): real {
-        if (root.isSimple)
+        if (ShellState.uiRadiusScale <= 0.01)
             return 0;
+        if (root.isSimple)
+            return Math.round(val * Math.max(0, ShellState.uiRadiusScale - 1.0));
         if (root.isRetro)
-            return val <= 2 ? Math.round(val) : Math.max(2, Math.min(6, Math.round(val * 0.32)));
+            return val <= 2
+                ? Math.round(val * ShellState.uiRadiusScale)
+                : Math.max(1, Math.round(val * 0.32 * ShellState.uiRadiusScale));
         if (root.isNeon)
             return Math.round(val * 0.55 * ShellState.uiRadiusScale);
         if (root.isMinimal)
@@ -331,7 +341,9 @@ Singleton {
     }
 
     function fs(px: real): int {
-        return Math.max(8, Math.round(px * ShellState.uiFontScale));
+        const fontDelta = (ShellState.uiFontSize > 0 ? (ShellState.uiFontSize - 10) * 0.04 : 0.0);
+        const mult = Math.max(0.80, Math.min(1.25, ShellState.uiFontScale + fontDelta));
+        return Math.max(7, Math.round(px * mult));
     }
 
     function applyColorsJson(raw: string): void {
@@ -418,6 +430,8 @@ Singleton {
             return;
         try {
             const p = JSON.parse(raw);
+            if (typeof p.blurEnabled === "boolean")
+                root.blurEnabled = p.blurEnabled;
             if (typeof p.blurFocusedOpacity === "number")
                 root.blurFocusedOpacity = p.blurFocusedOpacity;
             if (typeof p.blurUnfocusedOpacity === "number")
@@ -513,7 +527,9 @@ Singleton {
     }
 
     function updateModePref(key: string, val: var): void {
-        if (key === "blurFocusedOpacity")
+        if (key === "blurEnabled")
+            root.blurEnabled = !!val;
+        else if (key === "blurFocusedOpacity")
             root.blurFocusedOpacity = Number(val);
         else if (key === "blurUnfocusedOpacity")
             root.blurUnfocusedOpacity = Number(val);

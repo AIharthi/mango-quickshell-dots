@@ -859,7 +859,7 @@ def cmd_startup_remove():
     print(json.dumps(read_startup_state()))
 
 
-def parse_binds(path):
+def parse_binds(path, source_name="config"):
     binds = []
     if not os.path.exists(path):
         return binds
@@ -894,12 +894,14 @@ def parse_binds(path):
                 mods = [m.strip() for m in mods_raw.split("+") if m.strip() and m.strip().lower() != "none"]
                 binds.append({
                     "kind": "mouse" if is_mouse else "key",
+                    "source": source_name,
                     "category": current_cat,
                     "mods": mods,
                     "modsRaw": mods_raw,
                     "key": key_raw,
                     "action": action,
                     "arg": arg_display,
+                    "rawArg": arg,
                     "raw": s,
                 })
     except Exception:
@@ -908,8 +910,8 @@ def parse_binds(path):
 
 
 def cmd_keybinds_list():
-    binds = parse_binds(mango_conf_path)
-    binds.extend(parse_binds(local_conf_path))
+    binds = parse_binds(mango_conf_path, "config")
+    binds.extend(parse_binds(local_conf_path, "local"))
     cats = []
     for b in binds:
         if b["category"] not in cats:

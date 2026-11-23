@@ -230,7 +230,7 @@ ColumnLayout {
             Text {
                 text: "QUICK-LAUNCH KEYBIND APPLICATIONS"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -264,14 +264,14 @@ ColumnLayout {
                             Text {
                                 text: appRow.modelData.icon
                                 font.family: Theme.iconFont
-                                font.pixelSize: 14
+                                font.pixelSize: Theme.fs(14)
                                 color: Theme.primary
                             }
 
                             Text {
                                 text: appRow.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurface
                             }
@@ -289,7 +289,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: appRow.modelData.bindHint
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     color: Theme.fgSurfaceVariant
                                 }
                             }
@@ -299,7 +299,7 @@ ColumnLayout {
                             Text {
                                 text: appRow.activeCmd
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
                                 color: Theme.secondary
                             }
@@ -331,7 +331,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: candPill.modelData
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 10
+                                        font.pixelSize: Theme.fs(10)
                                         font.weight: candPill.selected ? Font.Bold : Font.Medium
                                         color: candPill.selected ? Theme.primary : Theme.fgSurface
                                     }
@@ -370,7 +370,7 @@ ColumnLayout {
                                         text: "Custom command (e.g. alacritty, firefox, zed)..."
                                         visible: customInput.text.length === 0
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 10
+                                        font.pixelSize: Theme.fs(10)
                                         color: Theme.fgSurfaceVariant
                                     }
 
@@ -379,7 +379,7 @@ ColumnLayout {
                                         anchors.fill: parent
                                         verticalAlignment: TextInput.AlignVCenter
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 10
+                                        font.pixelSize: Theme.fs(10)
                                         color: Theme.fgSurface
                                         clip: true
                                         onAccepted: {
@@ -405,7 +405,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: "Set"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     font.weight: Font.Bold
                                     color: Theme.primary
                                 }
@@ -450,7 +450,7 @@ ColumnLayout {
             Text {
                 text: "SYSTEM DEFAULT APPLICATIONS (XDG-MIME)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -485,7 +485,7 @@ ColumnLayout {
                             Text {
                                 text: mimeRow.modelData.icon
                                 font.family: Theme.iconFont
-                                font.pixelSize: 13
+                                font.pixelSize: Theme.fs(13)
                                 color: Theme.secondary
                             }
 
@@ -493,7 +493,7 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 text: mimeRow.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurface
                             }
@@ -501,7 +501,7 @@ ColumnLayout {
                             Text {
                                 text: mimeRow.currentId.length > 0 ? mimeRow.currentId : "Unassigned"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: mimeRow.currentId.length > 0 ? Theme.primary : Theme.fgSurfaceVariant
                             }
                         }
@@ -533,7 +533,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: optPill.modelData.name
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 10
+                                        font.pixelSize: Theme.fs(10)
                                         font.weight: optPill.selected ? Font.Bold : Font.Medium
                                         color: optPill.selected ? Theme.secondary : Theme.fgSurface
                                     }
@@ -572,7 +572,7 @@ ColumnLayout {
             Text {
                 text: "STARTUP APPLICATIONS (MANGOWC EXEC_ONCE)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -599,7 +599,7 @@ ColumnLayout {
                             text: "Add startup command (e.g. waypaper --restore, foot)..."
                             visible: startupInput.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -608,7 +608,7 @@ ColumnLayout {
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             color: Theme.fgSurface
                             clip: true
                             onAccepted: {
@@ -645,14 +645,14 @@ ColumnLayout {
                         Text {
                             text: "󰐕"
                             font.family: Theme.iconFont
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.fs(12)
                             color: Theme.fgPrimary
                         }
 
                         Text {
                             text: "Add"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Theme.fgPrimary
                         }
@@ -697,7 +697,7 @@ ColumnLayout {
                         Text {
                             text: "local.conf"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
                             color: Theme.primary
                         }
@@ -707,8 +707,35 @@ ColumnLayout {
                             elide: Text.ElideRight
                             text: usrStartRow.modelData.cmd
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             color: Theme.fgSurface
+                        }
+
+                        Rectangle {
+                            implicitWidth: 24
+                            implicitHeight: 24
+                            radius: Theme.r(6)
+                            color: editStartMouse.containsMouse ? Theme.withAlpha(Theme.primary, 0.20) : "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰏫"
+                                font.family: Theme.iconFont
+                                font.pixelSize: Theme.fs(12)
+                                color: editStartMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+                            }
+
+                            MouseArea {
+                                id: editStartMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    startupInput.text = usrStartRow.modelData.cmd;
+                                    root.removeStartup(usrStartRow.modelData.cmd);
+                                    startupInput.forceActiveFocus();
+                                }
+                            }
                         }
 
                         Rectangle {
@@ -721,7 +748,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "󰆴"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 12
+                                font.pixelSize: Theme.fs(12)
                                 color: delStartMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
                             }
 
@@ -741,7 +768,7 @@ ColumnLayout {
                 visible: root.startupUserItems.length === 0
                 text: "No custom startup commands added to local.conf yet"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.fgSurfaceVariant
             }
 
@@ -753,7 +780,7 @@ ColumnLayout {
                 Text {
                     text: "CORE AUTOSTART SERVICES (autostart.sh)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -778,7 +805,7 @@ ColumnLayout {
                             elide: Text.ElideRight
                             text: coreRow.modelData.cmd
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
                     }
@@ -805,7 +832,7 @@ ColumnLayout {
             Text {
                 text: "APP LAUNCHER VISIBILITY (HIDDEN-APPS.JSON)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -832,7 +859,7 @@ ColumnLayout {
                             text: "Desktop ID or name prefix to hide (e.g. qdbusviewer)..."
                             visible: hideIn.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -841,7 +868,7 @@ ColumnLayout {
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
                         }
@@ -854,7 +881,7 @@ ColumnLayout {
                     radius: Theme.r(8)
                     color: hidIdMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
 
-                    Text { id: hidIdLbl; anchors.centerIn: parent; text: "Hide ID"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgPrimary }
+                    Text { id: hidIdLbl; anchors.centerIn: parent; text: "Hide ID"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgPrimary }
                     MouseArea { id: hidIdMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.addHidden("id", hideIn.text); hideIn.text = ""; } }
                 }
 
@@ -866,7 +893,7 @@ ColumnLayout {
                     border.width: Theme.cardBorderWidth
                     border.color: Theme.cardBorder
 
-                    Text { id: hidPfLbl; anchors.centerIn: parent; text: "Hide Prefix"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.secondary }
+                    Text { id: hidPfLbl; anchors.centerIn: parent; text: "Hide Prefix"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.secondary }
                     MouseArea { id: hidPfMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.addHidden("prefix", hideIn.text); hideIn.text = ""; } }
                 }
             }
@@ -893,8 +920,8 @@ ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 5
 
-                            Text { text: hidTag.modelData; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurface }
-                            Text { text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: 9; color: Theme.error }
+                            Text { text: hidTag.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurface }
+                            Text { text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.error }
                         }
 
                         MouseArea {
@@ -930,8 +957,8 @@ ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 5
 
-                            Text { text: "prefix:" + pfTag.modelData; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.secondary }
-                            Text { text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: 9; color: Theme.error }
+                            Text { text: "prefix:" + pfTag.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.secondary }
+                            Text { text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.error }
                         }
 
                         MouseArea {
@@ -963,8 +990,8 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "SESSION ENVIRONMENT VARIABLES (env= IN local.conf)"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
-                Text { visible: root.envStatus.length > 0; text: root.envStatus; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.success }
+                Text { Layout.fillWidth: true; text: "SESSION ENVIRONMENT VARIABLES (env= IN local.conf)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
+                Text { visible: root.envStatus.length > 0; text: root.envStatus; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.success }
             }
 
             RowLayout {
@@ -981,8 +1008,8 @@ ColumnLayout {
 
                     Item {
                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: "VARIABLE"; visible: envKeyIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
-                        TextInput { id: envKeyIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface; clip: true }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: "VARIABLE"; visible: envKeyIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                        TextInput { id: envKeyIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
                     }
                 }
 
@@ -996,8 +1023,8 @@ ColumnLayout {
 
                     Item {
                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Value (e.g. wayland)"; visible: envValIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
-                        TextInput { id: envValIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface; clip: true }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Value (e.g. wayland)"; visible: envValIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                        TextInput { id: envValIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
                     }
                 }
 
@@ -1006,7 +1033,7 @@ ColumnLayout {
                     implicitWidth: addEnvLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: addEnvMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-                    Text { id: addEnvLbl; anchors.centerIn: parent; text: "Add Env"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgPrimary }
+                    Text { id: addEnvLbl; anchors.centerIn: parent; text: "Add Env"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgPrimary }
                     MouseArea {
                         id: addEnvMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                         onClicked: {
@@ -1033,13 +1060,27 @@ ColumnLayout {
 
                     RowLayout {
                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 6; spacing: 8
-                        Text { text: envRow.modelData.key; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.secondary }
-                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "= " + envRow.modelData.value; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                        Text { text: envRow.modelData.key; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.secondary }
+                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "= " + envRow.modelData.value; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
+
+                        Rectangle {
+                            implicitWidth: 20; implicitHeight: 20; radius: Theme.r(5)
+                            color: editEnvMouse.containsMouse ? Theme.withAlpha(Theme.primary, 0.22) : "transparent"
+                            Text { anchors.centerIn: parent; text: "󰏫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: editEnvMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant }
+                            MouseArea {
+                                id: editEnvMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    envKeyIn.text = envRow.modelData.key;
+                                    envValIn.text = envRow.modelData.value;
+                                    envValIn.forceActiveFocus();
+                                }
+                            }
+                        }
 
                         Rectangle {
                             implicitWidth: 20; implicitHeight: 20; radius: Theme.r(5)
                             color: delEnvMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : "transparent"
-                            Text { anchors.centerIn: parent; text: "󰆴"; font.family: Theme.iconFont; font.pixelSize: 11; color: delEnvMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant }
+                            Text { anchors.centerIn: parent; text: "󰆴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: delEnvMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant }
                             MouseArea { id: delEnvMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.removeEnv(envRow.modelData.key) }
                         }
                     }
@@ -1050,7 +1091,7 @@ ColumnLayout {
                 visible: root.envVars.length === 0
                 text: "No custom environment variables defined in local.conf"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.fgSurfaceVariant
             }
         }

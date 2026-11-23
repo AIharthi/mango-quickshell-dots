@@ -218,14 +218,14 @@ PanelWindow {
                 Text {
                     text: "󰖯"
                     font.family: Theme.iconFont
-                    font.pixelSize: 17
+                    font.pixelSize: Theme.fs(17)
                     color: Theme.primary
                 }
 
                 Text {
                     text: "Window Switcher"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.fs(14)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
@@ -241,7 +241,7 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: root.filteredClients.length + " open"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -261,7 +261,7 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "󰅖"
                         font.family: Theme.iconFont
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fs(12)
                         color: clsBtnMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
                     }
 
@@ -293,7 +293,7 @@ PanelWindow {
                     Text {
                         text: "󰍉"
                         font.family: Theme.iconFont
-                        font.pixelSize: 14
+                        font.pixelSize: Theme.fs(14)
                         color: searchInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
                     }
 
@@ -306,7 +306,7 @@ PanelWindow {
                             visible: searchInput.text.length === 0
                             text: "Search windows by title, app, or tag... (Enter to focus · Del to close)"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -318,7 +318,7 @@ PanelWindow {
                             selectionColor: Theme.primary
                             selectedTextColor: Theme.fgPrimary
                             font.family: Theme.fontFamily
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.fs(12)
                             clip: true
 
                             onTextChanged: {
@@ -426,7 +426,7 @@ PanelWindow {
                                     visible: !appIc.visible
                                     text: "󰖯"
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 15
+                                    font.pixelSize: Theme.fs(15)
                                     color: Theme.primary
                                 }
                             }
@@ -441,7 +441,7 @@ PanelWindow {
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 12
+                                    font.pixelSize: Theme.fs(12)
                                     font.weight: winRow.isSelected ? Font.Bold : Font.DemiBold
                                     color: winRow.isSelected ? Theme.primary : Theme.fgSurface
                                 }
@@ -455,7 +455,7 @@ PanelWindow {
                                         + (winRow.modelData.is_fullscreen ? " · Full" : "")
                                     elide: Text.ElideRight
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     color: Theme.fgSurfaceVariant
                                 }
                             }
@@ -472,7 +472,7 @@ PanelWindow {
                                     anchors.centerIn: parent
                                     text: "Tag " + winRow.firstTag
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
                                     color: Theme.secondary
                                 }
@@ -488,7 +488,7 @@ PanelWindow {
                                     anchors.centerIn: parent
                                     text: "󰅖"
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 11
+                                    font.pixelSize: Theme.fs(11)
                                     color: killMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
                                 }
 
@@ -509,7 +509,7 @@ PanelWindow {
                     visible: root.filteredClients.length === 0
                     text: "No open windows found"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fs(12)
                     color: Theme.fgSurfaceVariant
                 }
             }

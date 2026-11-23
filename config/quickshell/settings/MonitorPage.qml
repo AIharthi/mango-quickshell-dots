@@ -67,6 +67,14 @@ ColumnLayout {
         killProc.running = true;
     }
 
+    function serviceAction(name: string, act: string): void {
+        if (svcMutProc.running)
+            return;
+        root.statusMsg = "Running " + act + " on service " + name + "...";
+        svcMutProc.command = [Quickshell.shellPath("scripts/manage-system.sh"), "service-action", name, act];
+        svcMutProc.running = true;
+    }
+
     Component.onCompleted: refreshAll()
 
     Timer {
@@ -120,6 +128,20 @@ ColumnLayout {
         onExited: root.refreshFast()
     }
 
+    Process {
+        id: svcMutProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    root.initSystem = d.initSystem || root.initSystem;
+                    root.services = Array.isArray(d.services) ? d.services : root.services;
+                    root.statusMsg = "Service state refreshed";
+                } catch (err) {}
+            }
+        }
+    }
+
     // --- 1. Live Thermal Sensors ---
     Rectangle {
         Layout.fillWidth: true
@@ -143,7 +165,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "HARDWARE THERMAL SENSORS (/sys/class/hwmon · 4s LIVE)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -161,7 +183,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Refresh"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -215,14 +237,14 @@ ColumnLayout {
                                     elide: Text.ElideRight
                                     text: sensCard.modelData.chip + " · " + sensCard.modelData.label
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     color: Theme.fgSurface
                                 }
 
                                 Text {
                                     text: sensCard.temp.toFixed(1) + " °C"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     font.weight: Font.Bold
                                     color: sensCard.barCol
                                 }
@@ -255,7 +277,7 @@ ColumnLayout {
                 visible: root.sensors.length === 0
                 text: "No hwmon thermal sensors exposed by kernel"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.fgSurfaceVariant
             }
         }
@@ -284,7 +306,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "TOP RUNNING PROCESSES"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -314,7 +336,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: sortPill.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: sortPill.selected ? Font.Bold : Font.Medium
                             color: sortPill.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -351,7 +373,7 @@ ColumnLayout {
                         text: "Filter processes by name or PID..."
                         visible: procFilterIn.text.length === 0
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
 
@@ -361,7 +383,7 @@ ColumnLayout {
                         verticalAlignment: TextInput.AlignVCenter
                         text: root.procFilter
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurface
                         clip: true
                         onTextEdited: root.procFilter = text
@@ -393,7 +415,7 @@ ColumnLayout {
                             Layout.preferredWidth: 46
                             text: String(procRow.modelData.pid)
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -402,7 +424,7 @@ ColumnLayout {
                             elide: Text.ElideRight
                             text: procRow.modelData.name
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.DemiBold
                             color: Theme.fgSurface
                         }
@@ -412,7 +434,7 @@ ColumnLayout {
                             horizontalAlignment: Text.AlignRight
                             text: Number(procRow.modelData.cpuPct).toFixed(1) + "%"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Number(procRow.modelData.cpuPct) >= 50 ? Theme.warning : Theme.primary
                         }
@@ -422,7 +444,7 @@ ColumnLayout {
                             horizontalAlignment: Text.AlignRight
                             text: Math.round(Number(procRow.modelData.memMb)) + " MB"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.secondary
                         }
 
@@ -437,7 +459,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "Stop"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: termMouse.containsMouse ? Theme.warning : Theme.fgSurfaceVariant
                             }
@@ -462,7 +484,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "Kill"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: killMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
                             }
@@ -483,7 +505,7 @@ ColumnLayout {
                 visible: root.statusMsg.length > 0
                 text: root.statusMsg
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.info
             }
         }
@@ -513,7 +535,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "SYSTEM SERVICES (" + (root.initSystem ? root.initSystem.toUpperCase() : "INIT") + ")"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -543,7 +565,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: svcFiltPill.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: svcFiltPill.selected ? Font.Bold : Font.Medium
                             color: svcFiltPill.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -592,16 +614,42 @@ ColumnLayout {
                                 elide: Text.ElideRight
                                 text: svcRow.modelData.name
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurface
                             }
 
                             Text {
                                 text: svcRow.modelData.status
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: svcRow.runningState ? Theme.success : Theme.fgSurfaceVariant
+                            }
+
+                            Rectangle {
+                                implicitHeight: 18
+                                implicitWidth: svcActLbl.implicitWidth + 8
+                                radius: Theme.r(5)
+                                color: svcActMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
+                                border.width: Theme.cardBorderWidth
+                                border.color: Theme.cardBorder
+
+                                Text {
+                                    id: svcActLbl
+                                    anchors.centerIn: parent
+                                    text: "󰑐"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: Theme.fs(9)
+                                    color: Theme.primary
+                                }
+
+                                MouseArea {
+                                    id: svcActMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.serviceAction(svcRow.modelData.name, "restart")
+                                }
                             }
                         }
                     }

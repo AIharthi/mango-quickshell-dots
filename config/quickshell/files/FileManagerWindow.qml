@@ -970,7 +970,7 @@ PanelWindow {
                                 implicitHeight: 24
                                 radius: Theme.r(7)
                                 color: Theme.withAlpha(fstyle.accent, 0.20)
-                                Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: 13; color: fstyle.accent }
+                                Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: fstyle.accent }
                             }
                             Text {
                                 text: "Files"
@@ -1014,7 +1014,7 @@ PanelWindow {
                                             Layout.fillWidth: true
                                             text: String(tabChip.modelData.title || "Folder")
                                             font.family: Theme.fontFamily
-                                            font.pixelSize: 10
+                                            font.pixelSize: Theme.fs(10)
                                             font.weight: tabChip.cur ? Font.Bold : Font.Normal
                                             color: tabChip.cur ? fstyle.accent : Theme.fgSurface
                                             elide: Text.ElideRight
@@ -1027,7 +1027,7 @@ PanelWindow {
                                             radius: Theme.r(4)
                                             color: xTabMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.25) : "transparent"
                                             z: 2
-                                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
                                             MouseArea {
                                                 id: xTabMouse
                                                 anchors.fill: parent
@@ -1056,7 +1056,7 @@ PanelWindow {
                                 implicitHeight: 24
                                 radius: Theme.r(7)
                                 color: newTabMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                                Text { anchors.centerIn: parent; text: "󰐕"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.fgSurfaceVariant }
+                                Text { anchors.centerIn: parent; text: "󰐕"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
                                 MouseArea {
                                     id: newTabMouse
                                     anchors.fill: parent
@@ -1091,7 +1091,7 @@ PanelWindow {
                                     color: sel ? Theme.withAlpha(fstyle.accent, 0.22) : (qvmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                                     border.width: sel ? 1 : 0
                                     border.color: fstyle.accent
-                                    Text { anchors.centerIn: parent; text: qvmBtn.modelData.icon; font.family: Theme.iconFont; font.pixelSize: 12; color: qvmBtn.sel ? fstyle.accent : Theme.fgSurfaceVariant }
+                                    Text { anchors.centerIn: parent; text: qvmBtn.modelData.icon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: qvmBtn.sel ? fstyle.accent : Theme.fgSurfaceVariant }
                                     MouseArea { id: qvmMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmViewMode", qvmBtn.modelData.id) }
                                 }
                             }
@@ -1105,7 +1105,7 @@ PanelWindow {
                             color: ShellState.fmDualPane ? Theme.withAlpha(fstyle.accent, 0.22) : (dpMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                             border.width: ShellState.fmDualPane ? 1 : 0
                             border.color: fstyle.accent
-                            Text { anchors.centerIn: parent; text: "󰤼"; font.family: Theme.iconFont; font.pixelSize: 12; color: ShellState.fmDualPane ? fstyle.accent : Theme.fgSurfaceVariant }
+                            Text { anchors.centerIn: parent; text: "󰤼"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: ShellState.fmDualPane ? fstyle.accent : Theme.fgSurfaceVariant }
                             MouseArea { id: dpMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmDualPane", !ShellState.fmDualPane) }
                         }
 
@@ -1117,7 +1117,7 @@ PanelWindow {
                             color: ShellState.fmPreviewVisible ? Theme.withAlpha(fstyle.accent, 0.22) : (pvMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                             border.width: ShellState.fmPreviewVisible ? 1 : 0
                             border.color: fstyle.accent
-                            Text { anchors.centerIn: parent; text: "󰈙"; font.family: Theme.iconFont; font.pixelSize: 12; color: ShellState.fmPreviewVisible ? fstyle.accent : Theme.fgSurfaceVariant }
+                            Text { anchors.centerIn: parent; text: "󰈙"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: ShellState.fmPreviewVisible ? fstyle.accent : Theme.fgSurfaceVariant }
                             MouseArea { id: pvMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmPreviewVisible", !ShellState.fmPreviewVisible) }
                         }
 
@@ -1135,7 +1135,7 @@ PanelWindow {
                                 anchors.centerIn: parent
                                 text: "󰏘 Customize"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
                                 color: root.customizeOpen ? fstyle.onAccent : fstyle.accent
                             }
@@ -1154,7 +1154,7 @@ PanelWindow {
                             implicitHeight: 26
                             radius: Theme.r(7)
                             color: stgMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.fgSurfaceVariant }
+                            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
                             MouseArea {
                                 id: stgMouse
                                 anchors.fill: parent
@@ -1173,7 +1173,7 @@ PanelWindow {
                             implicitHeight: 26
                             radius: Theme.r(7)
                             color: clsWinMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
-                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: 12; color: clsWinMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant }
+                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: clsWinMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant }
                             MouseArea { id: clsWinMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeRequested() }
                         }
                     }
@@ -1192,7 +1192,7 @@ PanelWindow {
                         color: bkMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
                         border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
                         opacity: (parent.ap && parent.ap.histIndex > 0) ? 1.0 : 0.45
-                        Text { anchors.centerIn: parent; text: "󰁍"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰁍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
                         MouseArea { id: bkMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.goBack() }
                     }
 
@@ -1201,7 +1201,7 @@ PanelWindow {
                         color: fwMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
                         border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
                         opacity: (parent.ap && parent.ap.histIndex + 1 < parent.ap.history.length) ? 1.0 : 0.45
-                        Text { anchors.centerIn: parent; text: "󰁔"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰁔"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
                         MouseArea { id: fwMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.goForward() }
                     }
 
@@ -1210,7 +1210,7 @@ PanelWindow {
                         color: upBtnMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
                         border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
                         opacity: (parent.ap && !parent.ap.isTrashView && parent.ap.parent.length > 0) ? 1.0 : 0.45
-                        Text { anchors.centerIn: parent; text: "󰁝"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰁝"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
                         MouseArea { id: upBtnMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.goUp() }
                     }
 
@@ -1245,7 +1245,7 @@ PanelWindow {
                                         visible: root.activePane() && root.activePane().isTrashView
                                         text: "󰩹 Trash"
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 11
+                                        font.pixelSize: Theme.fs(11)
                                         font.weight: Font.Bold
                                         color: Theme.error
                                     }
@@ -1262,7 +1262,7 @@ PanelWindow {
                                                 visible: crumbWrap.index > 0
                                                 text: "/"
                                                 font.family: Theme.fontFamily
-                                                font.pixelSize: 10
+                                                font.pixelSize: Theme.fs(10)
                                                 color: Theme.outline
                                             }
 
@@ -1277,7 +1277,7 @@ PanelWindow {
                                                     anchors.centerIn: parent
                                                     text: String(crumbWrap.modelData.label || "/")
                                                     font.family: Theme.fontFamily
-                                                    font.pixelSize: 10
+                                                    font.pixelSize: Theme.fs(10)
                                                     font.weight: Font.Medium
                                                     color: Theme.fgSurface
                                                 }
@@ -1297,7 +1297,7 @@ PanelWindow {
                             Rectangle {
                                 implicitWidth: 22; implicitHeight: 22; radius: Theme.r(5)
                                 color: edPathMouse.containsMouse ? Theme.hoverBg : "transparent"
-                                Text { anchors.centerIn: parent; text: "󰑕"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.fgSurfaceVariant }
+                                Text { anchors.centerIn: parent; text: "󰑕"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
                                 MouseArea {
                                     id: edPathMouse
                                     anchors.fill: parent
@@ -1326,7 +1326,7 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 color: Theme.fgSurface
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 placeholderText: "Enter path (e.g. ~/Pictures or /etc)..."
                                 placeholderTextColor: Theme.fgSurfaceVariant
                                 background: null
@@ -1337,7 +1337,7 @@ PanelWindow {
                             Rectangle {
                                 implicitHeight: 20; implicitWidth: 34; radius: Theme.r(5)
                                 color: Theme.withAlpha(fstyle.accent, 0.22)
-                                Text { anchors.centerIn: parent; text: "Go"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: fstyle.accent }
+                                Text { anchors.centerIn: parent; text: "Go"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: fstyle.accent }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.navigateTo(pathInput.text.trim(), -1) }
                             }
                         }
@@ -1358,7 +1358,7 @@ PanelWindow {
                             anchors.rightMargin: 4
                             spacing: 5
 
-                            Text { text: "󰍉"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.fgSurfaceVariant }
+                            Text { text: "󰍉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
 
                             TextField {
                                 id: filterInput
@@ -1368,7 +1368,7 @@ PanelWindow {
                                 placeholderTextColor: Theme.fgSurfaceVariant
                                 color: Theme.fgSurface
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 background: null
                                 padding: 0
                                 onTextChanged: {
@@ -1400,7 +1400,7 @@ PanelWindow {
                                     anchors.centerIn: parent
                                     text: "Deep"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 8
+                                    font.pixelSize: Theme.fs(8)
                                     font.weight: Font.Bold
                                     color: parent.recOn ? fstyle.accent : Theme.fgSurfaceVariant
                                 }
@@ -1425,7 +1425,7 @@ PanelWindow {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: mkdMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
                         border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: "󰉖"; font.family: Theme.iconFont; font.pixelSize: 13; color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰉖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
                         MouseArea { id: mkdMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openPrompt("mkdir", "New Folder Name", "New Folder", null) }
                     }
 
@@ -1433,7 +1433,7 @@ PanelWindow {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: mkfMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
                         border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: "󰈤"; font.family: Theme.iconFont; font.pixelSize: 13; color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰈤"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
                         MouseArea { id: mkfMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openPrompt("touch", "New File Name", "notes.txt", null) }
                     }
 
@@ -1452,7 +1452,7 @@ PanelWindow {
                                 return (map[ShellState.fmSortBy] || "Name") + arr;
                             }
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Medium
                             color: Theme.fgSurface
                         }
@@ -1478,7 +1478,7 @@ PanelWindow {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: ShellState.fmShowHidden ? Theme.withAlpha(fstyle.accent, 0.22) : (hidMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
                         border.width: 1; border.color: ShellState.fmShowHidden ? fstyle.accent : Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: ShellState.fmShowHidden ? "󰈈" : "󰈉"; font.family: Theme.iconFont; font.pixelSize: 13; color: ShellState.fmShowHidden ? fstyle.accent : Theme.fgSurfaceVariant }
+                        Text { anchors.centerIn: parent; text: ShellState.fmShowHidden ? "󰈈" : "󰈉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: ShellState.fmShowHidden ? fstyle.accent : Theme.fgSurfaceVariant }
                         MouseArea { id: hidMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmShowHidden", !ShellState.fmShowHidden) }
                     }
 
@@ -1486,7 +1486,7 @@ PanelWindow {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
                         color: trmMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
                         border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: 13; color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
                         MouseArea {
                             id: trmMouse
                             anchors.fill: parent
@@ -1537,7 +1537,7 @@ PanelWindow {
                                     visible: !sbCard.iconsOnly
                                     text: "PLACES"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
                                     color: Theme.fgSurfaceVariant
                                 }
@@ -1568,7 +1568,7 @@ PanelWindow {
                                                 horizontalAlignment: sbPlace.iconMode ? Text.AlignHCenter : Text.AlignLeft
                                                 text: String(sbPlace.modelData.icon || "󰉋")
                                                 font.family: Theme.iconFont
-                                                font.pixelSize: 13
+                                                font.pixelSize: Theme.fs(13)
                                                 color: sbPlace.cur ? fstyle.accent : Theme.fgSurfaceVariant
                                             }
                                             Text {
@@ -1576,7 +1576,7 @@ PanelWindow {
                                                 Layout.fillWidth: true
                                                 text: String(sbPlace.modelData.name || "")
                                                 font.family: Theme.fontFamily
-                                                font.pixelSize: 11
+                                                font.pixelSize: Theme.fs(11)
                                                 font.weight: sbPlace.cur ? Font.Bold : Font.Normal
                                                 color: sbPlace.cur ? fstyle.accent : Theme.fgSurface
                                                 elide: Text.ElideRight
@@ -1614,7 +1614,7 @@ PanelWindow {
                                             horizontalAlignment: sbTrashItem.iconMode ? Text.AlignHCenter : Text.AlignLeft
                                             text: "󰩹"
                                             font.family: Theme.iconFont
-                                            font.pixelSize: 13
+                                            font.pixelSize: Theme.fs(13)
                                             color: sbTrashItem.cur ? Theme.error : Theme.fgSurfaceVariant
                                         }
                                         Text {
@@ -1622,14 +1622,14 @@ PanelWindow {
                                             Layout.fillWidth: true
                                             text: "Trash"
                                             font.family: Theme.fontFamily
-                                            font.pixelSize: 11
+                                            font.pixelSize: Theme.fs(11)
                                             color: sbTrashItem.cur ? Theme.error : Theme.fgSurface
                                         }
                                         Text {
                                             visible: !sbTrashItem.iconMode && Number(root.placesData.trashCount || 0) > 0
                                             text: String(root.placesData.trashCount || 0)
                                             font.family: Theme.fontFamily
-                                            font.pixelSize: 9
+                                            font.pixelSize: Theme.fs(9)
                                             font.weight: Font.Bold
                                             color: Theme.fgSurfaceVariant
                                         }
@@ -1653,14 +1653,14 @@ PanelWindow {
                                         Layout.fillWidth: true
                                         text: "BOOKMARKS"
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 9
+                                        font.pixelSize: Theme.fs(9)
                                         font.weight: Font.Bold
                                         color: Theme.fgSurfaceVariant
                                     }
                                     Rectangle {
                                         implicitWidth: 18; implicitHeight: 18; radius: Theme.r(5)
                                         color: pinBmMouse.containsMouse ? Theme.hoverBg : "transparent"
-                                        Text { anchors.centerIn: parent; text: "󰐕"; font.family: Theme.iconFont; font.pixelSize: 11; color: fstyle.accent }
+                                        Text { anchors.centerIn: parent; text: "󰐕"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: fstyle.accent }
                                         MouseArea {
                                             id: pinBmMouse
                                             anchors.fill: parent
@@ -1701,7 +1701,7 @@ PanelWindow {
                                                 horizontalAlignment: sbBm.iconMode ? Text.AlignHCenter : Text.AlignLeft
                                                 text: "󰃀"
                                                 font.family: Theme.iconFont
-                                                font.pixelSize: 12
+                                                font.pixelSize: Theme.fs(12)
                                                 color: sbBm.cur ? fstyle.accent : Theme.secondary
                                             }
                                             Text {
@@ -1709,7 +1709,7 @@ PanelWindow {
                                                 Layout.fillWidth: true
                                                 text: String(sbBm.modelData.name || "")
                                                 font.family: Theme.fontFamily
-                                                font.pixelSize: 10
+                                                font.pixelSize: Theme.fs(10)
                                                 color: sbBm.cur ? fstyle.accent : Theme.fgSurface
                                                 elide: Text.ElideRight
                                             }
@@ -1718,7 +1718,7 @@ PanelWindow {
                                                 implicitWidth: 16; implicitHeight: 16; radius: Theme.r(4)
                                                 color: rmBmMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.24) : "transparent"
                                                 z: 2
-                                                Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: 9; color: Theme.error }
+                                                Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.error }
                                                 MouseArea {
                                                     id: rmBmMouse
                                                     anchors.fill: parent
@@ -1748,7 +1748,7 @@ PanelWindow {
                                     Layout.topMargin: 6
                                     text: "DRIVES"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
                                     color: Theme.fgSurfaceVariant
                                 }
@@ -1780,7 +1780,7 @@ PanelWindow {
                                                     horizontalAlignment: sbDrive.iconMode ? Text.AlignHCenter : Text.AlignLeft
                                                     text: sbDrive.modelData.removable ? "󰕓" : "󰋊"
                                                     font.family: Theme.iconFont
-                                                    font.pixelSize: 12
+                                                    font.pixelSize: Theme.fs(12)
                                                     color: fstyle.accent
                                                 }
                                                 Text {
@@ -1788,7 +1788,7 @@ PanelWindow {
                                                     Layout.fillWidth: true
                                                     text: String(sbDrive.modelData.label || "")
                                                     font.family: Theme.fontFamily
-                                                    font.pixelSize: 10
+                                                    font.pixelSize: Theme.fs(10)
                                                     font.weight: Font.DemiBold
                                                     color: Theme.fgSurface
                                                     elide: Text.ElideRight
@@ -1797,7 +1797,7 @@ PanelWindow {
                                                     visible: !sbDrive.iconMode
                                                     text: String(sbDrive.modelData.availHuman || "")
                                                     font.family: Theme.fontFamily
-                                                    font.pixelSize: 8
+                                                    font.pixelSize: Theme.fs(8)
                                                     color: Theme.fgSurfaceVariant
                                                 }
                                             }
@@ -1967,7 +1967,7 @@ PanelWindow {
                                         return "Other pane: " + (dst ? String(dst.displayPath || dst.path) : "~");
                                     }
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     color: Theme.fgSurfaceVariant
                                     elide: Text.ElideMiddle
                                 }
@@ -1975,7 +1975,7 @@ PanelWindow {
                                 Rectangle {
                                     implicitHeight: 22; implicitWidth: cpOtherLbl.implicitWidth + 12; radius: Theme.r(6)
                                     color: cpOtherMouse.containsMouse ? fstyle.accent : Theme.withAlpha(fstyle.accent, 0.20)
-                                    Text { id: cpOtherLbl; anchors.centerIn: parent; text: "F5 Copy to Other Pane"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: cpOtherMouse.containsMouse ? fstyle.onAccent : fstyle.accent }
+                                    Text { id: cpOtherLbl; anchors.centerIn: parent; text: "F5 Copy to Other Pane"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: cpOtherMouse.containsMouse ? fstyle.onAccent : fstyle.accent }
                                     MouseArea { id: cpOtherMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.transferToOtherPane(false) }
                                 }
 
@@ -1983,7 +1983,7 @@ PanelWindow {
                                     implicitHeight: 22; implicitWidth: mvOtherLbl.implicitWidth + 12; radius: Theme.r(6)
                                     color: mvOtherMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
                                     border.width: 1; border.color: Theme.cardBorder
-                                    Text { id: mvOtherLbl; anchors.centerIn: parent; text: "Move to Other Pane"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.fgSurface }
+                                    Text { id: mvOtherLbl; anchors.centerIn: parent; text: "Move to Other Pane"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
                                     MouseArea { id: mvOtherMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.transferToOtherPane(true) }
                                 }
                             }
@@ -2075,7 +2075,7 @@ PanelWindow {
                                 return sel > 1 ? (sel + " selected  ·  " + base) : base;
                             }
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -2096,7 +2096,7 @@ PanelWindow {
                                 Text {
                                     text: (root.clipboardOp === "cut" ? "Cut " : "Copied ") + root.clipboardPaths.length + " · Paste (Ctrl+V)"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
                                     color: fstyle.accent
                                 }
@@ -2117,7 +2117,7 @@ PanelWindow {
                             Text {
                                 text: ShellState.fmOpLabel + " " + Math.round(ShellState.fmOpProgress * 100) + "% " + ShellState.fmOpCurrent
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: fstyle.accent
                             }
@@ -2138,7 +2138,7 @@ PanelWindow {
                             visible: root.statusToast.length > 0
                             text: root.statusToast
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: root.isErrorToast ? Theme.error : Theme.success
                         }
@@ -2147,7 +2147,7 @@ PanelWindow {
                             visible: root.statusToast.length === 0 && !ShellState.fmOpActive
                             text: "Ctrl+L Path · / Filter · F3 Split · Space Preview · Del Trash"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             color: Theme.outline
                         }
                     }
@@ -2222,14 +2222,14 @@ PanelWindow {
                             Text {
                                 text: String(ctxBtn.modelData.icon || "")
                                 font.family: Theme.iconFont
-                                font.pixelSize: 12
+                                font.pixelSize: Theme.fs(12)
                                 color: ctxBtn.modelData.act === "trash" ? Theme.error : fstyle.accent
                             }
                             Text {
                                 Layout.fillWidth: true
                                 text: String(ctxBtn.modelData.label || "")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: ctxBtn.modelData.act === "trash" ? Theme.error : Theme.fgSurface
                             }
                         }
@@ -2316,7 +2316,7 @@ PanelWindow {
                             text: root.promptText
                             color: Theme.fgSurface
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             background: null
                             padding: 0
                             onTextChanged: root.promptText = text
@@ -2332,7 +2332,7 @@ PanelWindow {
                         Rectangle {
                             implicitHeight: 28; implicitWidth: 74; radius: Theme.r(8)
                             color: Theme.subCardBg; border.width: 1; border.color: Theme.cardBorder
-                            Text { anchors.centerIn: parent; text: "Cancel"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { anchors.centerIn: parent; text: "Cancel"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.promptOpen = false }
                         }
 
@@ -2340,7 +2340,7 @@ PanelWindow {
                             implicitHeight: 28; implicitWidth: 86; radius: Theme.r(8)
                             readonly property bool danger: root.promptKind === "delete" || root.promptKind === "empty_trash"
                             color: danger ? Theme.error : fstyle.accent
-                            Text { anchors.centerIn: parent; text: parent.danger ? "Confirm" : "Apply"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: parent.danger ? Theme.fgError : fstyle.onAccent }
+                            Text { anchors.centerIn: parent; text: parent.danger ? "Confirm" : "Apply"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: parent.danger ? Theme.fgError : fstyle.onAccent }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.submitPrompt() }
                         }
                     }

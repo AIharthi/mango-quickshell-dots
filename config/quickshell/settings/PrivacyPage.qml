@@ -160,7 +160,7 @@ ColumnLayout {
             Text {
                 text: "CLIPBOARD & SELECTION PRIVACY"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -176,14 +176,14 @@ ColumnLayout {
                     Text {
                         text: "Disable Middle-Click Primary Paste"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
 
                     Text {
                         text: "Prevents accidental pasting of highlighted text across MangoWC & GTK"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -203,7 +203,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Wipe sensitive text or screenshots stored in Wayland clipboard"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
 
@@ -223,14 +223,14 @@ ColumnLayout {
                         Text {
                             text: "󰆴"
                             font.family: Theme.iconFont
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.fs(12)
                             color: clrClipMouse.containsMouse ? Theme.error : Theme.primary
                         }
 
                         Text {
                             text: "Clear Clipboard"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: clrClipMouse.containsMouse ? Theme.error : Theme.fgSurface
                         }
@@ -269,7 +269,7 @@ ColumnLayout {
             Text {
                 text: "FILE HISTORY & ACCOUNT PRIVACY"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -282,7 +282,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Remember Recently Opened Files"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -302,7 +302,7 @@ ColumnLayout {
                         ? ("Recent files index (~/.local/share/recently-used.xbel · " + root.recentSizeKb + " KB)")
                         : "Recent files history is empty"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
 
@@ -320,7 +320,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Clear Recent History"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: clrRecMouse.containsMouse ? Theme.error : Theme.fgSurface
                     }
@@ -346,7 +346,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Remember Application Usage Statistics"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -364,7 +364,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Hide User Identity in App Portals"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -394,7 +394,7 @@ ColumnLayout {
             Text {
                 text: "CAMERA, MICROPHONE & SCREEN LOCK"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -407,7 +407,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Disable Camera in Desktop Portals"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -426,7 +426,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Disable & Mute Microphone Input"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -448,7 +448,7 @@ ColumnLayout {
                     Text {
                         text: "Wayland Screen Locker"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
 
@@ -457,7 +457,7 @@ ColumnLayout {
                             ? ("Active locker: " + DeviceCaps.lockerCmd + " (Super + Shift + L)")
                             : "No locker installed (install swaylock, hyprlock, or waylock)"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -476,7 +476,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Lock Now"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -500,7 +500,7 @@ ColumnLayout {
             Text {
                 text: "IDLE LOCK & AUTO-SUSPEND"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -516,13 +516,13 @@ ColumnLayout {
                     Text {
                         text: "Auto-Lock on Inactivity"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
                     Text {
                         text: "Paused automatically when Keep Awake or fullscreen inhibitor is active"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -549,7 +549,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Auto-Suspend on Extended Inactivity"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -584,7 +584,7 @@ ColumnLayout {
                     Text {
                         text: "SDDM Login Theme Sync (mango-island)"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
                     Text {
@@ -592,7 +592,7 @@ ColumnLayout {
                             ? ((root.sddmActive ? "Active · " : "Installed · ") + (root.sddmWritable ? "Auto-syncing theme & wallpaper" : "Run install.sh --with-sddm to enable user sync"))
                             : "Not installed yet — run ./install.sh --with-sddm"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -611,7 +611,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Sync SDDM Now"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -633,7 +633,7 @@ ColumnLayout {
                 visible: root.statusMsg.length > 0
                 text: root.statusMsg
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.success
             }
         }

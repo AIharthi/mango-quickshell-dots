@@ -258,14 +258,14 @@ PanelWindow {
                                 Text {
                                     text: "󰒓"
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 16
+                                    font.pixelSize: Theme.fs(16)
                                     color: Theme.primary
                                 }
 
                                 Text {
                                     text: "Settings"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 15
+                                    font.pixelSize: Theme.fs(15)
                                     font.weight: Font.Bold
                                     color: Theme.fgSurface
                                 }
@@ -288,7 +288,7 @@ PanelWindow {
                                     Text {
                                         text: DeviceCaps.deviceType === "laptop" ? "󰌢" : "󰍹"
                                         font.family: Theme.iconFont
-                                        font.pixelSize: 12
+                                        font.pixelSize: Theme.fs(12)
                                         color: Theme.secondary
                                     }
 
@@ -298,7 +298,7 @@ PanelWindow {
                                             + (DeviceCaps.hostname.length > 0 ? (" · " + DeviceCaps.hostname) : "")
                                         elide: Text.ElideRight
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 10
+                                        font.pixelSize: Theme.fs(10)
                                         font.weight: Font.Medium
                                         color: Theme.fgSurfaceVariant
                                     }
@@ -324,7 +324,7 @@ PanelWindow {
                                 Text {
                                     text: "󰍉"
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 12
+                                    font.pixelSize: Theme.fs(12)
                                     color: searchInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
                                 }
 
@@ -337,7 +337,7 @@ PanelWindow {
                                         text: "Search settings..."
                                         visible: searchInput.text.length === 0
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 11
+                                        font.pixelSize: Theme.fs(11)
                                         color: Theme.fgSurfaceVariant
                                     }
 
@@ -347,7 +347,7 @@ PanelWindow {
                                         verticalAlignment: TextInput.AlignVCenter
                                         text: root.searchQuery
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 11
+                                        font.pixelSize: Theme.fs(11)
                                         color: Theme.fgSurface
                                         clip: true
                                         selectByMouse: true
@@ -381,7 +381,7 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         text: "󰅖"
                                         font.family: Theme.iconFont
-                                        font.pixelSize: 10
+                                        font.pixelSize: Theme.fs(10)
                                         color: Theme.fgSurfaceVariant
                                     }
 
@@ -417,7 +417,7 @@ PanelWindow {
                                     Layout.topMargin: 8
                                     text: "No matching setting"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 11
+                                    font.pixelSize: Theme.fs(11)
                                     color: Theme.fgSurfaceVariant
                                 }
 
@@ -447,7 +447,7 @@ PanelWindow {
                                                 elide: Text.ElideRight
                                                 text: hitBtn.modelData.label
                                                 font.family: Theme.fontFamily
-                                                font.pixelSize: 11
+                                                font.pixelSize: Theme.fs(11)
                                                 font.weight: Font.Bold
                                                 color: Theme.fgSurface
                                             }
@@ -457,7 +457,7 @@ PanelWindow {
                                                 elide: Text.ElideRight
                                                 text: "in " + hitBtn.modelData.pageId
                                                 font.family: Theme.fontFamily
-                                                font.pixelSize: 9
+                                                font.pixelSize: Theme.fs(9)
                                                 color: Theme.primary
                                             }
                                         }
@@ -538,7 +538,7 @@ PanelWindow {
                                                 Text {
                                                     text: navBtn.modelData.icon
                                                     font.family: Theme.iconFont
-                                                    font.pixelSize: 14
+                                                    font.pixelSize: Theme.fs(14)
                                                     color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurfaceVariant
 
                                                     Behavior on color {
@@ -552,7 +552,7 @@ PanelWindow {
                                                     elide: Text.ElideRight
                                                     text: navBtn.modelData.label
                                                     font.family: Theme.fontFamily
-                                                    font.pixelSize: 12
+                                                    font.pixelSize: Theme.fs(12)
                                                     font.weight: navBtn.isSelected ? Font.Bold : Font.Medium
                                                     color: navBtn.isSelected ? Theme.fgPrimary : Theme.fgSurface
 
@@ -606,7 +606,7 @@ PanelWindow {
                                         Text {
                                             text: "󰑐"
                                             font.family: Theme.iconFont
-                                            font.pixelSize: 11
+                                            font.pixelSize: Theme.fs(11)
                                             color: Theme.warning
                                         }
 
@@ -614,7 +614,7 @@ PanelWindow {
                                             Layout.fillWidth: true
                                             text: "Reset Settings"
                                             font.family: Theme.fontFamily
-                                            font.pixelSize: 10
+                                            font.pixelSize: Theme.fs(10)
                                             font.weight: Font.Bold
                                             color: Theme.fgSurface
                                         }
@@ -622,7 +622,7 @@ PanelWindow {
                                         Text {
                                             text: root.resetMenuOpen ? "󰅃" : "󰅀"
                                             font.family: Theme.iconFont
-                                            font.pixelSize: 11
+                                            font.pixelSize: Theme.fs(11)
                                             color: Theme.fgSurfaceVariant
                                         }
                                     }
@@ -651,7 +651,7 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         text: "Appearance & Theme"
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 9
+                                        font.pixelSize: Theme.fs(9)
                                         font.weight: Font.Medium
                                         color: Theme.warning
                                     }
@@ -679,7 +679,7 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         text: "Bar & Shell"
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 9
+                                        font.pixelSize: Theme.fs(9)
                                         font.weight: Font.Medium
                                         color: Theme.secondary
                                     }
@@ -709,7 +709,7 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         text: root.confirmFactoryReset ? "Confirm Factory?" : "Factory Reset All"
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 9
+                                        font.pixelSize: Theme.fs(9)
                                         font.weight: Font.Bold
                                         color: root.confirmFactoryReset ? Theme.fgError : Theme.error
                                     }
@@ -753,7 +753,7 @@ PanelWindow {
                                 Text {
                                     text: "Mode:"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     color: Theme.fgSurfaceVariant
                                 }
 
@@ -762,7 +762,7 @@ PanelWindow {
                                     horizontalAlignment: Text.AlignRight
                                     text: Theme.shellMode.toUpperCase()
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     font.weight: Font.Bold
                                     color: Theme.primary
                                 }
@@ -798,7 +798,7 @@ PanelWindow {
                             Text {
                                 text: root.currentNavItem.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 15
+                                font.pixelSize: Theme.fs(15)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurface
                             }
@@ -806,7 +806,7 @@ PanelWindow {
                             Text {
                                 text: root.currentNavItem.sub
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurfaceVariant
                             }
                         }
@@ -835,7 +835,7 @@ PanelWindow {
                                 anchors.centerIn: parent
                                 text: "󰅖"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 13
+                                font.pixelSize: Theme.fs(13)
                                 color: closeBtnMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
                             }
 

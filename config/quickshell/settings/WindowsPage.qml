@@ -277,7 +277,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "PICTURE-IN-PICTURE (PiP)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -295,7 +295,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Move Corner"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Medium
                         color: Theme.secondary
                     }
@@ -320,7 +320,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Snap Active"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgPrimary
                     }
@@ -346,7 +346,7 @@ ColumnLayout {
                     Text {
                         text: "Auto-Manage Browser & App PiP"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
 
@@ -355,7 +355,7 @@ ColumnLayout {
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
                         font.family: Theme.fontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fs(9)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -373,7 +373,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Sticky Across All Workspaces (is_global)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -393,7 +393,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Always On Top (is_overlay)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -414,7 +414,7 @@ ColumnLayout {
                     Layout.preferredWidth: 112
                     text: "Default Corner"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -444,7 +444,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: pipCorChip.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: pipCorChip.selected ? Font.Bold : Font.Medium
                             color: pipCorChip.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -471,7 +471,7 @@ ColumnLayout {
                     Layout.preferredWidth: 112
                     text: "Window Size"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -501,7 +501,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: pipSzChip.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: pipSzChip.selected ? Font.Bold : Font.Medium
                             color: pipSzChip.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -538,7 +538,7 @@ ColumnLayout {
                 wrapMode: Text.WordWrap
                 text: "Shortcuts: Super+P toggles PiP on any window · Super+Shift+P moves corner · Super+Alt+P re-snaps"
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Theme.fs(9)
                 color: Theme.fgSurfaceVariant
             }
         }
@@ -562,7 +562,7 @@ ColumnLayout {
             Text {
                 text: "FOCUS & CURSOR"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -574,7 +574,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Focus Follows Mouse (Sloppy Focus)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -591,7 +591,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Warp Cursor to Focused Window"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -608,7 +608,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Focus Window When Activated"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -638,7 +638,7 @@ ColumnLayout {
             Text {
                 text: "TILING & LAYOUTS"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -650,7 +650,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Open New Window as Master"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -674,7 +674,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Smart Gaps (Hide When Single Window)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -691,7 +691,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Drag-to-Swap Tiled Windows"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -709,7 +709,7 @@ ColumnLayout {
                     Layout.preferredWidth: 145
                     text: "Scroller Column Width"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -749,7 +749,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: scrollerChip.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: scrollerChip.selected ? Font.Bold : Font.Normal
                             color: scrollerChip.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -785,7 +785,7 @@ ColumnLayout {
             Text {
                 text: "FLOATING WINDOWS"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -797,7 +797,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Magnetic Edge Snapping"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -817,7 +817,7 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Allow Border Drag Resizing"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Allow Border Drag Resizing"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.enableBorderResize; onToggled: root.setSetting("enable_border_resize", !root.enableBorderResize) }
             }
 
@@ -849,7 +849,7 @@ ColumnLayout {
             Text {
                 text: "EXTENDED LAYOUT, CROSS-MONITOR & HOT CORNERS"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -871,28 +871,28 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Scroller Center Focus / Prefer Center"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Scroller Center Focus / Prefer Center"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.scrollerFocusCenter; onToggled: root.setSetting("scroller_focus_center", !root.scrollerFocusCenter) }
                 ToggleSwitch { checked: root.scrollerPreferCenter; activeColor: Theme.secondary; onToggled: root.setSetting("scroller_prefer_center", !root.scrollerPreferCenter) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Dwindle Smart Split & Smart Resize"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Dwindle Smart Split & Smart Resize"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.dwindleSmartSplit; onToggled: root.setSetting("dwindle_smart_split", !root.dwindleSmartSplit) }
                 ToggleSwitch { checked: root.dwindleSmartResize; activeColor: Theme.secondary; onToggled: root.setSetting("dwindle_smart_resize", !root.dwindleSmartResize) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Center-Master Overspread & No-Border Single"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Center-Master Overspread & No-Border Single"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.centerMasterOverspread; onToggled: root.setSetting("center_master_overspread", !root.centerMasterOverspread) }
                 ToggleSwitch { checked: root.noBorderWhenSingle; activeColor: Theme.secondary; onToggled: root.setSetting("no_border_when_single", !root.noBorderWhenSingle) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Monocle Clean Mode (Hide Border / Gap / Radius)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Monocle Clean Mode (Hide Border / Gap / Radius)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch {
                     checked: root.monocleNoBorder && root.monocleNoGap && root.monocleNoRadius
                     onToggled: {
@@ -906,14 +906,14 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Focus Cross-Monitor & Cross-Tag"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Focus Cross-Monitor & Cross-Tag"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.focusCrossMonitor; onToggled: root.setSetting("focus_cross_monitor", !root.focusCrossMonitor) }
                 ToggleSwitch { checked: root.focusCrossTag; activeColor: Theme.secondary; onToggled: root.setSetting("focus_cross_tag", !root.focusCrossTag) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Tag Carousel Loop & Exchange Cross-Monitor"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Tag Carousel Loop & Exchange Cross-Monitor"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.tagCarousel; onToggled: root.setSetting("tag_carousel", !root.tagCarousel) }
                 ToggleSwitch { checked: root.exchangeCrossMonitor; activeColor: Theme.secondary; onToggled: root.setSetting("exchange_cross_monitor", !root.exchangeCrossMonitor) }
             }
@@ -933,13 +933,13 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Enable Overview Hot Corner (Hotarea)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Enable Overview Hot Corner (Hotarea)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.enableHotarea; onToggled: root.setSetting("enable_hotarea", !root.enableHotarea) }
             }
 
             StepControl {
-                label: "Hotarea Size & Disable Fullscreen"
-                displayValue: root.hotareaSize + " px (c" + root.hotareaCorner + ")"
+                label: "Hotarea Trigger Size"
+                displayValue: root.hotareaSize + " px"
                 controlEnabled: root.enableHotarea
                 onDecremented: root.setSetting("hotarea_size", Math.max(4, root.hotareaSize - 2))
                 onIncremented: root.setSetting("hotarea_size", Math.min(40, root.hotareaSize + 2))
@@ -947,7 +947,67 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Allow Fullscreen Screen Tearing (Lowest Gaming Latency)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                spacing: 6
+                opacity: root.enableHotarea ? 1.0 : 0.45
+
+                Text {
+                    Layout.preferredWidth: 112
+                    text: "Hot Corner"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: 0, label: "Top-Left" },
+                        { id: 1, label: "Top-Right" },
+                        { id: 2, label: "Bottom-Left" },
+                        { id: 3, label: "Bottom-Right" }
+                    ]
+
+                    delegate: Rectangle {
+                        id: hcBtn
+                        required property var modelData
+                        readonly property bool selected: root.hotareaCorner === hcBtn.modelData.id
+
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: hcBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
+                        border.width: hcBtn.selected ? 1 : Theme.cardBorderWidth
+                        border.color: hcBtn.selected ? Theme.secondary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: hcBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            font.weight: hcBtn.selected ? Font.Bold : Font.Medium
+                            color: hcBtn.selected ? Theme.secondary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: root.enableHotarea
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.setSetting("hotarea_corner", hcBtn.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                opacity: root.enableHotarea ? 1.0 : 0.45
+                Text { Layout.fillWidth: true; text: "Disable Hot Corner When Fullscreen Window Active"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
+                ToggleSwitch { checked: root.hotareaDisableFullscreen; onToggled: root.setSetting("hotarea_disable_on_fullscreen", !root.hotareaDisableFullscreen) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Text { Layout.fillWidth: true; text: "Allow Fullscreen Screen Tearing (Lowest Gaming Latency)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.allowTearing; activeColor: Theme.warning; onToggled: root.setSetting("allow_tearing", !root.allowTearing) }
             }
         }
@@ -971,7 +1031,7 @@ ColumnLayout {
             Text {
                 text: "PER-WORKSPACE DEFAULT LAYOUTS (TAG RULES)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -991,7 +1051,7 @@ ColumnLayout {
                         Layout.preferredWidth: 52
                         text: "Tag " + tRow.modelData
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         font.weight: Font.Bold
                         color: Theme.fgSurface
                     }
@@ -1016,7 +1076,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: lChip.modelData
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: lChip.selected ? Font.Bold : Font.Normal
                                 color: lChip.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -1052,7 +1112,7 @@ ColumnLayout {
             Text {
                 text: "CUSTOM WINDOW RULES (window_rule IN local.conf)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -1079,7 +1139,7 @@ ColumnLayout {
                             text: "App ID / Class (e.g. pavucontrol, mpv, steam)..."
                             visible: appIdIn.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -1088,7 +1148,7 @@ ColumnLayout {
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
                         }
@@ -1113,7 +1173,7 @@ ColumnLayout {
                             text: "Tag 1-9"
                             visible: tagIn.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -1123,7 +1183,7 @@ ColumnLayout {
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.ruleTag
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             onTextEdited: root.ruleTag = text
                         }
@@ -1141,7 +1201,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Add Rule"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgPrimary
                     }
@@ -1195,7 +1255,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: wrFlagChip.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: wrFlagChip.active ? Theme.secondary : Theme.fgSurface
                         }
 
@@ -1220,7 +1280,7 @@ ColumnLayout {
                     visible: root.ruleStatus.length > 0
                     text: root.ruleStatus
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     color: Theme.success
                 }
             }
@@ -1249,8 +1309,44 @@ ColumnLayout {
                             elide: Text.ElideRight
                             text: "window_rule=" + wrRow.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
+                        }
+
+                        Rectangle {
+                            implicitHeight: 20
+                            implicitWidth: 20
+                            radius: Theme.r(5)
+                            color: editWrMouse.containsMouse ? Theme.withAlpha(Theme.primary, 0.22) : "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰏫"
+                                font.family: Theme.iconFont
+                                font.pixelSize: Theme.fs(11)
+                                color: editWrMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+                            }
+
+                            MouseArea {
+                                id: editWrMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    const raw = wrRow.modelData;
+                                    const mApp = raw.match(/app_id:([^,]+)/);
+                                    appIdIn.text = mApp ? mApp[1] : raw;
+                                    root.ruleFloating = raw.indexOf("isfloating:1") !== -1;
+                                    root.ruleGlobal = raw.indexOf("isglobal:1") !== -1;
+                                    root.ruleOverlay = raw.indexOf("isoverlay:1") !== -1;
+                                    root.ruleNoBlur = raw.indexOf("noblur:1") !== -1;
+                                    root.ruleNoShadow = raw.indexOf("noshadow:1") !== -1;
+                                    const mTag = raw.match(/tags:(\d+)/);
+                                    root.ruleTag = mTag ? mTag[1] : "";
+                                    tagIn.text = root.ruleTag;
+                                    root.removeWindowRule(raw);
+                                }
+                            }
                         }
 
                         Rectangle {
@@ -1263,7 +1359,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "󰆴"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 color: delWrMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
                             }
 
@@ -1283,7 +1379,7 @@ ColumnLayout {
                 visible: root.windowRules.length === 0
                 text: "No custom window rules configured in local.conf"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.fgSurfaceVariant
             }
         }

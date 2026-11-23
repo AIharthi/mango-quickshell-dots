@@ -633,14 +633,57 @@ elif cmd == "bind-add":
         reload_mango()
     print(json.dumps({"customBinds": get_custom_binds()}, separators=(",", ":")))
 
+elif cmd == "bind-update":
+    if len(args) < 4:
+        sys.exit("Usage: apply-local-setting.sh bind-update <old_raw_line> <mods> <key> <action> [arg]")
+    old_raw = args[0].strip()
+    mods, bkey, action = args[1].strip(), args[2].strip(), args[3].strip()
+    arg = " ".join(args[4:]).strip() if len(args) > 4 else ""
+    if not old_raw or not mods or not bkey or not action or "\n" in (mods + bkey + action + arg):
+        sys.exit("Invalid bind update specification")
+    prefix = "mousebind" if old_raw.startswith("mousebind=") else "bind"
+    new_line = f"{prefix}={mods},{bkey},{action},{arg}\n" if arg else f"{prefix}={mods},{bkey},{action}\n"
+    local_lines = read_lines(local_conf)
+    if any(line.strip() == old_raw for line in local_lines):
+        updated = [new_line if line.strip() == old_raw else line for line in local_lines]
+        validate_and_write_local("".join(updated))
+        reload_mango()
+    else:
+        base_lines = read_lines(base_conf)
+        if any(line.strip() == old_raw for line in base_lines):
+            prev_base = "".join(base_lines)
+            updated_base = "".join([new_line if line.strip() == old_raw else line for line in base_lines])
+            atomic_write(base_conf, updated_base)
+            if shutil.which("mango") and os.path.exists(base_conf):
+                proc = subprocess.run(["mango", "-c", base_conf, "-p"], capture_output=True, text=True)
+                if proc.returncode != 0:
+                    atomic_write(base_conf, prev_base)
+                    err = (proc.stderr or proc.stdout or "Invalid MangoWC config").strip()
+                    sys.exit(err)
+            reload_mango()
+        else:
+            if local_lines and not local_lines[-1].endswith("\n"):
+                local_lines[-1] += "\n"
+            local_lines.append(new_line)
+            validate_and_write_local("".join(local_lines))
+            reload_mango()
+    print(json.dumps({"customBinds": get_custom_binds()}, separators=(",", ":")))
+
 elif cmd == "bind-remove":
     if len(args) < 1:
         sys.exit("Usage: apply-local-setting.sh bind-remove <raw_line>")
     raw_target = " ".join(args).strip()
-    lines = read_lines(local_conf)
-    kept = [line for line in lines if line.strip() != raw_target]
-    atomic_write(local_conf, "".join(kept))
-    reload_mango()
+    local_lines = read_lines(local_conf)
+    if any(line.strip() == raw_target for line in local_lines):
+        kept = [line for line in local_lines if line.strip() != raw_target]
+        atomic_write(local_conf, "".join(kept))
+        reload_mango()
+    else:
+        base_lines = read_lines(base_conf)
+        if any(line.strip() == raw_target for line in base_lines):
+            kept_base = [line for line in base_lines if line.strip() != raw_target]
+            atomic_write(base_conf, "".join(kept_base))
+            reload_mango()
     print(json.dumps({"customBinds": get_custom_binds()}, separators=(",", ":")))
 
 elif cmd == "reset":

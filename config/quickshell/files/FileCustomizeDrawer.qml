@@ -33,7 +33,7 @@ Rectangle {
             Text {
                 text: "󰏘"
                 font.family: Theme.iconFont
-                font.pixelSize: 15
+                font.pixelSize: Theme.fs(15)
                 color: drawer.fileStyle.accent
             }
 
@@ -59,7 +59,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "󰑐 Reset Style"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.warning
                 }
@@ -83,7 +83,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "󰅖"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fs(12)
                     color: Theme.fgSurfaceVariant
                 }
 
@@ -115,7 +115,7 @@ Rectangle {
                     Text {
                         text: "QUICK WORKFLOW PRESETS"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fs(9)
                         font.weight: Font.Bold
                         color: Theme.fgSurfaceVariant
                     }
@@ -152,7 +152,7 @@ Rectangle {
                                     Text {
                                         text: fmPresetCard.modelData.icon
                                         font.family: Theme.iconFont
-                                        font.pixelSize: 16
+                                        font.pixelSize: Theme.fs(16)
                                         color: drawer.fileStyle.accent
                                     }
 
@@ -162,14 +162,14 @@ Rectangle {
                                         Text {
                                             text: fmPresetCard.modelData.title
                                             font.family: Theme.fontFamily
-                                            font.pixelSize: 11
+                                            font.pixelSize: Theme.fs(11)
                                             font.weight: Font.Bold
                                             color: Theme.fgSurface
                                         }
                                         Text {
                                             text: fmPresetCard.modelData.desc
                                             font.family: Theme.fontFamily
-                                            font.pixelSize: 9
+                                            font.pixelSize: Theme.fs(9)
                                             color: Theme.fgSurfaceVariant
                                             elide: Text.ElideRight
                                         }
@@ -206,7 +206,7 @@ Rectangle {
                         Text {
                             text: "LAYOUT & WINDOW"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
                             color: Theme.fgSurfaceVariant
                         }
@@ -215,7 +215,7 @@ Rectangle {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 4
-                            Text { Layout.preferredWidth: 82; text: "View Mode"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.preferredWidth: 82; text: "View Mode"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             Repeater {
                                 model: [
                                     { id: "list",   label: "List" },
@@ -232,7 +232,7 @@ Rectangle {
                                     color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (vmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                                     border.width: 1
                                     border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: vmBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: vmBtn.sel ? Font.Bold : Font.Normal; color: vmBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    Text { anchors.centerIn: parent; text: vmBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: vmBtn.sel ? Font.Bold : Font.Normal; color: vmBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
                                     MouseArea { id: vmMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmViewMode", vmBtn.modelData.id) }
                                 }
                             }
@@ -242,7 +242,7 @@ Rectangle {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 4
-                            Text { Layout.preferredWidth: 82; text: "Window Size"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.preferredWidth: 82; text: "Window Size"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             Repeater {
                                 model: [
                                     { id: "compact",  label: "S" },
@@ -260,7 +260,7 @@ Rectangle {
                                     color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (wsMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                                     border.width: 1
                                     border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: wsBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: wsBtn.sel ? Font.Bold : Font.Normal; color: wsBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    Text { anchors.centerIn: parent; text: wsBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: wsBtn.sel ? Font.Bold : Font.Normal; color: wsBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
                                     MouseArea { id: wsMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmWindowSize", wsBtn.modelData.id) }
                                 }
                             }
@@ -270,7 +270,7 @@ Rectangle {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 4
-                            Text { Layout.preferredWidth: 82; text: "Sidebar"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.preferredWidth: 82; text: "Sidebar"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             Repeater {
                                 model: [
                                     { id: "standard", label: "Full" },
@@ -287,7 +287,7 @@ Rectangle {
                                     color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (sbMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                                     border.width: 1
                                     border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: sbBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: sbBtn.sel ? Font.Bold : Font.Normal; color: sbBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    Text { anchors.centerIn: parent; text: sbBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: sbBtn.sel ? Font.Bold : Font.Normal; color: sbBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
                                     MouseArea { id: sbMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmSidebarStyle", sbBtn.modelData.id) }
                                 }
                             }
@@ -295,19 +295,19 @@ Rectangle {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Dual-Pane Split View (F3)"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Dual-Pane Split View (F3)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmDualPane; onToggled: ShellState.setPref("fmDualPane", !ShellState.fmDualPane) }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Show Left Sidebar"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Show Left Sidebar"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmSidebarVisible; onToggled: ShellState.setPref("fmSidebarVisible", !ShellState.fmSidebarVisible) }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Show Inspector / Preview Pane"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Show Inspector / Preview Pane"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmPreviewVisible; onToggled: ShellState.setPref("fmPreviewVisible", !ShellState.fmPreviewVisible) }
                         }
                     }
@@ -331,7 +331,7 @@ Rectangle {
                         Text {
                             text: "SURFACE, COLOR & TYPOGRAPHY"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
                             color: Theme.fgSurfaceVariant
                         }
@@ -358,7 +358,7 @@ Rectangle {
                                     color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (sfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                                     border.width: 1
                                     border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: sfBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: sfBtn.sel ? Font.Bold : Font.Normal; color: sfBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    Text { anchors.centerIn: parent; text: sfBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: sfBtn.sel ? Font.Bold : Font.Normal; color: sfBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
                                     MouseArea { id: sfMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmSurfacePreset", sfBtn.modelData.id) }
                                 }
                             }
@@ -378,7 +378,7 @@ Rectangle {
                             Text {
                                 text: "Accent Override (empty = follow live Theme)"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurface
                             }
                             RowLayout {
@@ -392,7 +392,7 @@ Rectangle {
                                     color: ShellState.fmAccentOverride === "" ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
                                     border.width: 1
                                     border.color: ShellState.fmAccentOverride === "" ? Theme.primary : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: "Auto"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.fgSurface }
+                                    Text { anchors.centerIn: parent; text: "Auto"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmAccentOverride", "") }
                                 }
 
@@ -418,7 +418,7 @@ Rectangle {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 4
-                            Text { Layout.preferredWidth: 74; text: "Icon Colors"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.preferredWidth: 74; text: "Icon Colors"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             Repeater {
                                 model: [
                                     { id: "category", label: "Theme" },
@@ -436,7 +436,7 @@ Rectangle {
                                     color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (icMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                                     border.width: 1
                                     border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: icBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: icBtn.sel ? Font.Bold : Font.Normal; color: icBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    Text { anchors.centerIn: parent; text: icBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: icBtn.sel ? Font.Bold : Font.Normal; color: icBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
                                     MouseArea { id: icMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmIconStyle", icBtn.modelData.id) }
                                 }
                             }
@@ -446,7 +446,7 @@ Rectangle {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 4
-                            Text { Layout.preferredWidth: 74; text: "Header Bar"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.preferredWidth: 74; text: "Header Bar"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             Repeater {
                                 model: [
                                     { id: "pill",      label: "Pill" },
@@ -463,7 +463,7 @@ Rectangle {
                                     color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (hdMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                                     border.width: 1
                                     border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: hdBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: hdBtn.sel ? Font.Bold : Font.Normal; color: hdBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    Text { anchors.centerIn: parent; text: hdBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: hdBtn.sel ? Font.Bold : Font.Normal; color: hdBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
                                     MouseArea { id: hdMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmHeaderStyle", hdBtn.modelData.id) }
                                 }
                             }
@@ -473,7 +473,7 @@ Rectangle {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 4
-                            Text { Layout.preferredWidth: 74; text: "Density"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.preferredWidth: 74; text: "Density"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             Repeater {
                                 model: [
                                     { id: "compact",  label: "Compact" },
@@ -490,7 +490,7 @@ Rectangle {
                                     color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (dnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                                     border.width: 1
                                     border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: dnBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: dnBtn.sel ? Font.Bold : Font.Normal; color: dnBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    Text { anchors.centerIn: parent; text: dnBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: dnBtn.sel ? Font.Bold : Font.Normal; color: dnBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
                                     MouseArea { id: dnMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmDensity", dnBtn.modelData.id) }
                                 }
                             }
@@ -505,13 +505,13 @@ Rectangle {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Alternating Zebra Rows"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Alternating Zebra Rows"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmRowAlternating; onToggled: ShellState.setPref("fmRowAlternating", !ShellState.fmRowAlternating) }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Show Selection Checkboxes"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Show Selection Checkboxes"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmShowCheckboxes; onToggled: ShellState.setPref("fmShowCheckboxes", !ShellState.fmShowCheckboxes) }
                         }
                     }
@@ -535,51 +535,51 @@ Rectangle {
                         Text {
                             text: "FILES, COLUMNS & STARTUP"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
                             color: Theme.fgSurfaceVariant
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Show Hidden Files (Ctrl+H)"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Show Hidden Files (Ctrl+H)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmShowHidden; onToggled: ShellState.setPref("fmShowHidden", !ShellState.fmShowHidden) }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Image Thumbnails in Grid"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Image Thumbnails in Grid"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmShowThumbnails; onToggled: ShellState.setPref("fmShowThumbnails", !ShellState.fmShowThumbnails) }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Folders Always First"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Folders Always First"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmDirsFirst; onToggled: ShellState.setPref("fmDirsFirst", !ShellState.fmDirsFirst) }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Show File Sizes Column"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Show File Sizes Column"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmShowSizes; onToggled: ShellState.setPref("fmShowSizes", !ShellState.fmShowSizes) }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Show Modified Dates Column"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Show Modified Dates Column"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmShowDates; onToggled: ShellState.setPref("fmShowDates", !ShellState.fmShowDates) }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: "Show Permissions Column"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.fillWidth: true; text: "Show Permissions Column"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             ToggleSwitch { checked: ShellState.fmShowPerms; onToggled: ShellState.setPref("fmShowPerms", !ShellState.fmShowPerms) }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 4
-                            Text { Layout.preferredWidth: 78; text: "Start Folder"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface }
+                            Text { Layout.preferredWidth: 78; text: "Start Folder"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             Repeater {
                                 model: [
                                     { id: "~",      label: "Home" },
@@ -595,7 +595,7 @@ Rectangle {
                                     color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (stMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
                                     border.width: 1
                                     border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: stBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: stBtn.sel ? Font.Bold : Font.Normal; color: stBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    Text { anchors.centerIn: parent; text: stBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: stBtn.sel ? Font.Bold : Font.Normal; color: stBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
                                     MouseArea { id: stMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmStartDir", stBtn.modelData.id) }
                                 }
                             }

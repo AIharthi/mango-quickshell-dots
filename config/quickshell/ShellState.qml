@@ -633,9 +633,13 @@ Singleton {
     }
 
     function applyBarPreset(preset: string): void {
+        const nextBarStyle = (root.barUiStyle === "split" || root.barUiStyle === "menubar")
+            ? "apple"
+            : root.barUiStyle;
         let map = null;
         if (preset === "minimal") {
             map = {
+                barUiStyle: nextBarStyle,
                 islandStyle: "pill",
                 barShowDate: false,
                 barShowWindow: false,
@@ -651,6 +655,7 @@ Singleton {
             };
         } else if (preset === "balanced") {
             map = {
+                barUiStyle: nextBarStyle,
                 islandStyle: "pill",
                 barShowDate: true,
                 barShowWindow: true,
@@ -666,6 +671,7 @@ Singleton {
             };
         } else if (preset === "full") {
             map = {
+                barUiStyle: nextBarStyle,
                 islandStyle: "bar",
                 barShowDate: true,
                 barShowWindow: true,

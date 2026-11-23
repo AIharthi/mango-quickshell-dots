@@ -103,7 +103,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: "󰒃"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 20
+                                font.pixelSize: Theme.fs(20)
                                 color: Theme.primary
                             }
                         }
@@ -116,7 +116,7 @@ Item {
                                 Layout.fillWidth: true
                                 text: "Authentication Required"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 14
+                                font.pixelSize: Theme.fs(14)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurface
                             }
@@ -127,7 +127,7 @@ Item {
                                 text: agent.flow ? (agent.flow.actionId || "") : ""
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurfaceVariant
                             }
                         }
@@ -138,7 +138,7 @@ Item {
                         wrapMode: Text.WordWrap
                         text: agent.flow ? (agent.flow.message || "Privileged action requires authentication.") : ""
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fs(12)
                         color: Theme.fgSurface
                     }
 
@@ -161,7 +161,7 @@ Item {
                             Text {
                                 text: "󰀄"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 13
+                                font.pixelSize: Theme.fs(13)
                                 color: Theme.secondary
                             }
 
@@ -171,7 +171,7 @@ Item {
                                     ? agent.flow.selectedIdentity.displayName
                                     : ""
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.DemiBold
                                 color: Theme.fgSurface
                             }
@@ -197,7 +197,7 @@ Item {
                             Text {
                                 text: "󰌋"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 14
+                                font.pixelSize: Theme.fs(14)
                                 color: Theme.primary
                             }
 
@@ -212,7 +212,7 @@ Item {
                                         ? agent.flow.inputPrompt.replace(/:\s*$/, "")
                                         : "Password"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 12
+                                    font.pixelSize: Theme.fs(12)
                                     color: Theme.fgSurfaceVariant
                                 }
 
@@ -227,7 +227,7 @@ Item {
                                     selectionColor: Theme.primary
                                     selectedTextColor: Theme.fgPrimary
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 12
+                                    font.pixelSize: Theme.fs(12)
                                     clip: true
 
                                     Keys.onReturnPressed: polkitWin.submitFlow()
@@ -245,7 +245,7 @@ Item {
                         wrapMode: Text.WordWrap
                         text: agent.flow ? (agent.flow.supplementaryMessage || "") : ""
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: (agent.flow && agent.flow.supplementaryIsError) ? Theme.error : Theme.warning
                     }
 
@@ -269,7 +269,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: "Cancel"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.Medium
                                 color: Theme.fgSurface
                             }
@@ -294,7 +294,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: "Authenticate"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.Bold
                                 color: Theme.fgPrimary
                             }

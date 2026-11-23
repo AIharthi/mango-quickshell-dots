@@ -77,14 +77,14 @@ Rectangle {
                 Text {
                     text: "󰩹"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.fs(13)
                     color: Theme.error
                 }
                 Text {
                     Layout.fillWidth: true
                     text: "Trash (" + (root.entries ? root.entries.length : 0) + " items)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
@@ -102,7 +102,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Empty Trash"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: empMouse.containsMouse ? Theme.fgError : Theme.error
                     }
@@ -129,7 +129,7 @@ Rectangle {
                 Layout.fillWidth: true
                 text: root.isSearchView ? "NAME  (PATH)" : "NAME"
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Theme.fs(9)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -138,7 +138,7 @@ Rectangle {
                 visible: ShellState.fmShowPerms
                 text: "PERMS"
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Theme.fs(9)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
                 horizontalAlignment: Text.AlignRight
@@ -148,7 +148,7 @@ Rectangle {
                 visible: ShellState.fmShowSizes
                 text: "SIZE"
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Theme.fs(9)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
                 horizontalAlignment: Text.AlignRight
@@ -158,7 +158,7 @@ Rectangle {
                 visible: ShellState.fmShowDates
                 text: "MODIFIED"
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Theme.fs(9)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
                 horizontalAlignment: Text.AlignRight
@@ -238,7 +238,7 @@ Rectangle {
                                 visible: rowCard.sel
                                 text: "✓"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: root.fileStyle.onAccent
                             }
@@ -273,7 +273,7 @@ Rectangle {
                                     visible: !!rowCard.modelData.isSymlink
                                     text: "→ " + String(rowCard.modelData.target || "")
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     color: Theme.info
                                     elide: Text.ElideRight
                                     Layout.maximumWidth: 160
@@ -285,7 +285,7 @@ Rectangle {
                                 visible: (root.isTrashView || root.isSearchView) && (String(rowCard.modelData.relPath || rowCard.modelData.originalPath || "").length > 0)
                                 text: root.isTrashView ? String(rowCard.modelData.originalPath || "") : String(rowCard.modelData.relPath || "")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                                 elide: Text.ElideMiddle
                             }
@@ -297,7 +297,7 @@ Rectangle {
                             visible: !root.isTrashView && ShellState.fmShowPerms
                             text: String(rowCard.modelData.perms || "")
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             color: Theme.fgSurfaceVariant
                             horizontalAlignment: Text.AlignRight
                         }
@@ -308,7 +308,7 @@ Rectangle {
                             visible: ShellState.fmShowSizes
                             text: String(rowCard.modelData.humanSize || "")
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                             horizontalAlignment: Text.AlignRight
                         }
@@ -321,7 +321,7 @@ Rectangle {
                                 ? String(rowCard.modelData.deletionDate || "").replace("T", " ")
                                 : root.fileStyle.formatMtime(rowCard.modelData.mtime)
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             color: Theme.fgSurfaceVariant
                             horizontalAlignment: Text.AlignRight
                         }
@@ -341,7 +341,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: "Restore"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: rstRowMouse.containsMouse ? root.fileStyle.onAccent : root.fileStyle.accent
                             }
@@ -459,7 +459,7 @@ Rectangle {
                                 Layout.fillWidth: true
                                 text: String(gridWrap.modelData.name || "")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: gridWrap.isDir ? Font.DemiBold : Font.Normal
                                 color: Theme.fgSurface
                                 horizontalAlignment: Text.AlignHCenter
@@ -541,14 +541,14 @@ Rectangle {
                                 Text {
                                     text: root.fileStyle.categoryIcon(String(milParentRow.modelData.category || "file"), "", !!milParentRow.modelData.isDir)
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 12
+                                    font.pixelSize: Theme.fs(12)
                                     color: milParentRow.isCurDir ? root.fileStyle.accent : Theme.fgSurfaceVariant
                                 }
                                 Text {
                                     Layout.fillWidth: true
                                     text: String(milParentRow.modelData.name || "")
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     font.weight: milParentRow.isCurDir ? Font.Bold : Font.Normal
                                     color: milParentRow.isCurDir ? root.fileStyle.accent : Theme.fgSurfaceVariant
                                     elide: Text.ElideRight
@@ -614,14 +614,14 @@ Rectangle {
                                 Text {
                                     text: root.fileStyle.categoryIcon(String(milCurRow.modelData.category || "file"), String(milCurRow.modelData.ext || ""), !!milCurRow.modelData.isDir)
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 13
+                                    font.pixelSize: Theme.fs(13)
                                     color: root.fileStyle.categoryColor(String(milCurRow.modelData.category || "file"), !!milCurRow.modelData.isDir, !!milCurRow.modelData.isBroken)
                                 }
                                 Text {
                                     Layout.fillWidth: true
                                     text: String(milCurRow.modelData.name || "")
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 11
+                                    font.pixelSize: Theme.fs(11)
                                     font.weight: milCurRow.modelData.isDir ? Font.DemiBold : Font.Normal
                                     color: Theme.fgSurface
                                     elide: Text.ElideMiddle
@@ -630,7 +630,7 @@ Rectangle {
                                     visible: !!milCurRow.modelData.isDir
                                     text: "›"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 12
+                                    font.pixelSize: Theme.fs(12)
                                     color: Theme.fgSurfaceVariant
                                 }
                             }
@@ -682,7 +682,7 @@ Rectangle {
                             Layout.fillWidth: true
                             text: root.millerChildTitle.length > 0 ? root.millerChildTitle : "Subfolder Preview"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
                             color: Theme.fgSurfaceVariant
                             elide: Text.ElideRight
@@ -711,14 +711,14 @@ Rectangle {
                                     Text {
                                         text: root.fileStyle.categoryIcon(String(milChildRow.modelData.category || "file"), "", !!milChildRow.modelData.isDir)
                                         font.family: Theme.iconFont
-                                        font.pixelSize: 11
+                                        font.pixelSize: Theme.fs(11)
                                         color: root.fileStyle.categoryColor(String(milChildRow.modelData.category || "file"), !!milChildRow.modelData.isDir, false)
                                     }
                                     Text {
                                         Layout.fillWidth: true
                                         text: String(milChildRow.modelData.name || "")
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 10
+                                        font.pixelSize: Theme.fs(10)
                                         color: Theme.fgSurface
                                         elide: Text.ElideRight
                                     }
@@ -747,14 +747,14 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: root.isTrashView ? "󰩹" : "󰉋"
                     font.family: Theme.iconFont
-                    font.pixelSize: 28
+                    font.pixelSize: Theme.fs(28)
                     color: Theme.outline
                 }
                 Text {
                     Layout.alignment: Qt.AlignHCenter
                     text: root.emptyMessage
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurfaceVariant
                 }
             }

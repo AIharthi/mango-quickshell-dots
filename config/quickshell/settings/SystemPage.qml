@@ -24,6 +24,7 @@ ColumnLayout {
     property var powerProfiles: ({ hasPowerProfiles: false, active: "", available: [] })
     property var disks: []
     property var userInfo: ({ user: "", fullName: "", uid: 1000, shell: "", home: "", groups: [], lang: "", sessionType: "", desktop: "" })
+    property var backupsList: []
     property string backupStatus: ""
 
     function loadOverrides(): void {
@@ -33,11 +34,21 @@ ColumnLayout {
             sysInfoProc.running = true;
         if (!userProc.running)
             userProc.running = true;
+        if (!backupsListProc.running)
+            backupsListProc.running = true;
     }
 
     function exportBackup(): void {
         if (!backupProc.running)
             backupProc.running = true;
+    }
+
+    function restoreBackup(archivePath: string): void {
+        const clean = (archivePath || "").trim();
+        if (clean.length === 0 || restoreProc.running)
+            return;
+        restoreProc.command = [Quickshell.shellPath("scripts/manage-system.sh"), "restore-settings", clean];
+        restoreProc.running = true;
     }
 
     function resetOverrides(): void {
@@ -140,8 +151,41 @@ ColumnLayout {
             onStreamFinished: {
                 try {
                     const d = JSON.parse((text || "").trim());
+                    if (d && Array.isArray(d.backups))
+                        root.backupsList = d.backups;
                     if (d && d.path)
                         root.backupStatus = "Saved backup: " + d.path + " (" + d.sizeKb + " KB)";
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: backupsListProc
+        command: [Quickshell.shellPath("scripts/manage-system.sh"), "list-backups"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    if (d && Array.isArray(d.backups))
+                        root.backupsList = d.backups;
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: restoreProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    if (d && Array.isArray(d.backups))
+                        root.backupsList = d.backups;
+                    if (d && Array.isArray(d.restored)) {
+                        root.backupStatus = "Restored " + d.restored.length + " config files from " + d.path;
+                        sysReloadTimer.restart();
+                    }
                 } catch (err) {}
             }
         }
@@ -165,7 +209,7 @@ ColumnLayout {
             Text {
                 text: "DEVICE & HARDWARE"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -184,7 +228,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: DeviceCaps.deviceType === "laptop" ? "󰌢" : "󰍹"
                         font.family: Theme.iconFont
-                        font.pixelSize: 18
+                        font.pixelSize: Theme.fs(18)
                         color: Theme.primary
                     }
                 }
@@ -196,7 +240,7 @@ ColumnLayout {
                     Text {
                         text: (DeviceCaps.hostname || "localhost") + " · " + (DeviceCaps.deviceType === "laptop" ? "Laptop Profile" : "Desktop Profile")
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fs(12)
                         font.weight: Font.Bold
                         color: Theme.fgSurface
                     }
@@ -204,14 +248,14 @@ ColumnLayout {
                     Text {
                         text: DeviceCaps.distro + " · Kernel " + DeviceCaps.kernel
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
 
                     Text {
                         text: "Mode: " + Theme.shellMode.toUpperCase() + " · Cursor: " + root.activeCursor + " (" + root.activeCursorSize + "px)"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.primary
                     }
                 }
@@ -240,7 +284,7 @@ ColumnLayout {
                         Text {
                             text: "PROCESSOR & MEMORY"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
                             color: Theme.fgSurfaceVariant
                         }
@@ -250,7 +294,7 @@ ColumnLayout {
                             elide: Text.ElideRight
                             text: root.cpuInfo.length > 0 ? root.cpuInfo : "Detecting CPU..."
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.DemiBold
                             color: Theme.fgSurface
                         }
@@ -258,7 +302,7 @@ ColumnLayout {
                         Text {
                             text: "RAM: " + root.memUsedGb.toFixed(1) + " / " + root.memTotalGb.toFixed(1) + " GB (" + root.memUsedPct + "%)"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.secondary
                         }
                     }
@@ -281,7 +325,7 @@ ColumnLayout {
                         Text {
                             text: "GRAPHICS & SESSION"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
                             color: Theme.fgSurfaceVariant
                         }
@@ -291,7 +335,7 @@ ColumnLayout {
                             elide: Text.ElideRight
                             text: root.gpusInfo.length > 0 ? root.gpusInfo.join(" + ") : "Wayland GPU"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.DemiBold
                             color: Theme.fgSurface
                         }
@@ -299,7 +343,7 @@ ColumnLayout {
                         Text {
                             text: "Up " + (root.uptimeStr || "-") + " · " + (root.timezoneStr || "Local")
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.tertiary
                         }
                     }
@@ -330,7 +374,7 @@ ColumnLayout {
                 Text {
                     text: "󰥔"
                     font.family: Theme.iconFont
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.fs(14)
                     color: Theme.primary
                 }
 
@@ -338,7 +382,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "DATE & TIME FORMAT"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -356,7 +400,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: ShellState.formatTime(sysClock.date) + "  ·  " + ShellState.formatDate(sysClock.date)
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -371,7 +415,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Use 24-Hour Clock"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -389,7 +433,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Show Seconds in Bar & Island"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -425,7 +469,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: Qt.formatDateTime(sysClock.date, dfPill.modelData)
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: dfPill.selected ? Font.Bold : Font.Medium
                             color: dfPill.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -465,7 +509,7 @@ ColumnLayout {
                 Text {
                     text: "󰋊"
                     font.family: Theme.iconFont
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.fs(14)
                     color: Theme.secondary
                 }
 
@@ -473,7 +517,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "DISK STORAGE"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -510,7 +554,7 @@ ColumnLayout {
                             Text {
                                 text: diskRow.modelData.mount
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurface
                             }
@@ -518,7 +562,7 @@ ColumnLayout {
                             Text {
                                 text: "(" + diskRow.modelData.device + " · " + diskRow.modelData.fs + ")"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                             }
 
@@ -527,7 +571,7 @@ ColumnLayout {
                             Text {
                                 text: diskRow.modelData.usedGb + " / " + diskRow.modelData.totalGb + " GB (" + diskRow.modelData.availGb + " GB free)"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurfaceVariant
                             }
                         }
@@ -558,7 +602,7 @@ ColumnLayout {
                 visible: root.disks.length === 0
                 text: "No mounted block storage reported"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.fgSurfaceVariant
             }
         }
@@ -585,7 +629,7 @@ ColumnLayout {
                 Text {
                     text: "DETECTED HARDWARE CAPABILITIES"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -605,7 +649,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "󰑐 Re-detect"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.primary
                     }
 
@@ -667,14 +711,14 @@ ColumnLayout {
                             Text {
                                 text: capBadge.modelData.ok ? "󰄬" : "·"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 color: capBadge.modelData.ok ? Theme.success : Theme.outline
                             }
 
                             Text {
                                 text: capBadge.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: capBadge.modelData.ok ? Font.Bold : Font.Normal
                                 color: capBadge.modelData.ok ? Theme.fgSurface : Theme.fgSurfaceVariant
                             }
@@ -703,7 +747,7 @@ ColumnLayout {
             Text {
                 text: "POWER, IDLE & SESSION"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -715,7 +759,7 @@ ColumnLayout {
                 Text {
                     text: "󰅶"
                     font.family: Theme.iconFont
-                    font.pixelSize: 15
+                    font.pixelSize: Theme.fs(15)
                     color: ShellState.keepAwake ? Theme.tertiary : Theme.fgSurfaceVariant
                 }
 
@@ -726,7 +770,7 @@ ColumnLayout {
                     Text {
                         text: "Keep Screen Awake (Idle Inhibitor)"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         font.weight: Font.DemiBold
                         color: Theme.fgSurface
                     }
@@ -734,7 +778,7 @@ ColumnLayout {
                     Text {
                         text: "Prevents Wayland display sleep or automatic locking while enabled"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -755,7 +799,7 @@ ColumnLayout {
                 Text {
                     text: "POWER PROFILE"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -786,7 +830,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: ppPill.modelData
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: ppPill.selected ? Font.Bold : Font.Medium
                                 color: ppPill.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -831,7 +875,7 @@ ColumnLayout {
                 Text {
                     text: "Per-Device Overrides (~/.config/mango/local.conf)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     font.weight: Font.DemiBold
                     color: Theme.fgSurface
                 }
@@ -839,7 +883,7 @@ ColumnLayout {
                 Text {
                     text: root.overrideCount + " active override rule(s) on this device"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -867,7 +911,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "Reload WM"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.primary
                 }
@@ -904,7 +948,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "Reset local.conf"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: rstLocalMouse.containsMouse ? Theme.error : Theme.fgSurface
                 }
@@ -967,7 +1011,7 @@ ColumnLayout {
             Text {
                 text: "USER ACCOUNT, BACKUP & RESET"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -983,7 +1027,7 @@ ColumnLayout {
                     Text {
                         text: (root.userInfo.user || "user") + " (UID " + root.userInfo.uid + ") · " + (root.userInfo.shell || "/bin/sh")
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         font.weight: Font.Bold
                         color: Theme.fgSurface
                     }
@@ -993,7 +1037,7 @@ ColumnLayout {
                         elide: Text.ElideRight
                         text: "Session: " + (root.userInfo.desktop || "mango") + " (" + (root.userInfo.sessionType || "wayland") + ") · Locale: " + (root.userInfo.lang || "C.UTF-8")
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
 
@@ -1003,7 +1047,7 @@ ColumnLayout {
                         elide: Text.ElideRight
                         text: "Groups: " + (root.userInfo.groups || []).join(", ")
                         font.family: Theme.fontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fs(9)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -1014,8 +1058,46 @@ ColumnLayout {
                     radius: Theme.r(8)
                     color: bkpMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
 
-                    Text { id: bkpLbl; anchors.centerIn: parent; text: "Export Backup"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgPrimary }
+                    Text { id: bkpLbl; anchors.centerIn: parent; text: "Export Backup"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgPrimary }
                     MouseArea { id: bkpMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.exportBackup() }
+                }
+            }
+
+            // Recent Backup Archives (1-click Restore)
+            Flow {
+                visible: root.backupsList.length > 0
+                Layout.fillWidth: true
+                spacing: 6
+
+                Repeater {
+                    model: root.backupsList
+
+                    delegate: Rectangle {
+                        id: bkpItem
+                        required property var modelData
+                        implicitHeight: 24
+                        implicitWidth: bkpItemRow.implicitWidth + 12
+                        radius: Theme.r(7)
+                        color: bkpItemMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                        border.width: Theme.cardBorderWidth
+                        border.color: bkpItemMouse.containsMouse ? Theme.primary : Theme.cardBorder
+
+                        RowLayout {
+                            id: bkpItemRow
+                            anchors.centerIn: parent
+                            spacing: 5
+                            Text { text: "󰑐 Restore " + bkpItem.modelData.name; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Medium; color: Theme.fgSurface }
+                            Text { text: "(" + bkpItem.modelData.sizeKb + " KB)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); color: Theme.primary }
+                        }
+
+                        MouseArea {
+                            id: bkpItemMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.restoreBackup(bkpItem.modelData.path)
+                        }
+                    }
                 }
             }
 
@@ -1038,7 +1120,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.confirmResetApp ? "Confirm Appearance?" : "Reset Appearance"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: root.confirmResetApp ? Theme.fgPrimary : Theme.warning
                     }
@@ -1076,7 +1158,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.confirmResetBar ? "Confirm Bar Reset?" : "Reset Bar & Shell"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: root.confirmResetBar ? Theme.fgSecondary : Theme.secondary
                     }
@@ -1114,7 +1196,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.confirmFactoryAll ? "Confirm Factory Reset?" : "Factory Reset All"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: root.confirmFactoryAll ? Theme.fgError : Theme.error
                     }
@@ -1146,7 +1228,7 @@ ColumnLayout {
                 elide: Text.ElideRight
                 text: root.backupStatus
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.success
             }
         }

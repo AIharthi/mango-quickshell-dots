@@ -179,7 +179,7 @@ Item {
         return h + (root.powerMenuOpen ? 48 : 0);
     }
 
-    readonly property int notchPad: (!Theme.isSimple && ShellState.barUiStyle === "classic" && ShellState.islandStyle === "notch") ? 14 : 0
+    readonly property int notchPad: (!Theme.isSimple && !isSplitBar && !isMenuBar && ShellState.islandStyle === "notch") ? 14 : 0
     readonly property bool isSplitBar: !Theme.isSimple && ShellState.barUiStyle === "split"
     readonly property bool isMenuBar: !Theme.isSimple && ShellState.barUiStyle === "menubar"
     readonly property bool isApplePill: !Theme.isSimple && ShellState.barUiStyle === "apple"
@@ -189,10 +189,10 @@ Item {
     readonly property int targetWidth: {
         if (root.islandState === "collapsed") {
             if (root.isMenuBar)
-                return Math.max(320, Math.round(root.width));
+                return Math.max(320, Math.round(root.width) - Math.max(0, ShellState.islandTopMargin - 8) * 2);
             if (root.isSplitBar)
-                return Math.max(480, Math.round(root.width) - 24);
-            if (!root.isApplePill && ShellState.islandStyle === "bar")
+                return Math.max(480, Math.round(root.width) - Math.max(12, ShellState.islandTopMargin * 3));
+            if (ShellState.islandStyle === "bar")
                 return Math.max(320, Math.round(root.width) - ShellState.islandTopMargin * 2);
             return Math.max(128, Math.min(Math.round(root.width) - 32, Math.round(collapsedPill.implicitWidth) + 28));
         }
@@ -206,7 +206,7 @@ Item {
     readonly property int targetHeight: {
         if (root.islandState === "collapsed") {
             if (root.isMenuBar)
-                return 28;
+                return Math.max(24, ShellState.pillHeight - 6);
             if (root.isSplitBar)
                 return ShellState.pillHeight;
             return ShellState.pillHeight + root.notchPad;
@@ -224,7 +224,7 @@ Item {
         if (root.islandState === "collapsed") {
             if (root.isMenuBar || root.isSplitBar)
                 return 0;
-            if (!root.isApplePill && ShellState.islandStyle === "bar")
+            if (ShellState.islandStyle === "bar")
                 return Math.round(Theme.r(12));
             return Math.round(Theme.r(Math.round(ShellState.pillHeight / 2) + 1));
         }
@@ -295,7 +295,7 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: Theme.isSimple
             ? (ShellState.simpleBarPosition === "bottom" ? 8 : (ShellState.simpleBarHeight + 4))
-            : (root.menuCollapsed ? 0 : (root.notchPad > 0 ? -root.notchPad : ShellState.islandTopMargin))
+            : (root.notchPad > 0 ? -root.notchPad : (root.menuCollapsed ? Math.max(0, ShellState.islandTopMargin - 8) : ShellState.islandTopMargin))
         anchors.horizontalCenter: parent.horizontalCenter
 
         width: hiddenInSimple ? 0 : root.targetWidth
@@ -467,12 +467,12 @@ Item {
             id: collapsedPill
             anchors.centerIn: parent
             anchors.verticalCenterOffset: Math.round(root.notchPad / 2)
-            width: (root.isSplitBar || root.menuCollapsed || (!root.isApplePill && ShellState.islandStyle === "bar"))
+            width: (root.isSplitBar || root.menuCollapsed || ShellState.islandStyle === "bar")
                 ? Math.max(0, parent.width - (root.isSplitBar ? 0 : 24))
                 : implicitWidth
             screenName: root.screenName
             active: !Theme.isSimple && root.islandState === "collapsed"
-            barMode: root.isMenuBar || root.isSplitBar || (!root.isApplePill && ShellState.islandStyle === "bar")
+            barMode: root.isMenuBar || root.isSplitBar || ShellState.islandStyle === "bar"
             barUiStyle: ShellState.barUiStyle
             player: root.activePlayer
             opacity: (!Theme.isSimple && root.islandState === "collapsed") ? 1.0 : 0.0

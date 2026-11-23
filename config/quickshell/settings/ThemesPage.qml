@@ -132,6 +132,7 @@ ColumnLayout {
         root.seedG = g;
         root.seedB = b;
         root.seedHex = "#" + toHex2(r) + toHex2(g) + toHex2(b);
+        Theme.applyAccentColor(root.seedHex);
     }
 
     function getSlotValue(key: string): string {
@@ -391,7 +392,7 @@ ColumnLayout {
             elide: Text.ElideMiddle
             text: root.statusMsg
             font.family: Theme.fontFamily
-            font.pixelSize: 10
+            font.pixelSize: Theme.fs(10)
             font.weight: Font.Medium
             color: root.statusError ? Theme.error : Theme.primary
         }
@@ -418,7 +419,7 @@ ColumnLayout {
                 Text {
                     text: "ONE-CLICK AESTHETIC VIBES"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -428,7 +429,7 @@ ColumnLayout {
                 Text {
                     text: "Applies palette + surface + shape"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -506,7 +507,7 @@ ColumnLayout {
                                     elide: Text.ElideRight
                                     text: vibeCard.modelData.title
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 11
+                                    font.pixelSize: Theme.fs(11)
                                     font.weight: Font.Bold
                                     color: Theme.fgSurface
                                 }
@@ -516,7 +517,7 @@ ColumnLayout {
                                     elide: Text.ElideRight
                                     text: vibeCard.modelData.desc
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     color: Theme.fgSurfaceVariant
                                 }
                             }
@@ -560,7 +561,7 @@ ColumnLayout {
                 Text {
                     text: "COLOR ENGINE & SCHEME"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -582,7 +583,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.confirmResetTheme ? "Confirm?" : "󰑐 Reset Theme & Colors"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: root.confirmResetTheme ? Theme.fgPrimary : Theme.warning
                     }
@@ -628,14 +629,14 @@ ColumnLayout {
                         Text {
                             text: Theme.colorScheme === "dark" ? "󰖔" : "󰖙"
                             font.family: Theme.iconFont
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             color: Theme.primary
                         }
 
                         Text {
                             text: Theme.colorScheme === "dark" ? "Dark Scheme" : "Light Scheme"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Theme.primary
                         }
@@ -687,7 +688,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: engBtn.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: engBtn.selected ? Font.Bold : Font.Medium
                             color: engBtn.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
@@ -726,7 +727,7 @@ ColumnLayout {
                 Text {
                     text: "16 CURATED THEME PRESETS"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -736,7 +737,7 @@ ColumnLayout {
                 Text {
                     text: Theme.themeMode === "preset" ? ("Active: " + Theme.presetName) : "Supports Dark & Light"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -809,7 +810,7 @@ ColumnLayout {
                                 elide: Text.ElideRight
                                 text: preBtn.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: preBtn.selected ? Font.Bold : Font.Medium
                                 color: preBtn.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -849,7 +850,7 @@ ColumnLayout {
                 Text {
                     text: "SEED ACCENT COLOR GENERATOR (MATUGEN HEX)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -859,7 +860,7 @@ ColumnLayout {
                 Text {
                     text: Theme.themeMode === "accent" ? ("Seed: " + Theme.accentColor) : "Pick or mix RGB"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -938,7 +939,7 @@ ColumnLayout {
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.seedHex
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             color: Theme.fgSurface
                             selectByMouse: true
                             onTextEdited: {
@@ -966,7 +967,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Generate Theme"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgPrimary
                     }
@@ -999,7 +1000,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Solid Wallpaper"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Medium
                         color: Theme.fgSurface
                     }
@@ -1067,7 +1068,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "WALLPAPER STUDIO & MATUGEN EXTRACTION"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -1085,7 +1086,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "󰒝 Random"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.secondary
                     }
@@ -1113,7 +1114,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Re-extract"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgPrimary
                     }
@@ -1154,7 +1155,7 @@ ColumnLayout {
                             text: "~/Pictures/Wallpapers"
                             visible: wpDirInput.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -1164,7 +1165,7 @@ ColumnLayout {
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.wallpaperDirInput
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
                             selectByMouse: true
@@ -1186,7 +1187,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Load Folder"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Medium
                         color: Theme.fgSurface
                     }
@@ -1215,7 +1216,7 @@ ColumnLayout {
                 Text {
                     text: "Solid Backdrop"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
 
@@ -1256,7 +1257,7 @@ ColumnLayout {
                 visible: root.wallpapersList.length === 0
                 text: "No .png / .jpg / .webp images found in wallpaper folder."
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.fgSurfaceVariant
             }
 
@@ -1317,7 +1318,7 @@ ColumnLayout {
                                     elide: Text.ElideRight
                                     text: wpTile.modelData.name
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: wpTile.selected ? Font.Bold : Font.Normal
                                     color: wpTile.selected ? Theme.primary : "#ffffff"
                                 }
@@ -1343,7 +1344,7 @@ ColumnLayout {
                 Text {
                     text: "Dominant Wallpaper Colors (click index)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
 
@@ -1387,7 +1388,7 @@ ColumnLayout {
             Text {
                 text: "Matugen Scheme Algorithm"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 color: Theme.fgSurfaceVariant
             }
 
@@ -1417,7 +1418,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: schemeChip.modelData.replace("scheme-", "")
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: schemeChip.selected ? Font.Bold : Font.Medium
                             color: schemeChip.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -1442,7 +1443,7 @@ ColumnLayout {
                     Layout.preferredWidth: 108
                     text: "Color Preference"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1472,7 +1473,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: prefChip.modelData
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: prefChip.selected ? Font.Bold : Font.Medium
                                 color: prefChip.selected ? Theme.secondary : Theme.fgSurface
                             }
@@ -1535,7 +1536,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "LIVE PALETTE SLOT EDITOR & CUSTOM THEMES"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -1553,7 +1554,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Sync Active"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
 
@@ -1580,7 +1581,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Apply Palette"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgPrimary
                     }
@@ -1635,7 +1636,7 @@ ColumnLayout {
                                 Layout.preferredWidth: 74
                                 text: slotRow.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurfaceVariant
                             }
 
@@ -1649,7 +1650,7 @@ ColumnLayout {
                                     verticalAlignment: TextInput.AlignVCenter
                                     text: slotRow.val
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     color: Theme.fgSurface
                                     selectByMouse: true
                                     onTextEdited: root.setSlotValue(slotRow.modelData.key, text)
@@ -1684,7 +1685,7 @@ ColumnLayout {
                             text: "Save active palette as custom theme name..."
                             visible: saveNameInput.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -1694,7 +1695,7 @@ ColumnLayout {
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.saveThemeName
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
                             selectByMouse: true
@@ -1714,7 +1715,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Save Theme"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgSecondary
                     }
@@ -1779,7 +1780,7 @@ ColumnLayout {
                             elide: Text.ElideRight
                             text: custItem.modelData.name + " (" + (custItem.modelData.isDark ? "Dark" : "Light") + ")"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: custItem.selected ? Font.Bold : Font.Medium
                             color: custItem.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -1795,7 +1796,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "Apply"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: Theme.fgPrimary
                             }
@@ -1825,7 +1826,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "Export"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurface
                             }
 
@@ -1851,7 +1852,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "Delete"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.error
                             }
 
@@ -1890,7 +1891,7 @@ ColumnLayout {
                             text: "Import theme JSON file (e.g. ~/mango-theme-name.json)..."
                             visible: importInput.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -1900,7 +1901,7 @@ ColumnLayout {
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.importThemePath
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
                             selectByMouse: true
@@ -1922,7 +1923,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Import JSON"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Medium
                         color: Theme.fgSurface
                     }
@@ -1967,7 +1968,7 @@ ColumnLayout {
                 Text {
                     text: "MANGOWC WINDOW BORDERS, SHADOWS & DIM TINT"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -1985,7 +1986,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Apply WM Colors"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgPrimary
                     }
@@ -2009,7 +2010,7 @@ ColumnLayout {
                     Layout.preferredWidth: 126
                     text: "Focused Border Hex"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -2040,7 +2041,7 @@ ColumnLayout {
                             text: "Theme default (or #RRGGBB)"
                             visible: focusHexField.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -2050,7 +2051,7 @@ ColumnLayout {
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.mangoFocusInput
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
                             selectByMouse: true
@@ -2072,7 +2073,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Set"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.primary
                     }
 
@@ -2112,7 +2113,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Reset"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
 
@@ -2139,7 +2140,7 @@ ColumnLayout {
                     Layout.preferredWidth: 126
                     text: "Unfocused Border"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -2170,7 +2171,7 @@ ColumnLayout {
                             text: "Theme default (or #RRGGBB)"
                             visible: borderHexField.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -2180,7 +2181,7 @@ ColumnLayout {
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.mangoBorderInput
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
                             selectByMouse: true
@@ -2202,7 +2203,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Set"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.primary
                     }
 
@@ -2242,7 +2243,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Reset"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
 
@@ -2268,7 +2269,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Colored Accent Window Shadows"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 

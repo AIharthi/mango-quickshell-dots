@@ -155,7 +155,7 @@ ColumnLayout {
             Text {
                 text: "KEYBOARD (PER-DEVICE LOCAL.CONF)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -196,7 +196,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: layChip.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: layChip.selected ? Font.Bold : Font.Medium
                             color: layChip.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -237,7 +237,7 @@ ColumnLayout {
                         text: root.kbLayout
                         color: Theme.fgSurface
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         clip: true
                         Keys.onReturnPressed: root.setSetting("xkb_rules_layout", text)
                         Keys.onEnterPressed: root.setSetting("xkb_rules_layout", text)
@@ -264,7 +264,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Apply"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         font.weight: Font.Bold
                         color: Theme.fgPrimary
                     }
@@ -288,7 +288,7 @@ ColumnLayout {
                     Layout.preferredWidth: 115
                     text: "Switch Shortcut"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -328,7 +328,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: optBtn.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: optBtn.selected ? Font.Bold : Font.Normal
                             color: optBtn.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -353,7 +353,7 @@ ColumnLayout {
                     Layout.preferredWidth: 115
                     text: "Repeat Rate"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -388,7 +388,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: rateBtn.modelData + "/s"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: rateBtn.selected ? Font.Bold : Font.Normal
                             color: rateBtn.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -413,7 +413,7 @@ ColumnLayout {
                     Layout.preferredWidth: 115
                     text: "Repeat Delay"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -448,7 +448,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: delayBtn.modelData + "ms"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: delayBtn.selected ? Font.Bold : Font.Normal
                             color: delayBtn.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -472,7 +472,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Enable NumLock on Startup"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -491,7 +491,7 @@ ColumnLayout {
                     Layout.preferredWidth: 115
                     text: "Keyboard Model"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -514,7 +514,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: modChip.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: modChip.selected ? Theme.primary : Theme.fgSurface
                         }
 
@@ -547,7 +547,7 @@ ColumnLayout {
                         text: "Type here to test key repeat rate, delay & layout switching..."
                         visible: kbTestIn.text.length === 0
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
 
@@ -556,7 +556,7 @@ ColumnLayout {
                         anchors.fill: parent
                         verticalAlignment: TextInput.AlignVCenter
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                         clip: true
                     }
@@ -586,7 +586,7 @@ ColumnLayout {
                 Text {
                     text: "MOUSE & POINTER"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -596,7 +596,7 @@ ColumnLayout {
                 Text {
                     text: "Cursor theme & size → Appearance"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -609,7 +609,7 @@ ColumnLayout {
                     Layout.preferredWidth: 115
                     text: "Accel Profile"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -647,7 +647,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: mProfBtn.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: mProfBtn.selected ? Font.Bold : Font.Normal
                             color: mProfBtn.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -677,7 +677,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Mouse Natural Scrolling"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -689,13 +689,13 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Left-Handed Mouse Buttons"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Left-Handed Mouse Buttons"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.mouseLeftHanded; onToggled: root.setSetting("mouse_left_handed", !root.mouseLeftHanded) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: "Middle-Button Emulation (Left + Right Click)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Middle-Button Emulation (Left + Right Click)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: root.mouseMiddleEmu; onToggled: root.setSetting("mouse_middle_button_emulation", !root.mouseMiddleEmu) }
             }
 
@@ -710,7 +710,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 6
 
-                Text { Layout.preferredWidth: 115; text: "Scroll Method"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.preferredWidth: 115; text: "Scroll Method"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
 
                 Repeater {
                     model: [
@@ -728,7 +728,7 @@ ColumnLayout {
                         color: mScrBtn.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
                         border.width: mScrBtn.selected ? 1 : Theme.cardBorderWidth
                         border.color: mScrBtn.selected ? Theme.primary : Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: mScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; color: mScrBtn.selected ? Theme.primary : Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: mScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: mScrBtn.selected ? Theme.primary : Theme.fgSurface }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("mouse_scroll_method", mScrBtn.modelData.val) }
                     }
                 }
@@ -755,7 +755,7 @@ ColumnLayout {
             Text {
                 text: "TOUCHPAD"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -777,7 +777,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         text: tpRow.modelData.label
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
 
@@ -796,7 +796,7 @@ ColumnLayout {
                     Layout.preferredWidth: 115
                     text: "Accel Profile"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -834,7 +834,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: tpProfBtn.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: tpProfBtn.selected ? Font.Bold : Font.Normal
                             color: tpProfBtn.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -870,7 +870,7 @@ ColumnLayout {
                     id: tpExtRow
                     required property var modelData
                     Layout.fillWidth: true
-                    Text { Layout.fillWidth: true; text: tpExtRow.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                    Text { Layout.fillWidth: true; text: tpExtRow.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                     ToggleSwitch { checked: tpExtRow.modelData.val; activeColor: Theme.secondary; onToggled: root.setSetting(tpExtRow.modelData.key, !tpExtRow.modelData.val) }
                 }
             }
@@ -886,7 +886,7 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                Text { Layout.preferredWidth: 115; text: "Click Method"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.preferredWidth: 115; text: "Click Method"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 Repeater {
                     model: [{ label: "Button Areas", val: 1 }, { label: "Clickfinger", val: 2 }]
                     delegate: Rectangle {
@@ -896,7 +896,7 @@ ColumnLayout {
                         Layout.fillWidth: true; implicitHeight: 24; radius: Theme.r(7)
                         color: tpClkBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
                         border.width: tpClkBtn.selected ? 1 : Theme.cardBorderWidth; border.color: tpClkBtn.selected ? Theme.secondary : Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: tpClkBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; color: tpClkBtn.selected ? Theme.secondary : Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: tpClkBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: tpClkBtn.selected ? Theme.secondary : Theme.fgSurface }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("trackpad_click_method", tpClkBtn.modelData.val) }
                     }
                 }
@@ -905,7 +905,7 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                Text { Layout.preferredWidth: 115; text: "Scroll Gesture"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.preferredWidth: 115; text: "Scroll Gesture"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 Repeater {
                     model: [{ label: "Two-Finger", val: 1 }, { label: "Edge", val: 2 }]
                     delegate: Rectangle {
@@ -915,7 +915,7 @@ ColumnLayout {
                         Layout.fillWidth: true; implicitHeight: 24; radius: Theme.r(7)
                         color: tpScrBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
                         border.width: tpScrBtn.selected ? 1 : Theme.cardBorderWidth; border.color: tpScrBtn.selected ? Theme.secondary : Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: tpScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; color: tpScrBtn.selected ? Theme.secondary : Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: tpScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: tpScrBtn.selected ? Theme.secondary : Theme.fgSurface }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("trackpad_scroll_method", tpScrBtn.modelData.val) }
                     }
                 }

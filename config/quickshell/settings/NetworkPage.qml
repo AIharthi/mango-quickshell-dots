@@ -223,7 +223,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "NETWORK INTERFACES, IP & DNS"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -241,7 +241,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Refresh"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -284,14 +284,14 @@ ColumnLayout {
                             Text {
                                 text: ifRow.modelData.kind === "wifi" ? "󰤨" : "󰈀"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 14
+                                font.pixelSize: Theme.fs(14)
                                 color: ifRow.isUp ? Theme.success : Theme.fgSurfaceVariant
                             }
 
                             Text {
                                 text: ifRow.modelData.name
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurface
                             }
@@ -300,7 +300,7 @@ ColumnLayout {
                                 visible: (ifRow.modelData.speed || "").length > 0
                                 text: ifRow.modelData.speed
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.secondary
                             }
 
@@ -309,7 +309,7 @@ ColumnLayout {
                             Text {
                                 text: "RX " + ifRow.modelData.rxMb + "MB · TX " + ifRow.modelData.txMb + "MB"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                             }
 
@@ -324,7 +324,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: ifRow.modelData.state
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
                                     color: ifRow.isUp ? Theme.success : Theme.fgSurfaceVariant
                                 }
@@ -337,7 +337,7 @@ ColumnLayout {
                             text: "IP: " + ((ifRow.modelData.addrs && ifRow.modelData.addrs.length > 0) ? ifRow.modelData.addrs.join(" · ") : "Unassigned")
                                 + (ifRow.modelData.mac ? ("   MAC: " + ifRow.modelData.mac) : "")
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
                     }
@@ -351,7 +351,7 @@ ColumnLayout {
                 Text {
                     text: "Gateway: " + (root.gateway.length > 0 ? root.gateway : "None")
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurface
                 }
 
@@ -360,7 +360,7 @@ ColumnLayout {
                     elide: Text.ElideRight
                     text: "DNS: " + (root.dnsList.length > 0 ? root.dnsList.join(", ") : "Automatic")
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.primary
                 }
             }
@@ -386,7 +386,7 @@ ColumnLayout {
             Text {
                 text: "NETWORKMANAGER PROFILES & DNS PRESETS"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -418,7 +418,7 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 text: nmConnRow.modelData.name + " (" + nmConnRow.modelData.type + ")"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurface
                             }
@@ -436,7 +436,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: nmConnRow.modelData.active ? "Disconnect" : "Connect"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
                                     color: nmConnRow.modelData.active ? Theme.warning : Theme.primary
                                 }
@@ -477,7 +477,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: dnsChip.modelData.label
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 9
+                                        font.pixelSize: Theme.fs(9)
                                         color: Theme.fgSurfaceVariant
                                     }
 
@@ -516,7 +516,7 @@ ColumnLayout {
             Text {
                 text: root.wifiEnabled ? "󰤨" : "󰤭"
                 font.family: Theme.iconFont
-                font.pixelSize: 16
+                font.pixelSize: Theme.fs(16)
                 color: root.wifiEnabled ? Theme.primary : Theme.fgSurfaceVariant
             }
 
@@ -527,7 +527,7 @@ ColumnLayout {
                 Text {
                     text: "Wi-Fi Radio"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fs(12)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
@@ -535,7 +535,7 @@ ColumnLayout {
                 Text {
                     text: root.statusMsg.length > 0 ? root.statusMsg : (root.wifiEnabled ? (root.networks.length + " networks visible") : "Radio disabled")
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -554,7 +554,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰑐 Scan"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurface
                 }
 
@@ -593,7 +593,7 @@ ColumnLayout {
             Text {
                 text: "Password (" + root.pendingSsid + "):"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.primary
             }
@@ -604,7 +604,7 @@ ColumnLayout {
                 echoMode: TextInput.Password
                 color: Theme.fgSurface
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.fs(11)
                 clip: true
                 Keys.onReturnPressed: root.connectWithPassword()
                 Keys.onEnterPressed: root.connectWithPassword()
@@ -620,7 +620,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "Connect"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgPrimary
                 }
@@ -642,7 +642,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "Cancel"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
 
@@ -678,7 +678,7 @@ ColumnLayout {
             Text {
                 text: "AVAILABLE NETWORKS"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -707,7 +707,7 @@ ColumnLayout {
                         Text {
                             text: netRow.modelData.inUse ? "󰄬" : "󰤨"
                             font.family: Theme.iconFont
-                            font.pixelSize: 14
+                            font.pixelSize: Theme.fs(14)
                             color: netRow.modelData.inUse ? Theme.primary : Theme.fgSurfaceVariant
                         }
 
@@ -716,7 +716,7 @@ ColumnLayout {
                             text: netRow.modelData.ssid
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             font.weight: netRow.modelData.inUse ? Font.Bold : Font.Medium
                             color: Theme.fgSurface
                         }
@@ -724,7 +724,7 @@ ColumnLayout {
                         Text {
                             text: (netRow.modelData.security || "Open") + " · " + netRow.modelData.signal + "%"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -741,7 +741,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: netRow.modelData.inUse ? "Disconnect" : "Connect"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
                                 color: netRow.modelData.inUse ? Theme.error : Theme.primary
                             }
@@ -767,7 +767,7 @@ ColumnLayout {
                 visible: root.networks.length === 0
                 text: "No Wi-Fi networks found. Click Scan to refresh."
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.fs(11)
                 color: Theme.fgSurfaceVariant
             }
         }

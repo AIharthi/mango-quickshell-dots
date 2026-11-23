@@ -317,7 +317,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: tagCell.modelData.index
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     font.weight: tagCell.isActive ? Font.Bold : Font.Medium
                     color: {
                         if (tagCell.isUrgent)
@@ -372,7 +372,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "[" + root.currentLayout + "]"
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.fs(11)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -403,7 +403,7 @@ Rectangle {
             maximumLineCount: 1
             text: root.activeWindowTitle
             font.family: Theme.fontFamily
-            font.pixelSize: 10
+            font.pixelSize: Theme.fs(10)
             font.weight: Font.Medium
             color: Theme.fgSurfaceVariant
         }
@@ -417,7 +417,7 @@ Rectangle {
         Text {
             text: ShellState.formatTime(clock.date)
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.fs(12)
             font.weight: Font.Bold
             color: Theme.fgSurface
         }
@@ -426,7 +426,7 @@ Rectangle {
             visible: ShellState.simpleBarShowDate || ShellState.barShowDate
             text: ShellState.formatDate(clock.date)
             font.family: Theme.fontFamily
-            font.pixelSize: 11
+            font.pixelSize: Theme.fs(11)
             color: Theme.fgSurfaceVariant
         }
     }
@@ -454,7 +454,7 @@ Rectangle {
                 Text {
                     text: "CPU " + Math.round(root.cpuPercent) + "%"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: root.cpuPercent > 85 ? Theme.error : Theme.primary
                 }
@@ -462,7 +462,7 @@ Rectangle {
                 Text {
                     text: "RAM " + Math.round(root.ramPercent) + "%"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: root.ramPercent > 85 ? Theme.warning : Theme.secondary
                 }
@@ -489,7 +489,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: root.volMuted ? "VOL MUTE" : ("VOL " + root.volPercent + "%")
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: root.volMuted ? Theme.error : Theme.fgSurfaceVariant
             }
@@ -531,7 +531,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: root.kbLayoutShort
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurface
             }
@@ -576,11 +576,11 @@ Rectangle {
                 id: sbGmRow
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.tertiary }
+                Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.tertiary }
                 Text {
                     text: "GAME"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.tertiary
                 }
@@ -614,11 +614,11 @@ Rectangle {
                 id: sbSwRow
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.secondary }
+                Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.secondary }
                 Text {
                     text: ShellState.formatTimer(ShellState.stopwatchElapsedSec)
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.secondary
                 }
@@ -652,11 +652,11 @@ Rectangle {
                 id: sbWRow
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.primary }
+                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.primary }
                 Text {
                     text: ShellState.weatherTemp
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
@@ -694,13 +694,13 @@ Rectangle {
                 Text {
                     text: "󰑊"
                     font.family: Theme.iconFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.error
                 }
                 Text {
                     text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec)
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.error
                 }
@@ -738,13 +738,13 @@ Rectangle {
                 Text {
                     text: "󰔛"
                     font.family: Theme.iconFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.primary
                 }
                 Text {
                     text: ShellState.formatTimer(ShellState.timerRemainingSec)
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.primary
                 }
@@ -782,13 +782,13 @@ Rectangle {
                 Text {
                     text: "󰂚"
                     font.family: Theme.iconFont
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.secondary
                 }
                 Text {
                     text: String(ShellState.unreadCount)
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
@@ -822,7 +822,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "󰂛"
                 font.family: Theme.iconFont
-                font.pixelSize: 12
+                font.pixelSize: Theme.fs(12)
                 color: Theme.warning
             }
 
@@ -853,7 +853,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "󰅶"
                 font.family: Theme.iconFont
-                font.pixelSize: 12
+                font.pixelSize: Theme.fs(12)
                 color: Theme.tertiary
             }
 
@@ -889,7 +889,7 @@ Rectangle {
                 Text {
                     text: DeviceCaps.batteryIcon
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fs(12)
                     color: DeviceCaps.batteryLow
                         ? Theme.error
                         : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant)
@@ -898,7 +898,7 @@ Rectangle {
                 Text {
                     text: DeviceCaps.batteryPercent + "%"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: DeviceCaps.batteryLow
                         ? Theme.error
@@ -926,7 +926,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "󰉋"
                 font.family: Theme.iconFont
-                font.pixelSize: 13
+                font.pixelSize: Theme.fs(13)
                 color: filesSbMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
             }
 
@@ -957,7 +957,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "󰒓"
                 font.family: Theme.iconFont
-                font.pixelSize: 13
+                font.pixelSize: Theme.fs(13)
                 color: Theme.fgSurfaceVariant
             }
 
@@ -990,7 +990,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "SIMPLE"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgPrimary
             }
@@ -1022,7 +1022,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "BLUR"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -1053,7 +1053,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: "󰍜"
                 font.family: Theme.iconFont
-                font.pixelSize: 13
+                font.pixelSize: Theme.fs(13)
                 color: Theme.fgSurface
             }
 

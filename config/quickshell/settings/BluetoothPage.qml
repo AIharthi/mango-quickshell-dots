@@ -122,7 +122,7 @@ ColumnLayout {
             Text {
                 text: root.powered ? "󰂯" : "󰂲"
                 font.family: Theme.iconFont
-                font.pixelSize: 16
+                font.pixelSize: Theme.fs(16)
                 color: root.powered ? Theme.secondary : Theme.fgSurfaceVariant
             }
 
@@ -133,7 +133,7 @@ ColumnLayout {
                 Text {
                     text: "Bluetooth Adapter"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fs(12)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
@@ -141,7 +141,7 @@ ColumnLayout {
                 Text {
                     text: root.statusMsg.length > 0 ? root.statusMsg : (root.powered ? (root.devices.length + " known devices") : "Adapter powered off")
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -160,7 +160,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰑐 Scan"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurface
                 }
 
@@ -200,7 +200,7 @@ ColumnLayout {
             Text {
                 text: "DEVICES"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -229,7 +229,7 @@ ColumnLayout {
                         Text {
                             text: devRow.modelData.connected ? "󰄬" : "󰂯"
                             font.family: Theme.iconFont
-                            font.pixelSize: 14
+                            font.pixelSize: Theme.fs(14)
                             color: devRow.modelData.connected ? Theme.secondary : Theme.fgSurfaceVariant
                         }
 
@@ -242,7 +242,7 @@ ColumnLayout {
                                 text: devRow.modelData.name
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: devRow.modelData.connected ? Font.Bold : Font.Medium
                                 color: Theme.fgSurface
                             }
@@ -250,7 +250,7 @@ ColumnLayout {
                             Text {
                                 text: devRow.modelData.mac
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                             }
                         }
@@ -268,7 +268,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: devRow.modelData.connected ? "Disconnect" : "Connect"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
                                 color: devRow.modelData.connected ? Theme.error : Theme.secondary
                             }
@@ -289,7 +289,7 @@ ColumnLayout {
                 visible: root.devices.length === 0
                 text: "No Bluetooth devices found. Click Scan to search."
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.fs(11)
                 color: Theme.fgSurfaceVariant
             }
         }

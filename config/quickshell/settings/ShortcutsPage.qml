@@ -16,6 +16,7 @@ ColumnLayout {
     property string searchQuery: ""
 
     property bool showAddForm: false
+    property string editingOldRaw: ""
     property var newMods: ["SUPER"]
     property string newAction: "spawn"
     property string bindStatus: ""
@@ -62,12 +63,37 @@ ColumnLayout {
         root.newMods = next;
     }
 
+    function startEditBind(b: var): void {
+        if (!b)
+            return;
+        root.editingOldRaw = b.raw || "";
+        root.newMods = (Array.isArray(b.mods) && b.mods.length > 0) ? b.mods.slice() : ["NONE"];
+        root.newAction = b.action || "spawn";
+        keyIn.text = b.key || "";
+        argIn.text = (b.rawArg !== undefined ? b.rawArg : (b.arg || ""));
+        root.showAddForm = true;
+        root.bindError = false;
+        root.bindStatus = "Editing shortcut: " + (b.modsRaw || "NONE") + " + " + (b.key || "");
+    }
+
+    function cancelEditBind(): void {
+        root.editingOldRaw = "";
+        keyIn.text = "";
+        argIn.text = "";
+        root.bindStatus = "";
+    }
+
     function addCustomBind(keyStr: string, argStr: string): void {
         const k = (keyStr || "").trim();
         if (k.length === 0 || bindMutProc.running)
             return;
         const mods = root.newMods.join("+");
-        const cmd = [Quickshell.shellPath("scripts/apply-local-setting.sh"), "bind-add", mods, k, root.newAction];
+        let cmd = [];
+        if (root.editingOldRaw.length > 0) {
+            cmd = [Quickshell.shellPath("scripts/apply-local-setting.sh"), "bind-update", root.editingOldRaw, mods, k, root.newAction];
+        } else {
+            cmd = [Quickshell.shellPath("scripts/apply-local-setting.sh"), "bind-add", mods, k, root.newAction];
+        }
         if ((argStr || "").trim().length > 0)
             cmd.push(argStr.trim());
         root.bindError = false;
@@ -79,6 +105,8 @@ ColumnLayout {
     function removeCustomBind(rawLine: string): void {
         if (bindMutProc.running)
             return;
+        if (root.editingOldRaw === rawLine)
+            root.editingOldRaw = "";
         root.bindError = false;
         bindMutProc.command = [Quickshell.shellPath("scripts/apply-local-setting.sh"), "bind-remove", rawLine];
         bindMutProc.running = true;
@@ -136,7 +164,8 @@ ColumnLayout {
                 root.bindStatus = (mutErr.text || "").trim().split("\n")[0] || "Conflict or invalid keybinding (rolled back)";
             } else {
                 root.bindError = false;
-                root.bindStatus = "Custom shortcut saved & active!";
+                root.bindStatus = root.editingOldRaw.length > 0 ? "Shortcut updated & active!" : "Shortcut saved & active!";
+                root.editingOldRaw = "";
                 bindsProc.running = true;
             }
         }
@@ -178,7 +207,7 @@ ColumnLayout {
                         Text {
                             text: "󰍉"
                             font.family: Theme.iconFont
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.fs(12)
                             color: bindSearch.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
                         }
 
@@ -191,7 +220,7 @@ ColumnLayout {
                                 text: "Filter shortcuts by key, action, or app..."
                                 visible: bindSearch.text.length === 0
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurfaceVariant
                             }
 
@@ -201,7 +230,7 @@ ColumnLayout {
                                 verticalAlignment: TextInput.AlignVCenter
                                 text: root.searchQuery
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 color: Theme.fgSurface
                                 clip: true
                                 onTextEdited: root.searchQuery = text
@@ -223,7 +252,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.filteredBinds.length + " binds"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -242,7 +271,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.showAddForm ? "Close Form" : "+ Add Custom"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: root.showAddForm ? Theme.fgPrimary : Theme.primary
                     }
@@ -266,7 +295,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 5
 
-                    Text { text: "Mods:"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
+                    Text { text: "Mods:"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
 
                     Repeater {
                         model: ["SUPER", "SHIFT", "CTRL", "ALT", "NONE"]
@@ -278,7 +307,7 @@ ColumnLayout {
                             color: modPick.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
                             border.width: modPick.selected ? 1 : Theme.cardBorderWidth
                             border.color: modPick.selected ? Theme.primary : Theme.cardBorder
-                            Text { id: modPickTxt; anchors.centerIn: parent; text: modPick.modelData; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: modPick.selected ? Font.Bold : Font.Normal; color: modPick.selected ? Theme.primary : Theme.fgSurface }
+                            Text { id: modPickTxt; anchors.centerIn: parent; text: modPick.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: modPick.selected ? Font.Bold : Font.Normal; color: modPick.selected ? Theme.primary : Theme.fgSurface }
                             MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.toggleMod(modPick.modelData) }
                         }
                     }
@@ -286,7 +315,7 @@ ColumnLayout {
                     Item { Layout.fillWidth: true }
 
                     Repeater {
-                        model: ["spawn", "spawn_shell", "toggleoverview", "switch_layout"]
+                        model: ["spawn", "spawn_shell", "toggleoverview", "switch_layout", "killclient", "togglefloating", "togglefullscreen"]
                         delegate: Rectangle {
                             id: actPick
                             required property string modelData
@@ -295,7 +324,7 @@ ColumnLayout {
                             color: actPick.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
                             border.width: actPick.selected ? 1 : Theme.cardBorderWidth
                             border.color: actPick.selected ? Theme.secondary : Theme.cardBorder
-                            Text { id: actPickTxt; anchors.centerIn: parent; text: actPick.modelData; font.family: Theme.fontFamily; font.pixelSize: 9; color: actPick.selected ? Theme.secondary : Theme.fgSurface }
+                            Text { id: actPickTxt; anchors.centerIn: parent; text: actPick.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: actPick.selected ? Theme.secondary : Theme.fgSurface }
                             MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.newAction = actPick.modelData }
                         }
                     }
@@ -310,8 +339,27 @@ ColumnLayout {
                         border.width: keyIn.activeFocus ? 1 : Theme.cardBorderWidth; border.color: keyIn.activeFocus ? Theme.primary : Theme.cardBorder
                         Item {
                             anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
-                            Text { anchors.verticalCenter: parent.verticalCenter; text: "Key (e.g. e, F5)"; visible: keyIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
-                            TextInput { id: keyIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface; clip: true }
+                            Text { anchors.verticalCenter: parent.verticalCenter; text: "Key (e.g. e, F5)"; visible: keyIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                            TextInput { id: keyIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.preferredWidth: 110; implicitHeight: 28; radius: Theme.r(8); color: Theme.subCardBg
+                        border.width: actIn.activeFocus ? 1 : Theme.cardBorderWidth; border.color: actIn.activeFocus ? Theme.secondary : Theme.cardBorder
+                        Item {
+                            anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
+                            TextInput {
+                                id: actIn
+                                anchors.fill: parent
+                                verticalAlignment: TextInput.AlignVCenter
+                                text: root.newAction
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                color: Theme.secondary
+                                clip: true
+                                onTextEdited: root.newAction = text.trim()
+                            }
                         }
                     }
 
@@ -320,14 +368,22 @@ ColumnLayout {
                         border.width: argIn.activeFocus ? 1 : Theme.cardBorderWidth; border.color: argIn.activeFocus ? Theme.primary : Theme.cardBorder
                         Item {
                             anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
-                            Text { anchors.verticalCenter: parent.verticalCenter; text: "Command / Argument (for spawn)"; visible: argIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
-                            TextInput { id: argIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurface; clip: true }
+                            Text { anchors.verticalCenter: parent.verticalCenter; text: "Command / Argument (for spawn)"; visible: argIn.text.length === 0; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                            TextInput { id: argIn; anchors.fill: parent; verticalAlignment: TextInput.AlignVCenter; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface; clip: true }
                         }
                     }
 
                     Rectangle {
+                        visible: root.editingOldRaw.length > 0
+                        implicitHeight: 28; implicitWidth: cancelEditLbl.implicitWidth + 12; radius: Theme.r(8); color: Theme.subCardBg
+                        border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
+                        Text { id: cancelEditLbl; anchors.centerIn: parent; text: "Cancel"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                        MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.cancelEditBind() }
+                    }
+
+                    Rectangle {
                         implicitHeight: 28; implicitWidth: saveBindLbl.implicitWidth + 14; radius: Theme.r(8); color: Theme.primary
-                        Text { id: saveBindLbl; anchors.centerIn: parent; text: "Save Bind"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgPrimary }
+                        Text { id: saveBindLbl; anchors.centerIn: parent; text: root.editingOldRaw.length > 0 ? "Save Rebind" : "Save Bind"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgPrimary }
                         MouseArea {
                             anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: root.addCustomBind(keyIn.text, argIn.text)
@@ -339,7 +395,7 @@ ColumnLayout {
                     visible: root.bindStatus.length > 0
                     text: root.bindStatus
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: root.bindError ? Theme.error : Theme.success
                 }
             }
@@ -370,7 +426,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: catPill.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: catPill.selected ? Font.Bold : Font.Medium
                             color: catPill.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -404,7 +460,7 @@ ColumnLayout {
             anchors.margins: 10
             spacing: 6
 
-            Text { text: "YOUR CUSTOM SHORTCUTS (local.conf)"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
+            Text { text: "YOUR CUSTOM SHORTCUTS (local.conf)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
 
             Repeater {
                 model: root.customBinds
@@ -414,11 +470,11 @@ ColumnLayout {
                     Layout.fillWidth: true; implicitHeight: 30; radius: Theme.r(8); color: Theme.subCardBg
                     RowLayout {
                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 6; spacing: 8
-                        Text { text: cbRow.modelData.raw; Layout.fillWidth: true; elide: Text.ElideRight; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.primary }
+                        Text { text: cbRow.modelData.raw; Layout.fillWidth: true; elide: Text.ElideRight; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.primary }
                         Rectangle {
                             implicitWidth: 20; implicitHeight: 20; radius: Theme.r(5)
                             color: delCbMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : "transparent"
-                            Text { anchors.centerIn: parent; text: "󰆴"; font.family: Theme.iconFont; font.pixelSize: 11; color: delCbMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant }
+                            Text { anchors.centerIn: parent; text: "󰆴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: delCbMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant }
                             MouseArea { id: delCbMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.removeCustomBind(cbRow.modelData.raw) }
                         }
                     }
@@ -477,7 +533,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: modCap.modelData
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
                                     color: Theme.primary
                                 }
@@ -497,7 +553,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: (bindRow.modelData.kind === "mouse" ? "󰍽 " : "") + bindRow.modelData.key
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurface
                             }
@@ -517,16 +573,68 @@ ColumnLayout {
                                 ? (bindRow.modelData.action + "  ·  " + bindRow.modelData.arg)
                                 : bindRow.modelData.action
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             font.weight: Font.DemiBold
                             color: Theme.fgSurface
                         }
 
                         Text {
-                            text: bindRow.modelData.category
+                            text: bindRow.modelData.category + (bindRow.modelData.source === "local" ? "  ·  local.conf" : "")
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
-                            color: Theme.fgSurfaceVariant
+                            font.pixelSize: Theme.fs(9)
+                            color: bindRow.modelData.source === "local" ? Theme.primary : Theme.fgSurfaceVariant
+                        }
+                    }
+
+                    Rectangle {
+                        implicitHeight: 24
+                        implicitWidth: editBindLbl.implicitWidth + 12
+                        radius: Theme.r(6)
+                        color: editBindMouse.containsMouse ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
+                        border.width: Theme.cardBorderWidth
+                        border.color: editBindMouse.containsMouse ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            id: editBindLbl
+                            anchors.centerIn: parent
+                            text: "󰏫 Edit"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            font.weight: Font.Bold
+                            color: editBindMouse.containsMouse ? Theme.primary : Theme.fgSurface
+                        }
+
+                        MouseArea {
+                            id: editBindMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.startEditBind(bindRow.modelData)
+                        }
+                    }
+
+                    Rectangle {
+                        implicitWidth: 24
+                        implicitHeight: 24
+                        radius: Theme.r(6)
+                        color: delBindMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
+                        border.width: Theme.cardBorderWidth
+                        border.color: delBindMouse.containsMouse ? Theme.error : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰆴"
+                            font.family: Theme.iconFont
+                            font.pixelSize: Theme.fs(11)
+                            color: delBindMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                        }
+
+                        MouseArea {
+                            id: delBindMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.removeCustomBind(bindRow.modelData.raw)
                         }
                     }
                 }
@@ -537,7 +645,7 @@ ColumnLayout {
             visible: root.filteredBinds.length === 0
             text: "No shortcuts match that filter"
             font.family: Theme.fontFamily
-            font.pixelSize: 11
+            font.pixelSize: Theme.fs(11)
             color: Theme.fgSurfaceVariant
         }
     }

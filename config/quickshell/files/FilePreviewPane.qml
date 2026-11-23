@@ -54,7 +54,7 @@ Rectangle {
             Text {
                 text: "INSPECTOR"
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Theme.fs(9)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -65,7 +65,7 @@ Rectangle {
                 visible: root.loading
                 text: "Loading..."
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Theme.fs(9)
                 color: root.fileStyle.accent
             }
         }
@@ -82,14 +82,14 @@ Rectangle {
                 Layout.alignment: Qt.AlignHCenter
                 text: "󰈙"
                 font.family: Theme.iconFont
-                font.pixelSize: 28
+                font.pixelSize: Theme.fs(28)
                 color: Theme.outline
             }
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: "Select a file or folder"
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.fs(11)
                 color: Theme.fgSurfaceVariant
             }
             Item { Layout.fillHeight: true }
@@ -134,7 +134,7 @@ Rectangle {
                         visible: root.pKind !== "image"
                         text: root.fileStyle.categoryIcon(String(root.d.category || "file"), String(root.d.ext || ""), !!root.d.isDir)
                         font.family: Theme.iconFont
-                        font.pixelSize: 34
+                        font.pixelSize: Theme.fs(34)
                         color: root.fileStyle.categoryColor(String(root.d.category || "file"), !!root.d.isDir, !!root.d.isBroken)
                     }
                 }
@@ -167,7 +167,7 @@ Rectangle {
                             return cat + "  ·  " + String(root.d.humanSize || "");
                         }
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                         elide: Text.ElideRight
                     }
@@ -196,7 +196,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: "󰸉 Wallpaper"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
                                 color: wpMouse.containsMouse ? root.fileStyle.onAccent : root.fileStyle.accent
                             }
@@ -224,7 +224,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: "󰏘 Matugen"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.DemiBold
                                 color: Theme.fgSurface
                             }
@@ -255,7 +255,7 @@ Rectangle {
                             anchors.centerIn: parent
                             text: "󰏘 Import as Shell Theme"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Theme.success
                         }
@@ -282,7 +282,7 @@ Rectangle {
                             anchors.centerIn: parent
                             text: "󰗄 Extract Archive Here"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: root.fileStyle.accent
                         }
@@ -312,7 +312,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: root.d.isDir ? "󰉋 Open" : (root.pKind === "text" ? "󰅩 Edit" : "󰏌 Open")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Medium
                                 color: Theme.fgSurface
                             }
@@ -343,7 +343,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: "󰆍 Terminal"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Medium
                                 color: Theme.fgSurface
                             }
@@ -371,7 +371,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: "󰃀"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 12
+                                font.pixelSize: Theme.fs(12)
                                 color: root.isBookmarked ? root.fileStyle.accent : Theme.fgSurfaceVariant
                             }
                             MouseArea {
@@ -402,7 +402,7 @@ Rectangle {
                         anchors.margins: 8
                         text: String(root.d.text || "")
                         font.family: Theme.fontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fs(9)
                         color: Theme.fgSurface
                         wrapMode: Text.WrapAnywhere
                     }
@@ -438,14 +438,14 @@ Rectangle {
                                 Text {
                                     text: root.fileStyle.categoryIcon(String(sampRow.modelData.category || "file"), "", !!sampRow.modelData.isDir)
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 11
+                                    font.pixelSize: Theme.fs(11)
                                     color: root.fileStyle.categoryColor(String(sampRow.modelData.category || "file"), !!sampRow.modelData.isDir, false)
                                 }
                                 Text {
                                     Layout.fillWidth: true
                                     text: String(sampRow.modelData.name || "")
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     color: Theme.fgSurface
                                     elide: Text.ElideRight
                                 }
@@ -481,7 +481,7 @@ Rectangle {
                                 Layout.fillWidth: true
                                 text: arcTxt.modelData
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                                 elide: Text.ElideMiddle
                             }
@@ -506,20 +506,20 @@ Rectangle {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { text: "Modified"; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                            Text { text: "Modified"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
                             Item { Layout.fillWidth: true }
-                            Text { text: root.fileStyle.formatMtime(root.d.mtime); font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurface }
+                            Text { text: root.fileStyle.formatMtime(root.d.mtime); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurface }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 4
-                            Text { text: "Mode"; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                            Text { text: "Mode"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
                             Item { Layout.fillWidth: true }
                             Text {
                                 text: String(root.d.perms || "") + " (" + String(root.d.modeOctal || "") + ")"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurface
                             }
                             Rectangle {
@@ -536,7 +536,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: root.isExecNow ? "-x" : "+x"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 8
+                                    font.pixelSize: Theme.fs(8)
                                     font.weight: Font.Bold
                                     color: root.isExecNow ? Theme.success : Theme.fgSurfaceVariant
                                 }
@@ -552,12 +552,12 @@ Rectangle {
                             Layout.fillWidth: true
                             visible: !!root.d.isSymlink
                             spacing: 4
-                            Text { text: "Target"; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                            Text { text: "Target"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
                             Text {
                                 Layout.fillWidth: true
                                 text: String(root.d.target || "")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.info
                                 horizontalAlignment: Text.AlignRight
                                 elide: Text.ElideMiddle
@@ -576,7 +576,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: "󰆏 Copy Full Path"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                             }
                             MouseArea {

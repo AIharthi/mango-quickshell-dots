@@ -22,7 +22,7 @@ RowLayout {
         Layout.fillWidth: true
         text: root.label
         font.family: Theme.fontFamily
-        font.pixelSize: 11
+        font.pixelSize: Theme.fs(11)
         color: Theme.fgSurface
     }
 
@@ -48,7 +48,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "-"
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.fs(12)
             font.weight: Font.Bold
             color: Theme.fgSurface
         }
@@ -68,7 +68,7 @@ RowLayout {
         horizontalAlignment: Text.AlignHCenter
         text: root.displayValue
         font.family: Theme.fontFamily
-        font.pixelSize: 11
+        font.pixelSize: Theme.fs(11)
         font.weight: Font.Bold
         color: root.accentColor
     }
@@ -95,7 +95,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "+"
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.fs(12)
             font.weight: Font.Bold
             color: Theme.fgSurface
         }

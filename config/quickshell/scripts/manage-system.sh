@@ -5,10 +5,10 @@ CMD="${1:-}"
 shift || true
 
 case "$CMD" in
-    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|user-info|backup-settings)
+    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings)
         ;;
     *)
-        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|user-info|backup-settings> [args...]" >&2
+        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings> [args...]" >&2
         exit 1
         ;;
 esac
@@ -758,6 +758,20 @@ def cmd_services():
     print(json.dumps({"initSystem": init_sys, "services": svcs}))
 
 
+def cmd_service_action():
+    if len(args) < 2:
+        sys.exit("Usage: manage-system.sh service-action <name> <start|stop|restart>")
+    svc_name = re.sub(r"[^A-Za-z0-9_.@-]", "", args[0].strip())
+    act = args[1].strip().lower()
+    if not svc_name or act not in ("start", "stop", "restart"):
+        sys.exit("Invalid service name or action")
+    if shutil.which("systemctl") and os.path.isdir("/run/systemd/system"):
+        subprocess.run(["timeout", "6", "systemctl", "--user", act, svc_name], stderr=subprocess.DEVNULL)
+    elif shutil.which("rc-service"):
+        subprocess.run(["timeout", "6", "sudo", "-n", "rc-service", svc_name, act], stderr=subprocess.DEVNULL)
+    cmd_services()
+
+
 def cmd_user_info():
     pw = pwd.getpwuid(os.getuid())
     group_names = []
@@ -781,6 +795,26 @@ def cmd_user_info():
     }))
 
 
+def list_backup_files():
+    pattern = os.path.expanduser("~/mango-settings-backup-*.tar.gz")
+    files = sorted(glob.glob(pattern), key=lambda p: os.path.getmtime(p), reverse=True)
+    out = []
+    for p in files[:6]:
+        try:
+            out.append({
+                "name": os.path.basename(p),
+                "path": p,
+                "sizeKb": round(os.path.getsize(p) / 1024.0, 1),
+            })
+        except Exception:
+            pass
+    return out
+
+
+def cmd_list_backups():
+    print(json.dumps({"backups": list_backup_files()}))
+
+
 def cmd_backup_settings():
     ts = time.strftime("%Y%m%d_%H%M%S")
     dest = os.path.expanduser(f"~/mango-settings-backup-{ts}.tar.gz")
@@ -797,7 +831,43 @@ def cmd_backup_settings():
             if os.path.isfile(src):
                 tf.add(src, arcname=arcname)
     size_kb = round(os.path.getsize(dest) / 1024.0, 1)
-    print(json.dumps({"path": dest, "sizeKb": size_kb}))
+    print(json.dumps({"path": dest, "sizeKb": size_kb, "backups": list_backup_files()}))
+
+
+def cmd_restore_settings():
+    if len(args) < 1:
+        sys.exit("Usage: manage-system.sh restore-settings <archive_path>")
+    src_path = os.path.expanduser(args[0].strip())
+    if not os.path.isfile(src_path):
+        sys.exit(f"Backup archive not found: {src_path}")
+    allowed_members = {
+        "quickshell/shell-prefs.json": os.path.join(QS_DIR, "shell-prefs.json"),
+        "quickshell/mode-prefs.json": os.path.join(QS_DIR, "mode-prefs.json"),
+        "quickshell/hidden-apps.json": os.path.join(QS_DIR, "hidden-apps.json"),
+        "quickshell/theme-state.json": os.path.join(QS_DIR, "theme-state.json"),
+        "quickshell/shell-mode.json": os.path.join(QS_DIR, "shell-mode.json"),
+        "mango/local.conf": os.path.join(MANGO_DIR, "local.conf"),
+    }
+    restored = []
+    with tarfile.open(src_path, "r:gz") as tf:
+        for member in tf.getmembers():
+            if not member.isfile() or member.name not in allowed_members:
+                continue
+            fobj = tf.extractfile(member)
+            if fobj is None:
+                continue
+            content = fobj.read().decode("utf-8", errors="replace")
+            atomic_write(allowed_members[member.name], content)
+            restored.append(member.name)
+    apply_mode = os.path.join(QS_DIR, "scripts", "apply-mode.sh")
+    apply_theme = os.path.join(QS_DIR, "scripts", "apply-theme.sh")
+    if os.path.isfile(apply_mode):
+        subprocess.run([apply_mode, "--init"], stderr=subprocess.DEVNULL)
+    if os.path.isfile(apply_theme):
+        subprocess.run([apply_theme, "--init", "--no-wallpaper"], stderr=subprocess.DEVNULL)
+    if shutil.which("mmsg"):
+        subprocess.run(["mmsg", "dispatch", "reload_config"], stderr=subprocess.DEVNULL)
+    print(json.dumps({"restored": restored, "path": src_path, "backups": list_backup_files()}))
 
 
 DISPATCH = {
@@ -819,8 +889,11 @@ DISPATCH = {
     "processes": cmd_processes,
     "kill-proc": cmd_kill_proc,
     "services": cmd_services,
+    "service-action": cmd_service_action,
     "user-info": cmd_user_info,
     "backup-settings": cmd_backup_settings,
+    "list-backups": cmd_list_backups,
+    "restore-settings": cmd_restore_settings,
 }
 
 DISPATCH[cmd]()

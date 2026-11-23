@@ -35,7 +35,7 @@ ColumnLayout {
             Text {
                 text: "DO NOT DISTURB & POPUPS"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -56,7 +56,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: ShellState.dnd ? "󰂛" : "󰂚"
                         font.family: Theme.iconFont
-                        font.pixelSize: 16
+                        font.pixelSize: Theme.fs(16)
                         color: ShellState.dnd ? Theme.warning : Theme.primary
                     }
                 }
@@ -68,7 +68,7 @@ ColumnLayout {
                     Text {
                         text: "Do Not Disturb"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fs(12)
                         font.weight: Font.Bold
                         color: Theme.fgSurface
                     }
@@ -78,7 +78,7 @@ ColumnLayout {
                         wrapMode: Text.WordWrap
                         text: "Silence notification island banners while continuing to record incoming notifications below"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -99,7 +99,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Popup Auto-Hide Duration"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -138,7 +138,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: durPill.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: durPill.selected ? Font.Bold : Font.Medium
                                 color: durPill.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -163,7 +163,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Allow Critical / Urgent Alerts During DND"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -181,7 +181,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Play Desktop Sound on Notification"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -199,7 +199,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Session History Capacity"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -226,7 +226,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: String(hCapPill.modelData)
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: hCapPill.selected ? Font.Bold : Font.Medium
                                 color: hCapPill.selected ? Theme.secondary : Theme.fgSurface
                             }
@@ -251,7 +251,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Preview banner appearance & auto-dismiss timing"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
 
@@ -281,14 +281,14 @@ ColumnLayout {
                         Text {
                             text: "󰂞"
                             font.family: Theme.iconFont
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.fs(12)
                             color: Theme.primary
                         }
 
                         Text {
                             text: "Send Test Notification"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Theme.fgSurface
                         }
@@ -331,7 +331,7 @@ ColumnLayout {
                 Text {
                     text: "NOTIFICATION HISTORY"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -347,7 +347,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: String(ShellState.notificationHistory.length)
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.secondary
                     }
@@ -372,14 +372,14 @@ ColumnLayout {
                         Text {
                             text: "󰆴"
                             font.family: Theme.iconFont
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             color: clrHistMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
                         }
 
                         Text {
                             text: "Clear All"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: clrHistMouse.containsMouse ? Theme.error : Theme.fgSurface
                         }
@@ -426,7 +426,7 @@ ColumnLayout {
                                 Text {
                                     text: notifCard.modelData.appName || "System"
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     font.weight: Font.Bold
                                     color: Theme.primary
                                 }
@@ -434,7 +434,7 @@ ColumnLayout {
                                 Text {
                                     text: "·  " + (notifCard.modelData.timeStr || "")
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     color: Theme.fgSurfaceVariant
                                 }
 
@@ -446,7 +446,7 @@ ColumnLayout {
                                 wrapMode: Text.WordWrap
                                 text: notifCard.modelData.summary || ""
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.DemiBold
                                 color: Theme.fgSurface
                             }
@@ -457,7 +457,7 @@ ColumnLayout {
                                 wrapMode: Text.WordWrap
                                 text: notifCard.modelData.body || ""
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurfaceVariant
                             }
                         }
@@ -473,7 +473,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "󰅖"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurfaceVariant
                             }
 
@@ -493,7 +493,7 @@ ColumnLayout {
                 visible: ShellState.notificationHistory.length === 0
                 text: "No notifications recorded in this session yet"
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.fs(11)
                 color: Theme.fgSurfaceVariant
             }
         }

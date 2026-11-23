@@ -204,7 +204,7 @@ RowLayout {
                     bottomPadding: 2
                     text: "FAVORITES"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -231,14 +231,14 @@ RowLayout {
                             Text {
                                 text: String(qpBtn.modelData.icon || "󰉋")
                                 font.family: Theme.iconFont
-                                font.pixelSize: 13
+                                font.pixelSize: Theme.fs(13)
                                 color: qpBtn.cur ? fstyle.accent : Theme.fgSurfaceVariant
                             }
                             Text {
                                 Layout.fillWidth: true
                                 text: String(qpBtn.modelData.name || "")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: qpBtn.cur ? Font.Bold : Font.Medium
                                 color: qpBtn.cur ? fstyle.accent : Theme.fgSurface
                                 elide: Text.ElideRight
@@ -262,7 +262,7 @@ RowLayout {
                     bottomPadding: 2
                     text: "BOOKMARKS"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -284,12 +284,12 @@ RowLayout {
                             anchors.rightMargin: 8
                             spacing: 7
 
-                            Text { text: "󰃀"; font.family: Theme.iconFont; font.pixelSize: 12; color: qbBtn.cur ? fstyle.accent : Theme.secondary }
+                            Text { text: "󰃀"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: qbBtn.cur ? fstyle.accent : Theme.secondary }
                             Text {
                                 Layout.fillWidth: true
                                 text: String(qbBtn.modelData.name || "")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: qbBtn.cur ? fstyle.accent : Theme.fgSurface
                                 elide: Text.ElideRight
                             }
@@ -321,8 +321,8 @@ RowLayout {
                         anchors.rightMargin: 8
                         spacing: 7
 
-                        Text { text: "󰩹"; font.family: Theme.iconFont; font.pixelSize: 13; color: root.inTrashView ? Theme.error : Theme.fgSurfaceVariant }
-                        Text { Layout.fillWidth: true; text: "Trash"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: root.inTrashView ? Font.Bold : Font.Medium; color: root.inTrashView ? Theme.error : Theme.fgSurface }
+                        Text { text: "󰩹"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: root.inTrashView ? Theme.error : Theme.fgSurfaceVariant }
+                        Text { Layout.fillWidth: true; text: "Trash"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: root.inTrashView ? Font.Bold : Font.Medium; color: root.inTrashView ? Theme.error : Theme.fgSurface }
 
                         Rectangle {
                             visible: Number(root.placesData.trashCount || 0) > 0
@@ -336,7 +336,7 @@ RowLayout {
                                 anchors.centerIn: parent
                                 text: String(root.placesData.trashCount || 0)
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurfaceVariant
                             }
@@ -363,7 +363,7 @@ RowLayout {
                     bottomPadding: 2
                     text: "LOCATIONS"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -388,9 +388,9 @@ RowLayout {
                             RowLayout {
                                 Layout.fillWidth: true
                                 spacing: 4
-                                Text { text: qdBtn.modelData.removable ? "󰕓" : "󰋊"; font.family: Theme.iconFont; font.pixelSize: 11; color: fstyle.accent }
-                                Text { Layout.fillWidth: true; text: String(qdBtn.modelData.label || ""); font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.fgSurface; elide: Text.ElideRight }
-                                Text { text: String(qdBtn.modelData.availHuman || ""); font.family: Theme.fontFamily; font.pixelSize: 8; color: Theme.fgSurfaceVariant }
+                                Text { text: qdBtn.modelData.removable ? "󰕓" : "󰋊"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: fstyle.accent }
+                                Text { Layout.fillWidth: true; text: String(qdBtn.modelData.label || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface; elide: Text.ElideRight }
+                                Text { text: String(qdBtn.modelData.availHuman || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); color: Theme.fgSurfaceVariant }
                             }
 
                             Rectangle {
@@ -455,7 +455,7 @@ RowLayout {
                     enabled: !root.inTrashView && root.parentPath.length > 0
                     opacity: enabled ? 1.0 : 0.45
 
-                    Text { anchors.centerIn: parent; text: "󰁝"; font.family: Theme.iconFont; font.pixelSize: 13; color: Theme.fgSurface }
+                    Text { anchors.centerIn: parent; text: "󰁝"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
                     MouseArea {
                         id: upMouse
                         anchors.fill: parent
@@ -482,8 +482,8 @@ RowLayout {
                         spacing: 4
                         visible: root.inTrashView
 
-                        Text { text: "󰩹"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.error }
-                        Text { text: "Trash"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.error }
+                        Text { text: "󰩹"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.error }
+                        Text { text: "Trash"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.error }
                         Item { Layout.fillWidth: true }
                     }
 
@@ -518,7 +518,7 @@ RowLayout {
                                         visible: crumbItem.index > 0
                                         text: "󰅂"
                                         font.family: Theme.iconFont
-                                        font.pixelSize: 10
+                                        font.pixelSize: Theme.fs(10)
                                         color: Theme.fgSurfaceVariant
                                     }
 
@@ -539,14 +539,14 @@ RowLayout {
                                                 visible: !!crumbItem.modelData.isHome
                                                 text: "󰋜"
                                                 font.family: Theme.iconFont
-                                                font.pixelSize: 11
+                                                font.pixelSize: Theme.fs(11)
                                                 color: crumbItem.isLast ? fstyle.accent : Theme.fgSurfaceVariant
                                             }
 
                                             Text {
                                                 text: String(crumbItem.modelData.label || "/")
                                                 font.family: Theme.fontFamily
-                                                font.pixelSize: 10
+                                                font.pixelSize: Theme.fs(10)
                                                 font.weight: crumbItem.isLast ? Font.Bold : Font.Medium
                                                 color: crumbItem.isLast ? fstyle.accent : Theme.fgSurface
                                             }
@@ -574,7 +574,7 @@ RowLayout {
                     border.width: Theme.cardBorderWidth
                     border.color: Theme.cardBorder
 
-                    Text { anchors.centerIn: parent; text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.fgSurfaceVariant }
+                    Text { anchors.centerIn: parent; text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
                     MouseArea {
                         id: termMouse
                         anchors.fill: parent
@@ -600,7 +600,7 @@ RowLayout {
                         anchors.centerIn: parent
                         text: "Finder ↗"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: fullMouse.containsMouse ? fstyle.onAccent : fstyle.accent
                     }
@@ -640,7 +640,7 @@ RowLayout {
                         Text {
                             text: "󰍉"
                             font.family: Theme.iconFont
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.fs(12)
                             color: quickFilter.activeFocus ? fstyle.accent : Theme.fgSurfaceVariant
                         }
 
@@ -652,7 +652,7 @@ RowLayout {
                             placeholderTextColor: Theme.fgSurfaceVariant
                             color: Theme.fgSurface
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             background: null
                             padding: 0
                             onTextChanged: root.filterText = text
@@ -670,7 +670,7 @@ RowLayout {
                                 anchors.centerIn: parent
                                 text: "󰅖"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 color: Theme.fgSurfaceVariant
                             }
 
@@ -694,7 +694,7 @@ RowLayout {
                                 anchors.centerIn: parent
                                 text: String(root.filteredEntries.length)
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 font.weight: Font.Bold
                                 color: Theme.fgSurfaceVariant
                             }
@@ -716,7 +716,7 @@ RowLayout {
                         anchors.centerIn: parent
                         text: ShellState.fmShowHidden ? "󰈈" : "󰈉"
                         font.family: Theme.iconFont
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fs(12)
                         color: ShellState.fmShowHidden ? fstyle.accent : Theme.fgSurfaceVariant
                     }
 
@@ -775,7 +775,7 @@ RowLayout {
                                     anchors.centerIn: parent
                                     text: fstyle.categoryIcon(String(qRow.modelData.category || "file"), String(qRow.modelData.ext || ""), qRow.isDir)
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 12
+                                    font.pixelSize: Theme.fs(12)
                                     color: qRow.itemCol
                                 }
                             }
@@ -784,7 +784,7 @@ RowLayout {
                                 Layout.fillWidth: true
                                 text: String(qRow.modelData.name || "")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: qRow.isDir ? Font.DemiBold : Font.Normal
                                 color: Theme.fgSurface
                                 elide: Text.ElideMiddle
@@ -801,7 +801,7 @@ RowLayout {
                                 border.color: fstyle.accent
                                 z: 2
 
-                                Text { id: qwLbl; anchors.centerIn: parent; text: "Wallpaper"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: fstyle.accent }
+                                Text { id: qwLbl; anchors.centerIn: parent; text: "Wallpaper"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: fstyle.accent }
                                 MouseArea {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
@@ -816,7 +816,7 @@ RowLayout {
                                 visible: !qRow.isDir
                                 text: String(qRow.modelData.humanSize || "")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                             }
 
@@ -824,7 +824,7 @@ RowLayout {
                                 visible: qRow.isDir
                                 text: "󰅂"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 color: qRowMouse.containsMouse ? fstyle.accent : Theme.withAlpha(Theme.fgSurfaceVariant, 0.6)
                             }
                         }
@@ -857,14 +857,14 @@ RowLayout {
                         Layout.alignment: Qt.AlignHCenter
                         text: root.inTrashView ? "󰩹" : "󰉋"
                         font.family: Theme.iconFont
-                        font.pixelSize: 28
+                        font.pixelSize: Theme.fs(28)
                         color: Theme.fgSurfaceVariant
                     }
                     Text {
                         Layout.alignment: Qt.AlignHCenter
                         text: root.filterText.length > 0 ? "No matching items" : (root.inTrashView ? "Trash is empty" : "Folder is empty")
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -882,7 +882,7 @@ RowLayout {
                         ? root.statusToast
                         : (root.filteredEntries.length + " items · Click folder to browse, click file to open")
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     color: root.statusToast.length > 0 ? fstyle.accent : Theme.fgSurfaceVariant
                     elide: Text.ElideRight
                 }

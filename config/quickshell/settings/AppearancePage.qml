@@ -187,7 +187,7 @@ ColumnLayout {
                     ? root.resetStatusMsg
                     : "Made a mistake? Restore Visual Mode, Surfaces, Island Shape, Theme, Font, Cursor & Blur to defaults"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: root.resetStatusMsg.length > 0 ? Font.Bold : Font.Normal
                 color: root.resetStatusMsg.length > 0 ? Theme.success : Theme.fgSurfaceVariant
             }
@@ -207,7 +207,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: root.confirmResetAppearance ? "Confirm Reset?" : "󰑐 Reset Appearance"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: root.confirmResetAppearance ? Theme.fgPrimary : Theme.warning
                 }
@@ -256,7 +256,7 @@ ColumnLayout {
                 Text {
                     text: "VISUAL MODE (QUICKSHELL + MANGOWC)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -286,7 +286,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: Theme.colorScheme === "dark" ? "󰖔  Dark" : "󰖙  Light"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -386,7 +386,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: modeCard.modelData.icon
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 16
+                                    font.pixelSize: Theme.fs(16)
                                     color: modeCard.selected || modeCard.mid === "neon" ? Theme.primary : Theme.fgSurface
                                 }
                             }
@@ -402,7 +402,7 @@ ColumnLayout {
                                     Text {
                                         text: modeCard.modelData.label
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 12
+                                        font.pixelSize: Theme.fs(12)
                                         font.weight: Font.Bold
                                         color: modeCard.selected ? Theme.primary : Theme.fgSurface
                                     }
@@ -412,7 +412,7 @@ ColumnLayout {
                                         text: "· " + modeCard.modelData.vibe
                                         elide: Text.ElideRight
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 9
+                                        font.pixelSize: Theme.fs(9)
                                         font.weight: Font.DemiBold
                                         color: Theme.fgSurfaceVariant
                                     }
@@ -421,7 +421,7 @@ ColumnLayout {
                                         visible: modeCard.selected
                                         text: "󰄬"
                                         font.family: Theme.iconFont
-                                        font.pixelSize: 13
+                                        font.pixelSize: Theme.fs(13)
                                         color: Theme.primary
                                     }
                                 }
@@ -433,7 +433,7 @@ ColumnLayout {
                                     maximumLineCount: 2
                                     wrapMode: Text.WordWrap
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     color: Theme.fgSurfaceVariant
                                 }
                             }
@@ -470,7 +470,7 @@ ColumnLayout {
             Text {
                 text: "SHELL SURFACE FINISH & TRANSPARENCY"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -484,7 +484,7 @@ ColumnLayout {
                     Layout.preferredWidth: 112
                     text: "Surface Finish"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -520,7 +520,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: surfChip.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: surfChip.selected ? Font.Bold : Font.Medium
                                 color: surfChip.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -555,13 +555,12 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                opacity: Theme.isSimple ? 0.5 : 1.0
 
                 Text {
                     Layout.preferredWidth: 112
                     text: "Corner Roundness"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -591,7 +590,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: radChip.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: radChip.selected ? Font.Bold : Font.Medium
                             color: radChip.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -599,13 +598,19 @@ ColumnLayout {
                         MouseArea {
                             id: radChipMouse
                             anchors.fill: parent
-                            enabled: !Theme.isSimple
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: ShellState.setPref("uiRadiusScale", radChip.modelData.val)
                         }
                     }
                 }
+            }
+
+            StepControl {
+                label: "Corner Roundness Fine Scale"
+                displayValue: Math.round(ShellState.uiRadiusScale * 100) + "%"
+                onDecremented: ShellState.setPref("uiRadiusScale", Number(Math.max(0.0, ShellState.uiRadiusScale - 0.1).toFixed(2)))
+                onIncremented: ShellState.setPref("uiRadiusScale", Number(Math.min(1.6, ShellState.uiRadiusScale + 0.1).toFixed(2)))
             }
 
             // Border Style
@@ -617,7 +622,7 @@ ColumnLayout {
                     Layout.preferredWidth: 112
                     text: "Border Style"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -647,7 +652,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: brdChip.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: brdChip.selected ? Font.Bold : Font.Medium
                             color: brdChip.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -691,7 +696,7 @@ ColumnLayout {
             Text {
                 text: "DYNAMIC ISLAND SHAPE & TEXT SCALE"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -700,13 +705,12 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                opacity: Theme.isSimple ? 0.5 : 1.0
 
                 Text {
                     Layout.preferredWidth: 112
                     text: "Island Style"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -735,7 +739,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: islChip.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: islChip.selected ? Font.Bold : Font.Medium
                             color: islChip.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -743,10 +747,19 @@ ColumnLayout {
                         MouseArea {
                             id: islChipMouse
                             anchors.fill: parent
-                            enabled: !Theme.isSimple
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: ShellState.setPref("islandStyle", islChip.modelData.id)
+                            onClicked: {
+                                if (Theme.isSimple)
+                                    Theme.setShellMode("default");
+                                const nextBarStyle = (ShellState.barUiStyle === "split" || ShellState.barUiStyle === "menubar")
+                                    ? "apple"
+                                    : ShellState.barUiStyle;
+                                ShellState.setPrefsBatch({
+                                    islandStyle: islChip.modelData.id,
+                                    barUiStyle: nextBarStyle
+                                });
+                            }
                         }
                     }
                 }
@@ -755,7 +768,6 @@ ColumnLayout {
             StepControl {
                 label: "Compact Pill Height"
                 displayValue: ShellState.pillHeight + " px"
-                controlEnabled: !Theme.isSimple
                 onDecremented: ShellState.setPref("pillHeight", Math.max(26, ShellState.pillHeight - 2))
                 onIncremented: ShellState.setPref("pillHeight", Math.min(40, ShellState.pillHeight + 2))
             }
@@ -763,7 +775,7 @@ ColumnLayout {
             StepControl {
                 label: "Island Top Margin"
                 displayValue: ShellState.islandTopMargin + " px"
-                controlEnabled: !Theme.isSimple && ShellState.islandStyle === "pill"
+                controlEnabled: ShellState.islandStyle !== "notch"
                 onDecremented: ShellState.setPref("islandTopMargin", Math.max(0, ShellState.islandTopMargin - 2))
                 onIncremented: ShellState.setPref("islandTopMargin", Math.min(20, ShellState.islandTopMargin + 2))
             }
@@ -777,7 +789,7 @@ ColumnLayout {
                     Layout.preferredWidth: 112
                     text: "Shell UI Text Scale"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -802,7 +814,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: Math.round(fsScaleChip.modelData * 100) + "%"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: fsScaleChip.selected ? Font.Bold : Font.Medium
                             color: fsScaleChip.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -859,7 +871,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "TYPOGRAPHY & SYSTEM FONT (SHELL · GTK · TERMINAL)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -877,7 +889,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.showAllFonts ? "All Fonts" : "Monospace"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: root.showAllFonts ? Theme.secondary : Theme.fgSurfaceVariant
                     }
@@ -910,7 +922,7 @@ ColumnLayout {
                     Text {
                         text: "󰍉"
                         font.family: Theme.iconFont
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurfaceVariant
                     }
 
@@ -923,7 +935,7 @@ ColumnLayout {
                             text: "Filter font families..."
                             visible: fontFilterInput.text.length === 0
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -933,7 +945,7 @@ ColumnLayout {
                             verticalAlignment: TextInput.AlignVCenter
                             text: root.fontSearch
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurface
                             clip: true
                             onTextEdited: root.fontSearch = text
@@ -979,7 +991,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: fontPill.modelData
                             font.family: fontPill.modelData
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             font.weight: fontPill.selected ? Font.Bold : Font.Normal
                             color: fontPill.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -1003,7 +1015,7 @@ ColumnLayout {
                 Text {
                     text: "Font Size (GTK / Terminal)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1034,7 +1046,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: fSzPill.modelData + "pt"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: fSzPill.selected ? Font.Bold : Font.Medium
                                 color: fSzPill.selected ? Theme.secondary : Theme.fgSurface
                             }
@@ -1071,7 +1083,7 @@ ColumnLayout {
             Text {
                 text: "CURSOR & POINTER THEME (MANGOWC + GTK)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -1116,14 +1128,14 @@ ColumnLayout {
                                 visible: curThemePill.selected
                                 text: "󰄬"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 color: Theme.primary
                             }
 
                             Text {
                                 text: curThemePill.modelData
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: curThemePill.selected ? Font.Bold : Font.Medium
                                 color: curThemePill.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -1149,7 +1161,7 @@ ColumnLayout {
                     Layout.preferredWidth: 115
                     text: "Cursor Size"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1184,7 +1196,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: curSzBtn.modelData + "px"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: curSzBtn.selected ? Font.Bold : Font.Normal
                             color: curSzBtn.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -1209,7 +1221,7 @@ ColumnLayout {
                     Layout.preferredWidth: 115
                     text: "Auto-Hide Idle"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1249,7 +1261,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: hideBtn.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: hideBtn.selected ? Font.Bold : Font.Normal
                             color: hideBtn.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -1273,7 +1285,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Hide Cursor While Typing"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1306,7 +1318,7 @@ ColumnLayout {
                 Text {
                     text: "MANGOWC ANIMATIONS & EFFECTS"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -1336,7 +1348,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Reset Defaults"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
 
@@ -1350,34 +1362,15 @@ ColumnLayout {
                 }
             }
 
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 28
-                visible: Theme.isSimple
-                radius: Theme.r(8)
-                color: Theme.withAlpha(Theme.warning, 0.14)
-                border.width: 1
-                border.color: Theme.withAlpha(Theme.warning, 0.4)
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "Simple Mode enforces 0px radius, zero gaps, and no blur/animations."
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 10
-                    color: Theme.warning
-                }
-            }
-
             // Animations Toggle Row
             RowLayout {
                 Layout.fillWidth: true
-                opacity: Theme.isSimple ? 0.5 : 1.0
 
                 Text {
                     Layout.fillWidth: true
                     text: "Window & Layer Animations"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1391,13 +1384,13 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                opacity: (!Theme.isSimple && Theme.wmAnimations) ? 1.0 : 0.45
+                opacity: Theme.wmAnimations ? 1.0 : 0.45
 
                 Text {
                     Layout.preferredWidth: 115
                     text: "Open Style"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1432,7 +1425,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: openChip.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: openChip.selected ? Font.Bold : Font.Normal
                             color: openChip.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -1452,13 +1445,13 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                opacity: (!Theme.isSimple && Theme.wmAnimations) ? 1.0 : 0.45
+                opacity: Theme.wmAnimations ? 1.0 : 0.45
 
                 Text {
                     Layout.preferredWidth: 115
                     text: "Close Style"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1493,7 +1486,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: closeChip.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: closeChip.selected ? Font.Bold : Font.Normal
                             color: closeChip.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -1513,13 +1506,13 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                opacity: (!Theme.isSimple && Theme.wmAnimations) ? 1.0 : 0.45
+                opacity: Theme.wmAnimations ? 1.0 : 0.45
 
                 Text {
                     Layout.preferredWidth: 115
                     text: "Tag Slide"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1557,7 +1550,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: dirChip.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: dirChip.selected ? Font.Bold : Font.Normal
                             color: dirChip.selected ? Theme.secondary : Theme.fgSurface
                         }
@@ -1576,21 +1569,20 @@ ColumnLayout {
             StepControl {
                 label: "Animation Speed (Duration)"
                 displayValue: Theme.animDuration + " ms"
-                controlEnabled: !Theme.isSimple && Theme.wmAnimations
-                onDecremented: Theme.updateModePref("animationDuration", Math.max(120, Theme.animDuration - 40))
-                onIncremented: Theme.updateModePref("animationDuration", Math.min(560, Theme.animDuration + 40))
+                controlEnabled: Theme.wmAnimations
+                onDecremented: Theme.updateModePref("animationDuration", Math.max(100, Theme.animDuration - 30))
+                onIncremented: Theme.updateModePref("animationDuration", Math.min(560, Theme.animDuration + 30))
             }
 
             // Shadows Toggle Row
             RowLayout {
                 Layout.fillWidth: true
-                opacity: Theme.isSimple ? 0.5 : 1.0
 
                 Text {
                     Layout.fillWidth: true
                     text: "Window Drop Shadows"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1603,7 +1595,6 @@ ColumnLayout {
             StepControl {
                 label: "Window Corner Radius"
                 displayValue: Theme.defaultRadius + " px"
-                controlEnabled: !Theme.isSimple
                 onDecremented: Theme.updateModePref("defaultRadius", Math.max(0, Theme.defaultRadius - 2))
                 onIncremented: Theme.updateModePref("defaultRadius", Math.min(28, Theme.defaultRadius + 2))
             }
@@ -1611,41 +1602,54 @@ ColumnLayout {
             StepControl {
                 label: "Window Gaps"
                 displayValue: Theme.defaultGaps + " px"
-                controlEnabled: !Theme.isSimple
                 onDecremented: Theme.updateModePref("defaultGaps", Math.max(0, Theme.defaultGaps - 2))
-                onIncremented: Theme.updateModePref("defaultGaps", Math.min(24, Theme.defaultGaps + 2))
+                onIncremented: Theme.updateModePref("defaultGaps", Math.min(28, Theme.defaultGaps + 2))
             }
 
             StepControl {
                 label: "Window Border Width"
                 displayValue: Theme.defaultBorderPx + " px"
-                controlEnabled: !Theme.isSimple
                 onDecremented: Theme.updateModePref("defaultBorderPx", Math.max(0, Theme.defaultBorderPx - 1))
                 onIncremented: Theme.updateModePref("defaultBorderPx", Math.min(4, Theme.defaultBorderPx + 1))
             }
 
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Window Background Blur (Dual Kawase)"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                ToggleSwitch {
+                    checked: Theme.blurEnabled
+                    activeColor: Theme.secondary
+                    onToggled: Theme.updateModePref("blurEnabled", !Theme.blurEnabled)
+                }
+            }
+
             StepControl {
-                label: "Blur Focused Opacity"
+                label: "Focused Window Opacity"
                 displayValue: Theme.blurFocusedOpacity.toFixed(2)
-                controlEnabled: !Theme.isSimple
                 accentColor: Theme.secondary
-                onDecremented: Theme.updateModePref("blurFocusedOpacity", Number(Math.max(0.60, Theme.blurFocusedOpacity - 0.02).toFixed(2)))
+                onDecremented: Theme.updateModePref("blurFocusedOpacity", Number(Math.max(0.50, Theme.blurFocusedOpacity - 0.02).toFixed(2)))
                 onIncremented: Theme.updateModePref("blurFocusedOpacity", Number(Math.min(1.00, Theme.blurFocusedOpacity + 0.02).toFixed(2)))
             }
 
             StepControl {
-                label: "Blur Unfocused Opacity"
+                label: "Unfocused Window Opacity"
                 displayValue: Theme.blurUnfocusedOpacity.toFixed(2)
-                controlEnabled: !Theme.isSimple
                 accentColor: Theme.secondary
                 onDecremented: Theme.updateModePref("blurUnfocusedOpacity", Number(Math.max(0.50, Theme.blurUnfocusedOpacity - 0.02).toFixed(2)))
-                onIncremented: Theme.updateModePref("blurUnfocusedOpacity", Number(Math.min(0.98, Theme.blurUnfocusedOpacity + 0.02).toFixed(2)))
+                onIncremented: Theme.updateModePref("blurUnfocusedOpacity", Number(Math.min(1.00, Theme.blurUnfocusedOpacity + 0.02).toFixed(2)))
             }
 
             StepControl {
                 label: "Blur Radius"
                 displayValue: Theme.blurRadius + " px"
-                controlEnabled: !Theme.isSimple
                 accentColor: Theme.secondary
                 onDecremented: Theme.updateModePref("blurRadius", Math.max(2, Theme.blurRadius - 1))
                 onIncremented: Theme.updateModePref("blurRadius", Math.min(16, Theme.blurRadius + 1))
@@ -1654,7 +1658,6 @@ ColumnLayout {
             StepControl {
                 label: "Blur Passes"
                 displayValue: String(Theme.blurPasses)
-                controlEnabled: !Theme.isSimple
                 accentColor: Theme.secondary
                 onDecremented: Theme.updateModePref("blurPasses", Math.max(1, Theme.blurPasses - 1))
                 onIncremented: Theme.updateModePref("blurPasses", Math.min(6, Theme.blurPasses + 1))
@@ -1663,7 +1666,6 @@ ColumnLayout {
             StepControl {
                 label: "Blur Saturation"
                 displayValue: Theme.blurSaturation.toFixed(2)
-                controlEnabled: !Theme.isSimple
                 accentColor: Theme.secondary
                 onDecremented: Theme.updateModePref("blurSaturation", Number(Math.max(0.80, Theme.blurSaturation - 0.05).toFixed(2)))
                 onIncremented: Theme.updateModePref("blurSaturation", Number(Math.min(1.60, Theme.blurSaturation + 0.05).toFixed(2)))
@@ -1672,7 +1674,6 @@ ColumnLayout {
             StepControl {
                 label: "Blur Brightness"
                 displayValue: Theme.blurBrightness.toFixed(2)
-                controlEnabled: !Theme.isSimple
                 accentColor: Theme.secondary
                 onDecremented: Theme.updateModePref("blurBrightness", Number(Math.max(0.65, Theme.blurBrightness - 0.05).toFixed(2)))
                 onIncremented: Theme.updateModePref("blurBrightness", Number(Math.min(1.15, Theme.blurBrightness + 0.05).toFixed(2)))
@@ -1681,7 +1682,6 @@ ColumnLayout {
             StepControl {
                 label: "Blur Noise"
                 displayValue: Theme.blurNoise.toFixed(3)
-                controlEnabled: !Theme.isSimple
                 accentColor: Theme.secondary
                 onDecremented: Theme.updateModePref("blurNoise", Number(Math.max(0.0, Theme.blurNoise - 0.005).toFixed(3)))
                 onIncremented: Theme.updateModePref("blurNoise", Number(Math.min(0.10, Theme.blurNoise + 0.005).toFixed(3)))
@@ -1690,7 +1690,6 @@ ColumnLayout {
             StepControl {
                 label: "Blur Contrast"
                 displayValue: Theme.blurContrast.toFixed(2)
-                controlEnabled: !Theme.isSimple
                 accentColor: Theme.secondary
                 onDecremented: Theme.updateModePref("blurContrast", Number(Math.max(0.70, Theme.blurContrast - 0.05).toFixed(2)))
                 onIncremented: Theme.updateModePref("blurContrast", Number(Math.min(1.30, Theme.blurContrast + 0.05).toFixed(2)))
@@ -1698,13 +1697,12 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                opacity: Theme.isSimple ? 0.5 : 1.0
 
                 Text {
                     Layout.fillWidth: true
                     text: "Blur Layer Surfaces & Optimized Dual Kawase"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1716,13 +1714,12 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                opacity: Theme.isSimple ? 0.5 : 1.0
 
                 Text {
                     Layout.fillWidth: true
                     text: "Blur Cache Optimization (blur_optimized)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1734,13 +1731,12 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                opacity: Theme.isSimple ? 0.5 : 1.0
 
                 Text {
                     Layout.fillWidth: true
                     text: "Dim Unfocused Windows (dim_enable)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1752,13 +1748,13 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                opacity: (!Theme.isSimple && Theme.wmShadows) ? 1.0 : 0.45
+                opacity: Theme.wmShadows ? 1.0 : 0.45
 
                 Text {
                     Layout.fillWidth: true
                     text: "Layer Drop Shadows & Floating-Only Shadows"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1777,7 +1773,7 @@ ColumnLayout {
             StepControl {
                 label: "Shadow Spread Size"
                 displayValue: Theme.shadowsSize + " px"
-                controlEnabled: !Theme.isSimple && Theme.wmShadows
+                controlEnabled: Theme.wmShadows
                 onDecremented: Theme.updateModePref("shadowsSize", Math.max(2, Theme.shadowsSize - 2))
                 onIncremented: Theme.updateModePref("shadowsSize", Math.min(40, Theme.shadowsSize + 2))
             }
@@ -1785,20 +1781,20 @@ ColumnLayout {
             StepControl {
                 label: "Shadow Softness (Blur)"
                 displayValue: Theme.shadowsBlur + " px"
-                controlEnabled: !Theme.isSimple && Theme.wmShadows
+                controlEnabled: Theme.wmShadows
                 onDecremented: Theme.updateModePref("shadowsBlur", Math.max(2, Theme.shadowsBlur - 2))
                 onIncremented: Theme.updateModePref("shadowsBlur", Math.min(48, Theme.shadowsBlur + 2))
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                opacity: (!Theme.isSimple && Theme.wmAnimations) ? 1.0 : 0.45
+                opacity: Theme.wmAnimations ? 1.0 : 0.45
 
                 Text {
                     Layout.fillWidth: true
                     text: "Layer Animations & Fade In/Out"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1843,7 +1839,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "WALLPAPER TRANSITIONS (AWWW / SWWW)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -1859,7 +1855,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Re-apply Now"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgPrimary
                     }
@@ -1882,7 +1878,7 @@ ColumnLayout {
                     Layout.preferredWidth: 120
                     text: "Transition Effect"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1912,7 +1908,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: trChip.modelData
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: trChip.selected ? Font.Bold : Font.Medium
                                 color: trChip.selected ? Theme.secondary : Theme.fgSurface
                             }
@@ -1944,7 +1940,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Wallpaper Scaling & FPS"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1968,7 +1964,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: rzChip.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: rzChip.selected ? Theme.primary : Theme.fgSurface
                         }
 
@@ -2001,7 +1997,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: fpsChip.modelData + "fps"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: fpsChip.selected ? Theme.secondary : Theme.fgSurface
                         }
 
@@ -2035,7 +2031,7 @@ ColumnLayout {
             Text {
                 text: "GTK ICON THEME & FONT RENDERING"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -2043,7 +2039,7 @@ ColumnLayout {
             Text {
                 text: "Icon Theme (" + String(root.gtkInfo.iconTheme || "Adwaita") + ")"
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.fs(11)
                 color: Theme.fgSurface
             }
 
@@ -2073,7 +2069,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: icChip.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: icChip.selected ? Font.Bold : Font.Medium
                             color: icChip.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -2097,7 +2093,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Font Hinting"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -2121,7 +2117,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: hntChip.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: hntChip.selected ? Theme.secondary : Theme.fgSurface
                         }
 
@@ -2143,7 +2139,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Antialiasing & Subpixel"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -2167,7 +2163,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: aaChip.modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: aaChip.selected ? Theme.primary : Theme.fgSurface
                         }
 
@@ -2196,7 +2192,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Text Cursor Blinking (GTK)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 

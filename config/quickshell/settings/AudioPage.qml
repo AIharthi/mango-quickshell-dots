@@ -226,14 +226,14 @@ ColumnLayout {
                 Text {
                     text: "󰋋"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.fs(13)
                     color: Theme.secondary
                 }
 
                 Text {
                     text: "Open Pavucontrol"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
             }
@@ -263,14 +263,14 @@ ColumnLayout {
                 Text {
                     text: "󰑐"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fs(12)
                     color: Theme.primary
                 }
 
                 Text {
                     text: "Refresh"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
             }
@@ -303,7 +303,7 @@ ColumnLayout {
             Text {
                 text: "OUTPUT (SPEAKERS & HEADPHONES)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -324,7 +324,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.outMuted ? "󰝟" : "󰕾"
                         font.family: Theme.iconFont
-                        font.pixelSize: 15
+                        font.pixelSize: Theme.fs(15)
                         color: root.outMuted ? Theme.error : Theme.primary
                     }
 
@@ -384,7 +384,7 @@ ColumnLayout {
                     horizontalAlignment: Text.AlignRight
                     text: Math.round(root.outVolume * 100) + "%"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     font.weight: Font.Bold
                     color: root.outVolume > 1.0 ? Theme.warning : Theme.fgSurface
                 }
@@ -398,7 +398,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Over-Amplification (Allow up to 150% Boost)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
 
@@ -418,7 +418,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: root.testStatus.length > 0 ? root.testStatus : "Speaker Channel Test"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: root.testStatus.length > 0 ? Theme.primary : Theme.fgSurfaceVariant
                 }
 
@@ -440,7 +440,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: tstChip.modelData.charAt(0).toUpperCase() + tstChip.modelData.slice(1)
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: Theme.primary
                         }
@@ -492,7 +492,7 @@ ColumnLayout {
                         Text {
                             text: sinkRow.isDefault ? "󰄬" : "󰋋"
                             font.family: Theme.iconFont
-                            font.pixelSize: 13
+                            font.pixelSize: Theme.fs(13)
                             color: sinkRow.isDefault ? Theme.primary : Theme.fgSurfaceVariant
                         }
 
@@ -501,7 +501,7 @@ ColumnLayout {
                             text: sinkRow.modelData.desc
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             font.weight: sinkRow.isDefault ? Font.Bold : Font.Normal
                             color: Theme.fgSurface
                         }
@@ -537,7 +537,7 @@ ColumnLayout {
             Text {
                 text: "INPUT (MICROPHONES)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -558,7 +558,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.inMuted ? "󰍭" : "󰍬"
                         font.family: Theme.iconFont
-                        font.pixelSize: 15
+                        font.pixelSize: Theme.fs(15)
                         color: root.inMuted ? Theme.error : Theme.secondary
                     }
 
@@ -616,7 +616,7 @@ ColumnLayout {
                     horizontalAlignment: Text.AlignRight
                     text: Math.round(root.inVolume * 100) + "%"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     font.weight: Font.Bold
                     color: Theme.fgSurface
                 }
@@ -658,7 +658,7 @@ ColumnLayout {
                         Text {
                             text: srcRow.isDefault ? "󰄬" : "󰍬"
                             font.family: Theme.iconFont
-                            font.pixelSize: 13
+                            font.pixelSize: Theme.fs(13)
                             color: srcRow.isDefault ? Theme.secondary : Theme.fgSurfaceVariant
                         }
 
@@ -667,7 +667,7 @@ ColumnLayout {
                             text: srcRow.modelData.desc
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             font.weight: srcRow.isDefault ? Font.Bold : Font.Normal
                             color: Theme.fgSurface
                         }
@@ -687,7 +687,7 @@ ColumnLayout {
                 visible: root.sources.length === 0
                 text: "No microphone input devices detected"
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.fs(11)
                 color: Theme.fgSurfaceVariant
             }
         }
@@ -716,7 +716,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "APPLICATION MIXER (ACTIVE STREAMS)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -734,7 +734,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Refresh"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -780,7 +780,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: streamRow.modelData.mute ? "󰖁" : "󰎈"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 13
+                                font.pixelSize: Theme.fs(13)
                                 color: streamRow.modelData.mute ? Theme.error : Theme.primary
                             }
 
@@ -801,7 +801,7 @@ ColumnLayout {
                                 elide: Text.ElideRight
                                 text: streamRow.modelData.name
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.fs(11)
                                 font.weight: Font.Bold
                                 color: streamRow.modelData.mute ? Theme.fgSurfaceVariant : Theme.fgSurface
                             }
@@ -812,7 +812,7 @@ ColumnLayout {
                                 elide: Text.ElideRight
                                 text: streamRow.modelData.media || ""
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                             }
                         }
@@ -856,7 +856,7 @@ ColumnLayout {
                             horizontalAlignment: Text.AlignRight
                             text: streamRow.modelData.mute ? "Mute" : (Math.round(streamRow.modelData.vol * 100) + "%")
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
                             color: streamRow.modelData.mute ? Theme.error : Theme.fgSurface
                         }
@@ -868,7 +868,7 @@ ColumnLayout {
                 visible: root.sinkInputs.length === 0
                 text: "No active audio playback streams right now"
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.fs(11)
                 color: Theme.fgSurfaceVariant
             }
         }
@@ -893,7 +893,7 @@ ColumnLayout {
             Text {
                 text: "HARDWARE AUDIO CARD PROFILES"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -922,7 +922,7 @@ ColumnLayout {
                             elide: Text.ElideRight
                             text: cardBox.modelData.desc
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             font.weight: Font.Bold
                             color: Theme.fgSurface
                         }
@@ -953,7 +953,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: profChip.modelData.desc
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 9
+                                        font.pixelSize: Theme.fs(9)
                                         font.weight: profChip.selected ? Font.Bold : Font.Normal
                                         color: profChip.selected ? Theme.secondary : Theme.fgSurface
                                     }

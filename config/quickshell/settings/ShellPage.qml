@@ -49,7 +49,7 @@ ColumnLayout {
                 Text {
                     text: root.barStatusMsg.length > 0 ? root.barStatusMsg : "Reset Bar Widgets, Dynamic Island & Simple Bar to defaults"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: root.barStatusMsg.length > 0 ? Font.Bold : Font.Normal
                     color: root.barStatusMsg.length > 0 ? Theme.success : Theme.fgSurfaceVariant
                     elide: Text.ElideRight
@@ -71,7 +71,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: root.confirmResetBar ? "Confirm Reset?" : "󰑐 Reset Bar & Shell"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: root.confirmResetBar ? Theme.fgPrimary : Theme.warning
                 }
@@ -119,7 +119,7 @@ ColumnLayout {
                 Text {
                     text: "BAR WIDGETS & MODULES (ISLAND & BAR)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -129,7 +129,7 @@ ColumnLayout {
                 Text {
                     text: "Choose Bar UI, Hub Layout & modular widgets"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fs(9)
                     color: Theme.fgSurfaceVariant
                 }
             }
@@ -138,7 +138,7 @@ ColumnLayout {
             Text {
                 text: "TOP BAR / DYNAMIC ISLAND UI STYLE"
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Theme.fs(9)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -184,7 +184,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: barStyleCard.modelData.icon
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 15
+                                    font.pixelSize: Theme.fs(15)
                                     color: barStyleCard.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
                                 }
                             }
@@ -196,8 +196,8 @@ ColumnLayout {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     spacing: 6
-                                    Text { text: barStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.Bold; color: barStyleCard.selected ? Theme.primary : Theme.fgSurface }
-                                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + barStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                                    Text { text: barStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: barStyleCard.selected ? Theme.primary : Theme.fgSurface }
+                                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + barStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
                                 }
 
                                 Text {
@@ -207,7 +207,7 @@ ColumnLayout {
                                     wrapMode: Text.WordWrap
                                     text: barStyleCard.modelData.desc
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     color: Theme.fgSurfaceVariant
                                 }
                             }
@@ -232,7 +232,7 @@ ColumnLayout {
             Text {
                 text: "EXPANDED HUB UI LAYOUT"
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Theme.fs(9)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -278,7 +278,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: hubStyleCard.modelData.icon
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 15
+                                    font.pixelSize: Theme.fs(15)
                                     color: hubStyleCard.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
                                 }
                             }
@@ -290,8 +290,8 @@ ColumnLayout {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     spacing: 6
-                                    Text { text: hubStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.Bold; color: hubStyleCard.selected ? Theme.secondary : Theme.fgSurface }
-                                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + hubStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                                    Text { text: hubStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: hubStyleCard.selected ? Theme.secondary : Theme.fgSurface }
+                                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + hubStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
                                 }
 
                                 Text {
@@ -301,7 +301,7 @@ ColumnLayout {
                                     wrapMode: Text.WordWrap
                                     text: hubStyleCard.modelData.desc
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     color: Theme.fgSurfaceVariant
                                 }
                             }
@@ -331,7 +331,7 @@ ColumnLayout {
                     Layout.preferredWidth: 106
                     text: "Bar Presets"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -370,7 +370,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: bpBtn.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: bpBtn.active ? Font.Bold : Font.Medium
                             color: bpBtn.active ? Theme.primary : Theme.fgSurface
                         }
@@ -393,42 +393,42 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Date Next to Clock (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Date Next to Clock (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowDate; onToggled: ShellState.setPref("barShowDate", !ShellState.barShowDate) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Active Window Title"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Active Window Title"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowWindow; onToggled: ShellState.setPref("barShowWindow", !ShellState.barShowWindow) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Workspaces / Tags Strip (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Workspaces / Tags Strip (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowWorkspaces; onToggled: ShellState.setPref("barShowWorkspaces", !ShellState.barShowWorkspaces) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Window Layout Badge ([T]) (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Window Layout Badge ([T]) (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowLayout; onToggled: ShellState.setPref("barShowLayout", !ShellState.barShowLayout) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Now-Playing Media Strip"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Now-Playing Media Strip"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.pillShowMedia; onToggled: ShellState.setPref("pillShowMedia", !ShellState.pillShowMedia) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "CPU & RAM Usage"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "CPU & RAM Usage"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowSystem; onToggled: ShellState.setPref("barShowSystem", !ShellState.barShowSystem) }
             }
 
@@ -436,35 +436,35 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 10
                 visible: DeviceCaps.hasAudio
-                Text { Layout.fillWidth: true; text: "Volume Indicator (Click Mute / Scroll ±5%)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Volume Indicator (Click Mute / Scroll ±5%)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowVolume; onToggled: ShellState.setPref("barShowVolume", !ShellState.barShowVolume) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Keyboard Layout Indicator (US / AR)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Keyboard Layout Indicator (US / AR)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowKbLayout; onToggled: ShellState.setPref("barShowKbLayout", !ShellState.barShowKbLayout) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "System Tray Icons (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "System Tray Icons (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowTray; onToggled: ShellState.setPref("barShowTray", !ShellState.barShowTray) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "App Launcher & Settings Shortcut Icons"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "App Launcher & Settings Shortcut Icons"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowQuickIcons; onToggled: ShellState.setPref("barShowQuickIcons", !ShellState.barShowQuickIcons) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Files Manager Shortcut Icon (Island / Simple Bar)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Files Manager Shortcut Icon (Island / Simple Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowFiles; onToggled: ShellState.setPref("barShowFiles", !ShellState.barShowFiles) }
             }
 
@@ -472,7 +472,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 10
                 visible: DeviceCaps.hasBattery
-                Text { Layout.fillWidth: true; text: "Battery Percentage"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Battery Percentage"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowBattery; onToggled: ShellState.setPref("barShowBattery", !ShellState.barShowBattery) }
             }
         }
@@ -496,7 +496,7 @@ ColumnLayout {
             Text {
                 text: "DYNAMIC ISLAND & COMPACT PILL"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -512,14 +512,14 @@ ColumnLayout {
                     Text {
                         text: "Expand Hub on Pointer Hover"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
 
                     Text {
                         text: "When disabled, click the pill or press Super + D to expand"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -554,7 +554,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Rotate Album Cover Art While Playing"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -573,7 +573,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Show Animated Mini Equalizer Bars"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -591,7 +591,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "On-Screen Volume & Brightness OSD Popups"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -629,7 +629,7 @@ ColumnLayout {
             Text {
                 text: "SIMPLE MODE TOP/BOTTOM BAR"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -649,7 +649,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Screen Edge Position"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -678,7 +678,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: posPill.modelData === "top" ? "Top" : "Bottom"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: posPill.selected ? Font.Bold : Font.Medium
                                 color: posPill.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -703,7 +703,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Show Layout Badge ([T]) Beside Workspaces"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -721,7 +721,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Show Date Next to Bar Clock"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -749,9 +749,9 @@ ColumnLayout {
             spacing: 10
 
             Text {
-                text: "SCREENSHOTS (GRIM + SLURP)"
+                text: "SCREENSHOTS & SCREEN RECORDING (GRIM + SLURP + WF-RECORDER)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -761,9 +761,10 @@ ColumnLayout {
                 spacing: 8
 
                 Text {
-                    text: "Save Directory"
+                    Layout.preferredWidth: 112
+                    text: "Screenshots Folder"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -783,7 +784,7 @@ ColumnLayout {
                         verticalAlignment: TextInput.AlignVCenter
                         text: ShellState.screenshotDir
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurface
                         clip: true
                         onAccepted: {
@@ -806,7 +807,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Save"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -819,6 +820,75 @@ ColumnLayout {
                         onClicked: {
                             if (dirInput.text.trim().length > 0)
                                 ShellState.setPref("screenshotDir", dirInput.text.trim());
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    Layout.preferredWidth: 112
+                    text: "Recordings Folder"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: Theme.subCardBg
+                    border.width: recDirInput.activeFocus ? 1 : Theme.cardBorderWidth
+                    border.color: recDirInput.activeFocus ? Theme.primary : Theme.cardBorder
+
+                    TextInput {
+                        id: recDirInput
+                        anchors.fill: parent
+                        anchors.leftMargin: 9
+                        anchors.rightMargin: 9
+                        verticalAlignment: TextInput.AlignVCenter
+                        text: ShellState.recordingDir
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.fgSurface
+                        clip: true
+                        onAccepted: {
+                            if (text.trim().length > 0)
+                                ShellState.setPref("recordingDir", text.trim());
+                        }
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 28
+                    implicitWidth: saveRecDirLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: saveRecDirMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: Theme.cardBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: saveRecDirLbl
+                        anchors.centerIn: parent
+                        text: "Save"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        id: saveRecDirMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (recDirInput.text.trim().length > 0)
+                                ShellState.setPref("recordingDir", recDirInput.text.trim());
                         }
                     }
                 }
@@ -839,7 +909,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Copy Captured Image to Clipboard (wl-copy)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -857,7 +927,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Send Dynamic Island Notification After Capture"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -887,7 +957,7 @@ ColumnLayout {
             Text {
                 text: "ACCESSIBILITY & MOTION"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -903,14 +973,14 @@ ColumnLayout {
                     Text {
                         text: "Reduce Motion (Shell + GTK)"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
 
                     Text {
                         text: "Disables spinning art, equalizer animation, and UI motion across Quickshell & GTK"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -932,14 +1002,14 @@ ColumnLayout {
                     Text {
                         text: "High-Contrast Card & Island Outlines"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
 
                     Text {
                         text: "Forces crisp high-visibility borders across panels, cards, and GTK a11y schema"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurfaceVariant
                     }
                 }
@@ -974,7 +1044,7 @@ ColumnLayout {
                 Text {
                     text: "DYNAMIC FILE MANAGER (RUST BACKEND)"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -994,7 +1064,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "󰉋 Open Files"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: openFmMouse.containsMouse ? Theme.fgPrimary : Theme.primary
                     }
@@ -1020,7 +1090,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Reset Style"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.warning
                     }
@@ -1046,7 +1116,7 @@ ColumnLayout {
                     Layout.preferredWidth: 110
                     text: "Default View Mode"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1071,7 +1141,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: fmVmBtn.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: fmVmBtn.sel ? Font.Bold : Font.Medium
                             color: fmVmBtn.sel ? Theme.primary : Theme.fgSurface
                         }
@@ -1089,22 +1159,467 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Dual-Pane Split by Default (F3)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Dual-Pane Split by Default (F3)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.fmDualPane; onToggled: ShellState.setPref("fmDualPane", !ShellState.fmDualPane) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Show Live Inspector / Preview Pane"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Show Live Inspector / Preview Pane"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.fmPreviewVisible; onToggled: ShellState.setPref("fmPreviewVisible", !ShellState.fmPreviewVisible) }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { Layout.fillWidth: true; text: "Show Hidden Dotfiles by Default (Ctrl+H)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Show Hidden Dotfiles by Default (Ctrl+H)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.fmShowHidden; onToggled: ShellState.setPref("fmShowHidden", !ShellState.fmShowHidden) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 110
+                    text: "FM Vibe Presets"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "finder",    label: "Finder" },
+                        { id: "minimal",   label: "Minimal" },
+                        { id: "gallery",   label: "Gallery" },
+                        { id: "commander", label: "Commander" }
+                    ]
+                    delegate: Rectangle {
+                        id: fmPreBtn
+                        required property var modelData
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: fmPreMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                        border.width: 1
+                        border.color: Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: fmPreBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Bold
+                            color: Theme.primary
+                        }
+                        MouseArea {
+                            id: fmPreMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                ShellState.applyFmPreset(fmPreBtn.modelData.id);
+                                root.barStatusMsg = "Applied File Manager preset: " + fmPreBtn.modelData.label;
+                                barStatusTimer.restart();
+                            }
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 110
+                    text: "Sort Order"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "name",  label: "Name" },
+                        { id: "size",  label: "Size" },
+                        { id: "mtime", label: "Modified" },
+                        { id: "ext",   label: "Extension" }
+                    ]
+                    delegate: Rectangle {
+                        id: fmSortBtn
+                        required property var modelData
+                        readonly property bool sel: ShellState.fmSortBy === fmSortBtn.modelData.id
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: sel ? Theme.withAlpha(Theme.secondary, 0.22) : (fmSortMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: 1
+                        border.color: sel ? Theme.secondary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: fmSortBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: fmSortBtn.sel ? Font.Bold : Font.Medium
+                            color: fmSortBtn.sel ? Theme.secondary : Theme.fgSurface
+                        }
+                        MouseArea {
+                            id: fmSortMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("fmSortBy", fmSortBtn.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 110
+                    text: "Row Density"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "compact",  label: "Compact" },
+                        { id: "cozy",     label: "Cozy" },
+                        { id: "spacious", label: "Spacious" }
+                    ]
+                    delegate: Rectangle {
+                        id: fmDensBtn
+                        required property var modelData
+                        readonly property bool sel: ShellState.fmDensity === fmDensBtn.modelData.id
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmDensMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: 1
+                        border.color: sel ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: fmDensBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: fmDensBtn.sel ? Font.Bold : Font.Medium
+                            color: fmDensBtn.sel ? Theme.primary : Theme.fgSurface
+                        }
+                        MouseArea {
+                            id: fmDensMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("fmDensity", fmDensBtn.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "Grid Tile Size"
+                displayValue: ShellState.fmGridSize + " px"
+                onDecremented: ShellState.setPref("fmGridSize", Math.max(84, ShellState.fmGridSize - 12))
+                onIncremented: ShellState.setPref("fmGridSize", Math.min(172, ShellState.fmGridSize + 12))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 110
+                    text: "Icon Badge Style"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "category", label: "Category" },
+                        { id: "accent",   label: "Accent" },
+                        { id: "mono",     label: "Mono" },
+                        { id: "vivid",    label: "Vivid" }
+                    ]
+                    delegate: Rectangle {
+                        id: fmIcoBtn
+                        required property var modelData
+                        readonly property bool sel: ShellState.fmIconStyle === fmIcoBtn.modelData.id
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmIcoMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: 1
+                        border.color: sel ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: fmIcoBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: fmIcoBtn.sel ? Font.Bold : Font.Medium
+                            color: fmIcoBtn.sel ? Theme.primary : Theme.fgSurface
+                        }
+                        MouseArea {
+                            id: fmIcoMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("fmIconStyle", fmIcoBtn.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 110
+                    text: "Window Surface"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "inherit", label: "Inherit" },
+                        { id: "glass",   label: "Glass" },
+                        { id: "oled",    label: "OLED" },
+                        { id: "tinted",  label: "Tinted" },
+                        { id: "solid",   label: "Solid" }
+                    ]
+                    delegate: Rectangle {
+                        id: fmSurfBtn
+                        required property var modelData
+                        readonly property bool sel: ShellState.fmSurfacePreset === fmSurfBtn.modelData.id
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: sel ? Theme.withAlpha(Theme.secondary, 0.22) : (fmSurfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: 1
+                        border.color: sel ? Theme.secondary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: fmSurfBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: fmSurfBtn.sel ? Font.Bold : Font.Medium
+                            color: fmSurfBtn.sel ? Theme.secondary : Theme.fgSurface
+                        }
+                        MouseArea {
+                            id: fmSurfMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("fmSurfacePreset", fmSurfBtn.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            StepControl {
+                label: "File Manager Window Opacity"
+                displayValue: Math.round(ShellState.fmOpacity * 100) + "%"
+                onDecremented: ShellState.setPref("fmOpacity", Number(Math.max(0.60, ShellState.fmOpacity - 0.04).toFixed(2)))
+                onIncremented: ShellState.setPref("fmOpacity", Number(Math.min(1.00, ShellState.fmOpacity + 0.04).toFixed(2)))
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 110
+                    text: "Toolbar Header"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "pill",      label: "Pill Header" },
+                        { id: "minimal",   label: "Minimal" },
+                        { id: "underline", label: "Underline" }
+                    ]
+                    delegate: Rectangle {
+                        id: fmHdrBtn
+                        required property var modelData
+                        readonly property bool sel: ShellState.fmHeaderStyle === fmHdrBtn.modelData.id
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmHdrMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: 1
+                        border.color: sel ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: fmHdrBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: fmHdrBtn.sel ? Font.Bold : Font.Medium
+                            color: fmHdrBtn.sel ? Theme.primary : Theme.fgSurface
+                        }
+                        MouseArea {
+                            id: fmHdrMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("fmHeaderStyle", fmHdrBtn.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 110
+                    text: "Sidebar Nav"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "standard", label: "Standard" },
+                        { id: "compact",  label: "Compact" },
+                        { id: "icons",    label: "Icons Only" }
+                    ]
+                    delegate: Rectangle {
+                        id: fmSbBtn
+                        required property var modelData
+                        readonly property bool sel: ShellState.fmSidebarStyle === fmSbBtn.modelData.id
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: sel ? Theme.withAlpha(Theme.secondary, 0.22) : (fmSbMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: 1
+                        border.color: sel ? Theme.secondary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: fmSbBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: fmSbBtn.sel ? Font.Bold : Font.Medium
+                            color: fmSbBtn.sel ? Theme.secondary : Theme.fgSurface
+                        }
+                        MouseArea {
+                            id: fmSbMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("fmSidebarStyle", fmSbBtn.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 110
+                    text: "Dialog Size"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Repeater {
+                    model: [
+                        { id: "compact",  label: "Compact" },
+                        { id: "balanced", label: "Balanced" },
+                        { id: "wide",     label: "Wide" },
+                        { id: "max",      label: "Max" }
+                    ]
+                    delegate: Rectangle {
+                        id: fmSzBtn
+                        required property var modelData
+                        readonly property bool sel: ShellState.fmWindowSize === fmSzBtn.modelData.id
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmSzMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                        border.width: 1
+                        border.color: sel ? Theme.primary : Theme.cardBorder
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: fmSzBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: fmSzBtn.sel ? Font.Bold : Font.Medium
+                            color: fmSzBtn.sel ? Theme.primary : Theme.fgSurface
+                        }
+                        MouseArea {
+                            id: fmSzMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("fmWindowSize", fmSzBtn.modelData.id)
+                        }
+                    }
+                }
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: 12
+                rowSpacing: 8
+
+                Repeater {
+                    model: [
+                        { key: "fmDirsFirst",      label: "Folders First",         val: ShellState.fmDirsFirst },
+                        { key: "fmSortDesc",       label: "Reverse Sort Order",    val: ShellState.fmSortDesc },
+                        { key: "fmSidebarVisible", label: "Show Places Sidebar",   val: ShellState.fmSidebarVisible },
+                        { key: "fmShowThumbnails", label: "Image Thumbnails",      val: ShellState.fmShowThumbnails },
+                        { key: "fmRowAlternating", label: "Alternating List Rows", val: ShellState.fmRowAlternating },
+                        { key: "fmShowSizes",      label: "Show File Sizes",       val: ShellState.fmShowSizes },
+                        { key: "fmShowDates",      label: "Show Modified Dates",   val: ShellState.fmShowDates },
+                        { key: "fmShowPerms",      label: "Show POSIX Perms",      val: ShellState.fmShowPerms }
+                    ]
+                    delegate: RowLayout {
+                        id: fmFlagRow
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: 6
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: fmFlagRow.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            color: Theme.fgSurface
+                        }
+                        ToggleSwitch {
+                            checked: fmFlagRow.modelData.val
+                            onToggled: ShellState.setPref(fmFlagRow.modelData.key, !fmFlagRow.modelData.val)
+                        }
+                    }
+                }
             }
         }
     }
@@ -1127,7 +1642,7 @@ ColumnLayout {
             Text {
                 text: "WEATHER WIDGET & WALLPAPER SLIDESHOW"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -1140,8 +1655,8 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 1
 
-                    Text { text: "Enable Opt-In Weather Widget (wttr.in)"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
-                    Text { text: "Caches conditions locally every 30 minutes when enabled"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
+                    Text { text: "Enable Opt-In Weather Widget (wttr.in)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
+                    Text { text: "Caches conditions locally every 30 minutes when enabled"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
                 }
 
                 ToggleSwitch {
@@ -1155,7 +1670,7 @@ ColumnLayout {
                 spacing: 10
                 opacity: ShellState.weatherEnabled ? 1.0 : 0.45
 
-                Text { Layout.fillWidth: true; text: "Show Compact Weather Pill in Top Bar"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
+                Text { Layout.fillWidth: true; text: "Show Compact Weather Pill in Top Bar"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch {
                     checked: ShellState.barShowWeather
                     onToggled: ShellState.setPref("barShowWeather", !ShellState.barShowWeather)
@@ -1170,7 +1685,7 @@ ColumnLayout {
                 Text {
                     text: "City / Location"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -1190,7 +1705,7 @@ ColumnLayout {
                         verticalAlignment: TextInput.AlignVCenter
                         text: ShellState.weatherLocation
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurface
                         clip: true
 
@@ -1199,7 +1714,7 @@ ColumnLayout {
                             visible: locInput.text.length === 0
                             text: "Auto-detect by IP (or enter city)"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
 
@@ -1222,7 +1737,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "°" + ShellState.weatherUnits
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -1252,7 +1767,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Apply"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -1283,8 +1798,8 @@ ColumnLayout {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 1
-                    Text { text: "Automatic Wallpaper Slideshow"; font.family: Theme.fontFamily; font.pixelSize: 11; color: Theme.fgSurface }
-                    Text { text: "Automatically rotates wallpaper & re-themes via Matugen"; font.family: Theme.fontFamily; font.pixelSize: 10; color: Theme.fgSurfaceVariant }
+                    Text { text: "Automatic Wallpaper Slideshow"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
+                    Text { text: "Automatically rotates wallpaper & re-themes via Matugen"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
                 }
 
                 ToggleSwitch {

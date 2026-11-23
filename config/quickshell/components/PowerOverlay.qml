@@ -216,7 +216,7 @@ PanelWindow {
                         Text {
                             text: "Session & Power"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 16
+                            font.pixelSize: Theme.fs(16)
                             font.weight: Font.Bold
                             color: Theme.fgSurface
                         }
@@ -226,7 +226,7 @@ PanelWindow {
                                 + (DeviceCaps.hostname.length > 0 ? ("@" + DeviceCaps.hostname) : "")
                                 + (root.uptimeText.length > 0 ? ("  ·  " + root.uptimeText) : "")
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             color: Theme.fgSurfaceVariant
                         }
                     }
@@ -236,7 +236,7 @@ PanelWindow {
                     Text {
                         text: ShellState.formatTime(pwrClock.date)
                         font.family: Theme.fontFamily
-                        font.pixelSize: 16
+                        font.pixelSize: Theme.fs(16)
                         font.weight: Font.Bold
                         color: Theme.primary
                     }
@@ -253,7 +253,7 @@ PanelWindow {
                             anchors.centerIn: parent
                             text: "󰅖"
                             font.family: Theme.iconFont
-                            font.pixelSize: 13
+                            font.pixelSize: Theme.fs(13)
                             color: clsMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
                         }
 
@@ -327,7 +327,7 @@ PanelWindow {
                                     anchors.centerIn: parent
                                     text: actCard.modelData.hotkey
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
                                     color: Theme.fgSurfaceVariant
                                 }
@@ -348,7 +348,7 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         text: actCard.modelData.icon
                                         font.family: Theme.iconFont
-                                        font.pixelSize: 20
+                                        font.pixelSize: Theme.fs(20)
                                         color: actCard.isPending ? Theme.error : actCard.tintCol
                                     }
                                 }
@@ -357,7 +357,7 @@ PanelWindow {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: actCard.isPending ? "Click again to confirm" : actCard.modelData.label
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 12
+                                    font.pixelSize: Theme.fs(12)
                                     font.weight: Font.Bold
                                     color: actCard.isPending ? Theme.error : Theme.fgSurface
                                 }
@@ -366,7 +366,7 @@ PanelWindow {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: actCard.modelData.sub
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 9
+                                    font.pixelSize: Theme.fs(9)
                                     color: Theme.fgSurfaceVariant
                                 }
                             }
@@ -387,7 +387,7 @@ PanelWindow {
                     Layout.alignment: Qt.AlignHCenter
                     text: "Press L/S/H/E/R/P or arrow keys + Enter · Esc to cancel"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     color: Theme.fgSurfaceVariant
                 }
             }

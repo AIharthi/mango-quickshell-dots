@@ -275,7 +275,7 @@ ColumnLayout {
             text: root.statusMsg
             elide: Text.ElideRight
             font.family: Theme.fontFamily
-            font.pixelSize: 10
+            font.pixelSize: Theme.fs(10)
             color: Theme.primary
         }
 
@@ -295,14 +295,14 @@ ColumnLayout {
                 Text {
                     text: "󰑐"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fs(12)
                     color: Theme.primary
                 }
 
                 Text {
                     text: "Detect Outputs"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
             }
@@ -354,7 +354,7 @@ ColumnLayout {
                     Text {
                         text: "󰍹"
                         font.family: Theme.iconFont
-                        font.pixelSize: 16
+                        font.pixelSize: Theme.fs(16)
                         color: Theme.primary
                     }
 
@@ -365,7 +365,7 @@ ColumnLayout {
                         Text {
                             text: outCard.modelData.name
                             font.family: Theme.fontFamily
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.fs(12)
                             font.weight: Font.Bold
                             color: Theme.fgSurface
                         }
@@ -375,7 +375,7 @@ ColumnLayout {
                             text: outCard.modelData.description
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
                     }
@@ -395,7 +395,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: outCard.modelData.enabled ? "ACTIVE" : "OFF"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
                             color: outCard.modelData.enabled ? Theme.success : Theme.fgSurfaceVariant
                         }
@@ -413,7 +413,7 @@ ColumnLayout {
                 Text {
                     text: "RESOLUTION & REFRESH RATE"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -454,7 +454,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: modePill.modelData.label + (modePill.modelData.preferred ? " ★" : "")
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: modePill.selected ? Font.Bold : Font.Normal
                                 color: modePill.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -473,7 +473,7 @@ ColumnLayout {
                 Text {
                     text: "DISPLAY SCALE"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -513,7 +513,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: scalePill.modelData + "x"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: scalePill.selected ? Font.Bold : Font.Medium
                                 color: scalePill.selected ? Theme.secondary : Theme.fgSurface
                             }
@@ -533,7 +533,7 @@ ColumnLayout {
                 Text {
                     text: "ORIENTATION & ROTATION"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
                 }
@@ -564,7 +564,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: rotPill.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: rotPill.selected ? Font.Bold : Font.Medium
                                 color: rotPill.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -589,7 +589,7 @@ ColumnLayout {
                     Text {
                         text: "MULTI-MONITOR POSITION (" + (root.otherOutputFor(outCard.modelData.name) || "other") + ")"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgSurfaceVariant
                     }
@@ -625,7 +625,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: mPosPill.modelData.label
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(10)
                                     font.weight: mPosPill.selected ? Font.Bold : Font.Medium
                                     color: mPosPill.selected ? Theme.secondary : Theme.fgSurface
                                 }
@@ -653,7 +653,7 @@ ColumnLayout {
                         Text {
                             text: "Adaptive Sync (VRR)"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             font.weight: Font.DemiBold
                             color: Theme.fgSurface
                         }
@@ -663,7 +663,7 @@ ColumnLayout {
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             color: Theme.fgSurfaceVariant
                         }
                     }
@@ -698,7 +698,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: "Apply Live"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             font.weight: Font.Bold
                             color: Theme.fgPrimary
                         }
@@ -734,7 +734,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: "Save to local.conf"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.fs(11)
                             font.weight: Font.DemiBold
                             color: Theme.fgSurface
                         }
@@ -771,7 +771,7 @@ ColumnLayout {
             Text {
                 text: "DISPLAY BRIGHTNESS (" + (DeviceCaps.hasBacklight ? "BACKLIGHT" : "DDC/CI") + ")"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -805,7 +805,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: brtPill.modelData + "%"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: brtPill.selected ? Font.Bold : Font.Medium
                             color: brtPill.selected ? Theme.primary : Theme.fgSurface
                         }
@@ -845,7 +845,7 @@ ColumnLayout {
                 Text {
                     text: "󰖔"
                     font.family: Theme.iconFont
-                    font.pixelSize: 15
+                    font.pixelSize: Theme.fs(15)
                     color: ShellState.nightLightEnabled ? Theme.warning : Theme.fgSurfaceVariant
                 }
 
@@ -856,7 +856,7 @@ ColumnLayout {
                     Text {
                         text: "NIGHT LIGHT (" + (DeviceCaps.nightLightCmd.length > 0 ? DeviceCaps.nightLightCmd : "color filter") + ")"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
                         color: Theme.fgSurfaceVariant
                     }
@@ -864,7 +864,7 @@ ColumnLayout {
                     Text {
                         text: "Reduce blue light emission at " + ShellState.nightLightTemp + "K"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface
                     }
                 }
@@ -902,7 +902,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: nlPill.modelData + "K"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: Theme.fs(10)
                             font.weight: nlPill.selected ? Font.Bold : Font.Medium
                             color: nlPill.selected ? Theme.warning : Theme.fgSurface
                         }

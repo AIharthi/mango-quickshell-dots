@@ -66,7 +66,7 @@ ColumnLayout {
             Text {
                 text: "FOOT WAYLAND TERMINAL (~/.config/foot/foot.ini)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -93,7 +93,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Cursor Shape"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -122,7 +122,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: fCurPill.modelData
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: fCurPill.selected ? Font.Bold : Font.Medium
                                 color: fCurPill.selected ? Theme.primary : Theme.fgSurface
                             }
@@ -147,7 +147,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Blinking Cursor"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -165,7 +165,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Scrollback Lines"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -194,7 +194,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: fScrPill.modelData >= 1000 ? ((fScrPill.modelData / 1000) + "k") : String(fScrPill.modelData)
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: fScrPill.selected ? Font.Bold : Font.Medium
                                 color: fScrPill.selected ? Theme.secondary : Theme.fgSurface
                             }
@@ -232,7 +232,7 @@ ColumnLayout {
             Text {
                 text: "KITTY TERMINAL (~/.config/kitty/kitty.conf)"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(10)
                 font.weight: Font.Bold
                 color: Theme.fgSurfaceVariant
             }
@@ -261,7 +261,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Cursor Shape"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -290,7 +290,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: kCurPill.modelData
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: kCurPill.selected ? Font.Bold : Font.Medium
                                 color: kCurPill.selected ? Theme.secondary : Theme.fgSurface
                             }
@@ -315,7 +315,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Blinking Cursor"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -334,7 +334,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Confirm Before Closing OS Window"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -353,7 +353,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Scrollback History"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     color: Theme.fgSurface
                 }
 
@@ -382,7 +382,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: (kScrPill.modelData / 1000) + "k"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: kScrPill.selected ? Font.Bold : Font.Medium
                                 color: kScrPill.selected ? Theme.secondary : Theme.fgSurface
                             }
