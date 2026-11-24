@@ -68,19 +68,11 @@ fn detect_touchpad() -> bool {
     false
 }
 
-fn read_distro() -> String {
+fn read_distro() -> (&'static str, String) {
     let Ok(txt) = fs::read_to_string("/etc/os-release") else {
-        return "Linux".to_string();
+        return ("linux", "Linux".to_string());
     };
-    for line in txt.lines() {
-        if let Some(rest) = line.strip_prefix("PRETTY_NAME=") {
-            let cleaned = rest.trim().trim_matches(|c| c == '"' || c == '\'');
-            if !cleaned.is_empty() {
-                return cleaned.to_string();
-            }
-        }
-    }
-    "Linux".to_string()
+    crate::distro::parse_os_release(&txt)
 }
 
 pub fn cmd_probe() {
@@ -103,12 +95,18 @@ pub fn cmd_probe() {
     let has_xdg_mime = which("xdg-mime").is_some();
     let has_network = dir_has_any(Path::new("/sys/class/net"), |n| n != "lo");
     let has_ddcutil = which("ddcutil").is_some();
-    let has_openrc = which("rc-status").is_some();
-    let has_systemd = which("systemctl").is_some() && Path::new("/run/systemd/system").is_dir();
+    let (init_sys, seat_mgr, _) = crate::distro::detect_init_and_seat();
+    let has_openrc = init_sys == "openrc";
+    let has_systemd = init_sys == "systemd";
+    let has_elogind = seat_mgr == "elogind";
     let has_clipboard = which("wl-copy").is_some();
     let has_speaker_test = which("speaker-test").is_some() || which("paplay").is_some();
     let has_foot = which("foot").is_some() || cfg.join("foot/foot.ini").exists();
     let has_kitty = which("kitty").is_some() || cfg.join("kitty/kitty.conf").exists();
+    let has_satty = which("satty").is_some();
+    let has_swappy = which("swappy").is_some();
+    let has_wf_recorder = which("wf-recorder").is_some() || which("gpu-screen-recorder").is_some();
+    let has_flatpak = which("flatpak").is_some();
 
     let night_light_cmd = ["hyprsunset", "wlsunset", "gammastep"]
         .into_iter()
@@ -139,9 +137,9 @@ pub fn cmd_probe() {
         .or_else(|| std::env::var("HOSTNAME").ok())
         .unwrap_or_else(|| "localhost".to_string());
     let kernel = read_trimmed(Path::new("/proc/sys/kernel/osrelease")).unwrap_or_default();
-    let distro = read_distro();
+    let (distro_id, distro) = read_distro();
 
-    let mut o = JsonOut::with_capacity(768);
+    let mut o = JsonOut::with_capacity(1024);
     o.obj_start();
     o.kv_bool("probed", true);
     o.kv_bool("hasWifi", has_wifi);
@@ -169,15 +167,21 @@ pub fn cmd_probe() {
     o.kv_bool("hasDdcutil", has_ddcutil);
     o.kv_bool("hasOpenRc", has_openrc);
     o.kv_bool("hasSystemd", has_systemd);
+    o.kv_bool("hasElogind", has_elogind);
     o.kv_bool("hasClipboard", has_clipboard);
     o.kv_bool("hasSpeakerTest", has_speaker_test);
     o.kv_bool("hasFoot", has_foot);
     o.kv_bool("hasKitty", has_kitty);
+    o.kv_bool("hasSatty", has_satty);
+    o.kv_bool("hasSwappy", has_swappy);
+    o.kv_bool("hasWfRecorder", has_wf_recorder);
+    o.kv_bool("hasFlatpak", has_flatpak);
     o.kv_str("lockerCmd", &locker_cmd);
     o.kv_bool("hasLocker", has_locker);
     o.kv_str("deviceType", device_type);
     o.kv_str("hostname", &hostname);
     o.kv_str("kernel", &kernel);
+    o.kv_str("distroId", distro_id);
     o.kv_str("distro", &distro);
     o.obj_end();
     println!("{}", o.finish());

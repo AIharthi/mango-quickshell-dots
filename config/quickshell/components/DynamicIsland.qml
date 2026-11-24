@@ -20,6 +20,7 @@ Item {
     signal openSettingsRequested(string page)
     signal openFilesRequested(string path)
     signal openKeybindsRequested()
+    signal openCaptureHubRequested()
 
     readonly property bool needsKeyboardFocus:
         (islandState === "expanded" && activeTab === "launcher") || launcherSearchFocused
@@ -104,6 +105,15 @@ Item {
             return;
         }
         root.launcherMode = "clip";
+        toggleTab("launcher");
+    }
+
+    function toggleSnippets(): void {
+        if (root.islandState === "expanded" && root.activeTab === "launcher" && root.launcherMode !== "snippets") {
+            root.launcherMode = "snippets";
+            return;
+        }
+        root.launcherMode = "snippets";
         toggleTab("launcher");
     }
 
@@ -583,6 +593,7 @@ Item {
                 onOpenSettingsRequested: page => root.openSettingsRequested(page)
                 onOpenFilesRequested: path => root.openFilesRequested(path)
                 onOpenKeybindsRequested: root.openKeybindsRequested()
+                onOpenCaptureHubRequested: root.openCaptureHubRequested()
                 onCloseRequested: root.collapse()
                 onSearchFocusChanged: focused => { root.launcherSearchFocused = focused; }
                 onControlInteractionChanged: interacting => {

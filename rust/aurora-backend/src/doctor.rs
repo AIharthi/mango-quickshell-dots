@@ -183,10 +183,120 @@ fn check_theme(qs_dir: &Path) -> CheckItem {
     }
 }
 
+fn check_init_seat() -> CheckItem {
+    let (init_sys, seat_mgr, has_rc_user) = crate::distro::detect_init_and_seat();
+    let has_loginctl = which("loginctl").is_some();
+    match (init_sys, seat_mgr) {
+        ("systemd", _) => CheckItem {
+            id: "init-seat",
+            label: "Init & Seat Manager",
+            status: "ok",
+            detail: "systemd + systemd-logind active".to_string(),
+        },
+        ("openrc", "elogind") => {
+            let user_note = if has_rc_user { " + openrc-user" } else { "" };
+            CheckItem {
+                id: "init-seat",
+                label: "Init & Seat Manager",
+                status: "ok",
+                detail: format!("OpenRC + elogind{user_note} active"),
+            }
+        }
+        ("openrc", _) => CheckItem {
+            id: "init-seat",
+            label: "Init & Seat Manager",
+            status: "warn",
+            detail: if has_loginctl {
+                "OpenRC detected; elogind runtime not verified".to_string()
+            } else {
+                "OpenRC without elogind/loginctl (power actions limited)".to_string()
+            },
+        },
+        _ => CheckItem {
+            id: "init-seat",
+            label: "Init & Seat Manager",
+            status: "warn",
+            detail: "Non-systemd/OpenRC init environment".to_string(),
+        },
+    }
+}
+
+fn check_distro_pkg() -> CheckItem {
+    let txt = fs::read_to_string("/etc/os-release").unwrap_or_default();
+    let (family, pretty) = crate::distro::parse_os_release(&txt);
+    match family {
+        "arch" => {
+            let ok = which("pacman").is_some();
+            CheckItem {
+                id: "distro-pkg",
+                label: "Distro Profile",
+                status: if ok { "ok" } else { "warn" },
+                detail: format!("{pretty} (pacman)"),
+            }
+        }
+        "fedora" => {
+            let ok = which("dnf").is_some();
+            CheckItem {
+                id: "distro-pkg",
+                label: "Distro Profile",
+                status: if ok { "ok" } else { "warn" },
+                detail: format!("{pretty} (dnf)"),
+            }
+        }
+        "gentoo" => {
+            let ok = which("emerge").is_some() && Path::new("/var/db/pkg").is_dir();
+            CheckItem {
+                id: "distro-pkg",
+                label: "Distro Profile",
+                status: if ok { "ok" } else { "warn" },
+                detail: format!("{pretty} (Portage)"),
+            }
+        }
+        _ => CheckItem {
+            id: "distro-pkg",
+            label: "Distro Profile",
+            status: "ok",
+            detail: pretty,
+        },
+    }
+}
+
+fn check_capture_tools() -> CheckItem {
+    let mut missing = Vec::new();
+    for bin in ["grim", "slurp", "wl-copy"] {
+        if which(bin).is_none() {
+            missing.push(bin);
+        }
+    }
+    if missing.is_empty() {
+        let rec = if which("wf-recorder").is_some() {
+            " + wf-recorder"
+        } else if which("gpu-screen-recorder").is_some() {
+            " + gpu-screen-recorder"
+        } else {
+            ""
+        };
+        CheckItem {
+            id: "capture-tools",
+            label: "Capture & Clipboard",
+            status: "ok",
+            detail: format!("grim, slurp, wl-copy{rec} ready"),
+        }
+    } else {
+        CheckItem {
+            id: "capture-tools",
+            label: "Capture & Clipboard",
+            status: "warn",
+            detail: format!("Missing: {}", missing.join(", ")),
+        }
+    }
+}
+
 fn check_portal(cfg_dir: &Path) -> CheckItem {
     let has_bin = which("xdg-desktop-portal").is_some()
         || Path::new("/usr/libexec/xdg-desktop-portal-wlr").exists()
-        || Path::new("/usr/lib/xdg-desktop-portal-wlr").exists();
+        || Path::new("/usr/lib/xdg-desktop-portal-wlr").exists()
+        || Path::new("/usr/lib64/xdg-desktop-portal-wlr").exists();
     let has_conf = cfg_dir
         .join("xdg-desktop-portal/mango-portals.conf")
         .exists();
@@ -255,10 +365,13 @@ pub fn cmd_doctor() {
         check_mango(),
         check_bins(&qs_dir),
         check_session_env(),
+        check_init_seat(),
+        check_distro_pkg(),
         check_audio(),
         check_wallpaper(),
         check_theme(&qs_dir),
         check_portal(&cfg),
+        check_capture_tools(),
         check_pam(&qs_dir),
         check_sddm(),
     ];

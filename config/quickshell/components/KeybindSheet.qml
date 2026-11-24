@@ -119,6 +119,8 @@ PanelWindow {
             "snapPip": "Snap PiP window",
             "lockSession": "Lock screen",
             "toggleClipboard": "Clipboard history",
+            "toggleSnippets": "Snippets vault",
+            "toggleCaptureHub": "Capture Studio",
             "clearClipboard": "Clear clipboard",
             "toggleEmoji": "Emoji picker",
             "refreshWeather": "Refresh weather",
@@ -126,6 +128,10 @@ PanelWindow {
         };
         if (arg.indexOf("qs ipc call island ") === 0) {
             const fn = arg.slice("qs ipc call island ".length).trim();
+            return ipcLabels[fn] || ("Shell: " + fn);
+        }
+        if (arg.indexOf("qs ipc call aurora ") === 0) {
+            const fn = arg.slice("qs ipc call aurora ".length).trim();
             return ipcLabels[fn] || ("Shell: " + fn);
         }
         if (arg.indexOf("screenshot.sh") !== -1)

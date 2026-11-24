@@ -1,4 +1,4 @@
-# Aurora Shell 2.0 (MangoWC + Quickshell)
+# Aurora Shell 2.1 (MangoWC + Quickshell)
 
 A reactive, pure-Rust-accelerated Wayland desktop shell built around **MangoWC** (`mangowm` + `scenefx`) and **Quickshell**, hardened for **Arch Linux, Fedora, and Gentoo** (`systemd` and `OpenRC + elogind`), across both **desktop PCs and laptops** with multi-monitor support.
 
@@ -10,25 +10,25 @@ A reactive, pure-Rust-accelerated Wayland desktop shell built around **MangoWC**
 | --- | --- | --- |
 | ![Default Mode](docs/assets/showcase-default.png) | ![Simple Mode](docs/assets/showcase-simple.png) | ![Blur Mode](docs/assets/showcase-blur.png) |
 
-| Built-in Settings (`Super + S`) | Aurora Rust File Manager (`Super + Shift + E`) |
-| --- | --- |
-| ![Settings App](docs/assets/showcase-settings.png) | ![aurora-fm](docs/assets/showcase-files.png) |
+| Built-in Settings (`Super + S`) | Aurora Rust File Manager (`Super + Shift + E`) | Capture Studio (`Super + Shift + S`) |
+| --- | --- | --- |
+| ![Settings App](docs/assets/showcase-settings.png) | ![aurora-fm](docs/assets/showcase-files.png) | ![Capture Studio](docs/assets/showcase-studio.png) |
 
 ---
 
 ## Highlights
 
-- **Pure-Rust System Backend (`rust/aurora-backend`) & Hardware Capabilities (`DeviceCaps`)**: Zero-dependency `std`-only Rust daemon (`#![forbid(unsafe_code)]`) powering hardware capability discovery (`probe`), live `/proc` CPU/RAM/network speed telemetry (`SystemTelemetry` singleton shared across all bar & hub widgets), `/sys/class/power_supply` multi-battery aggregation (`BAT0`+`BAT1` wattage/ETA/health), `/sys/class/hwmon` sensors, process inspection, Wayland clipboard watcher/store (`wl-paste --watch`), and **Aurora Doctor** system health diagnostics (`doctor`) across both **systemd** (`loginctl` / `systemctl`) and **OpenRC + elogind**.
+- **Pure-Rust System Backend (`rust/aurora-backend` v2.1.0) & Hardware Capabilities (`DeviceCaps`)**: Zero-dependency `std`-only Rust daemon (`#![forbid(unsafe_code)]`) powering cross-distro package & service inspection (`distro`, `services`, `service-action`, `power`, `kill-proc`) for **Arch Linux** (`pacman`, `paru`/`yay`, `checkupdates`), **Fedora** (`rpm`/`dnf`), and **Gentoo** (`Portage`, `@world`, overlays, `preserved-rebuild`) across both **systemd** (`loginctl` / `systemctl`) and **OpenRC + elogind + openrc-user**; plus hardware capability discovery (`probe`), live `/proc` telemetry, multi-battery `/sys/class/power_supply` & `hwmon` aggregation, Wayland clipboard watcher (`wl-paste --watch`), event-driven PiP watcher (`pip watch`), and 12-check **Aurora Doctor** (`doctor`).
 - **Monochrome-First Dynamic Island (`4` Bar UIs x `4` Hub Layouts x `7` Visual Modes)**: Choose between **Dynamic Island Capsule**, **Split Islands**, **Sequoia Menu Bar**, or **Modular Pill** on top with calm monochrome typography, optional live **Network Speed (`↓/↑`)**, and color reserved strictly for recording/critical states; inside the expanded Hub choose content-fitted zero-dead-space **Cupertino Control Center**, **Apple Stage**, **Pro Telemetry Cockpit**, or **Bento 2x2**; plus 7 visual finishes (`Island`, `Frosted`, `Cyber`, `Zen`, `Tactile`, `Obsidian`, `Simple`), live **Stopwatch**, **Game Mode (`Super + Shift + G`)**, opt-in **Weather**, **Activity Rings** / CPU Sparkline, borderless filled tiles, and Notification Server.
-- **Multi-Mode Launcher (`Super + Space` / `Super + V`)**: Fuzzy App Launcher plus built-in **Clipboard History Manager** (`cb ` / `Super + V` with pinning & password-manager exclusion), pure recursive-descent **Math, Hex/Binary, Unit Converter (`100f to c`, `2 gib to mb`, `5 km in mi`), and Color Inspector (`#cba6f7`, `rgb(...)`)** (`=`), **Quick Desktop Commands** (`>`), and **Emoji / Nerd Font Glyph Picker** (`:`).
-- **Open Window Switcher (`Super + W`) & Power Overlay (`Super + Escape`)**: Fast client switcher across monitors/tags via `mmsg get all-clients` with search, focus, and close actions; full-screen 3x2 animated Power Overlay (`Lock`, `Suspend`, `Hibernate`, `Logout`, `Reboot`, `Poweroff`) with keyboard shortcuts (`L/S/H/E/R/P`) and confirmation guard.
+- **Multi-Mode Launcher (`Super + Space` / `Super + V` / `Super + ;`)**: Fuzzy App Launcher plus built-in **Snippets Vault** (`;` prefix or `Super + ;`, `0600`-locked JSON store, pinning, password-manager clipboard exclusion), **Clipboard History Manager** (`cb ` / `Super + V` with pinning & password-manager exclusion), pure recursive-descent **Math, Hex/Binary, Unit Converter (`100f to c`, `2 gib to mb`, `5 km in mi`), and Color Inspector (`#cba6f7`, `rgb(...)`)** (`=`), **Quick Desktop Commands** (`>`), and **Emoji / Nerd Font Glyph Picker** (`:`).
+- **Open Window Switcher & Workspace Sessions (`Super + W`) & Power Overlay (`Super + Escape`)**: Fast client switcher across monitors/tags via `mmsg get all-clients` with search, focus, close actions, and **Workspace Sessions** (`workspaces` backend) to save/restore running apps via verified `.desktop`, Flatpak, and `PATH` launchers; plus full-screen 3x2 animated Power Overlay (`Lock`, `Suspend`, `Hibernate`, `Logout`, `Reboot`, `Poweroff`) with keyboard shortcuts (`L/S/H/E/R/P`) and cross-init power routing.
 - **Alerts & Agenda Hub (`Super + Shift + N`)**: Unified Notification Center with unread pill badge, interactive **Month Calendar**, **Focus Timer & Lap Stopwatch** docked live in the bar, compact opt-in **Weather Card** (`wttr.in`, 30-min cache), and persistent **Quick Scratchpad**.
 - **Animated Wayland Lock Screen & Matching Qt6 SDDM Login Theme (`aurora-island`)**: Smooth entrance/exit zoom & glass-sheen animations, time-of-day greeting, clickable keyboard layout pill, inline MPRIS media controls, auth shake feedback, `WlSessionLock` + user-space PAM verification (`pam/lock`), plus a companion Qt6 SDDM theme (`system/sddm-theme/aurora-island/`) synced automatically on every wallpaper/theme switch.
 - **Native Polkit Agent & Idle Power Manager**: Native `PolkitAgent` authentication modal and `ext-idle-notify-v1` auto-lock/auto-suspend daemon (`IdleMonitor`, respecting `keepAwake`, Game Mode, and media inhibitors).
-- **Capture, Eyedropper & Screen Recording**: Area (`Super + =`), Fullscreen (`Super + Shift + =`), Focused Window (`Super + Ctrl + =`), and annotated (`--edit`) screenshots, pixel **Eyedropper Color Picker** (`Super + Alt + C`), and **Screen Recorder** (`Super + Shift + R` via `wf-recorder`) with a live pulsing `REC` pill.
+- **Capture Studio (`Super + Shift + S`), Eyedropper & Screen Recording**: Unified Capture Studio (`captures` Rust backend with symlink-rejected PNG/MP4 gallery, PNG `IHDR` dimensions, and XDG Trash), Area (`Super + =`), Fullscreen (`Super + Shift + =`), Focused Window (`Super + Ctrl + =`), and annotated (`--edit`) screenshots, pure-Rust PPM `P6` **Eyedropper Color Picker** (`Super + Alt + C`), and **Screen Recorder** (`Super + Shift + R` via `wf-recorder`) with verified `rec-state` tracking and a live pulsing `REC` pill.
 - **Interactive Keybind Cheat Sheet (`Super + /`)**: Searchable category modal displaying live bindings parsed from MangoWC and `local.conf`.
 - **Live Matugen, Slideshow & Preset Theming**: Syncs wallpapers (`awww` or `swww` auto-detected) with optional timed **Wallpaper Slideshow**, 16 dark/light presets, 8 one-click vibes, seed accent generator, and JSON custom theme import across Quickshell, MangoWC, GTK 3/4 + `color-scheme` portal preference, Foot, Kitty, Qt6ct, Zed, and SDDM (`flock`-serialized updates). See [`docs/THEMING.md`](docs/THEMING.md).
-- **Built-in 16-Page Aurora Settings App (`Super + S`)**: Includes **Aurora Shell 2.0 System Doctor**, Appearance, Themes & Colors Studio, Shell & Bar (with network throughput toggle, Weather & Slideshow controls), Windows & PiP (`Super + P`), Audio, Displays (`wlr-randr`), Network/DNS, Bluetooth, Input & Touchpad, Foot/Kitty Terminals, Notifications/DND, Apps & Startup, live `mango -p`-validated Shortcuts, Privacy / Idle Lock / SDDM sync status, Thermal/Process/Service Monitor, System Backup & Safe Resets.
+- **Built-in 16-Page Aurora Settings App (`Super + S`)**: Includes the 12-check **Aurora Shell 2.1 System Doctor** + live **Distro & packages** card in System, scope-aware `systemd` / `OpenRC` service controls in Monitor, Appearance, Themes & Colors Studio, Shell & Bar (with network throughput toggle, Weather & Slideshow controls), Windows & PiP (`Super + P`), Audio, Displays (`wlr-randr`), Network/DNS, Bluetooth, Input & Touchpad, Foot/Kitty Terminals, Notifications/DND, Apps & Startup, live `mango -p`-validated Shortcuts, Privacy / Idle Lock / SDDM sync status, System Backup & Safe Resets.
 - **Zero-Dependency Rust File Manager (`rust/aurora-fm`)**: `std`-only pure Rust backend (`Cargo.lock` tracked) with streaming FIPS 180-4 SHA-256 file checksums and symlink-loop-guarded folder size calculation in the Inspector pane, customizable Quickshell UI (`List`, async thumbnail `Grid`, 3-column `Miller`, `Dual-Pane F3`, multi-tab, XDG Trash, mounts, bookmarks, Zip/Tar Slip & flag-injection hardened). See [`docs/FILE_MANAGER.md`](docs/FILE_MANAGER.md).
 - **Idempotent Multi-Machine Configs**: Machine-specific overrides stay in `~/.config/mango/local.conf` (`source_optional`) and `~/.config/quickshell/shell-prefs.json`, preserved cleanly across `./install.sh` re-runs.
 
@@ -53,7 +53,7 @@ A reactive, pure-Rust-accelerated Wayland desktop shell built around **MangoWC**
 ├── docs/                         # Detailed guides (THEMING.md, FILE_MANAGER.md, KEYBINDS.md)
 ├── rust/
 │   ├── aurora-fm/                # Zero-dependency std-only Rust file manager (installed to ~/.config/quickshell/bin/aurora-fm)
-│   └── aurora-backend/           # Zero-dependency std-only Rust telemetry, hardware probe, hwmon, proc, clipboard & doctor backend
+│   └── aurora-backend/           # Zero-dependency std-only Rust backend (telemetry, distro/services, captures, snippets, workspaces, PiP & doctor)
 ├── config/
 │   ├── mango/                    # MangoWC config, mode.conf, theme.conf, autostart.sh
 │   ├── quickshell/               # shell.qml, Theme, SystemTelemetry, DeviceCaps, ShellState, components/, files/, settings/, scripts/
@@ -211,9 +211,11 @@ cd mango-quickshell-dots
 | Shortcut | Action |
 | --- | --- |
 | `Super + Return` / `B` / `Z` | Default terminal / browser / editor (`launch-app.sh`) |
-| `Super + Space` / `Super + A` | Multi-Mode Launcher (Apps, `=` Calc, `>` Commands, `:` Emoji, `cb ` Clipboard) |
+| `Super + Space` / `Super + A` | Multi-Mode Launcher (Apps, `; ` Snippets, `=` Calc, `>` Commands, `:` Emoji, `cb ` Clipboard) |
+| `Super + ;` | Toggle Snippets Vault (pinning, copy, password-manager exclusion) |
 | `Super + V` | Clipboard History Manager (pin, search, copy, clear) |
-| `Super + W` | Open Window Switcher across tags and monitors |
+| `Super + W` | Open Window Switcher & Workspace Sessions across tags and monitors |
+| `Super + Shift + S` | Toggle Capture Studio (screenshots gallery, area/window/full capture, color picker, recordings) |
 | `Super + Escape` | Full-Screen Power Overlay (`L` Lock, `S` Suspend, `H` Hibernate, `E` Logout, `R` Reboot, `P` Poweroff) |
 | `Super + Shift + G` | Toggle Game Mode (Minimal Pill bar, pauses wallpaper slideshow & idle auto-lock) |
 | `Super + Shift + N` | Alerts & Agenda Hub (Notifications, Calendar, Timer/Stopwatch, Weather, Scratchpad) |

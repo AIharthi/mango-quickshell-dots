@@ -28,14 +28,20 @@ Singleton {
     property bool hasDdcutil: false
     property bool hasOpenRc: false
     property bool hasSystemd: false
+    property bool hasElogind: false
     property bool hasClipboard: false
     property bool hasSpeakerTest: false
     property bool hasFoot: false
     property bool hasKitty: false
+    property bool hasSatty: false
+    property bool hasSwappy: false
+    property bool hasWfRecorder: false
+    property bool hasFlatpak: false
     property bool hasLocker: false
     property string lockerCmd: ""
     property string deviceType: "desktop"       // "desktop" | "laptop"
     property string hostname: ""
+    property string distroId: "linux"
     property string distro: "Linux"
     property string kernel: ""
 
@@ -120,14 +126,20 @@ Singleton {
                     root.hasDdcutil = !!data.hasDdcutil;
                     root.hasOpenRc = !!data.hasOpenRc;
                     root.hasSystemd = !!data.hasSystemd;
+                    root.hasElogind = !!data.hasElogind;
                     root.hasClipboard = !!data.hasClipboard;
                     root.hasSpeakerTest = !!data.hasSpeakerTest;
                     root.hasFoot = !!data.hasFoot;
                     root.hasKitty = !!data.hasKitty;
+                    root.hasSatty = !!data.hasSatty;
+                    root.hasSwappy = !!data.hasSwappy;
+                    root.hasWfRecorder = !!data.hasWfRecorder;
+                    root.hasFlatpak = !!data.hasFlatpak;
                     root.hasLocker = !!data.hasLocker;
                     root.lockerCmd = data.lockerCmd || "";
                     root.deviceType = data.deviceType || "desktop";
                     root.hostname = data.hostname || "";
+                    root.distroId = data.distroId || "linux";
                     root.distro = data.distro || "Linux";
                     root.kernel = data.kernel || "";
                     if (root.hasBattery && root.batteryPath.length > 0)

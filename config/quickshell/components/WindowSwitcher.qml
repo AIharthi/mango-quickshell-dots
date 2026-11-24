@@ -16,6 +16,12 @@ PanelWindow {
     property string query: ""
     property int selectedIndex: 0
     property var clients: []
+    property var sessions: []
+    property bool sessionsLoading: false
+    property string sessionsError: ""
+    property bool saveSessionOpen: false
+    property string sessionStatus: ""
+    property string _pendingSessionOp: ""
 
     signal closeRequested()
 
@@ -36,6 +42,49 @@ PanelWindow {
     function refresh(): void {
         if (!clientsProc.running)
             clientsProc.running = true;
+        refreshSessions();
+    }
+
+    function refreshSessions(): void {
+        if (sessionsProc.running)
+            return;
+        root.sessionsLoading = true;
+        root.sessionsError = "";
+        root._pendingSessionOp = "list";
+        sessionsProc.command = [Quickshell.shellPath("bin/aurora-backend"), "workspaces", "list"];
+        sessionsProc.running = true;
+    }
+
+    function saveCurrentSession(): void {
+        const nm = sessionNameInput.text.trim();
+        if (nm.length === 0) {
+            root.sessionsError = "Enter a session name";
+            return;
+        }
+        if (sessionsProc.running)
+            return;
+        root.sessionsLoading = true;
+        root.sessionsError = "";
+        root._pendingSessionOp = "save";
+        sessionsProc.command = [Quickshell.shellPath("bin/aurora-backend"), "workspaces", "save", nm];
+        sessionsProc.running = true;
+    }
+
+    function restoreSession(id: int): void {
+        if (sessionActProc.running)
+            return;
+        sessionActProc.command = [Quickshell.shellPath("bin/aurora-backend"), "workspaces", "restore", String(id)];
+        sessionActProc.running = true;
+    }
+
+    function deleteSession(id: int): void {
+        if (sessionsProc.running)
+            return;
+        root.sessionsLoading = true;
+        root.sessionsError = "";
+        root._pendingSessionOp = "delete";
+        sessionsProc.command = [Quickshell.shellPath("bin/aurora-backend"), "workspaces", "delete", String(id)];
+        sessionsProc.running = true;
     }
 
     Component.onCompleted: Qt.callLater(() => {
@@ -51,6 +100,9 @@ PanelWindow {
             searchInput.text = "";
             root.query = "";
             root.selectedIndex = 0;
+            root.saveSessionOpen = false;
+            root.sessionStatus = "";
+            root.sessionsError = "";
             refresh();
             focusTimer.restart();
         }
@@ -89,6 +141,58 @@ PanelWindow {
                     root.clients = arr;
                 } catch (err) {
                     root.clients = [];
+                }
+            }
+        }
+    }
+
+    Process {
+        id: sessionsProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.sessionsLoading = false;
+                const op = root._pendingSessionOp;
+                root._pendingSessionOp = "";
+                const raw = (text || "").trim();
+                if (raw.length === 0) {
+                    root.sessionsError = "Workspace backend returned empty response";
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        root.sessionsError = "";
+                        root.sessions = parsed;
+                        if (op === "save") {
+                            root.saveSessionOpen = false;
+                            sessionNameInput.text = "";
+                            root.sessionStatus = "Session saved";
+                            searchInput.forceActiveFocus();
+                        }
+                    } else if (parsed && parsed.ok === false) {
+                        root.sessionsError = String(parsed.error || "Unable to update sessions");
+                    }
+                } catch (err) {
+                    root.sessionsError = "Unable to parse workspace sessions";
+                }
+            }
+        }
+    }
+
+    Process {
+        id: sessionActProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                try {
+                    const d = JSON.parse(raw);
+                    if (d && d.ok) {
+                        root.closeRequested();
+                    } else if (d && d.error) {
+                        root.sessionsError = String(d.error);
+                    }
+                } catch (err) {
+                    root.sessionsError = "Failed restoring session";
                 }
             }
         }
@@ -168,7 +272,7 @@ PanelWindow {
     ClippingRectangle {
         anchors.centerIn: parent
         width: Math.min(720, Math.max(400, root.width - 64))
-        height: Math.min(520, Math.max(210, 154 + Math.max(1, root.filteredClients.length) * 56))
+        height: Math.min(560, Math.max(255, 206 + Math.max(1, root.filteredClients.length) * 56))
         Behavior on height {
             enabled: !Theme.reducedMotion && !Theme.isSimple
             NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
@@ -351,6 +455,230 @@ PanelWindow {
                                     text = "";
                                 else
                                     root.closeRequested();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Saved Workspace Sessions Strip (Rust-backed)
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: wsStripCol.implicitHeight + 14
+                radius: Theme.r(12)
+                color: Theme.cardBg
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.cardBorder
+
+                ColumnLayout {
+                    id: wsStripCol
+                    anchors.fill: parent
+                    anchors.margins: 7
+                    spacing: 6
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Text {
+                            text: "Saved sessions"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Bold
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: {
+                                if (root.sessionsError.length > 0) return root.sessionsError;
+                                if (root.sessionsLoading && root.sessions.length === 0) return "Loading sessions...";
+                                if (root.sessionStatus.length > 0) return root.sessionStatus;
+                                if (root.sessions.length === 0) return "No saved sessions · Save open windows to restore later";
+                                return "";
+                            }
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            color: root.sessionsError.length > 0 ? Theme.error : Theme.fgSurfaceVariant
+                        }
+
+                        Rectangle {
+                            implicitHeight: 22
+                            implicitWidth: saveWsTxt.implicitWidth + 14
+                            radius: Theme.r(7)
+                            color: root.saveSessionOpen
+                                ? Theme.primary
+                                : (saveWsMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+
+                            Text {
+                                id: saveWsTxt
+                                anchors.centerIn: parent
+                                text: root.saveSessionOpen ? "Cancel" : "+ Save session"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(9)
+                                font.weight: Font.DemiBold
+                                color: root.saveSessionOpen ? Theme.fgPrimary : Theme.primary
+                            }
+
+                            MouseArea {
+                                id: saveWsMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.saveSessionOpen = !root.saveSessionOpen;
+                                    root.sessionsError = "";
+                                    if (root.saveSessionOpen) {
+                                        sessionNameInput.text = "";
+                                        sessionNameInput.forceActiveFocus();
+                                    } else {
+                                        searchInput.forceActiveFocus();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        visible: root.saveSessionOpen
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 28
+                            radius: Theme.r(7)
+                            color: Theme.subCardBg
+                            border.width: sessionNameInput.activeFocus ? 1 : 0
+                            border.color: Theme.primary
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                visible: sessionNameInput.text.length === 0
+                                text: "Session name, e.g. Dev"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                color: Theme.fgSurfaceVariant
+                            }
+
+                            TextInput {
+                                id: sessionNameInput
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                verticalAlignment: TextInput.AlignVCenter
+                                color: Theme.fgSurface
+                                selectionColor: Theme.primary
+                                selectedTextColor: Theme.fgPrimary
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                clip: true
+                                Keys.onReturnPressed: root.saveCurrentSession()
+                                Keys.onEnterPressed: root.saveCurrentSession()
+                                Keys.onEscapePressed: {
+                                    root.saveSessionOpen = false;
+                                    searchInput.forceActiveFocus();
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            implicitHeight: 28
+                            implicitWidth: commitWsTxt.implicitWidth + 16
+                            radius: Theme.r(7)
+                            color: Theme.primary
+
+                            Text {
+                                id: commitWsTxt
+                                anchors.centerIn: parent
+                                text: "Save"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                font.weight: Font.Bold
+                                color: Theme.fgPrimary
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.saveCurrentSession()
+                            }
+                        }
+                    }
+
+                    Flickable {
+                        visible: root.sessions.length > 0
+                        Layout.fillWidth: true
+                        implicitHeight: 26
+                        contentWidth: wsPillRow.implicitWidth
+                        contentHeight: 26
+                        clip: true
+
+                        Row {
+                            id: wsPillRow
+                            spacing: 6
+
+                            Repeater {
+                                model: root.sessions
+
+                                delegate: Rectangle {
+                                    id: wsPill
+                                    required property var modelData
+                                    implicitHeight: 26
+                                    implicitWidth: wsPillInner.implicitWidth + 14
+                                    radius: Theme.r(8)
+                                    color: wsOpenMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+
+                                    RowLayout {
+                                        id: wsPillInner
+                                        anchors.centerIn: parent
+                                        spacing: 6
+
+                                        Text {
+                                            text: String(wsPill.modelData.name || "") + " · " + Number(wsPill.modelData.windowCount || 0)
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: Theme.fs(10)
+                                            font.weight: Font.DemiBold
+                                            color: Theme.fgSurface
+                                        }
+
+                                        Rectangle {
+                                            implicitWidth: 16
+                                            implicitHeight: 16
+                                            radius: Theme.r(8)
+                                            color: wsDelMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.25) : "transparent"
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: "󰅖"
+                                                font.family: Theme.iconFont
+                                                font.pixelSize: Theme.fs(9)
+                                                color: wsDelMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                                            }
+
+                                            MouseArea {
+                                                id: wsDelMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: root.deleteSession(wsPill.modelData.id)
+                                            }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: wsOpenMouse
+                                        anchors.fill: parent
+                                        anchors.rightMargin: 24
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.restoreSession(wsPill.modelData.id)
+                                    }
+                                }
                             }
                         }
                     }

@@ -20,14 +20,8 @@ Rectangle {
         root.actionTriggered(actionId);
         if (actionId === "lock") {
             Quickshell.execDetached([Quickshell.shellPath("scripts/lock.sh")]);
-        } else if (actionId === "suspend") {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "power-action", "suspend"]);
-        } else if (actionId === "logout") {
-            Quickshell.execDetached(["mmsg", "dispatch", "quit"]);
-        } else if (actionId === "reboot") {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "power-action", "reboot"]);
-        } else if (actionId === "poweroff") {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "power-action", "poweroff"]);
+        } else if (actionId === "suspend" || actionId === "logout" || actionId === "reboot" || actionId === "poweroff") {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "power-action", actionId]);
         }
     }
 

@@ -1,13 +1,19 @@
 #![forbid(unsafe_code)]
 
 mod calc;
+mod captures;
 mod clipboard;
+mod distro;
 mod doctor;
 mod json;
+mod pip;
 mod probe;
 mod proc_mon;
+mod services;
+mod snippets;
 mod telemetry;
 mod util;
+mod workspaces;
 
 use std::env;
 
@@ -26,7 +32,7 @@ fn print_err_exit(msg: &str) -> ! {
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
     let Some(cmd) = args.first().map(String::as_str) else {
-        print_err_exit("Usage: aurora-backend <version|probe|battery|telemetry|hwmon|processes|clipboard|calc|doctor>");
+        print_err_exit("Usage: aurora-backend <version|probe|battery|telemetry|hwmon|processes|clipboard|calc|doctor|captures|distro|services|service-action|kill-proc|power|snippets|pip|workspaces>");
     };
     let rest = &args[1..];
 
@@ -53,6 +59,47 @@ fn main() {
         }
         "calc" => calc::cmd_calc(rest),
         "doctor" => doctor::cmd_doctor(),
+        "captures" => {
+            if let Err(e) = captures::cmd_captures(rest) {
+                print_err_exit(&e);
+            }
+        }
+        "distro" => {
+            if let Err(e) = distro::cmd_distro(rest) {
+                print_err_exit(&e);
+            }
+        }
+        "services" => services::cmd_services(),
+        "service-action" => {
+            if let Err(e) = services::cmd_service_action(rest) {
+                print_err_exit(&e);
+            }
+        }
+        "kill-proc" => {
+            if let Err(e) = services::cmd_kill_proc(rest) {
+                print_err_exit(&e);
+            }
+        }
+        "power" => {
+            if let Err(e) = services::cmd_power(rest) {
+                print_err_exit(&e);
+            }
+        }
+        "snippets" => {
+            if let Err(e) = snippets::cmd_snippets(rest) {
+                print_err_exit(&e);
+            }
+        }
+        "pip" => {
+            if let Err(e) = pip::cmd_pip(rest) {
+                print_err_exit(&e);
+            }
+        }
+        "workspaces" => {
+            if let Err(e) = workspaces::cmd_workspaces(rest) {
+                print_err_exit(&e);
+            }
+        }
         other => print_err_exit(&format!("Unknown subcommand '{other}'")),
     }
 }

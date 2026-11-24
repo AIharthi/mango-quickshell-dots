@@ -67,11 +67,14 @@ ColumnLayout {
         killProc.running = true;
     }
 
-    function serviceAction(name: string, act: string): void {
+    function serviceAction(name: string, act: string, scope: string): void {
         if (svcMutProc.running)
             return;
         root.statusMsg = "Running " + act + " on service " + name + "...";
-        svcMutProc.command = [Quickshell.shellPath("scripts/manage-system.sh"), "service-action", name, act];
+        const cmd = [Quickshell.shellPath("scripts/manage-system.sh"), "service-action", name, act];
+        if (scope && scope.length > 0)
+            cmd.push(scope);
+        svcMutProc.command = cmd;
         svcMutProc.running = true;
     }
 
@@ -648,7 +651,7 @@ ColumnLayout {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.serviceAction(svcRow.modelData.name, "restart")
+                                    onClicked: root.serviceAction(svcRow.modelData.name, "restart", String(svcRow.modelData.scope || ""))
                                 }
                             }
                         }

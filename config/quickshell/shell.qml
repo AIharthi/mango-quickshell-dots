@@ -28,6 +28,9 @@ ShellRoot {
     property bool powerOverlayOpen: false
     property bool _powerOverlayLoaded: false
 
+    property bool captureHubOpen: false
+    property bool _captureHubLoaded: false
+
     function primaryIsland(): var {
         const list = screenVariants.instances;
         if (!list || list.length === 0)
@@ -54,6 +57,7 @@ ShellRoot {
         root.closeKeybinds();
         root.closeWindowSwitcher();
         root.closePowerOverlay();
+        root.closeCaptureHub();
         root.settingsPage = (page && page.length > 0) ? page : "appearance";
         root.collapseAll();
         settingsUnloadTimer.stop();
@@ -79,6 +83,7 @@ ShellRoot {
         root.closeKeybinds();
         root.closeWindowSwitcher();
         root.closePowerOverlay();
+        root.closeCaptureHub();
         root.filesStartPath = (startPath && startPath.length > 0) ? startPath : "";
         root.collapseAll();
         filesUnloadTimer.stop();
@@ -104,6 +109,7 @@ ShellRoot {
         root.closeFiles();
         root.closeWindowSwitcher();
         root.closePowerOverlay();
+        root.closeCaptureHub();
         root.collapseAll();
         keybindsUnloadTimer.stop();
         root._keybindsLoaded = true;
@@ -128,6 +134,7 @@ ShellRoot {
         root.closeFiles();
         root.closeKeybinds();
         root.closePowerOverlay();
+        root.closeCaptureHub();
         root.collapseAll();
         switcherUnloadTimer.stop();
         root._windowSwitcherLoaded = true;
@@ -152,6 +159,7 @@ ShellRoot {
         root.closeFiles();
         root.closeKeybinds();
         root.closeWindowSwitcher();
+        root.closeCaptureHub();
         root.collapseAll();
         powerUnloadTimer.stop();
         root._powerOverlayLoaded = true;
@@ -169,6 +177,31 @@ ShellRoot {
             root.closePowerOverlay();
         else
             root.openPowerOverlay();
+    }
+
+    function openCaptureHub(): void {
+        root.closeSettings();
+        root.closeFiles();
+        root.closeKeybinds();
+        root.closeWindowSwitcher();
+        root.closePowerOverlay();
+        root.collapseAll();
+        captureHubUnloadTimer.stop();
+        root._captureHubLoaded = true;
+        root.captureHubOpen = true;
+    }
+
+    function closeCaptureHub(): void {
+        root.captureHubOpen = false;
+        if (root._captureHubLoaded)
+            captureHubUnloadTimer.restart();
+    }
+
+    function toggleCaptureHub(): void {
+        if (root.captureHubOpen)
+            root.closeCaptureHub();
+        else
+            root.openCaptureHub();
     }
 
     Timer {
@@ -218,6 +251,16 @@ ShellRoot {
         onTriggered: {
             if (!root.powerOverlayOpen)
                 root._powerOverlayLoaded = false;
+        }
+    }
+
+    Timer {
+        id: captureHubUnloadTimer
+        interval: Theme.reducedMotion ? 10 : 160
+        repeat: false
+        onTriggered: {
+            if (!root.captureHubOpen)
+                root._captureHubLoaded = false;
         }
     }
 
@@ -361,6 +404,7 @@ ShellRoot {
                     onOpenSettingsRequested: page => root.openSettings(page)
                     onOpenFilesRequested: path => root.openFiles(path)
                     onOpenKeybindsRequested: root.openKeybinds()
+                    onOpenCaptureHubRequested: root.openCaptureHub()
                 }
             }
         }
@@ -426,6 +470,18 @@ ShellRoot {
         }
     }
 
+    // Rust-Backed Capture Studio Modal (lazy-loaded on demand)
+    LazyLoader {
+        id: captureHubLoader
+        active: root._captureHubLoaded
+
+        CaptureHubModal {
+            isOpen: root.captureHubOpen
+            onCloseRequested: root.closeCaptureHub()
+            onOpenFilesRequested: path => root.openFiles(path)
+        }
+    }
+
     // Native Polkit Authentication Agent Modal
     PolkitModal {}
 
@@ -444,7 +500,18 @@ ShellRoot {
             root.closeKeybinds();
             root.closeWindowSwitcher();
             root.closePowerOverlay();
+            root.closeCaptureHub();
             lockScreen.lock();
+        }
+
+        function toggleCaptureHub(): void {
+            root.toggleCaptureHub();
+        }
+
+        function toggleSnippets(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleSnippets();
         }
 
         function toggleWindowSwitcher(): void {
@@ -646,7 +713,18 @@ ShellRoot {
             root.closeKeybinds();
             root.closeWindowSwitcher();
             root.closePowerOverlay();
+            root.closeCaptureHub();
             lockScreen.lock();
+        }
+
+        function toggleCaptureHub(): void {
+            root.toggleCaptureHub();
+        }
+
+        function toggleSnippets(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleSnippets();
         }
 
         function toggleWindowSwitcher(): void {

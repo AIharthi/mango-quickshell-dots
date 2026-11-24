@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# MangoWC Session Autostart (Fedora / Arch / Gentoo — systemd & OpenRC + elogind)
+# MangoWC Session Autostart (Fedora / Arch / Gentoo - systemd & OpenRC + elogind)
 
 CONFIG_BASE="${XDG_CONFIG_HOME:-$HOME/.config}"
 RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
@@ -41,8 +41,10 @@ if ! command -v qs >/dev/null 2>&1; then
         for agent in \
             /usr/libexec/polkit-gnome-authentication-agent-1 \
             /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 \
+            /usr/lib64/polkit-gnome/polkit-gnome-authentication-agent-1 \
             /usr/libexec/lxqt-policykit-agent \
             /usr/lib/polkit-kde-authentication-agent-1 \
+            /usr/lib64/polkit-kde-authentication-agent-1 \
             /usr/libexec/polkit-kde-authentication-agent-1 \
             /usr/libexec/xfce-polkit \
             /usr/lib/mate-polkit/polkit-mate-authentication-agent-1; do
@@ -63,7 +65,7 @@ fi
 
 # Wayland Clipboard History Watcher
 if [[ -x "${CONFIG_BASE}/quickshell/scripts/manage-clipboard.sh" ]]; then
-    if ! pgrep -f 'manage-clipboard\.sh watch' >/dev/null 2>&1; then
+    if ! pgrep -f 'manage-clipboard\.sh watch|aurora-backend clipboard watch' >/dev/null 2>&1; then
         "${CONFIG_BASE}/quickshell/scripts/manage-clipboard.sh" watch </dev/null >/dev/null 2>&1 &
     fi
 fi

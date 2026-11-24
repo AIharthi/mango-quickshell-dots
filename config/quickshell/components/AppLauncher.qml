@@ -11,11 +11,16 @@ ColumnLayout {
 
     property bool active: false
     property string initialMode: "apps"
-    property string activeMode: "apps"        // "apps" | "clip" | "calc" | "cmds" | "emoji"
+    property string activeMode: "apps"        // "apps" | "clip" | "snippets" | "calc" | "cmds" | "emoji"
     property int selectedIndex: 0
     property string query: ""
     property var clipboardItems: []
     property bool clipboardLoading: false
+    property var snippetItems: []
+    property bool snippetsLoading: false
+    property string snippetsError: ""
+    property bool composerOpen: false
+    property bool _composerClipboardMode: false
 
     property var hiddenConfig: ({
         hiddenIds: [
@@ -37,6 +42,7 @@ ColumnLayout {
     signal openSettingsRequested(string page)
     signal openFilesRequested(string path)
     signal openKeybindsRequested()
+    signal openCaptureHubRequested()
 
     spacing: 8
 
@@ -49,6 +55,8 @@ ColumnLayout {
             return "cmds";
         if (trimmed.startsWith(":"))
             return "emoji";
+        if (trimmed.startsWith(";"))
+            return "snippets";
         if (trimmed.toLowerCase().startsWith("cb "))
             return "clip";
         if (root.activeMode === "apps" && isQuickCalcOrConvert(trimmed))
@@ -58,7 +66,7 @@ ColumnLayout {
 
     readonly property string cleanQuery: {
         const trimmed = (root.query || "").replace(/^\s+/, "");
-        if (trimmed.startsWith("=") || trimmed.startsWith(">") || trimmed.startsWith(":"))
+        if (trimmed.startsWith("=") || trimmed.startsWith(">") || trimmed.startsWith(":") || trimmed.startsWith(";"))
             return trimmed.slice(1).trim();
         if (trimmed.toLowerCase().startsWith("cb "))
             return trimmed.slice(3).trim();
@@ -78,15 +86,18 @@ ColumnLayout {
     }
 
     function openInMode(modeName: string): void {
-        const valid = (modeName === "clip" || modeName === "calc" || modeName === "cmds" || modeName === "emoji")
+        const valid = (modeName === "clip" || modeName === "snippets" || modeName === "calc" || modeName === "cmds" || modeName === "emoji")
             ? modeName
             : "apps";
         root.activeMode = valid;
+        root.composerOpen = false;
         searchInput.text = "";
         root.query = "";
         root.selectedIndex = 0;
         if (valid === "clip")
             refreshClipboard();
+        else if (valid === "snippets")
+            refreshSnippets();
         if (root.active)
             focusTimer.restart();
     }
@@ -98,14 +109,19 @@ ColumnLayout {
 
     onEffectiveModeChanged: {
         root.selectedIndex = 0;
+        if (root.effectiveMode !== "snippets")
+            root.composerOpen = false;
         if (root.effectiveMode === "clip")
             refreshClipboard();
+        else if (root.effectiveMode === "snippets")
+            refreshSnippets();
     }
 
     onActiveChanged: {
         if (active) {
             openInMode(root.initialMode || "apps");
         } else {
+            root.composerOpen = false;
             searchInput.focus = false;
         }
     }
@@ -179,6 +195,102 @@ ColumnLayout {
             }
         }
         onExited: root.clipboardLoading = false
+    }
+
+    function refreshSnippets(): void {
+        if (snippetsProc.running)
+            return;
+        root.snippetsLoading = true;
+        root.snippetsError = "";
+        snippetsProc.command = [Quickshell.shellPath("bin/aurora-backend"), "snippets", "list"];
+        snippetsProc.running = true;
+    }
+
+    function runSnippetAction(action: string, itemId: int): void {
+        if (action === "copy") {
+            Quickshell.execDetached([Quickshell.shellPath("bin/aurora-backend"), "snippets", "copy", String(itemId)]);
+            root.closeRequested();
+            return;
+        }
+        if (snippetsProc.running)
+            return;
+        root.snippetsLoading = true;
+        root.snippetsError = "";
+        snippetsProc.command = [Quickshell.shellPath("bin/aurora-backend"), "snippets", action, String(itemId)];
+        snippetsProc.running = true;
+    }
+
+    function saveComposerSnippet(): void {
+        const title = snipTitleInput.text.trim();
+        const tag = snipTagInput.text.trim().length > 0 ? snipTagInput.text.trim() : "general";
+        const body = snipBodyInput.text;
+        if (title.length === 0) {
+            root.snippetsError = "Snippet title is required";
+            return;
+        }
+        if (!root._composerClipboardMode && body.trim().length === 0) {
+            root.snippetsError = "Snippet text is required";
+            return;
+        }
+        if (snippetsProc.running)
+            return;
+        root.snippetsLoading = true;
+        root.snippetsError = "";
+        if (root._composerClipboardMode) {
+            snippetsProc.command = [
+                Quickshell.shellPath("bin/aurora-backend"),
+                "snippets", "add", title, tag, "--from-clipboard"
+            ];
+        } else {
+            snippetsProc.command = [
+                "sh", "-c",
+                "printf '%s' \"$4\" | \"$1\" snippets add \"$2\" \"$3\" --stdin",
+                "_", Quickshell.shellPath("bin/aurora-backend"), title, tag, body
+            ];
+        }
+        snippetsProc.running = true;
+    }
+
+    function openSnippetComposer(fromClipboard: bool): void {
+        root._composerClipboardMode = fromClipboard;
+        root.snippetsError = "";
+        snipTitleInput.text = "";
+        snipTagInput.text = "shell";
+        snipBodyInput.text = "";
+        root.composerOpen = true;
+        snipTitleInput.forceActiveFocus();
+    }
+
+    Process {
+        id: snippetsProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.snippetsLoading = false;
+                const raw = (text || "").trim();
+                if (raw.length === 0) {
+                    root.snippetsError = "Snippets backend returned empty response";
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        root.snippetsError = "";
+                        root.snippetItems = parsed;
+                        if (root.composerOpen)
+                            root.composerOpen = false;
+                    } else if (parsed && parsed.ok === false) {
+                        root.snippetsError = String(parsed.error || "Snippet command failed");
+                    }
+                } catch (err) {
+                    root.snippetsError = "Unable to parse snippets store";
+                }
+            }
+        }
+        onExited: (code) => {
+            root.snippetsLoading = false;
+            if (code !== 0 && root.snippetsError.length === 0)
+                root.snippetsError = "Snippets backend exited with code " + code;
+        }
     }
 
     FileView {
@@ -348,6 +460,21 @@ ColumnLayout {
         if (q.length === 0)
             return items;
         return items.filter(it => String(it.text || "").toLowerCase().indexOf(q) !== -1);
+    }
+
+    // --- Snippets Model ---
+    readonly property var filteredSnippets: {
+        if (root.effectiveMode !== "snippets")
+            return [];
+        const q = root.cleanQuery.toLowerCase();
+        const items = root.snippetItems || [];
+        if (q.length === 0)
+            return items;
+        return items.filter(it =>
+            String(it.title || "").toLowerCase().indexOf(q) !== -1
+            || String(it.tag || "").toLowerCase().indexOf(q) !== -1
+            || String(it.body || "").toLowerCase().indexOf(q) !== -1
+        );
     }
 
     // --- Safe Calculator, Unit Converter & Color Inspector (zero eval) ---
@@ -766,6 +893,9 @@ ColumnLayout {
         { id: "shot-area",   title: "Screenshot: Area Selection",   sub: "Select region with slurp",           icon: "󰹑", kw: "screenshot capture area" },
         { id: "shot-win",    title: "Screenshot: Focused Window",   sub: "Capture active window geometry",     icon: "󰖯", kw: "screenshot window capture" },
         { id: "shot-full",   title: "Screenshot: Fullscreen",       sub: "Capture entire display",             icon: "󰍹", kw: "screenshot full screen" },
+        { id: "captures",    title: "Open Capture Studio",          sub: "Gallery, copy, annotate & record",   icon: "󰹑", kw: "capture studio screenshots recordings gallery" },
+        { id: "snippets",    title: "Open Snippets Vault",          sub: "Reusable commands and text templates", icon: "󰅍", kw: "snippets templates vault paste" },
+        { id: "distro-stat", title: "Check Distro & Package Status",sub: "Inspect Portage, pacman, or dnf health", icon: "󰏗", kw: "distro packages updates arch fedora gentoo doctor" },
         { id: "color-pick",  title: "Color Picker (Eyedropper)",    sub: "Pick pixel #RRGGBB to clipboard",    icon: "󰈊", kw: "color picker eyedropper hex" },
         { id: "record-area", title: "Toggle Screen Recording",      sub: "Start/stop wf-recorder capture",     icon: "󰑊", kw: "record screen video mp4" },
         { id: "keybinds",    title: "Keybind Cheat Sheet",          sub: "Show all MangoWC & shell shortcuts", icon: "󰌌", kw: "keybinds shortcuts help" },
@@ -879,6 +1009,7 @@ ColumnLayout {
     readonly property int currentCount: {
         if (root.effectiveMode === "apps") return root.filteredApps.length;
         if (root.effectiveMode === "clip") return root.filteredClipboard.length;
+        if (root.effectiveMode === "snippets") return root.filteredSnippets.length;
         if (root.effectiveMode === "calc") return root.calcResults.length;
         if (root.effectiveMode === "cmds") return root.filteredCommands.length;
         return root.filteredEmojis.length;
@@ -896,6 +1027,7 @@ ColumnLayout {
         root.selectedIndex = (root.selectedIndex + delta + count) % count;
         if (root.effectiveMode === "apps") appList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
         else if (root.effectiveMode === "clip") clipList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+        else if (root.effectiveMode === "snippets") snipList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
         else if (root.effectiveMode === "cmds") cmdsList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
         else if (root.effectiveMode === "emoji") emojiGrid.positionViewAtIndex(root.selectedIndex, GridView.Contain);
     }
@@ -951,6 +1083,13 @@ ColumnLayout {
             Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--window"]);
         } else if (cmdId === "shot-full") {
             Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--full"]);
+        } else if (cmdId === "captures") {
+            root.openCaptureHubRequested();
+        } else if (cmdId === "snippets") {
+            root.openInMode("snippets");
+            return;
+        } else if (cmdId === "distro-stat") {
+            root.openSettingsRequested("system");
         } else if (cmdId === "color-pick") {
             Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--color"]);
         } else if (cmdId === "record-area") {
@@ -990,6 +1129,8 @@ ColumnLayout {
             launchEntry(root.filteredApps[idx]);
         } else if (root.effectiveMode === "clip" && idx < root.filteredClipboard.length) {
             runClipboardAction("copy", root.filteredClipboard[idx].id);
+        } else if (root.effectiveMode === "snippets" && idx < root.filteredSnippets.length) {
+            runSnippetAction("copy", root.filteredSnippets[idx].id);
         } else if (root.effectiveMode === "calc" && idx < root.calcResults.length) {
             copyPlainText(root.calcResults[idx].copyVal);
             root.closeRequested();
@@ -1000,6 +1141,9 @@ ColumnLayout {
             root.closeRequested();
         }
     }
+
+    readonly property bool anyInputFocused: searchInput.activeFocus || snipTitleInput.activeFocus || snipTagInput.activeFocus || snipBodyInput.activeFocus
+    onAnyInputFocusedChanged: root.searchFocusChanged(anyInputFocused)
 
     // --- macOS Spotlight Search / Expression Bar ---
     Rectangle {
@@ -1027,6 +1171,7 @@ ColumnLayout {
             Text {
                 text: {
                     if (root.effectiveMode === "clip") return "󰅌";
+                    if (root.effectiveMode === "snippets") return "󰅍";
                     if (root.effectiveMode === "calc") return "󰪚";
                     if (root.effectiveMode === "cmds") return "󰘳";
                     if (root.effectiveMode === "emoji") return "󰞅";
@@ -1046,10 +1191,11 @@ ColumnLayout {
                     visible: searchInput.text.length === 0
                     text: {
                         if (root.effectiveMode === "clip") return "Search clipboard history...";
+                        if (root.effectiveMode === "snippets") return "Search snippets by title, tag, or body...";
                         if (root.effectiveMode === "calc") return "Math (1920*1080), units (100f to c, 2 gib to mb), or #hex...";
                         if (root.effectiveMode === "cmds") return "Search desktop commands...";
                         if (root.effectiveMode === "emoji") return "Search emojis & Nerd Font icons...";
-                        return "Search apps, > commands, = math, 100f to c, #hex...";
+                        return "Search apps, > commands, ; snippets, = math, #hex...";
                     }
                     elide: Text.ElideRight
                     width: parent.width
@@ -1073,7 +1219,6 @@ ColumnLayout {
                         root.query = text;
                         root.selectedIndex = 0;
                     }
-                    onActiveFocusChanged: root.searchFocusChanged(activeFocus)
 
                     Keys.onUpPressed: root.moveSelection(-1)
                     Keys.onDownPressed: root.moveSelection(1)
@@ -1160,11 +1305,12 @@ ColumnLayout {
 
                 Repeater {
                     model: [
-                        { id: "apps",  label: "Apps",      icon: "󰀻" },
-                        { id: "clip",  label: "Clipboard", icon: "󰅌" },
-                        { id: "calc",  label: "Calc",      icon: "󰪚" },
-                        { id: "cmds",  label: "Commands",  icon: "󰘳" },
-                        { id: "emoji", label: "Emoji",     icon: "󰞅" }
+                        { id: "apps",     label: "Apps",      icon: "󰀻" },
+                        { id: "clip",     label: "Clipboard", icon: "󰅌" },
+                        { id: "snippets", label: "Snippets",  icon: "󰅍" },
+                        { id: "calc",     label: "Calc",      icon: "󰪚" },
+                        { id: "cmds",     label: "Commands",  icon: "󰘳" },
+                        { id: "emoji",    label: "Emoji",     icon: "󰞅" }
                     ]
 
                     delegate: Rectangle {
@@ -1251,9 +1397,83 @@ ColumnLayout {
             }
         }
 
+        // Snippet Composer Quick Actions
+        RowLayout {
+            visible: root.effectiveMode === "snippets"
+            spacing: 6
+
+            Rectangle {
+                implicitHeight: 26
+                implicitWidth: newSnipLbl.implicitWidth + 14
+                radius: Theme.r(8)
+                color: (root.composerOpen && !root._composerClipboardMode)
+                    ? Theme.primary
+                    : (newSnipMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+
+                Text {
+                    id: newSnipLbl
+                    anchors.centerIn: parent
+                    text: "+ New"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.DemiBold
+                    color: (root.composerOpen && !root._composerClipboardMode) ? Theme.fgPrimary : Theme.fgSurface
+                }
+
+                MouseArea {
+                    id: newSnipMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.composerOpen && !root._composerClipboardMode) {
+                            root.composerOpen = false;
+                            searchInput.forceActiveFocus();
+                        } else {
+                            root.openSnippetComposer(false);
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                implicitHeight: 26
+                implicitWidth: clipSnipLbl.implicitWidth + 14
+                radius: Theme.r(8)
+                color: (root.composerOpen && root._composerClipboardMode)
+                    ? Theme.primary
+                    : (clipSnipMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+
+                Text {
+                    id: clipSnipLbl
+                    anchors.centerIn: parent
+                    text: "+ Clipboard"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.DemiBold
+                    color: (root.composerOpen && root._composerClipboardMode) ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                }
+
+                MouseArea {
+                    id: clipSnipMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.composerOpen && root._composerClipboardMode) {
+                            root.composerOpen = false;
+                            searchInput.forceActiveFocus();
+                        } else {
+                            root.openSnippetComposer(true);
+                        }
+                    }
+                }
+            }
+        }
+
         // Subtle Keycap Shortcuts Hint
         RowLayout {
-            visible: !(root.effectiveMode === "clip" && root.clipboardItems.length > 0)
+            visible: !(root.effectiveMode === "clip" && root.clipboardItems.length > 0) && root.effectiveMode !== "snippets"
             spacing: 8
 
             Repeater {
@@ -1842,16 +2062,382 @@ ColumnLayout {
             }
         }
 
-        // Empty State Text
+        // 6. Snippets Vault List + Inline Composer
+        ColumnLayout {
+            visible: root.effectiveMode === "snippets"
+            anchors.fill: parent
+            anchors.margins: 8
+            spacing: 8
+
+            Rectangle {
+                visible: root.composerOpen
+                Layout.fillWidth: true
+                implicitHeight: compCol.implicitHeight + 16
+                radius: Theme.r(12)
+                color: Theme.subCardBg
+
+                ColumnLayout {
+                    id: compCol
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 6
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 30
+                            radius: Theme.r(8)
+                            color: Theme.cardBg
+                            border.width: snipTitleInput.activeFocus ? 1 : 0
+                            border.color: Theme.primary
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                visible: snipTitleInput.text.length === 0
+                                text: "Snippet title"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
+                                color: Theme.fgSurfaceVariant
+                            }
+
+                            TextInput {
+                                id: snipTitleInput
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                verticalAlignment: TextInput.AlignVCenter
+                                color: Theme.fgSurface
+                                selectionColor: Theme.primary
+                                selectedTextColor: Theme.fgPrimary
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
+                                clip: true
+                                Keys.onTabPressed: snipTagInput.forceActiveFocus()
+                                Keys.onEscapePressed: {
+                                    root.composerOpen = false;
+                                    searchInput.forceActiveFocus();
+                                }
+                                Keys.onReturnPressed: {
+                                    if (root._composerClipboardMode)
+                                        root.saveComposerSnippet();
+                                    else
+                                        snipBodyInput.forceActiveFocus();
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.preferredWidth: 110
+                            implicitHeight: 30
+                            radius: Theme.r(8)
+                            color: Theme.cardBg
+                            border.width: snipTagInput.activeFocus ? 1 : 0
+                            border.color: Theme.primary
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                visible: snipTagInput.text.length === 0
+                                text: "Tag (shell)"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
+                                color: Theme.fgSurfaceVariant
+                            }
+
+                            TextInput {
+                                id: snipTagInput
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                verticalAlignment: TextInput.AlignVCenter
+                                color: Theme.fgSurface
+                                selectionColor: Theme.primary
+                                selectedTextColor: Theme.fgPrimary
+                                font.family: Theme.monoFont
+                                font.pixelSize: 10
+                                clip: true
+                                Keys.onTabPressed: {
+                                    if (root._composerClipboardMode)
+                                        snipTitleInput.forceActiveFocus();
+                                    else
+                                        snipBodyInput.forceActiveFocus();
+                                }
+                                Keys.onEscapePressed: {
+                                    root.composerOpen = false;
+                                    searchInput.forceActiveFocus();
+                                }
+                                Keys.onReturnPressed: {
+                                    if (root._composerClipboardMode)
+                                        root.saveComposerSnippet();
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        visible: !root._composerClipboardMode
+                        Layout.fillWidth: true
+                        implicitHeight: 62
+                        radius: Theme.r(8)
+                        color: Theme.cardBg
+                        border.width: snipBodyInput.activeFocus ? 1 : 0
+                        border.color: Theme.primary
+
+                        Text {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.margins: 8
+                            visible: snipBodyInput.text.length === 0
+                            text: "Enter reusable command, path, or template text..."
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        TextEdit {
+                            id: snipBodyInput
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            color: Theme.fgSurface
+                            selectionColor: Theme.primary
+                            selectedTextColor: Theme.fgPrimary
+                            font.family: Theme.monoFont
+                            font.pixelSize: 11
+                            wrapMode: TextEdit.Wrap
+                            clip: true
+                            Keys.onEscapePressed: {
+                                root.composerOpen = false;
+                                searchInput.forceActiveFocus();
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: root.snippetsError.length > 0
+                                ? root.snippetsError
+                                : (root._composerClipboardMode ? "Reads current clipboard text safely into vault" : "Saved with 0600 permissions")
+                            elide: Text.ElideRight
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            color: root.snippetsError.length > 0 ? Theme.error : Theme.fgSurfaceVariant
+                        }
+
+                        Rectangle {
+                            implicitHeight: 24
+                            implicitWidth: cnlSnipTxt.implicitWidth + 14
+                            radius: Theme.r(7)
+                            color: cnlSnipMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg
+
+                            Text {
+                                id: cnlSnipTxt
+                                anchors.centerIn: parent
+                                text: "Cancel"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                color: Theme.fgSurfaceVariant
+                            }
+
+                            MouseArea {
+                                id: cnlSnipMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.composerOpen = false;
+                                    searchInput.forceActiveFocus();
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            implicitHeight: 24
+                            implicitWidth: svSnipTxt.implicitWidth + 16
+                            radius: Theme.r(7)
+                            color: Theme.primary
+
+                            Text {
+                                id: svSnipTxt
+                                anchors.centerIn: parent
+                                text: "Save snippet"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                font.weight: Font.Bold
+                                color: Theme.fgPrimary
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.saveComposerSnippet()
+                            }
+                        }
+                    }
+                }
+            }
+
+            ListView {
+                id: snipList
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: !root.snippetsLoading && root.snippetsError.length === 0 && root.filteredSnippets.length > 0
+                spacing: 4
+                clip: true
+                model: root.filteredSnippets
+
+                delegate: Rectangle {
+                    id: snipRow
+                    required property var modelData
+                    required property int index
+
+                    readonly property bool isSelected: snipRow.index === root.selectedIndex
+
+                    width: snipList.width
+                    height: 52
+                    radius: Theme.r(12)
+                    color: snipRow.isSelected
+                        ? Theme.rowSelectedBg
+                        : (snipMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: snipRow.isSelected ? 1 : 0
+                    border.color: Theme.primary
+
+                    MouseArea {
+                        id: snipMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onEntered: root.selectedIndex = snipRow.index
+                        onClicked: root.runSnippetAction("copy", snipRow.modelData.id)
+                    }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 10
+
+                        Rectangle {
+                            implicitWidth: 26
+                            implicitHeight: 26
+                            radius: Theme.r(13)
+                            color: snipRow.modelData.pinned
+                                ? Theme.withAlpha(Theme.primary, 0.22)
+                                : (snipPinMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰐃"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 11
+                                color: snipRow.modelData.pinned ? Theme.primary : Theme.fgSurfaceVariant
+                            }
+
+                            MouseArea {
+                                id: snipPinMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.runSnippetAction("pin", snipRow.modelData.id)
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Text {
+                                    text: String(snipRow.modelData.title || "")
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 1
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 11
+                                    font.weight: snipRow.isSelected ? Font.Bold : Font.DemiBold
+                                    color: snipRow.isSelected ? Theme.primary : Theme.fgSurface
+                                }
+
+                                Rectangle {
+                                    implicitHeight: 17
+                                    implicitWidth: tagBadgeLbl.implicitWidth + 10
+                                    radius: Theme.r(5)
+                                    color: Theme.cardBg
+
+                                    Text {
+                                        id: tagBadgeLbl
+                                        anchors.centerIn: parent
+                                        text: String(snipRow.modelData.tag || "general")
+                                        font.family: Theme.monoFont
+                                        font.pixelSize: 9
+                                        color: Theme.secondary
+                                    }
+                                }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: String(snipRow.modelData.preview || "")
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                font.family: Theme.monoFont
+                                font.pixelSize: 10
+                                color: Theme.fgSurfaceVariant
+                            }
+                        }
+
+                        Rectangle {
+                            implicitWidth: 26
+                            implicitHeight: 26
+                            radius: Theme.r(13)
+                            color: snipDelMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰆴"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 12
+                                color: snipDelMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                            }
+
+                            MouseArea {
+                                id: snipDelMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.runSnippetAction("delete", snipRow.modelData.id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Empty / Loading / Error State Text
         ColumnLayout {
             anchors.centerIn: parent
-            visible: root.currentCount === 0
+            visible: root.effectiveMode === "snippets"
+                ? (!root.composerOpen && (root.snippetsLoading || root.snippetsError.length > 0 || root.filteredSnippets.length === 0))
+                : (root.currentCount === 0)
             spacing: 6
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: {
                     if (root.effectiveMode === "clip") return "󰅌";
+                    if (root.effectiveMode === "snippets") return root.snippetsError.length > 0 ? "󰀦" : "󰅍";
                     if (root.effectiveMode === "calc") return "󰪚";
                     if (root.effectiveMode === "cmds") return "󰘳";
                     if (root.effectiveMode === "emoji") return "󰞅";
@@ -1859,7 +2445,7 @@ ColumnLayout {
                 }
                 font.family: Theme.iconFont
                 font.pixelSize: 28
-                color: Theme.fgSurfaceVariant
+                color: (root.effectiveMode === "snippets" && root.snippetsError.length > 0) ? Theme.error : Theme.fgSurfaceVariant
             }
 
             Text {
@@ -1867,6 +2453,13 @@ ColumnLayout {
                 text: {
                     if (root.effectiveMode === "clip")
                         return root.clipboardLoading ? "Loading clipboard..." : "Clipboard history is empty";
+                    if (root.effectiveMode === "snippets") {
+                        if (root.snippetsLoading) return "Loading snippets...";
+                        if (root.snippetsError.length > 0) return root.snippetsError;
+                        return root.cleanQuery.length > 0
+                            ? "No matching snippets"
+                            : "No saved snippets yet. Click + New or + Clipboard above.";
+                    }
                     if (root.effectiveMode === "calc")
                         return "Enter an arithmetic, hex (0xff), or Math expression";
                     if (root.effectiveMode === "cmds")

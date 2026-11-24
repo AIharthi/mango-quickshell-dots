@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Aurora Shell 2.0 (MangoWC + Quickshell) Dotfiles Installer
+# Aurora Shell 2.1 (MangoWC + Quickshell) Dotfiles Installer
 # Supports Arch Linux, Fedora, and Gentoo (systemd and OpenRC + elogind).
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -405,7 +405,7 @@ echo ""
 if [[ "$DRY_RUN" -eq 1 ]]; then
     echo "Dry run complete. No files were modified."
 else
-    echo "Done! Welcome to Aurora Shell 2.0. Next steps:"
+    echo "Done! Welcome to Aurora Shell 2.1. Next steps:"
     echo "  1. Drop wallpapers into $HOME/Pictures/Wallpapers/ for the Theme Switcher & Matugen."
     echo "  2. Press Super+S anytime to open Aurora Settings (16 categories + System Doctor)."
     echo "  3. Press Super+Shift+E to open aurora-fm (Dynamic File Manager) or Super+Alt+E for Quick Files."

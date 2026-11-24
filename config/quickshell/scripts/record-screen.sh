@@ -12,6 +12,7 @@ mkdir -p "$RUNTIME_DIR"
 chmod 700 "$RUNTIME_DIR" 2>/dev/null || true
 STATE_FILE="${RUNTIME_DIR}/aurora-recording.json"
 QUICKSHELL_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
+BACKEND_BIN="${QUICKSHELL_DIR}/bin/aurora-backend"
 PREFS_JSON="${QUICKSHELL_DIR}/shell-prefs.json"
 COLORS_JSON="${QUICKSHELL_DIR}/colors.json"
 
@@ -34,6 +35,14 @@ sync_shell() {
 
 read_recording_dir() {
     local default_dir="$HOME/Videos/Recordings"
+    if [[ -x "$BACKEND_BIN" ]]; then
+        local rdir=""
+        IFS=$'\t' read -r _ _ _ _ _ _ rdir < <("$BACKEND_BIN" captures prefs --tsv 2>/dev/null || true)
+        if [[ -n "$rdir" ]]; then
+            printf '%s\n' "$rdir"
+            return 0
+        fi
+    fi
     if [[ -f "$PREFS_JSON" ]] && command -v python3 >/dev/null 2>&1; then
         python3 - "$PREFS_JSON" "$default_dir" <<'PY' 2>/dev/null || printf '%s\n' "$default_dir"
 import json, os, sys
@@ -51,6 +60,12 @@ PY
 }
 
 is_recording_active() {
+    if [[ -x "$BACKEND_BIN" ]]; then
+        local st=""
+        st=$("$BACKEND_BIN" captures rec-state status 2>/dev/null || true)
+        [[ "$st" == *'"active":true'* ]] && return 0
+        return 1
+    fi
     [[ -f "$STATE_FILE" ]] || return 1
     local pid
     pid=$(python3 - "$STATE_FILE" <<'PY' 2>/dev/null || echo ""
@@ -70,6 +85,9 @@ PY
 }
 
 read_status() {
+    if [[ -x "$BACKEND_BIN" ]]; then
+        exec "$BACKEND_BIN" captures rec-state status
+    fi
     if is_recording_active; then
         cat "$STATE_FILE"
     else
@@ -78,11 +96,26 @@ read_status() {
 }
 
 stop_recording() {
+    local filepath=""
+    if [[ -x "$BACKEND_BIN" ]]; then
+        filepath=$("$BACKEND_BIN" captures rec-state stop --print-path 2>/dev/null || true)
+        sync_shell
+        if [[ -n "$filepath" && -f "$filepath" ]]; then
+            if command -v wl-copy >/dev/null 2>&1; then
+                printf '%s' "$filepath" | wl-copy --type text/plain 2>/dev/null || true
+            fi
+            notify_user "Recording Saved" "Saved to ${filepath} (path copied to clipboard)"
+        else
+            notify_user "Recording Stopped" "Screen recording finished."
+        fi
+        return 0
+    fi
+
     if ! [[ -f "$STATE_FILE" ]]; then
         sync_shell
         exit 0
     fi
-    local pid="" filepath=""
+    local pid=""
     IFS=$'\t' read -r pid filepath < <(python3 - "$STATE_FILE" <<'PY' 2>/dev/null || printf '\t\n'
 import json, sys
 try:
@@ -161,7 +194,11 @@ start_recording() {
         fi
         local sel_border="#cba6f7ff"
         local sel_fill="#cba6f724"
-        if [[ -f "$COLORS_JSON" ]] && command -v python3 >/dev/null 2>&1; then
+        if [[ -x "$BACKEND_BIN" ]]; then
+            IFS=$'\t' read -r _ _ _ _ sel_border sel_fill _ < <(
+                "$BACKEND_BIN" captures prefs --tsv 2>/dev/null || printf '\t\t\t\t#cba6f7ff\t#cba6f724\t\n'
+            )
+        elif [[ -f "$COLORS_JSON" ]] && command -v python3 >/dev/null 2>&1; then
             IFS=$'\t' read -r sel_border sel_fill < <(python3 - "$COLORS_JSON" <<'PY' 2>/dev/null || printf '#cba6f7ff\t#cba6f724\n'
 import json, re, sys
 try:
@@ -194,9 +231,12 @@ PY
         rec_pid=$!
     fi
 
-    local started_at
-    started_at=$(date +%s)
-    python3 - "$STATE_FILE" "$rec_pid" "$started_at" "$filepath" <<'PY'
+    if [[ -x "$BACKEND_BIN" ]]; then
+        "$BACKEND_BIN" captures rec-state write "$rec_pid" "$filepath" >/dev/null 2>&1 || true
+    else
+        local started_at
+        started_at=$(date +%s)
+        python3 - "$STATE_FILE" "$rec_pid" "$started_at" "$filepath" <<'PY'
 import json, os, sys, tempfile
 state_path, pid_s, ts_s, fpath = sys.argv[1:5]
 parent = os.path.dirname(state_path)
@@ -218,6 +258,7 @@ except Exception:
         os.unlink(tmp)
     raise
 PY
+    fi
     sync_shell
 }
 

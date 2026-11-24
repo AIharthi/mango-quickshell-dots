@@ -109,16 +109,8 @@ PanelWindow {
         root.closeRequested();
         if (actId === "lock") {
             root.lockRequested();
-        } else if (actId === "suspend") {
-            Quickshell.execDetached(["loginctl", "suspend"]);
-        } else if (actId === "hibernate") {
-            Quickshell.execDetached(["loginctl", "hibernate"]);
-        } else if (actId === "logout") {
-            Quickshell.execDetached(["mmsg", "dispatch", "quit"]);
-        } else if (actId === "reboot") {
-            Quickshell.execDetached(["loginctl", "reboot"]);
-        } else if (actId === "poweroff") {
-            Quickshell.execDetached(["loginctl", "poweroff"]);
+        } else if (actId === "suspend" || actId === "hibernate" || actId === "logout" || actId === "reboot" || actId === "poweroff") {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "power-action", actId]);
         }
     }
 

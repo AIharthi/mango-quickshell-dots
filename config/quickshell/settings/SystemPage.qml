@@ -28,12 +28,40 @@ ColumnLayout {
     property string backupStatus: ""
     property var doctorReport: ({ ok: true, summary: "Running diagnostics...", passCount: 0, warnCount: 0, failCount: 0, checks: [] })
     property bool doctorRunning: false
+    property var distroStatus: ({ ok: false, family: "", prettyName: "", initSystem: "", seatManager: "", hasOpenRcUser: false, packageManager: "", installedCount: 0, worldCount: 0, repos: [], syncStatus: "", updatesChecked: false, pendingCount: 0, dbLocked: false, preservedRebuild: false, aurHelper: "", flatpakCount: 0, updateCmd: "" })
+    property bool distroLoading: false
+    property string distroError: ""
 
     function runDoctor(): void {
         if (doctorProc.running)
             return;
         root.doctorRunning = true;
         doctorProc.running = true;
+    }
+
+    function refreshDistro(forceRefresh: bool): void {
+        if (distroProc.running)
+            return;
+        root.distroLoading = true;
+        root.distroError = "";
+        distroProc.command = [
+            Quickshell.shellPath("scripts/manage-system.sh"),
+            "distro",
+            forceRefresh ? "refresh" : "status"
+        ];
+        distroProc.running = true;
+    }
+
+    function launchDistroUpdate(): void {
+        const cmd = String(root.distroStatus.updateCmd || "").trim();
+        if (cmd.length === 0)
+            return;
+        Quickshell.execDetached([
+            Quickshell.shellPath("scripts/launch-app.sh"),
+            "terminal-exec",
+            "sh", "-c",
+            cmd + "; printf '\\nPress Enter to close...'; read _"
+        ]);
     }
 
     function loadOverrides(): void {
@@ -46,6 +74,7 @@ ColumnLayout {
         if (!backupsListProc.running)
             backupsListProc.running = true;
         runDoctor();
+        refreshDistro(false);
     }
 
     function exportBackup(): void {
@@ -220,7 +249,39 @@ ColumnLayout {
         onExited: root.doctorRunning = false
     }
 
-    // --- 0. Aurora Shell 2.0 · System Health Doctor ---
+    Process {
+        id: distroProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.distroLoading = false;
+                const raw = (text || "").trim();
+                if (raw.length === 0) {
+                    root.distroError = "Distro status returned an empty response";
+                    return;
+                }
+                try {
+                    const d = JSON.parse(raw);
+                    if (d && d.ok === false) {
+                        root.distroError = String(d.error || "Unable to inspect distro packages");
+                        return;
+                    }
+                    if (d && d.ok) {
+                        root.distroError = "";
+                        root.distroStatus = d;
+                    }
+                } catch (err) {
+                    root.distroError = "Unable to parse distro status";
+                }
+            }
+        }
+        onExited: (code) => {
+            root.distroLoading = false;
+            if (code !== 0 && root.distroError.length === 0)
+                root.distroError = "Distro check exited with code " + code;
+        }
+    }
+
+    // --- 0. Aurora Shell 2.1 · System Health Doctor ---
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: docCol.implicitHeight + 24
@@ -248,7 +309,7 @@ ColumnLayout {
                     Text {
                         id: verLbl
                         anchors.centerIn: parent
-                        text: "Aurora Shell 2.0"
+                        text: "Aurora Shell 2.1"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(9)
                         font.weight: Font.Bold
@@ -359,6 +420,297 @@ ColumnLayout {
                                 font.pixelSize: Theme.fs(9)
                                 color: Theme.fgSurfaceVariant
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 0b. Cross-Distro Package & Init Center (Arch / Fedora / Gentoo) ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: distCol.implicitHeight + 24
+        radius: Theme.r(14)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: distCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "󰏗"
+                    font.family: Theme.iconFont
+                    font.pixelSize: Theme.fs(15)
+                    color: Theme.primary
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        text: "Distro & packages"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(11)
+                        font.weight: Font.Bold
+                        color: Theme.fgSurface
+                    }
+
+                    Text {
+                        text: root.distroStatus.ok
+                            ? (String(root.distroStatus.prettyName || DeviceCaps.distro)
+                                + " · " + String(root.distroStatus.initSystem || "")
+                                + " + " + String(root.distroStatus.seatManager || ""))
+                            : "Arch (pacman), Fedora (dnf), and Gentoo (Portage)"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 26
+                    implicitWidth: chkDistLbl.implicitWidth + 16
+                    radius: Theme.r(8)
+                    color: chkDistMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+
+                    Text {
+                        id: chkDistLbl
+                        anchors.centerIn: parent
+                        text: root.distroLoading ? "Checking..." : "Check status"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
+                    }
+
+                    MouseArea {
+                        id: chkDistMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.refreshDistro(true)
+                    }
+                }
+
+                Rectangle {
+                    visible: root.distroStatus.ok && String(root.distroStatus.updateCmd || "").length > 0
+                    implicitHeight: 26
+                    implicitWidth: updDistLbl.implicitWidth + 16
+                    radius: Theme.r(8)
+                    color: Theme.primary
+
+                    Text {
+                        id: updDistLbl
+                        anchors.centerIn: parent
+                        text: "Update in terminal"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.fgPrimary
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.launchDistroUpdate()
+                    }
+                }
+            }
+
+            // Loading / Error / Empty states
+            Text {
+                visible: root.distroLoading && !root.distroStatus.ok
+                text: "Inspecting local package database and init runtime..."
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(10)
+                color: Theme.fgSurfaceVariant
+            }
+
+            RowLayout {
+                visible: !root.distroLoading && root.distroError.length > 0 && !root.distroStatus.ok
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.distroError
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(10)
+                    color: Theme.error
+                }
+
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: retryDistTxt.implicitWidth + 14
+                    radius: Theme.r(7)
+                    color: Theme.subCardBg
+
+                    Text {
+                        id: retryDistTxt
+                        anchors.centerIn: parent
+                        text: "Retry"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.refreshDistro(true)
+                    }
+                }
+            }
+
+            GridLayout {
+                visible: root.distroStatus.ok
+                Layout.fillWidth: true
+                columns: 3
+                columnSpacing: 8
+                rowSpacing: 8
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: pmCol.implicitHeight + 14
+                    radius: Theme.r(10)
+                    color: Theme.subCardBg
+
+                    ColumnLayout {
+                        id: pmCol
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 3
+
+                        Text {
+                            text: String(root.distroStatus.packageManager || "Packages")
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            font.weight: Font.Bold
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: Number(root.distroStatus.installedCount || 0) + " installed"
+                                + (Number(root.distroStatus.worldCount || 0) > 0 ? (" · " + root.distroStatus.worldCount + " @world") : "")
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Bold
+                            color: Theme.fgSurface
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: (String(root.distroStatus.aurHelper || "").length > 0 ? ("AUR: " + root.distroStatus.aurHelper + " · ") : "")
+                                + Number(root.distroStatus.flatpakCount || 0) + " Flatpak apps"
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(9)
+                            color: Theme.fgSurfaceVariant
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: repoCol.implicitHeight + 14
+                    radius: Theme.r(10)
+                    color: Theme.subCardBg
+
+                    ColumnLayout {
+                        id: repoCol
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 3
+
+                        Text {
+                            text: root.distroStatus.family === "gentoo" ? "Repositories & overlays" : "Enabled repositories"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            font.weight: Font.Bold
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: (Array.isArray(root.distroStatus.repos) && root.distroStatus.repos.length > 0)
+                                ? root.distroStatus.repos.join(", ")
+                                : "None detected"
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.DemiBold
+                            color: Theme.fgSurface
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: root.distroStatus.hasOpenRcUser ? "openrc-user active" : ("Family: " + String(root.distroStatus.family || "linux"))
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(9)
+                            color: Theme.fgSurfaceVariant
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: syncCol.implicitHeight + 14
+                    radius: Theme.r(10)
+                    color: Theme.subCardBg
+
+                    ColumnLayout {
+                        id: syncCol
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 3
+
+                        Text {
+                            text: "Sync & health"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            font.weight: Font.Bold
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: String(root.distroStatus.syncStatus || "Unknown")
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.DemiBold
+                            color: (Number(root.distroStatus.pendingCount || 0) > 0 || root.distroStatus.dbLocked)
+                                ? Theme.warning
+                                : Theme.fgSurface
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: root.distroStatus.dbLocked
+                                ? "Database lock present"
+                                : (root.distroStatus.preservedRebuild ? "Preserved libs in registry" : "Package DB unlocked")
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            color: (root.distroStatus.dbLocked || root.distroStatus.preservedRebuild)
+                                ? Theme.warning
+                                : Theme.fgSurfaceVariant
                         }
                     }
                 }

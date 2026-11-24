@@ -131,7 +131,10 @@ PanelWindow {
         { label: "Shortcuts & Custom Binds",   pageId: "shortcuts",     keywords: "shortcut keybind hotkeys super mod mousebind custom bind cheat sheet" },
         { label: "Clipboard, Idle Lock & SDDM",    pageId: "privacy",   keywords: "privacy clipboard history clear middle paste recent files camera microphone lock idle timeout suspend sddm greeter login sync" },
         { label: "Sensors, Processes & Init",  pageId: "monitor",       keywords: "temp temperature cpu gpu process pid kill openrc systemd services" },
-        { label: "User, Clock & Backup",       pageId: "system",        keywords: "user account clock 24h seconds date format keep awake disk storage backup export reset doctor health diagnostics aurora battery watts" }
+        { label: "User, Clock & Backup",       pageId: "system",        keywords: "user account clock 24h seconds date format keep awake disk storage backup export reset doctor health diagnostics aurora battery watts" },
+        { label: "Distro & Package Center",    pageId: "system",        keywords: "distro arch pacman paru yay fedora dnf rpm gentoo portage emerge openrc systemd elogind flatpak updates packages" },
+        { label: "Capture Studio & Screenshots", pageId: "shell",       keywords: "capture studio screenshot recording gallery annotate satty swappy wf-recorder copy trash" },
+        { label: "Snippets Vault & Sessions",  pageId: "shortcuts",     keywords: "snippets vault templates workspace sessions save restore window switcher" }
     ]
 
     readonly property var searchMatches: {

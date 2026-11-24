@@ -22,6 +22,7 @@ ColumnLayout {
     signal openSettingsRequested(string page)
     signal openFilesRequested(string path)
     signal openKeybindsRequested()
+    signal openCaptureHubRequested()
     signal closeRequested()
     signal searchFocusChanged(bool focused)
     signal controlInteractionChanged(bool interacting)
@@ -607,6 +608,7 @@ ColumnLayout {
                 onOpenSettingsRequested: page => root.openSettingsRequested(page)
                 onOpenFilesRequested: path => root.openFilesRequested(path)
                 onOpenKeybindsRequested: root.openKeybindsRequested()
+                onOpenCaptureHubRequested: root.openCaptureHubRequested()
             }
         }
 

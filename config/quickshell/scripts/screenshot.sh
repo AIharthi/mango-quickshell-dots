@@ -9,9 +9,12 @@ COPY_CLIP=1
 SEND_NOTIFY=1
 DELAY_SEC=0
 QUICKSHELL_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
+BACKEND_BIN="${QUICKSHELL_DIR}/bin/aurora-backend"
 COLORS_JSON="${QUICKSHELL_DIR}/colors.json"
 PREFS_JSON="${QUICKSHELL_DIR}/shell-prefs.json"
 RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+SEL_BORDER="#cba6f7ff"
+SEL_FILL="#cba6f724"
 
 notify_msg() {
     local summary="$1"
@@ -29,9 +32,14 @@ notify_msg() {
     fi
 }
 
-if [[ -f "$PREFS_JSON" ]] && command -v python3 >/dev/null 2>&1; then
-    IFS=$'\t' read -r SCREENSHOT_DIR COPY_CLIP SEND_NOTIFY DELAY_SEC < <(
-        python3 - "$PREFS_JSON" <<'PY' 2>/dev/null || printf '%s\t1\t1\t0\n' "$HOME/Pictures/Screenshots"
+if [[ -x "$BACKEND_BIN" ]]; then
+    IFS=$'\t' read -r SCREENSHOT_DIR COPY_CLIP SEND_NOTIFY DELAY_SEC SEL_BORDER SEL_FILL _ < <(
+        "$BACKEND_BIN" captures prefs --tsv 2>/dev/null || printf '%s\t1\t1\t0\t#cba6f7ff\t#cba6f724\t\n' "$HOME/Pictures/Screenshots"
+    )
+else
+    if [[ -f "$PREFS_JSON" ]] && command -v python3 >/dev/null 2>&1; then
+        IFS=$'\t' read -r SCREENSHOT_DIR COPY_CLIP SEND_NOTIFY DELAY_SEC < <(
+            python3 - "$PREFS_JSON" <<'PY' 2>/dev/null || printf '%s\t1\t1\t0\n' "$HOME/Pictures/Screenshots"
 import json, os, sys
 try:
     with open(sys.argv[1], "r", encoding="utf-8") as f:
@@ -44,15 +52,13 @@ try:
 except Exception:
     print(f"{os.path.expanduser('~/Pictures/Screenshots')}\t1\t1\t0")
 PY
-    )
-fi
+        )
+    fi
 
-# Read active Quickshell theme accent for slurp selection box
-SEL_BORDER="#cba6f7ff"
-SEL_FILL="#cba6f722"
-if [[ -f "$COLORS_JSON" ]] && command -v python3 >/dev/null 2>&1; then
-    IFS=$'\t' read -r SEL_BORDER SEL_FILL < <(
-        python3 - "$COLORS_JSON" <<'PY' 2>/dev/null || printf '#cba6f7ff\t#cba6f722\n'
+    # Read active Quickshell theme accent for slurp selection box
+    if [[ -f "$COLORS_JSON" ]] && command -v python3 >/dev/null 2>&1; then
+        IFS=$'\t' read -r SEL_BORDER SEL_FILL < <(
+            python3 - "$COLORS_JSON" <<'PY' 2>/dev/null || printf '#cba6f7ff\t#cba6f722\n'
 import json, re, sys
 try:
     with open(sys.argv[1], "r", encoding="utf-8") as f:
@@ -64,7 +70,8 @@ try:
 except Exception:
     print("#cba6f7ff\t#cba6f722")
 PY
-    )
+        )
+    fi
 fi
 
 # Eyedropper Color Picker mode
@@ -75,7 +82,10 @@ if [[ "$MODE" == "--color" ]]; then
     elif command -v grim >/dev/null 2>&1 && command -v slurp >/dev/null 2>&1; then
         PT=$(slurp -p -b "#00000044" -c "$SEL_BORDER" 2>/dev/null) || exit 0
         [[ -n "$PT" ]] || exit 0
-        PICKED=$(grim -g "$PT" -t ppm - 2>/dev/null | python3 -c '
+        if [[ -x "$BACKEND_BIN" ]]; then
+            PICKED=$(grim -g "$PT" -t ppm - 2>/dev/null | "$BACKEND_BIN" captures ppm-hex --raw 2>/dev/null || true)
+        else
+            PICKED=$(grim -g "$PT" -t ppm - 2>/dev/null | python3 -c '
 import sys
 data = sys.stdin.buffer.read()
 i = 0
@@ -101,6 +111,7 @@ if len(tokens) >= 4 and tokens[0] == "P6" and i < n:
     if len(rgb) == 3:
         print(f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}")
 ' 2>/dev/null || true)
+        fi
     else
         notify_msg "Color Picker Failed" "Install hyprpicker or grim + slurp."
         exit 1
@@ -146,7 +157,9 @@ if [[ "$MODE" == "--full" ]]; then
     TITLE="Fullscreen Screenshot"
 elif [[ "$MODE" == "--window" ]]; then
     WIN_GEOM=""
-    if command -v mmsg >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+    if [[ -x "$BACKEND_BIN" ]]; then
+        WIN_GEOM=$("$BACKEND_BIN" captures window-geom 2>/dev/null || true)
+    elif command -v mmsg >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
         WIN_GEOM=$(mmsg get focusing-client 2>/dev/null | python3 -c '
 import json, sys
 try:

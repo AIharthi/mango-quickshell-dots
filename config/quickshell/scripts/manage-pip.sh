@@ -13,6 +13,11 @@ case "$CMD" in
         ;;
 esac
 
+BACKEND_BIN="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/bin/aurora-backend"
+if [[ -x "$BACKEND_BIN" ]]; then
+    exec "$BACKEND_BIN" pip "$CMD" "$@"
+fi
+
 exec python3 - "$CMD" "$@" <<'PY'
 import json
 import os

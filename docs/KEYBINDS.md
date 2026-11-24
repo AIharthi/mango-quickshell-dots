@@ -11,8 +11,9 @@ Default compositor keybindings live in [`config/mango/config.conf`](../config/ma
 | `Super + Return` | Open default terminal (`launch-app.sh terminal`) |
 | `Super + B` | Open default browser (`launch-app.sh browser`) |
 | `Super + Z` | Open default editor (`launch-app.sh editor`) |
-| `Super + A` / `Super + Space` | Toggle Multi-Mode Launcher (`Apps`, `=` Calc, `>` Commands, `:` Emoji, `cb ` Clipboard) |
-| `Super + W` | Toggle Open Window Switcher (`WindowSwitcher.qml` via `mmsg get all-clients`) |
+| `Super + A` / `Super + Space` | Toggle Multi-Mode Launcher (`Apps`, `; ` Snippets, `=` Calc, `>` Commands, `:` Emoji, `cb ` Clipboard) |
+| `Super + ;` | Toggle Snippets Vault in Launcher (`AppLauncher.qml` / `aurora-backend snippets`) |
+| `Super + W` | Toggle Open Window Switcher & Workspace Sessions (`WindowSwitcher.qml` via `mmsg get all-clients` + `aurora-backend workspaces`) |
 | `Super + Escape` | Toggle Full-Screen Power Overlay (`Lock`, `Suspend`, `Hibernate`, `Logout`, `Reboot`, `Poweroff`) |
 | `Super + Shift + G` | Toggle Game Mode (switches bar to Minimal Pill + pauses slideshow & idle auto-lock) |
 | `Super + V` | Toggle Clipboard History Manager (`manage-clipboard.sh`) |
@@ -24,6 +25,7 @@ Default compositor keybindings live in [`config/mango/config.conf`](../config/ma
 | `Super + Shift + E` | Toggle Dynamic File Manager (`aurora-fm`) |
 | `Super + Alt + E` | Toggle Dynamic Island Quick Files Tab |
 | `Super + Shift + L` | Lock screen (`lock.sh`: native `WlSessionLock` PAM screen, or `hyprlock`/`swaylock`/`waylock` fallback) |
+| `Super + Shift + S` | Toggle Capture Studio (`CaptureHubModal.qml` gallery, modes, recordings) |
 | `Super + =` | Area screenshot (`screenshot.sh --area`) |
 | `Super + Shift + =` | Fullscreen screenshot (`screenshot.sh --full`) |
 | `Super + Ctrl + =` | Focused window screenshot (`screenshot.sh --window`) |
@@ -113,6 +115,8 @@ Default compositor keybindings live in [`config/mango/config.conf`](../config/ma
 # Drawers, Launcher, Lock, Power, Switcher, Settings & Files
 qs ipc call aurora lockSession
 qs ipc call aurora toggleLauncher
+qs ipc call aurora toggleSnippets
+qs ipc call aurora toggleCaptureHub
 qs ipc call aurora toggleWindowSwitcher
 qs ipc call aurora togglePowerOverlay
 qs ipc call aurora toggleGameMode

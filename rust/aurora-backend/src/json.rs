@@ -39,6 +39,27 @@ impl JsonVal {
         }
     }
 
+    pub fn get_i64(&self, key: &str) -> Option<i64> {
+        match self.get(key) {
+            Some(JsonVal::Num(n)) if n.is_finite() => Some(*n as i64),
+            _ => None,
+        }
+    }
+
+    pub fn get_f64(&self, key: &str) -> Option<f64> {
+        match self.get(key) {
+            Some(JsonVal::Num(n)) if n.is_finite() => Some(*n),
+            _ => None,
+        }
+    }
+
+    pub fn as_u64(&self) -> Option<u64> {
+        match self {
+            JsonVal::Num(n) if n.is_finite() && *n >= 0.0 => Some(*n as u64),
+            _ => None,
+        }
+    }
+
     pub fn as_arr(&self) -> Option<&[JsonVal]> {
         match self {
             JsonVal::Arr(a) => Some(a.as_slice()),
@@ -376,6 +397,12 @@ impl JsonOut {
     pub fn kv_u64(&mut self, k: &str, v: u64) {
         self.key(k);
         self.u64(v);
+    }
+
+    pub fn kv_i64(&mut self, k: &str, v: i64) {
+        self.key(k);
+        self.comma();
+        let _ = write!(self.buf, "{v}");
     }
 
     pub fn kv_f64(&mut self, k: &str, v: f64, decimals: usize) {

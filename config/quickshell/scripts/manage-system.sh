@@ -5,10 +5,10 @@ CMD="${1:-}"
 shift || true
 
 case "$CMD" in
-    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor)
+    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor)
         ;;
     *)
-        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor> [args...]" >&2
+        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor> [args...]" >&2
         exit 1
         ;;
 esac
@@ -16,8 +16,11 @@ esac
 BACKEND_BIN="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/bin/aurora-backend"
 if [[ -x "$BACKEND_BIN" ]]; then
     case "$CMD" in
-        hwmon|processes|doctor)
+        hwmon|processes|doctor|services|service-action|kill-proc|distro)
             exec "$BACKEND_BIN" "$CMD" "$@"
+            ;;
+        power-action|power)
+            exec "$BACKEND_BIN" power "$@"
             ;;
     esac
 fi
@@ -540,9 +543,15 @@ def cmd_network_action():
 
 
 def cmd_power_action():
-    if len(args) < 1 or args[0] not in ("suspend", "reboot", "poweroff"):
-        sys.exit("Usage: manage-system.sh power-action <suspend|reboot|poweroff>")
+    if len(args) < 1 or args[0] not in ("suspend", "hibernate", "reboot", "poweroff", "logout"):
+        sys.exit("Usage: manage-system.sh power-action <suspend|hibernate|reboot|poweroff|logout>")
     act = args[0]
+    if act == "logout":
+        if shutil.which("mmsg"):
+            res = subprocess.run(["mmsg", "dispatch", "quit"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if res.returncode == 0:
+                return
+        sys.exit("No supported logout backend found")
     if shutil.which("loginctl"):
         res = subprocess.run(["loginctl", act], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if res.returncode == 0:
@@ -552,10 +561,11 @@ def cmd_power_action():
         return
     fallback_map = {
         "suspend": ["zzz"],
+        "hibernate": ["ZZZ"],
         "reboot": ["reboot"],
         "poweroff": ["poweroff"],
     }
-    for exe in fallback_map[act]:
+    for exe in fallback_map.get(act, []):
         if shutil.which(exe):
             subprocess.Popen([exe], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return
@@ -926,6 +936,7 @@ DISPATCH = {
     "network-info": cmd_network_info,
     "network-action": cmd_network_action,
     "power-action": cmd_power_action,
+    "power": cmd_power_action,
     "audio-cards": cmd_audio_cards,
     "audio-set-profile": cmd_audio_set_profile,
     "audio-test": cmd_audio_test,

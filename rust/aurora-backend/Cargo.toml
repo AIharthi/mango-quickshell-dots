@@ -1,8 +1,8 @@
 [package]
 name = "aurora-backend"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2021"
-description = "Zero-dependency Rust system telemetry, probe, monitor, clipboard, calc, and doctor backend for Aurora Shell"
+description = "Zero-dependency Rust system telemetry, probe, monitor, clipboard, calc, captures, distro, services, snippets, pip, workspaces, and doctor backend for Aurora Shell"
 
 [profile.release]
 opt-level = "z"

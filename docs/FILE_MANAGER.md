@@ -1,6 +1,6 @@
 # Aurora Dynamic File Manager & Pure-Rust Backend (`rust/aurora-fm`)
 
-Aurora Shell 2.0 includes a native Quickshell file manager (**`Super + Shift + E`** standalone window or **`Super + Alt + E`** inside the Dynamic Island **Files** tab) backed by a zero-dependency pure-Rust binary (`aurora-fm`, with a `mango-fm` compatibility symlink).
+Aurora Shell 2.1 includes a native Quickshell file manager (**`Super + Shift + E`** standalone window or **`Super + Alt + E`** inside the Dynamic Island **Files** tab) backed by a zero-dependency pure-Rust binary (`aurora-fm`, with a `mango-fm` compatibility symlink).
 
 ---
 
