@@ -1,8 +1,8 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=Mango
+Name=Aurora Shell (MangoWC)
 DesktopNames=mango;wlroots
-Comment=mango WM
+Comment=Aurora Shell Wayland Desktop on MangoWC
 Exec=/usr/local/bin/mango-session
 Icon=mango
 Type=Application

@@ -1,8 +1,8 @@
 [package]
-name = "mango-fm"
-version = "0.1.0"
+name = "aurora-fm"
+version = "2.0.0"
 edition = "2021"
-description = "Zero-dependency Rust file manager backend for MangoWC + Quickshell"
+description = "Zero-dependency Rust file manager backend for Aurora Shell"
 
 [profile.release]
 opt-level = "z"

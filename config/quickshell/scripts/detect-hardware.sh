@@ -7,6 +7,13 @@ set -euo pipefail
 #   detect-hardware.sh --battery  -> aggregated multi-battery status JSON
 
 MODE="${1:-}"
+BACKEND_BIN="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/bin/aurora-backend"
+if [[ -x "$BACKEND_BIN" ]]; then
+    if [[ "$MODE" == "--battery" ]]; then
+        exec "$BACKEND_BIN" battery
+    fi
+    exec "$BACKEND_BIN" probe
+fi
 
 python3 - "$MODE" <<'PY'
 import glob

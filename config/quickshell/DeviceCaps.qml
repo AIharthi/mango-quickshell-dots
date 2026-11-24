@@ -46,6 +46,9 @@ Singleton {
     property string batteryStatus: "Full"
     property bool batteryCharging: false
     property bool batteryLow: false
+    property real batteryWatts: 0.0
+    property string batteryEta: ""
+    property int batteryHealth: 100
     property bool _warned15: false
     property bool _warned5: false
 
@@ -151,6 +154,12 @@ Singleton {
                     root.batteryStatus = st;
                     root.batteryCharging = (d.charging !== undefined) ? !!d.charging : (st === "Charging" || st === "Full");
                     root.batteryLow = (!root.batteryCharging && root.batteryPercent <= 20);
+                    if (typeof d.powerWatts === "number")
+                        root.batteryWatts = d.powerWatts;
+                    if (d.etaLabel !== undefined)
+                        root.batteryEta = String(d.etaLabel || "");
+                    if (typeof d.healthPercent === "number")
+                        root.batteryHealth = Math.round(d.healthPercent);
                     if (root.batteryCharging) {
                         root._warned15 = false;
                         root._warned5 = false;

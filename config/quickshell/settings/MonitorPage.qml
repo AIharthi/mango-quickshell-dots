@@ -326,10 +326,10 @@ ColumnLayout {
                         implicitWidth: sortTxt.implicitWidth + 12
                         radius: Theme.r(7)
                         color: sortPill.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (sortMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: sortPill.selected ? 1 : Theme.subBorderWidth
-                        border.color: sortPill.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.primary
+                            : (sortMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: sortPill.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             id: sortTxt
@@ -338,7 +338,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: sortPill.selected ? Font.Bold : Font.Medium
-                            color: sortPill.selected ? Theme.primary : Theme.fgSurface
+                            color: sortPill.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -555,10 +555,10 @@ ColumnLayout {
                         implicitWidth: svcFiltTxt.implicitWidth + 12
                         radius: Theme.r(7)
                         color: svcFiltPill.selected
-                            ? Theme.withAlpha(Theme.secondary, 0.22)
-                            : (svcFiltMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: svcFiltPill.selected ? 1 : Theme.subBorderWidth
-                        border.color: svcFiltPill.selected ? Theme.secondary : Theme.cardBorder
+                            ? Theme.secondary
+                            : (svcFiltMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: svcFiltPill.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.secondary
 
                         Text {
                             id: svcFiltTxt
@@ -567,7 +567,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: svcFiltPill.selected ? Font.Bold : Font.Medium
-                            color: svcFiltPill.selected ? Theme.secondary : Theme.fgSurface
+                            color: svcFiltPill.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                         }
 
                         MouseArea {

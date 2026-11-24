@@ -434,10 +434,10 @@ ColumnLayout {
                             implicitWidth: modeTxt.implicitWidth + 14
                             radius: Theme.r(8)
                             color: modePill.selected
-                                ? Theme.withAlpha(Theme.primary, 0.22)
-                                : (modePillMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: modePill.selected ? 1 : Theme.subBorderWidth
-                            border.color: modePill.selected ? Theme.primary : Theme.cardBorder
+                                ? Theme.primary
+                                : (modePillMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: modePill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
                             scale: modePillMouse.pressed ? 0.95 : 1.0
 
                             Behavior on color {
@@ -456,7 +456,7 @@ ColumnLayout {
                                 font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: modePill.selected ? Font.Bold : Font.Normal
-                                color: modePill.selected ? Theme.primary : Theme.fgSurface
+                                color: modePill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -494,10 +494,10 @@ ColumnLayout {
                             implicitHeight: 26
                             radius: Theme.r(8)
                             color: scalePill.selected
-                                ? Theme.withAlpha(Theme.secondary, 0.22)
-                                : (scaleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: scalePill.selected ? 1 : Theme.subBorderWidth
-                            border.color: scalePill.selected ? Theme.secondary : Theme.cardBorder
+                                ? Theme.primary
+                                : (scaleMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: scalePill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
                             scale: scaleMouse.pressed ? 0.95 : 1.0
 
                             Behavior on color {
@@ -515,7 +515,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: scalePill.selected ? Font.Bold : Font.Medium
-                                color: scalePill.selected ? Theme.secondary : Theme.fgSurface
+                                color: scalePill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -554,10 +554,10 @@ ColumnLayout {
                             implicitWidth: rotTxt.implicitWidth + 16
                             radius: Theme.r(8)
                             color: rotPill.selected
-                                ? Theme.withAlpha(Theme.primary, 0.22)
-                                : (rotMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: rotPill.selected ? 1 : Theme.subBorderWidth
-                            border.color: rotPill.selected ? Theme.primary : Theme.cardBorder
+                                ? Theme.primary
+                                : (rotMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: rotPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: rotTxt
@@ -566,7 +566,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: rotPill.selected ? Font.Bold : Font.Medium
-                                color: rotPill.selected ? Theme.primary : Theme.fgSurface
+                                color: rotPill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -616,9 +616,9 @@ ColumnLayout {
                                 implicitHeight: 24
                                 implicitWidth: mPosTxt.implicitWidth + 14
                                 radius: Theme.r(7)
-                                color: mPosPill.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                                border.width: mPosPill.selected ? 1 : Theme.subBorderWidth
-                                border.color: mPosPill.selected ? Theme.secondary : Theme.cardBorder
+                                color: mPosPill.selected ? Theme.primary : Theme.subCardBg
+                                border.width: mPosPill.selected ? Theme.activeControlBorderWidth : 0
+                                border.color: Theme.primary
 
                                 Text {
                                     id: mPosTxt
@@ -627,7 +627,7 @@ ColumnLayout {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(10)
                                     font.weight: mPosPill.selected ? Font.Bold : Font.Medium
-                                    color: mPosPill.selected ? Theme.secondary : Theme.fgSurface
+                                    color: mPosPill.selected ? Theme.fgPrimary : Theme.fgSurface
                                 }
 
                                 MouseArea {
@@ -797,9 +797,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: brtPill.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                        border.width: brtPill.selected ? 1 : Theme.subBorderWidth
-                        border.color: brtPill.selected ? Theme.primary : Theme.cardBorder
+                        color: brtPill.selected ? Theme.primary : Theme.subCardBg
+                        border.width: brtPill.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -807,7 +807,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: brtPill.selected ? Font.Bold : Font.Medium
-                            color: brtPill.selected ? Theme.primary : Theme.fgSurface
+                            color: brtPill.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -892,10 +892,10 @@ ColumnLayout {
                         implicitWidth: nlTxt.implicitWidth + 14
                         radius: Theme.r(8)
                         color: nlPill.selected
-                            ? Theme.withAlpha(Theme.warning, 0.22)
-                            : (nlMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: nlPill.selected ? 1 : Theme.subBorderWidth
-                        border.color: nlPill.selected ? Theme.warning : Theme.cardBorder
+                            ? Theme.warning
+                            : (nlMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: nlPill.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.warning
 
                         Text {
                             id: nlTxt
@@ -904,7 +904,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: nlPill.selected ? Font.Bold : Font.Medium
-                            color: nlPill.selected ? Theme.warning : Theme.fgSurface
+                            color: nlPill.selected ? Theme.contrastInk(Theme.warning) : Theme.fgSurface
                         }
 
                         MouseArea {

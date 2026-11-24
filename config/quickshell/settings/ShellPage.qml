@@ -62,8 +62,8 @@ ColumnLayout {
                 radius: Theme.r(8)
                 color: root.confirmResetBar
                     ? Theme.warning
-                    : (rstBarMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg)
-                border.width: 1
+                    : (rstBarMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                border.width: Theme.activeControlBorderWidth
                 border.color: root.confirmResetBar ? Theme.warning : Theme.cardBorder
 
                 Text {
@@ -73,7 +73,7 @@ ColumnLayout {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: root.confirmResetBar ? Theme.fgPrimary : Theme.warning
+                    color: root.confirmResetBar ? Theme.contrastInk(Theme.warning) : Theme.warning
                 }
 
                 MouseArea {
@@ -161,17 +161,30 @@ ColumnLayout {
                         Layout.preferredHeight: 62
                         radius: Theme.r(12)
                         color: barStyleCard.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (barStyleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: barStyleCard.selected ? 1 : Theme.subBorderWidth
-                        border.color: barStyleCard.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.tileActiveBg
+                            : (barStyleMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: barStyleCard.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
                         scale: barStyleMouse.pressed ? 0.97 : 1.0
+
+                        Rectangle {
+                            visible: barStyleCard.selected
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.topMargin: 10
+                            anchors.bottomMargin: 10
+                            width: 3
+                            radius: 1.5
+                            color: Theme.primary
+                        }
 
                         Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                         RowLayout {
                             anchors.fill: parent
                             anchors.margins: 10
+                            anchors.leftMargin: 12
                             spacing: 10
 
                             Rectangle {
@@ -196,7 +209,7 @@ ColumnLayout {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     spacing: 6
-                                    Text { text: barStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: barStyleCard.selected ? Theme.primary : Theme.fgSurface }
+                                    Text { text: barStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.fgSurface }
                                     Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + barStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
                                 }
 
@@ -255,24 +268,37 @@ ColumnLayout {
                         Layout.preferredHeight: 62
                         radius: Theme.r(12)
                         color: hubStyleCard.selected
-                            ? Theme.withAlpha(Theme.secondary, 0.22)
-                            : (hubStyleMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: hubStyleCard.selected ? 1 : Theme.subBorderWidth
-                        border.color: hubStyleCard.selected ? Theme.secondary : Theme.cardBorder
+                            ? Theme.tileActiveBg
+                            : (hubStyleMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: hubStyleCard.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
                         scale: hubStyleMouse.pressed ? 0.97 : 1.0
+
+                        Rectangle {
+                            visible: hubStyleCard.selected
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.topMargin: 10
+                            anchors.bottomMargin: 10
+                            width: 3
+                            radius: 1.5
+                            color: Theme.primary
+                        }
 
                         Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                         RowLayout {
                             anchors.fill: parent
                             anchors.margins: 10
+                            anchors.leftMargin: 12
                             spacing: 10
 
                             Rectangle {
                                 implicitWidth: 34
                                 implicitHeight: 34
                                 radius: Theme.r(10)
-                                color: hubStyleCard.selected ? Theme.secondary : Theme.surfaceContainerHighest
+                                color: hubStyleCard.selected ? Theme.primary : Theme.surfaceContainerHighest
 
                                 Text {
                                     anchors.centerIn: parent
@@ -290,7 +316,7 @@ ColumnLayout {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     spacing: 6
-                                    Text { text: hubStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: hubStyleCard.selected ? Theme.secondary : Theme.fgSurface }
+                                    Text { text: hubStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.fgSurface }
                                     Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + hubStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
                                 }
 
@@ -361,10 +387,10 @@ ColumnLayout {
                         implicitHeight: 28
                         radius: Theme.r(8)
                         color: bpBtn.active
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (bpMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: bpBtn.active ? 1 : Theme.subBorderWidth
-                        border.color: bpBtn.active ? Theme.primary : Theme.cardBorder
+                            ? Theme.primary
+                            : (bpMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: bpBtn.active ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -372,7 +398,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: bpBtn.active ? Font.Bold : Font.Medium
-                            color: bpBtn.active ? Theme.primary : Theme.fgSurface
+                            color: bpBtn.active ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -430,6 +456,13 @@ ColumnLayout {
                 spacing: 10
                 Text { Layout.fillWidth: true; text: "CPU & RAM Usage"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 ToggleSwitch { checked: ShellState.barShowSystem; onToggled: ShellState.setPref("barShowSystem", !ShellState.barShowSystem) }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Text { Layout.fillWidth: true; text: "Live Network Speed (↓ / ↑)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
+                ToggleSwitch { checked: ShellState.barShowNetSpeed; onToggled: ShellState.setPref("barShowNetSpeed", !ShellState.barShowNetSpeed) }
             }
 
             RowLayout {
@@ -668,10 +701,10 @@ ColumnLayout {
                             implicitWidth: posTxt.implicitWidth + 16
                             radius: Theme.r(7)
                             color: posPill.selected
-                                ? Theme.withAlpha(Theme.primary, 0.22)
-                                : (posMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: posPill.selected ? 1 : Theme.subBorderWidth
-                            border.color: posPill.selected ? Theme.primary : Theme.cardBorder
+                                ? Theme.primary
+                                : (posMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: posPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: posTxt
@@ -680,7 +713,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: posPill.selected ? Font.Bold : Font.Medium
-                                color: posPill.selected ? Theme.primary : Theme.fgSurface
+                                color: posPill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -1055,8 +1088,8 @@ ColumnLayout {
                     implicitHeight: 24
                     implicitWidth: openFmLbl.implicitWidth + 14
                     radius: Theme.r(7)
-                    color: openFmMouse.containsMouse ? Theme.primary : Theme.withAlpha(Theme.primary, 0.20)
-                    border.width: 1
+                    color: openFmMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+                    border.width: Theme.activeControlBorderWidth
                     border.color: Theme.primary
 
                     Text {
@@ -1066,7 +1099,7 @@ ColumnLayout {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
-                        color: openFmMouse.containsMouse ? Theme.fgPrimary : Theme.primary
+                        color: Theme.fgPrimary
                     }
                     MouseArea {
                         id: openFmMouse
@@ -1082,7 +1115,7 @@ ColumnLayout {
                     implicitWidth: rstFmLbl.implicitWidth + 12
                     radius: Theme.r(7)
                     color: rstFmMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.22) : Theme.subCardBg
-                    border.width: 1
+                    border.width: Theme.activeControlBorderWidth
                     border.color: Theme.cardBorder
 
                     Text {
@@ -1133,9 +1166,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 26
                         radius: Theme.r(8)
-                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmVmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: 1
-                        border.color: sel ? Theme.primary : Theme.cardBorder
+                        color: sel ? Theme.primary : (fmVmMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: sel ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -1143,7 +1176,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: fmVmBtn.sel ? Font.Bold : Font.Medium
-                            color: fmVmBtn.sel ? Theme.primary : Theme.fgSurface
+                            color: fmVmBtn.sel ? Theme.fgPrimary : Theme.fgSurface
                         }
                         MouseArea {
                             id: fmVmMouse
@@ -1202,8 +1235,8 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: fmPreMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                        border.width: 1
+                        color: fmPreMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                        border.width: Theme.activeControlBorderWidth
                         border.color: Theme.cardBorder
 
                         Text {
@@ -1212,7 +1245,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
-                            color: Theme.primary
+                            color: fmPreMouse.containsMouse ? Theme.primary : Theme.fgSurface
                         }
                         MouseArea {
                             id: fmPreMouse
@@ -1255,9 +1288,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: sel ? Theme.withAlpha(Theme.secondary, 0.22) : (fmSortMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: 1
-                        border.color: sel ? Theme.secondary : Theme.cardBorder
+                        color: sel ? Theme.primary : (fmSortMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: sel ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -1265,7 +1298,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: fmSortBtn.sel ? Font.Bold : Font.Medium
-                            color: fmSortBtn.sel ? Theme.secondary : Theme.fgSurface
+                            color: fmSortBtn.sel ? Theme.fgPrimary : Theme.fgSurface
                         }
                         MouseArea {
                             id: fmSortMouse
@@ -1303,9 +1336,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmDensMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: 1
-                        border.color: sel ? Theme.primary : Theme.cardBorder
+                        color: sel ? Theme.primary : (fmDensMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: sel ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -1313,7 +1346,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: fmDensBtn.sel ? Font.Bold : Font.Medium
-                            color: fmDensBtn.sel ? Theme.primary : Theme.fgSurface
+                            color: fmDensBtn.sel ? Theme.fgPrimary : Theme.fgSurface
                         }
                         MouseArea {
                             id: fmDensMouse
@@ -1359,9 +1392,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmIcoMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: 1
-                        border.color: sel ? Theme.primary : Theme.cardBorder
+                        color: sel ? Theme.primary : (fmIcoMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: sel ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -1369,7 +1402,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: fmIcoBtn.sel ? Font.Bold : Font.Medium
-                            color: fmIcoBtn.sel ? Theme.primary : Theme.fgSurface
+                            color: fmIcoBtn.sel ? Theme.fgPrimary : Theme.fgSurface
                         }
                         MouseArea {
                             id: fmIcoMouse
@@ -1409,9 +1442,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: sel ? Theme.withAlpha(Theme.secondary, 0.22) : (fmSurfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: 1
-                        border.color: sel ? Theme.secondary : Theme.cardBorder
+                        color: sel ? Theme.primary : (fmSurfMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: sel ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -1419,7 +1452,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: fmSurfBtn.sel ? Font.Bold : Font.Medium
-                            color: fmSurfBtn.sel ? Theme.secondary : Theme.fgSurface
+                            color: fmSurfBtn.sel ? Theme.fgPrimary : Theme.fgSurface
                         }
                         MouseArea {
                             id: fmSurfMouse
@@ -1464,9 +1497,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmHdrMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: 1
-                        border.color: sel ? Theme.primary : Theme.cardBorder
+                        color: sel ? Theme.primary : (fmHdrMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: sel ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -1474,7 +1507,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: fmHdrBtn.sel ? Font.Bold : Font.Medium
-                            color: fmHdrBtn.sel ? Theme.primary : Theme.fgSurface
+                            color: fmHdrBtn.sel ? Theme.fgPrimary : Theme.fgSurface
                         }
                         MouseArea {
                             id: fmHdrMouse
@@ -1512,9 +1545,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: sel ? Theme.withAlpha(Theme.secondary, 0.22) : (fmSbMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: 1
-                        border.color: sel ? Theme.secondary : Theme.cardBorder
+                        color: sel ? Theme.primary : (fmSbMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: sel ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -1522,7 +1555,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: fmSbBtn.sel ? Font.Bold : Font.Medium
-                            color: fmSbBtn.sel ? Theme.secondary : Theme.fgSurface
+                            color: fmSbBtn.sel ? Theme.fgPrimary : Theme.fgSurface
                         }
                         MouseArea {
                             id: fmSbMouse
@@ -1561,9 +1594,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: sel ? Theme.withAlpha(Theme.primary, 0.22) : (fmSzMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: 1
-                        border.color: sel ? Theme.primary : Theme.cardBorder
+                        color: sel ? Theme.primary : (fmSzMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: sel ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -1571,7 +1604,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: fmSzBtn.sel ? Font.Bold : Font.Medium
-                            color: fmSzBtn.sel ? Theme.primary : Theme.fgSurface
+                            color: fmSzBtn.sel ? Theme.fgPrimary : Theme.fgSurface
                         }
                         MouseArea {
                             id: fmSzMouse

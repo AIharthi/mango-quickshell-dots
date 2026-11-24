@@ -6,8 +6,11 @@ set -euo pipefail
 CMD="${1:-status}"
 shift || true
 
-RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"
-STATE_FILE="${RUNTIME_DIR}/mango-recording.json"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/quickshell"
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-$CACHE_DIR}"
+mkdir -p "$RUNTIME_DIR"
+chmod 700 "$RUNTIME_DIR" 2>/dev/null || true
+STATE_FILE="${RUNTIME_DIR}/aurora-recording.json"
 QUICKSHELL_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
 PREFS_JSON="${QUICKSHELL_DIR}/shell-prefs.json"
 COLORS_JSON="${QUICKSHELL_DIR}/colors.json"

@@ -50,8 +50,8 @@ Rectangle {
                 implicitHeight: 26
                 implicitWidth: rstLbl.implicitWidth + 14
                 radius: Theme.r(8)
-                color: rstMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.22) : Theme.subCardBg
-                border.width: 1
+                color: rstMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg
+                border.width: Theme.activeControlBorderWidth
                 border.color: Theme.cardBorder
 
                 Text {
@@ -140,8 +140,8 @@ Rectangle {
                                 Layout.fillWidth: true
                                 implicitHeight: 46
                                 radius: Theme.r(10)
-                                color: fpMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                                border.width: 1
+                                color: fpMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg
+                                border.width: Theme.activeControlBorderWidth
                                 border.color: fpMouse.containsMouse ? drawer.fileStyle.accent : Theme.cardBorder
 
                                 RowLayout {
@@ -229,10 +229,10 @@ Rectangle {
                                     Layout.fillWidth: true
                                     implicitHeight: 24
                                     radius: Theme.r(7)
-                                    color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (vmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: 1
-                                    border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: vmBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: vmBtn.sel ? Font.Bold : Font.Normal; color: vmBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    color: vmBtn.sel ? drawer.fileStyle.accent : (vmMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: vmBtn.sel ? Theme.activeControlBorderWidth : 0
+                                    border.color: drawer.fileStyle.accent
+                                    Text { anchors.centerIn: parent; text: vmBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: vmBtn.sel ? Font.Bold : Font.Normal; color: vmBtn.sel ? Theme.contrastInk(drawer.fileStyle.accent) : Theme.fgSurface }
                                     MouseArea { id: vmMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmViewMode", vmBtn.modelData.id) }
                                 }
                             }
@@ -257,10 +257,10 @@ Rectangle {
                                     Layout.fillWidth: true
                                     implicitHeight: 24
                                     radius: Theme.r(7)
-                                    color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (wsMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: 1
-                                    border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: wsBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: wsBtn.sel ? Font.Bold : Font.Normal; color: wsBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    color: wsBtn.sel ? drawer.fileStyle.accent : (wsMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: wsBtn.sel ? Theme.activeControlBorderWidth : 0
+                                    border.color: drawer.fileStyle.accent
+                                    Text { anchors.centerIn: parent; text: wsBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: wsBtn.sel ? Font.Bold : Font.Normal; color: wsBtn.sel ? Theme.contrastInk(drawer.fileStyle.accent) : Theme.fgSurface }
                                     MouseArea { id: wsMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmWindowSize", wsBtn.modelData.id) }
                                 }
                             }
@@ -284,10 +284,10 @@ Rectangle {
                                     Layout.fillWidth: true
                                     implicitHeight: 24
                                     radius: Theme.r(7)
-                                    color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (sbMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: 1
-                                    border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: sbBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: sbBtn.sel ? Font.Bold : Font.Normal; color: sbBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    color: sbBtn.sel ? drawer.fileStyle.accent : (sbMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: sbBtn.sel ? Theme.activeControlBorderWidth : 0
+                                    border.color: drawer.fileStyle.accent
+                                    Text { anchors.centerIn: parent; text: sbBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: sbBtn.sel ? Font.Bold : Font.Normal; color: sbBtn.sel ? Theme.contrastInk(drawer.fileStyle.accent) : Theme.fgSurface }
                                     MouseArea { id: sbMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmSidebarStyle", sbBtn.modelData.id) }
                                 }
                             }
@@ -355,10 +355,10 @@ Rectangle {
                                     Layout.fillWidth: true
                                     implicitHeight: 24
                                     radius: Theme.r(7)
-                                    color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (sfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: 1
-                                    border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: sfBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: sfBtn.sel ? Font.Bold : Font.Normal; color: sfBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    color: sfBtn.sel ? drawer.fileStyle.accent : (sfMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: sfBtn.sel ? Theme.activeControlBorderWidth : 0
+                                    border.color: drawer.fileStyle.accent
+                                    Text { anchors.centerIn: parent; text: sfBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: sfBtn.sel ? Font.Bold : Font.Normal; color: sfBtn.sel ? Theme.contrastInk(drawer.fileStyle.accent) : Theme.fgSurface }
                                     MouseArea { id: sfMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmSurfacePreset", sfBtn.modelData.id) }
                                 }
                             }
@@ -389,10 +389,10 @@ Rectangle {
                                     implicitHeight: 22
                                     implicitWidth: 46
                                     radius: Theme.r(7)
-                                    color: ShellState.fmAccentOverride === "" ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                                    border.width: 1
-                                    border.color: ShellState.fmAccentOverride === "" ? Theme.primary : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: "Auto"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                                    color: ShellState.fmAccentOverride === "" ? Theme.primary : Theme.subCardBg
+                                    border.width: ShellState.fmAccentOverride === "" ? Theme.activeControlBorderWidth : 0
+                                    border.color: Theme.primary
+                                    Text { anchors.centerIn: parent; text: "Auto"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: ShellState.fmAccentOverride === "" ? Theme.fgPrimary : Theme.fgSurface }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmAccentOverride", "") }
                                 }
 
@@ -433,10 +433,10 @@ Rectangle {
                                     Layout.fillWidth: true
                                     implicitHeight: 24
                                     radius: Theme.r(7)
-                                    color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (icMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: 1
-                                    border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: icBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: icBtn.sel ? Font.Bold : Font.Normal; color: icBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    color: icBtn.sel ? drawer.fileStyle.accent : (icMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: icBtn.sel ? Theme.activeControlBorderWidth : 0
+                                    border.color: drawer.fileStyle.accent
+                                    Text { anchors.centerIn: parent; text: icBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: icBtn.sel ? Font.Bold : Font.Normal; color: icBtn.sel ? Theme.contrastInk(drawer.fileStyle.accent) : Theme.fgSurface }
                                     MouseArea { id: icMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmIconStyle", icBtn.modelData.id) }
                                 }
                             }
@@ -460,10 +460,10 @@ Rectangle {
                                     Layout.fillWidth: true
                                     implicitHeight: 24
                                     radius: Theme.r(7)
-                                    color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (hdMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: 1
-                                    border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: hdBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: hdBtn.sel ? Font.Bold : Font.Normal; color: hdBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    color: hdBtn.sel ? drawer.fileStyle.accent : (hdMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: hdBtn.sel ? Theme.activeControlBorderWidth : 0
+                                    border.color: drawer.fileStyle.accent
+                                    Text { anchors.centerIn: parent; text: hdBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: hdBtn.sel ? Font.Bold : Font.Normal; color: hdBtn.sel ? Theme.contrastInk(drawer.fileStyle.accent) : Theme.fgSurface }
                                     MouseArea { id: hdMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmHeaderStyle", hdBtn.modelData.id) }
                                 }
                             }
@@ -487,10 +487,10 @@ Rectangle {
                                     Layout.fillWidth: true
                                     implicitHeight: 24
                                     radius: Theme.r(7)
-                                    color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (dnMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: 1
-                                    border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: dnBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: dnBtn.sel ? Font.Bold : Font.Normal; color: dnBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    color: dnBtn.sel ? drawer.fileStyle.accent : (dnMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: dnBtn.sel ? Theme.activeControlBorderWidth : 0
+                                    border.color: drawer.fileStyle.accent
+                                    Text { anchors.centerIn: parent; text: dnBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: dnBtn.sel ? Font.Bold : Font.Normal; color: dnBtn.sel ? Theme.contrastInk(drawer.fileStyle.accent) : Theme.fgSurface }
                                     MouseArea { id: dnMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmDensity", dnBtn.modelData.id) }
                                 }
                             }
@@ -592,10 +592,10 @@ Rectangle {
                                     Layout.fillWidth: true
                                     implicitHeight: 24
                                     radius: Theme.r(7)
-                                    color: sel ? Theme.withAlpha(drawer.fileStyle.accent, 0.22) : (stMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: 1
-                                    border.color: sel ? drawer.fileStyle.accent : Theme.cardBorder
-                                    Text { anchors.centerIn: parent; text: stBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: stBtn.sel ? Font.Bold : Font.Normal; color: stBtn.sel ? drawer.fileStyle.accent : Theme.fgSurface }
+                                    color: stBtn.sel ? drawer.fileStyle.accent : (stMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: stBtn.sel ? Theme.activeControlBorderWidth : 0
+                                    border.color: drawer.fileStyle.accent
+                                    Text { anchors.centerIn: parent; text: stBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: stBtn.sel ? Font.Bold : Font.Normal; color: stBtn.sel ? Theme.contrastInk(drawer.fileStyle.accent) : Theme.fgSurface }
                                     MouseArea { id: stMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmStartDir", stBtn.modelData.id) }
                                 }
                             }

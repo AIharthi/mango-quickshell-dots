@@ -20,6 +20,11 @@ case "$CMD" in
         ;;
 esac
 
+BACKEND_BIN="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/bin/aurora-backend"
+if [[ -x "$BACKEND_BIN" ]]; then
+    exec "$BACKEND_BIN" clipboard "$CMD" "$@"
+fi
+
 mkdir -p "$CACHE_BASE"
 chmod 700 "$CACHE_BASE" 2>/dev/null || true
 

@@ -359,8 +359,8 @@ PanelWindow {
                         radius: Theme.r(13)
                         color: catChip.isSel
                             ? Theme.primary
-                            : (catMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                        border.width: catChip.isSel ? 1 : Theme.subBorderWidth
+                            : (catMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+                        border.width: catChip.isSel ? Theme.activeControlBorderWidth : Theme.subBorderWidth
                         border.color: catChip.isSel ? Theme.primary : Theme.cardBorder
 
                         Text {

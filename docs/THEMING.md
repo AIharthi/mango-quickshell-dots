@@ -106,6 +106,6 @@ Place `.png`, `.jpg`, `.jpeg`, or `.webp` wallpapers inside `~/Pictures/Wallpape
 - **Subcommands**: `list-presets`, `render-preset`, `apply-mango-overrides`, `tweak-colors`, `custom-list`, `custom-save`, `custom-apply`, `custom-delete`, `custom-export`, `custom-import`, `wallpaper-colors`, `wallpapers-list`, `solid-wallpaper`, `random-wallpaper`, `apply-vibe`.
 - **Import Validation**: `custom-import` enforces a `256 KiB` size cap, validates JSON types, strictly verifies `#RRGGBB` hex colors against an allowlist of palette tokens, sanitizes theme names/slugs, and auto-completes missing derivative Material roles so malformed JSON files cannot break Quickshell or MangoWC.
 - **Safe Resets**:
-  - `qs ipc call island resetAppearance` — resets surface, font, blur & theme appearance settings.
-  - `qs ipc call island resetBar` — resets bar widgets, layout & shell behavior.
-  - `qs ipc call island resetAllSettings` — resets shell settings to factory defaults.
+  - `qs ipc call aurora resetAppearance`: resets surface, font, blur & theme appearance settings.
+  - `qs ipc call aurora resetBar`: resets bar widgets, layout & shell behavior.
+  - `qs ipc call aurora resetAllSettings`: resets shell settings to factory defaults.

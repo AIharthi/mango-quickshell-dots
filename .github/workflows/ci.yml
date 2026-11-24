@@ -40,12 +40,16 @@ jobs:
           sys.exit(errs)
           PY
 
-  rust-mango-fm:
-    name: Rust File Manager (std-only)
+  rust-backends:
+    name: Aurora Rust Backends (${{ matrix.crate }}, std-only)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [aurora-fm, aurora-backend]
     defaults:
       run:
-        working-directory: rust/mango-fm
+        working-directory: rust/${{ matrix.crate }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -55,10 +59,10 @@ jobs:
         run: |
           test -f Cargo.lock
           python3 - <<'PY'
-          import sys
+          import re, sys
           txt = open("Cargo.toml", encoding="utf-8").read()
-          if "[dependencies]" in txt or "[dev-dependencies]" in txt or "[build-dependencies]" in txt:
-              print("ERROR: External crate dependency section found in rust/mango-fm/Cargo.toml")
+          if re.search(r"^\[(?:dev-|build-)?dependencies\]", txt, re.M):
+              print("ERROR: External crate dependency section found in Cargo.toml")
               sys.exit(1)
           print("Zero-dependency Cargo.toml verified.")
           PY

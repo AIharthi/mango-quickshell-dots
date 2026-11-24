@@ -321,10 +321,10 @@ ColumnLayout {
                                     implicitWidth: candTxt.implicitWidth + 14
                                     radius: Theme.r(7)
                                     color: candPill.selected
-                                        ? Theme.withAlpha(Theme.primary, 0.22)
-                                        : (candMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                                    border.width: candPill.selected ? 1 : Theme.subBorderWidth
-                                    border.color: candPill.selected ? Theme.primary : Theme.cardBorder
+                                        ? Theme.primary
+                                        : (candMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+                                    border.width: candPill.selected ? Theme.activeControlBorderWidth : 0
+                                    border.color: Theme.primary
 
                                     Text {
                                         id: candTxt
@@ -333,7 +333,7 @@ ColumnLayout {
                                         font.family: Theme.fontFamily
                                         font.pixelSize: Theme.fs(10)
                                         font.weight: candPill.selected ? Font.Bold : Font.Medium
-                                        color: candPill.selected ? Theme.primary : Theme.fgSurface
+                                        color: candPill.selected ? Theme.fgPrimary : Theme.fgSurface
                                     }
 
                                     MouseArea {
@@ -523,10 +523,10 @@ ColumnLayout {
                                     implicitWidth: optTxt.implicitWidth + 14
                                     radius: Theme.r(7)
                                     color: optPill.selected
-                                        ? Theme.withAlpha(Theme.secondary, 0.22)
-                                        : (optMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                                    border.width: optPill.selected ? 1 : Theme.subBorderWidth
-                                    border.color: optPill.selected ? Theme.secondary : Theme.cardBorder
+                                        ? Theme.secondary
+                                        : (optMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+                                    border.width: optPill.selected ? Theme.activeControlBorderWidth : 0
+                                    border.color: Theme.secondary
 
                                     Text {
                                         id: optTxt
@@ -535,7 +535,7 @@ ColumnLayout {
                                         font.family: Theme.fontFamily
                                         font.pixelSize: Theme.fs(10)
                                         font.weight: optPill.selected ? Font.Bold : Font.Medium
-                                        color: optPill.selected ? Theme.secondary : Theme.fgSurface
+                                        color: optPill.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                                     }
 
                                     MouseArea {

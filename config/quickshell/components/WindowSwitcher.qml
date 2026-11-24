@@ -390,10 +390,22 @@ PanelWindow {
                         height: 50
                         radius: Theme.r(12)
                         color: winRow.isSelected
-                            ? Theme.activeBg
-                            : (rowMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: winRow.isSelected ? 1 : 0
-                        border.color: Theme.withAlpha(Theme.primary, 0.55)
+                            ? Theme.rowSelectedBg
+                            : (rowMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: winRow.isSelected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
+
+                        Rectangle {
+                            visible: winRow.isSelected
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.topMargin: 10
+                            anchors.bottomMargin: 10
+                            width: 3
+                            radius: 1.5
+                            color: Theme.primary
+                        }
 
                         MouseArea {
                             id: rowMouse

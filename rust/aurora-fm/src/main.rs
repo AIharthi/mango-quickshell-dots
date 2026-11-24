@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod hash;
 mod json;
 mod list;
 mod ops;
@@ -11,11 +12,34 @@ mod util;
 
 use std::env;
 use std::io::{self, BufRead, BufWriter, Stdout, Write};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
 use crate::json::{JsonOut, JsonVal};
+
+const MAX_BG_WORKERS: usize = 8;
+
+struct WorkerGuard(Arc<AtomicUsize>);
+
+impl Drop for WorkerGuard {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::AcqRel);
+    }
+}
+
+fn try_acquire_worker(active: &Arc<AtomicUsize>) -> Option<WorkerGuard> {
+    let mut cur = active.load(Ordering::Acquire);
+    loop {
+        if cur >= MAX_BG_WORKERS {
+            return None;
+        }
+        match active.compare_exchange_weak(cur, cur + 1, Ordering::AcqRel, Ordering::Acquire) {
+            Ok(_) => return Some(WorkerGuard(Arc::clone(active))),
+            Err(actual) => cur = actual,
+        }
+    }
+}
 
 fn print_err_exit(msg: &str) -> ! {
     let mut o = JsonOut::new();
@@ -106,6 +130,7 @@ fn serve_loop() {
     let stdin = io::stdin();
     let writer = Arc::new(Mutex::new(BufWriter::new(io::stdout())));
     let search_token = Arc::new(AtomicU64::new(0));
+    let active_workers = Arc::new(AtomicUsize::new(0));
     let shutdown = Arc::new(AtomicBool::new(false));
 
     // Signal readiness to Quickshell SplitParser immediately
@@ -182,16 +207,76 @@ fn serve_loop() {
                 let path = req.get_str("path").unwrap_or("");
                 send_reply(&writer, &shutdown, id, preview::preview_path(path))
             }
+            "checksum" => {
+                let path = req.get_str("path").unwrap_or("").to_string();
+                let Some(guard) = try_acquire_worker(&active_workers) else {
+                    if !send_reply(
+                        &writer,
+                        &shutdown,
+                        id,
+                        Err("Too many concurrent file operations; please wait".to_string()),
+                    ) {
+                        break;
+                    }
+                    continue;
+                };
+                let w = Arc::clone(&writer);
+                let sd = Arc::clone(&shutdown);
+                thread::spawn(move || {
+                    let _guard = guard;
+                    let res = hash::sha256_file(&path);
+                    if !sd.load(Ordering::Relaxed) {
+                        send_reply(&w, &sd, id, res);
+                    }
+                });
+                true
+            }
+            "dir_size" => {
+                let path = req.get_str("path").unwrap_or("~").to_string();
+                let Some(guard) = try_acquire_worker(&active_workers) else {
+                    if !send_reply(
+                        &writer,
+                        &shutdown,
+                        id,
+                        Err("Too many concurrent file operations; please wait".to_string()),
+                    ) {
+                        break;
+                    }
+                    continue;
+                };
+                let w = Arc::clone(&writer);
+                let sd = Arc::clone(&shutdown);
+                thread::spawn(move || {
+                    let _guard = guard;
+                    let res = hash::dir_size(&path);
+                    if !sd.load(Ordering::Relaxed) {
+                        send_reply(&w, &sd, id, res);
+                    }
+                });
+                true
+            }
             "search" => {
                 let path = req.get_str("path").unwrap_or("~").to_string();
                 let query = req.get_str("query").unwrap_or("").to_string();
                 let hidden = req.get_bool("hidden").unwrap_or(false);
-                let max_res = req.get_u64("max").unwrap_or(120) as usize;
+                let max_res = (req.get_u64("max").unwrap_or(120) as usize).clamp(1, 2000);
                 let my_tok = search_token.fetch_add(1, Ordering::Relaxed) + 1;
+                let Some(guard) = try_acquire_worker(&active_workers) else {
+                    if !send_reply(
+                        &writer,
+                        &shutdown,
+                        id,
+                        Err("Too many concurrent file operations; please wait".to_string()),
+                    ) {
+                        break;
+                    }
+                    continue;
+                };
                 let tok = Arc::clone(&search_token);
                 let w = Arc::clone(&writer);
                 let sd = Arc::clone(&shutdown);
                 thread::spawn(move || {
+                    let _guard = guard;
                     let res = search::search_dir(&path, &query, hidden, max_res, &tok, my_tok, &sd);
                     if !sd.load(Ordering::Relaxed) {
                         send_reply(&w, &sd, id, res);
@@ -219,10 +304,22 @@ fn serve_loop() {
                 let sources = collect_paths(&req);
                 let dest = req.get_str("dest").unwrap_or("").to_string();
                 let overwrite = req.get_bool("overwrite").unwrap_or(false);
+                let Some(guard) = try_acquire_worker(&active_workers) else {
+                    if !send_reply(
+                        &writer,
+                        &shutdown,
+                        id,
+                        Err("Too many concurrent file operations; please wait".to_string()),
+                    ) {
+                        break;
+                    }
+                    continue;
+                };
                 let w = Arc::clone(&writer);
                 let sd = Arc::clone(&shutdown);
                 let label = if is_move { "Moving" } else { "Copying" };
                 thread::spawn(move || {
+                    let _guard = guard;
                     let w_prog = Arc::clone(&w);
                     let sd_prog = Arc::clone(&sd);
                     let res = ops::copy_or_move(&sources, &dest, is_move, overwrite, |d, t, c| {
@@ -246,9 +343,21 @@ fn serve_loop() {
             "trash_empty" => send_reply(&writer, &shutdown, id, trash::trash_empty()),
             "delete" => {
                 let paths = collect_paths(&req);
+                let Some(guard) = try_acquire_worker(&active_workers) else {
+                    if !send_reply(
+                        &writer,
+                        &shutdown,
+                        id,
+                        Err("Too many concurrent file operations; please wait".to_string()),
+                    ) {
+                        break;
+                    }
+                    continue;
+                };
                 let w = Arc::clone(&writer);
                 let sd = Arc::clone(&shutdown);
                 thread::spawn(move || {
+                    let _guard = guard;
                     let res = ops::delete_paths(&paths);
                     if !sd.load(Ordering::Relaxed) {
                         send_reply(&w, &sd, id, res);
@@ -266,9 +375,21 @@ fn serve_loop() {
                 let dest = req.get_str("destDir").unwrap_or("").to_string();
                 let name = req.get_str("name").unwrap_or("archive").to_string();
                 let fmt = req.get_str("format").unwrap_or("tar.gz").to_string();
+                let Some(guard) = try_acquire_worker(&active_workers) else {
+                    if !send_reply(
+                        &writer,
+                        &shutdown,
+                        id,
+                        Err("Too many concurrent file operations; please wait".to_string()),
+                    ) {
+                        break;
+                    }
+                    continue;
+                };
                 let w = Arc::clone(&writer);
                 let sd = Arc::clone(&shutdown);
                 thread::spawn(move || {
+                    let _guard = guard;
                     let _ = send_progress(&w, &sd, id, "Compressing", 0, 1, &name);
                     let res = ops::compress_paths(&sources, &dest, &name, &fmt);
                     let _ = send_progress(&w, &sd, id, "Compressing", 1, 1, "");
@@ -281,9 +402,21 @@ fn serve_loop() {
             "extract" => {
                 let path = req.get_str("path").unwrap_or("").to_string();
                 let dest = req.get_str("destDir").map(str::to_string);
+                let Some(guard) = try_acquire_worker(&active_workers) else {
+                    if !send_reply(
+                        &writer,
+                        &shutdown,
+                        id,
+                        Err("Too many concurrent file operations; please wait".to_string()),
+                    ) {
+                        break;
+                    }
+                    continue;
+                };
                 let w = Arc::clone(&writer);
                 let sd = Arc::clone(&shutdown);
                 thread::spawn(move || {
+                    let _guard = guard;
                     let _ = send_progress(&w, &sd, id, "Extracting", 0, 1, &path);
                     let res = ops::extract_archive(&path, dest.as_deref());
                     let _ = send_progress(&w, &sd, id, "Extracting", 1, 1, "");
@@ -340,7 +473,7 @@ fn main() {
     match args[0].as_str() {
         "version" => {
             println!(
-                "{{\"name\":\"mango-fm\",\"version\":\"{}\"}}",
+                "{{\"name\":\"aurora-fm\",\"version\":\"{}\"}}",
                 env!("CARGO_PKG_VERSION")
             );
         }
@@ -381,6 +514,20 @@ fn main() {
                 Err(e) => print_err_exit(&e),
             }
         }
+        "checksum" => {
+            let path = args.get(1).map(String::as_str).unwrap_or("");
+            match hash::sha256_file(path) {
+                Ok(out) => println!("{out}"),
+                Err(e) => print_err_exit(&e),
+            }
+        }
+        "dir-size" => {
+            let path = args.get(1).map(String::as_str).unwrap_or("~");
+            match hash::dir_size(path) {
+                Ok(out) => println!("{out}"),
+                Err(e) => print_err_exit(&e),
+            }
+        }
         "search" => {
             let path = args.get(1).map(String::as_str).unwrap_or("~");
             let query = args.get(2).map(String::as_str).unwrap_or("");
@@ -398,6 +545,7 @@ fn main() {
                 }
                 i += 1;
             }
+            max_res = max_res.clamp(1, 2000);
             let tok = AtomicU64::new(1);
             let shutdown = AtomicBool::new(false);
             match search::search_dir(path, query, hidden, max_res, &tok, 1, &shutdown) {

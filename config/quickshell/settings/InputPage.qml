@@ -177,10 +177,10 @@ ColumnLayout {
                         implicitHeight: 28
                         radius: Theme.r(8)
                         color: layChip.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (layMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: layChip.selected ? 1 : Theme.subBorderWidth
-                        border.color: layChip.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.primary
+                            : (layMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: layChip.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
                         scale: layMouse.pressed ? 0.95 : 1.0
 
                         Behavior on color {
@@ -198,7 +198,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: layChip.selected ? Font.Bold : Font.Medium
-                            color: layChip.selected ? Theme.primary : Theme.fgSurface
+                            color: layChip.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -309,10 +309,10 @@ ColumnLayout {
                         implicitHeight: 26
                         radius: Theme.r(8)
                         color: optBtn.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (optMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: optBtn.selected ? 1 : Theme.subBorderWidth
-                        border.color: optBtn.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.primary
+                            : (optMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: optBtn.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
                         scale: optMouse.pressed ? 0.95 : 1.0
 
                         Behavior on color {
@@ -330,7 +330,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: optBtn.selected ? Font.Bold : Font.Normal
-                            color: optBtn.selected ? Theme.primary : Theme.fgSurface
+                            color: optBtn.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -369,10 +369,10 @@ ColumnLayout {
                         implicitHeight: 26
                         radius: Theme.r(8)
                         color: rateBtn.selected
-                            ? Theme.withAlpha(Theme.secondary, 0.22)
-                            : (rateMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: rateBtn.selected ? 1 : Theme.subBorderWidth
-                        border.color: rateBtn.selected ? Theme.secondary : Theme.cardBorder
+                            ? Theme.secondary
+                            : (rateMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: rateBtn.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.secondary
                         scale: rateMouse.pressed ? 0.95 : 1.0
 
                         Behavior on color {
@@ -390,7 +390,7 @@ ColumnLayout {
                             font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             font.weight: rateBtn.selected ? Font.Bold : Font.Normal
-                            color: rateBtn.selected ? Theme.secondary : Theme.fgSurface
+                            color: rateBtn.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -429,10 +429,10 @@ ColumnLayout {
                         implicitHeight: 26
                         radius: Theme.r(8)
                         color: delayBtn.selected
-                            ? Theme.withAlpha(Theme.secondary, 0.22)
-                            : (delayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: delayBtn.selected ? 1 : Theme.subBorderWidth
-                        border.color: delayBtn.selected ? Theme.secondary : Theme.cardBorder
+                            ? Theme.secondary
+                            : (delayMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: delayBtn.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.secondary
                         scale: delayMouse.pressed ? 0.95 : 1.0
 
                         Behavior on color {
@@ -450,7 +450,7 @@ ColumnLayout {
                             font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             font.weight: delayBtn.selected ? Font.Bold : Font.Normal
-                            color: delayBtn.selected ? Theme.secondary : Theme.fgSurface
+                            color: delayBtn.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -506,16 +506,17 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: modChip.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                        border.width: modChip.selected ? 1 : Theme.subBorderWidth
-                        border.color: modChip.selected ? Theme.primary : Theme.cardBorder
+                        color: modChip.selected ? Theme.primary : Theme.subCardBg
+                        border.width: modChip.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
                             text: modChip.modelData
                             font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
-                            color: modChip.selected ? Theme.primary : Theme.fgSurface
+                            font.weight: modChip.selected ? Font.Bold : Font.Normal
+                            color: modChip.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -628,10 +629,10 @@ ColumnLayout {
                         implicitHeight: 26
                         radius: Theme.r(8)
                         color: mProfBtn.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (mProfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: mProfBtn.selected ? 1 : Theme.subBorderWidth
-                        border.color: mProfBtn.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.primary
+                            : (mProfMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: mProfBtn.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
                         scale: mProfMouse.pressed ? 0.96 : 1.0
 
                         Behavior on color {
@@ -649,7 +650,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: mProfBtn.selected ? Font.Bold : Font.Normal
-                            color: mProfBtn.selected ? Theme.primary : Theme.fgSurface
+                            color: mProfBtn.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -725,10 +726,10 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: mScrBtn.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                        border.width: mScrBtn.selected ? 1 : Theme.subBorderWidth
-                        border.color: mScrBtn.selected ? Theme.primary : Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: mScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: mScrBtn.selected ? Theme.primary : Theme.fgSurface }
+                        color: mScrBtn.selected ? Theme.primary : Theme.subCardBg
+                        border.width: mScrBtn.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
+                        Text { anchors.centerIn: parent; text: mScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: mScrBtn.selected ? Font.Bold : Font.Normal; color: mScrBtn.selected ? Theme.fgPrimary : Theme.fgSurface }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("mouse_scroll_method", mScrBtn.modelData.val) }
                     }
                 }
@@ -815,10 +816,10 @@ ColumnLayout {
                         implicitHeight: 26
                         radius: Theme.r(8)
                         color: tpProfBtn.selected
-                            ? Theme.withAlpha(Theme.secondary, 0.22)
-                            : (tpProfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: tpProfBtn.selected ? 1 : Theme.subBorderWidth
-                        border.color: tpProfBtn.selected ? Theme.secondary : Theme.cardBorder
+                            ? Theme.secondary
+                            : (tpProfMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: tpProfBtn.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.secondary
                         scale: tpProfMouse.pressed ? 0.96 : 1.0
 
                         Behavior on color {
@@ -836,7 +837,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: tpProfBtn.selected ? Font.Bold : Font.Normal
-                            color: tpProfBtn.selected ? Theme.secondary : Theme.fgSurface
+                            color: tpProfBtn.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -894,9 +895,9 @@ ColumnLayout {
                         required property var modelData
                         readonly property bool selected: root.trackpadClickMethod === tpClkBtn.modelData.val
                         Layout.fillWidth: true; implicitHeight: 24; radius: Theme.r(7)
-                        color: tpClkBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                        border.width: tpClkBtn.selected ? 1 : Theme.subBorderWidth; border.color: tpClkBtn.selected ? Theme.secondary : Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: tpClkBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: tpClkBtn.selected ? Theme.secondary : Theme.fgSurface }
+                        color: tpClkBtn.selected ? Theme.secondary : Theme.subCardBg
+                        border.width: tpClkBtn.selected ? Theme.activeControlBorderWidth : 0; border.color: Theme.secondary
+                        Text { anchors.centerIn: parent; text: tpClkBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: tpClkBtn.selected ? Font.Bold : Font.Normal; color: tpClkBtn.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("trackpad_click_method", tpClkBtn.modelData.val) }
                     }
                 }
@@ -913,9 +914,9 @@ ColumnLayout {
                         required property var modelData
                         readonly property bool selected: root.trackpadScrollMethod === tpScrBtn.modelData.val
                         Layout.fillWidth: true; implicitHeight: 24; radius: Theme.r(7)
-                        color: tpScrBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                        border.width: tpScrBtn.selected ? 1 : Theme.subBorderWidth; border.color: tpScrBtn.selected ? Theme.secondary : Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: tpScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: tpScrBtn.selected ? Theme.secondary : Theme.fgSurface }
+                        color: tpScrBtn.selected ? Theme.secondary : Theme.subCardBg
+                        border.width: tpScrBtn.selected ? Theme.activeControlBorderWidth : 0; border.color: Theme.secondary
+                        Text { anchors.centerIn: parent; text: tpScrBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: tpScrBtn.selected ? Font.Bold : Font.Normal; color: tpScrBtn.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.setSetting("trackpad_scroll_method", tpScrBtn.modelData.val) }
                     }
                 }

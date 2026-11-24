@@ -400,9 +400,19 @@ ColumnLayout {
                     Layout.fillWidth: true
                     implicitHeight: nmConnInner.implicitHeight + 14
                     radius: Theme.r(10)
-                    color: Theme.subCardBg
-                    border.width: nmConnRow.modelData.active ? 1 : Theme.subBorderWidth
-                    border.color: nmConnRow.modelData.active ? Theme.primary : Theme.cardBorder
+                    clip: true
+                    color: nmConnRow.modelData.active ? Theme.tileActiveBg : Theme.subCardBg
+                    border.width: nmConnRow.modelData.active ? Theme.activeControlBorderWidth : 0
+                    border.color: Theme.primary
+
+                    Rectangle {
+                        visible: nmConnRow.modelData.active
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: 3
+                        color: Theme.primary
+                    }
 
                     ColumnLayout {
                         id: nmConnInner
@@ -425,11 +435,11 @@ ColumnLayout {
 
                             Rectangle {
                                 implicitHeight: 22
-                                implicitWidth: nmTogLbl.implicitWidth + 12
+                                implicitWidth: nmTogLbl.implicitWidth + 14
                                 radius: Theme.r(6)
-                                color: Theme.cardBg
-                                border.width: Theme.subBorderWidth
-                                border.color: Theme.cardBorder
+                                color: nmConnRow.modelData.active ? Theme.withAlpha(Theme.warning, 0.16) : Theme.cardBg
+                                border.width: Theme.activeControlBorderWidth
+                                border.color: nmConnRow.modelData.active ? Theme.warning : Theme.cardBorder
 
                                 Text {
                                     id: nmTogLbl
@@ -692,11 +702,21 @@ ColumnLayout {
                     Layout.fillWidth: true
                     implicitHeight: 38
                     radius: Theme.r(10)
+                    clip: true
                     color: netRow.modelData.inUse
-                        ? Theme.withAlpha(Theme.primary, 0.20)
-                        : (netMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: netRow.modelData.inUse ? 1 : Theme.subBorderWidth
-                    border.color: netRow.modelData.inUse ? Theme.primary : Theme.cardBorder
+                        ? Theme.tileActiveBg
+                        : (netMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: netRow.modelData.inUse ? Theme.activeControlBorderWidth : 0
+                    border.color: Theme.primary
+
+                    Rectangle {
+                        visible: netRow.modelData.inUse
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: 3
+                        color: Theme.primary
+                    }
 
                     RowLayout {
                         anchors.fill: parent
@@ -732,8 +752,8 @@ ColumnLayout {
                             implicitHeight: 24
                             implicitWidth: actTxt.implicitWidth + 14
                             radius: Theme.r(7)
-                            color: netRow.modelData.inUse ? Theme.withAlpha(Theme.error, 0.22) : Theme.cardBg
-                            border.width: Theme.subBorderWidth
+                            color: netRow.modelData.inUse ? Theme.withAlpha(Theme.error, 0.18) : Theme.cardBg
+                            border.width: Theme.activeControlBorderWidth
                             border.color: Theme.cardBorder
 
                             Text {

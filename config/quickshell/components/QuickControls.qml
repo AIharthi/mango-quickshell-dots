@@ -10,6 +10,10 @@ Rectangle {
 
     property bool active: false
     property bool hideDuplicateToggles: false
+    property bool hideHeader: false
+    property bool hideStyleFooter: false
+    property bool showFocusAwakeRow: false
+    property bool tallActionTiles: false
     signal draggingChanged(bool dragging)
     signal openSettingsRequested(string page)
 
@@ -232,12 +236,13 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 11
-        spacing: 7
+        anchors.margins: root.hideHeader ? 10 : 10
+        spacing: root.hideHeader ? 8 : 6
 
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
+            visible: !root.hideHeader
 
             Text {
                 text: "Quick Controls"
@@ -266,13 +271,13 @@ Rectangle {
             Item {
                 id: volCapsule
                 Layout.fillWidth: true
-                implicitHeight: 32
+                implicitHeight: root.tallActionTiles ? 34 : 32
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Theme.r(16)
+                    radius: Theme.r(root.tallActionTiles ? 17 : 16)
                     color: Theme.subCardBg
-                    border.width: Theme.subBorderWidth
+                    border.width: Theme.activeControlBorderWidth
                     border.color: Theme.cardBorder
                     clip: true
 
@@ -281,7 +286,7 @@ Rectangle {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
                         width: Math.max(parent.height, parent.width * root.volumeLevel)
-                        radius: Theme.r(16)
+                        radius: Theme.r(root.tallActionTiles ? 17 : 16)
                         color: root.volumeMuted ? Theme.surfaceContainerHighest : Theme.primary
 
                         Behavior on width {
@@ -300,7 +305,7 @@ Rectangle {
                             text: root.volumeMuted ? "󰝟" : (root.volumeLevel <= 0.45 ? "󰖀" : "󰕾")
                             font.family: Theme.iconFont
                             font.pixelSize: 15
-                            color: root.volumeMuted ? Theme.error : Theme.fgPrimary
+                            color: root.volumeMuted ? Theme.fgSurfaceVariant : Theme.fgPrimary
 
                             MouseArea {
                                 anchors.fill: parent
@@ -358,13 +363,13 @@ Rectangle {
             }
 
             Rectangle {
-                implicitWidth: 32
-                implicitHeight: 32
-                radius: Theme.r(16)
+                implicitWidth: root.tallActionTiles ? 34 : 32
+                implicitHeight: root.tallActionTiles ? 34 : 32
+                radius: Theme.r(root.tallActionTiles ? 17 : 16)
                 color: root.micMuted
-                    ? Theme.withAlpha(Theme.error, 0.20)
-                    : (micMuteArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: root.micMuted ? 1 : Theme.subBorderWidth
+                    ? Theme.error
+                    : (micMuteArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                border.width: Theme.activeControlBorderWidth
                 border.color: root.micMuted ? Theme.error : Theme.cardBorder
 
                 Text {
@@ -372,7 +377,7 @@ Rectangle {
                     text: root.micMuted ? "󰍭" : "󰍬"
                     font.family: Theme.iconFont
                     font.pixelSize: 14
-                    color: root.micMuted ? Theme.error : Theme.secondary
+                    color: root.micMuted ? Theme.fgError : Theme.fgSurface
                 }
 
                 MouseArea {
@@ -399,9 +404,9 @@ Rectangle {
 
             Rectangle {
                 anchors.fill: parent
-                radius: Theme.r(16)
+                radius: Theme.r(15)
                 color: Theme.subCardBg
-                border.width: Theme.subBorderWidth
+                border.width: Theme.activeControlBorderWidth
                 border.color: Theme.cardBorder
                 clip: true
 
@@ -410,7 +415,7 @@ Rectangle {
                     anchors.bottom: parent.bottom
                     anchors.left: parent.left
                     width: root.brightnessSupported ? Math.max(parent.height, parent.width * root.brightnessLevel) : parent.height
-                    radius: Theme.r(16)
+                    radius: Theme.r(15)
                     color: Theme.warning
 
                     Behavior on width {
@@ -483,17 +488,17 @@ Rectangle {
             spacing: 8
             visible: DeviceCaps.hasWifi || DeviceCaps.hasBluetooth
 
-            // Wi-Fi Pill
+            // Wi-Fi Pill (borderless tonal elevation + solid accent disc)
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 34
                 visible: DeviceCaps.hasWifi
                 radius: Theme.r(12)
                 color: root.wifiEnabled
-                    ? Theme.withAlpha(Theme.primary, 0.22)
-                    : (wifiArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: root.wifiEnabled ? 1 : Theme.subBorderWidth
-                border.color: root.wifiEnabled ? Theme.primary : Theme.cardBorder
+                    ? Theme.tileActiveBg
+                    : (wifiArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                border.width: root.wifiEnabled ? Theme.activeControlBorderWidth : 0
+                border.color: Theme.primary
                 scale: wifiArea.pressed ? 0.97 : 1.0
 
                 Behavior on color {
@@ -507,15 +512,23 @@ Rectangle {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: 8
                     anchors.rightMargin: 10
-                    spacing: 6
+                    spacing: 7
 
-                    Text {
-                        text: root.wifiEnabled ? "󰤨" : "󰤭"
-                        font.family: Theme.iconFont
-                        font.pixelSize: 15
-                        color: root.wifiEnabled ? Theme.primary : Theme.fgSurfaceVariant
+                    Rectangle {
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        radius: Theme.r(11)
+                        color: root.wifiEnabled ? Theme.primary : Theme.surfaceContainerHighest
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: root.wifiEnabled ? "󰤨" : "󰤭"
+                            font.family: Theme.iconFont
+                            font.pixelSize: 12
+                            color: root.wifiEnabled ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                        }
                     }
 
                     Text {
@@ -525,8 +538,8 @@ Rectangle {
                         maximumLineCount: 1
                         font.family: Theme.fontFamily
                         font.pixelSize: 11
-                        font.weight: Font.DemiBold
-                        color: Theme.fgSurface
+                        font.weight: root.wifiEnabled ? Font.Bold : Font.DemiBold
+                        color: root.wifiEnabled ? Theme.fgSurface : Theme.fgSurfaceVariant
                     }
                 }
 
@@ -547,17 +560,17 @@ Rectangle {
                 }
             }
 
-            // Bluetooth Pill
+            // Bluetooth Pill (borderless tonal elevation + solid accent disc)
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 34
                 visible: DeviceCaps.hasBluetooth
                 radius: Theme.r(12)
                 color: root.btEnabled
-                    ? Theme.withAlpha(Theme.secondary, 0.22)
-                    : (btArea.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: root.btEnabled ? 1 : Theme.subBorderWidth
-                border.color: root.btEnabled ? Theme.secondary : Theme.cardBorder
+                    ? Theme.tileActiveBg
+                    : (btArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                border.width: root.btEnabled ? Theme.activeControlBorderWidth : 0
+                border.color: Theme.secondary
                 scale: btArea.pressed ? 0.97 : 1.0
 
                 Behavior on color {
@@ -571,15 +584,23 @@ Rectangle {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: 8
                     anchors.rightMargin: 10
-                    spacing: 6
+                    spacing: 7
 
-                    Text {
-                        text: root.btEnabled ? "󰂯" : "󰂲"
-                        font.family: Theme.iconFont
-                        font.pixelSize: 15
-                        color: root.btEnabled ? Theme.secondary : Theme.fgSurfaceVariant
+                    Rectangle {
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        radius: Theme.r(11)
+                        color: root.btEnabled ? Theme.secondary : Theme.surfaceContainerHighest
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: root.btEnabled ? "󰂯" : "󰂲"
+                            font.family: Theme.iconFont
+                            font.pixelSize: 12
+                            color: root.btEnabled ? Theme.fgSecondary : Theme.fgSurfaceVariant
+                        }
                     }
 
                     Text {
@@ -589,8 +610,8 @@ Rectangle {
                         maximumLineCount: 1
                         font.family: Theme.fontFamily
                         font.pixelSize: 11
-                        font.weight: Font.DemiBold
-                        color: Theme.fgSurface
+                        font.weight: root.btEnabled ? Font.Bold : Font.DemiBold
+                        color: root.btEnabled ? Theme.fgSurface : Theme.fgSurfaceVariant
                     }
                 }
 
@@ -612,15 +633,15 @@ Rectangle {
             }
         }
 
-        // --- Desktop Audio & Settings Shortcut (shown when no backlight/wifi/bt clutter exists) ---
+        // --- Desktop Audio & Settings Shortcut ---
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: false
             implicitHeight: 32
             visible: !DeviceCaps.hasExtraQuickControls && !root.hideDuplicateToggles
             radius: Theme.r(11)
-            color: audioSettingsArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            border.width: Theme.subBorderWidth
+            color: audioSettingsArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+            border.width: Theme.activeControlBorderWidth
             border.color: Theme.cardBorder
             scale: audioSettingsArea.pressed ? 0.97 : 1.0
 
@@ -643,7 +664,7 @@ Rectangle {
                     text: "󰋋"
                     font.family: Theme.iconFont
                     font.pixelSize: 14
-                    color: Theme.secondary
+                    color: Theme.fgSurfaceVariant
                 }
 
                 Text {
@@ -661,14 +682,14 @@ Rectangle {
                     implicitWidth: 22
                     implicitHeight: 22
                     radius: Theme.r(7)
-                    color: cycSinkMouse.containsMouse ? Theme.hoverBg : "transparent"
+                    color: cycSinkMouse.containsMouse ? Theme.tileActiveBg : "transparent"
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰓃"
                         font.family: Theme.iconFont
                         font.pixelSize: 13
-                        color: cycSinkMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+                        color: cycSinkMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
                     }
 
                     MouseArea {
@@ -698,6 +719,89 @@ Rectangle {
             }
         }
 
+        // --- Optional Focus & Keep Awake Row (fills Desktop Cockpit deck cleanly) ---
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            spacing: 6
+            visible: root.showFocusAwakeRow && !root.hideDuplicateToggles
+
+            Repeater {
+                model: [
+                    { id: "dnd",   label: "Focus",      sub: ShellState.dnd ? "DND On" : "Normal", icon: ShellState.dnd ? "󰂛" : "󰂚", active: ShellState.dnd, tint: Theme.secondary },
+                    { id: "awake", label: "Keep Awake", sub: ShellState.keepAwake ? "Paused" : "Auto", icon: "󰅶", active: ShellState.keepAwake, tint: Theme.warning }
+                ]
+
+                delegate: Rectangle {
+                    id: faTile
+                    required property var modelData
+                    Layout.fillWidth: true
+                    implicitHeight: 32
+                    radius: Theme.r(10)
+                    color: faTile.modelData.active
+                        ? Theme.tileActiveBg
+                        : (faMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: faTile.modelData.active ? Theme.activeControlBorderWidth : 0
+                    border.color: faTile.modelData.tint
+                    scale: faMouse.pressed ? 0.96 : 1.0
+
+                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 7
+                        anchors.rightMargin: 9
+                        spacing: 7
+
+                        Rectangle {
+                            implicitWidth: 20
+                            implicitHeight: 20
+                            radius: Theme.r(10)
+                            color: faTile.modelData.active ? faTile.modelData.tint : Theme.surfaceContainerHighest
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: faTile.modelData.icon
+                                font.family: Theme.iconFont
+                                font.pixelSize: 11
+                                color: faTile.modelData.active ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                            }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: faTile.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.weight: faTile.modelData.active ? Font.Bold : Font.DemiBold
+                            color: faTile.modelData.active ? Theme.fgSurface : Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            text: faTile.modelData.sub
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            color: faTile.modelData.active ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.72)
+                        }
+                    }
+
+                    MouseArea {
+                        id: faMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (faTile.modelData.id === "dnd")
+                                ShellState.toggleDnd();
+                            else
+                                ShellState.toggleKeepAwake();
+                        }
+                    }
+                }
+            }
+        }
+
         // --- Decluttered 4-Pill Quick Actions Strip ---
         RowLayout {
             Layout.fillWidth: true
@@ -707,34 +811,64 @@ Rectangle {
             Repeater {
                 model: root.hideDuplicateToggles
                     ? [
-                        { id: "shot",  label: "Capture", icon: "󰹑", active: false, accent: Theme.primary },
-                        { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
-                        { id: "keys",  label: "Keys",    icon: "󰌌", active: false, accent: Theme.tertiary },
-                        { id: "wins",  label: "Windows", icon: "󰖯", active: false, accent: Theme.secondary }
+                        { id: "shot",  label: "Capture", icon: "󰹑", active: false, isAlert: false, tint: Theme.primary },
+                        { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, isAlert: true, tint: Theme.error },
+                        { id: "keys",  label: "Keys",    icon: "󰌌", active: false, isAlert: false, tint: Theme.primary },
+                        { id: "wins",  label: "Windows", icon: "󰖯", active: false, isAlert: false, tint: Theme.primary }
                     ]
                     : [
-                        { id: "shot",  label: "Capture", icon: "󰹑", active: false, accent: Theme.primary },
-                        { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, accent: Theme.error },
-                        { id: "game",  label: "Game",    icon: "󰊴", active: ShellState.gameModeActive, accent: Theme.tertiary },
-                        { id: "wins",  label: "Windows", icon: "󰖯", active: false, accent: Theme.secondary }
+                        { id: "shot",  label: "Capture", icon: "󰹑", active: false, isAlert: false, tint: Theme.primary },
+                        { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, isAlert: true, tint: Theme.error },
+                        { id: "game",  label: "Game",    icon: "󰊴", active: ShellState.gameModeActive, isAlert: false, tint: Theme.tertiary },
+                        { id: "wins",  label: "Windows", icon: "󰖯", active: false, isAlert: false, tint: Theme.primary }
                     ]
 
                 delegate: Rectangle {
                     id: qaBtn
                     required property var modelData
                     Layout.fillWidth: true
-                    implicitHeight: 30
-                    radius: Theme.r(10)
-                    color: qaBtn.modelData.active
-                        ? Theme.withAlpha(qaBtn.modelData.accent, 0.24)
-                        : (qaMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: qaBtn.modelData.active ? 1 : Theme.subBorderWidth
-                    border.color: qaBtn.modelData.active ? qaBtn.modelData.accent : Theme.cardBorder
+                    implicitHeight: root.tallActionTiles ? 54 : 30
+                    radius: Theme.r(root.tallActionTiles ? 12 : 10)
+                    color: {
+                        if (qaBtn.modelData.active)
+                            return qaBtn.modelData.isAlert ? Theme.error : Theme.tileActiveBg;
+                        return qaMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg;
+                    }
+                    border.width: qaBtn.modelData.active ? Theme.activeControlBorderWidth : 0
+                    border.color: qaBtn.modelData.tint
                     scale: qaMouse.pressed ? 0.94 : 1.0
 
                     Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
+                    ColumnLayout {
+                        visible: root.tallActionTiles
+                        anchors.centerIn: parent
+                        spacing: 3
+
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: qaBtn.modelData.icon
+                            font.family: Theme.iconFont
+                            font.pixelSize: 15
+                            color: qaBtn.modelData.active
+                                ? (qaBtn.modelData.isAlert ? Theme.fgError : qaBtn.modelData.tint)
+                                : (qaMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant)
+                        }
+
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: qaBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 9
+                            font.weight: qaBtn.modelData.active ? Font.Bold : Font.DemiBold
+                            color: qaBtn.modelData.active
+                                ? (qaBtn.modelData.isAlert ? Theme.fgError : Theme.fgSurface)
+                                : Theme.fgSurface
+                        }
+                    }
+
                     RowLayout {
+                        visible: !root.tallActionTiles
                         anchors.centerIn: parent
                         spacing: 4
 
@@ -742,7 +876,9 @@ Rectangle {
                             text: qaBtn.modelData.icon
                             font.family: Theme.iconFont
                             font.pixelSize: 12
-                            color: (qaBtn.modelData.active || qaMouse.containsMouse) ? qaBtn.modelData.accent : Theme.fgSurfaceVariant
+                            color: qaBtn.modelData.active
+                                ? (qaBtn.modelData.isAlert ? Theme.fgError : qaBtn.modelData.tint)
+                                : (qaMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant)
                         }
 
                         Text {
@@ -750,7 +886,9 @@ Rectangle {
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: qaBtn.modelData.active ? Font.Bold : Font.DemiBold
-                            color: qaBtn.modelData.active ? qaBtn.modelData.accent : Theme.fgSurface
+                            color: qaBtn.modelData.active
+                                ? (qaBtn.modelData.isAlert ? Theme.fgError : Theme.fgSurface)
+                                : Theme.fgSurface
                         }
                     }
 
@@ -780,21 +918,21 @@ Rectangle {
             // Night Light compact icon (shown when wlsunset/hyprsunset/gammastep installed)
             Rectangle {
                 visible: DeviceCaps.hasNightLight
-                implicitWidth: 32
-                implicitHeight: 30
-                radius: Theme.r(10)
+                implicitWidth: root.tallActionTiles ? 38 : 32
+                implicitHeight: root.tallActionTiles ? 54 : 30
+                radius: Theme.r(root.tallActionTiles ? 12 : 10)
                 color: ShellState.nightLightEnabled
-                    ? Theme.withAlpha(Theme.warning, 0.24)
-                    : (nlMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: ShellState.nightLightEnabled ? 1 : Theme.subBorderWidth
-                border.color: ShellState.nightLightEnabled ? Theme.warning : Theme.cardBorder
+                    ? Theme.tileActiveBg
+                    : (nlMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                border.width: ShellState.nightLightEnabled ? Theme.activeControlBorderWidth : 0
+                border.color: Theme.warning
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰖔"
                     font.family: Theme.iconFont
                     font.pixelSize: 13
-                    color: ShellState.nightLightEnabled ? Theme.warning : Theme.fgSurfaceVariant
+                    color: ShellState.nightLightEnabled ? Theme.warning : (nlMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant)
                 }
 
                 MouseArea {
@@ -807,17 +945,16 @@ Rectangle {
             }
         }
 
-        Item { Layout.fillHeight: true }
-
         // --- Clean Apple Visual Style Summary Pill (LMB -> Settings Appearance, RMB -> Cycle Mode) ---
         Rectangle {
             id: styleSummaryCard
+            visible: !root.hideStyleFooter
             Layout.fillWidth: true
             Layout.fillHeight: false
-            implicitHeight: 32
-            radius: Theme.r(12)
-            color: styleSummaryMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            border.width: Theme.subBorderWidth
+            implicitHeight: 30
+            radius: Theme.r(10)
+            color: styleSummaryMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+            border.width: Theme.activeControlBorderWidth
             border.color: Theme.cardBorder
             scale: styleSummaryMouse.pressed ? 0.97 : 1.0
 
@@ -841,8 +978,8 @@ Rectangle {
                 Text {
                     text: styleSummaryCard.curModeObj ? styleSummaryCard.curModeObj.icon : "󰏘"
                     font.family: Theme.iconFont
-                    font.pixelSize: 14
-                    color: Theme.primary
+                    font.pixelSize: 13
+                    color: Theme.fgSurfaceVariant
                 }
 
                 Text {
@@ -860,7 +997,7 @@ Rectangle {
                     font.family: Theme.fontFamily
                     font.pixelSize: 9
                     font.weight: Font.DemiBold
-                    color: Theme.primary
+                    color: styleSummaryMouse.containsMouse ? Theme.fgSurface : Theme.primary
                 }
             }
 

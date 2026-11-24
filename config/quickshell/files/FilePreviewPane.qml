@@ -11,6 +11,10 @@ Rectangle {
     property var previewData: null
     property bool loading: false
     property bool isBookmarked: false
+    property string computedHash: ""
+    property string computedDirSummary: ""
+    property bool computingExtra: false
+    property string _lastExtraPath: ""
 
     signal openRequested(string path)
     signal editRequested(string path)
@@ -21,6 +25,8 @@ Rectangle {
     signal copyTextRequested(string text, string label)
     signal importThemeRequested(string path)
     signal wallpaperApplied(string path, bool dynamicMode)
+    signal checksumRequested(string path)
+    signal dirSizeRequested(string path)
 
     radius: Theme.r(12)
     color: root.fileStyle.paneBg
@@ -32,6 +38,15 @@ Rectangle {
     readonly property string pKind: String(d.previewKind || "")
     readonly property string pPath: String(d.path || "")
     readonly property bool isExecNow: !!d.isExec
+
+    onPPathChanged: {
+        if (root.pPath !== root._lastExtraPath) {
+            root._lastExtraPath = root.pPath;
+            root.computedHash = "";
+            root.computedDirSummary = "";
+            root.computingExtra = false;
+        }
+    }
 
     function toggledExecMode(): string {
         const cur = parseInt(String(root.d.modeOctal || "0644"), 8);
@@ -188,8 +203,8 @@ Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 28
                             radius: Theme.r(8)
-                            color: wpMouse.containsMouse ? root.fileStyle.accent : Theme.withAlpha(root.fileStyle.accent, 0.20)
-                            border.width: 1
+                            color: wpMouse.containsMouse ? Qt.lighter(root.fileStyle.accent, 1.08) : root.fileStyle.accent
+                            border.width: Theme.activeControlBorderWidth
                             border.color: root.fileStyle.accent
 
                             Text {
@@ -198,7 +213,7 @@ Rectangle {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
-                                color: wpMouse.containsMouse ? root.fileStyle.onAccent : root.fileStyle.accent
+                                color: Theme.contrastInk(root.fileStyle.accent)
                             }
                             MouseArea {
                                 id: wpMouse
@@ -216,8 +231,8 @@ Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 28
                             radius: Theme.r(8)
-                            color: dynMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                            border.width: 1
+                            color: dynMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                            border.width: Theme.activeControlBorderWidth
                             border.color: Theme.cardBorder
 
                             Text {
@@ -247,8 +262,8 @@ Rectangle {
                         visible: !!root.d.isThemeJson
                         implicitHeight: 28
                         radius: Theme.r(8)
-                        color: thImpMouse.containsMouse ? Theme.withAlpha(Theme.success, 0.28) : Theme.withAlpha(Theme.success, 0.16)
-                        border.width: 1
+                        color: thImpMouse.containsMouse ? Theme.success : Theme.withAlpha(Theme.success, 0.16)
+                        border.width: Theme.activeControlBorderWidth
                         border.color: Theme.success
 
                         Text {
@@ -257,7 +272,7 @@ Rectangle {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
-                            color: Theme.success
+                            color: thImpMouse.containsMouse ? Theme.contrastInk(Theme.success) : Theme.success
                         }
                         MouseArea {
                             id: thImpMouse
@@ -274,8 +289,8 @@ Rectangle {
                         visible: root.pKind === "archive"
                         implicitHeight: 28
                         radius: Theme.r(8)
-                        color: exMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                        border.width: 1
+                        color: exMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                        border.width: Theme.activeControlBorderWidth
                         border.color: root.fileStyle.accent
 
                         Text {
@@ -304,8 +319,8 @@ Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 26
                             radius: Theme.r(8)
-                            color: opMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                            border.width: 1
+                            color: opMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                            border.width: Theme.activeControlBorderWidth
                             border.color: Theme.cardBorder
 
                             Text {
@@ -335,8 +350,8 @@ Rectangle {
                             visible: !!root.d.isDir
                             implicitHeight: 26
                             radius: Theme.r(8)
-                            color: tmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                            border.width: 1
+                            color: tmMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                            border.width: Theme.activeControlBorderWidth
                             border.color: Theme.cardBorder
 
                             Text {
@@ -362,17 +377,17 @@ Rectangle {
                             visible: !!root.d.isDir
                             radius: Theme.r(8)
                             color: root.isBookmarked
-                                ? Theme.withAlpha(root.fileStyle.accent, 0.22)
-                                : (bmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: 1
-                            border.color: root.isBookmarked ? root.fileStyle.accent : Theme.cardBorder
+                                ? root.fileStyle.accent
+                                : (bmMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: root.isBookmarked ? Theme.activeControlBorderWidth : 0
+                            border.color: root.fileStyle.accent
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰃀"
                                 font.family: Theme.iconFont
                                 font.pixelSize: Theme.fs(12)
-                                color: root.isBookmarked ? root.fileStyle.accent : Theme.fgSurfaceVariant
+                                color: root.isBookmarked ? Theme.contrastInk(root.fileStyle.accent) : Theme.fgSurfaceVariant
                             }
                             MouseArea {
                                 id: bmMouse
@@ -392,8 +407,8 @@ Rectangle {
                     implicitHeight: Math.min(200, Math.max(64, txtPrev.implicitHeight + 16))
                     radius: Theme.r(8)
                     color: Theme.surfaceContainerLowest
-                    border.width: 1
-                    border.color: Theme.outlineVariant
+                    border.width: Theme.subBorderWidth
+                    border.color: Theme.hairlineBorder
                     clip: true
 
                     Text {
@@ -527,9 +542,9 @@ Rectangle {
                                 implicitHeight: 16
                                 implicitWidth: xLbl.implicitWidth + 8
                                 radius: Theme.r(4)
-                                color: root.isExecNow ? Theme.withAlpha(Theme.success, 0.22) : Theme.cardBg
-                                border.width: 1
-                                border.color: root.isExecNow ? Theme.success : Theme.outlineVariant
+                                color: root.isExecNow ? Theme.success : Theme.cardBg
+                                border.width: root.isExecNow ? Theme.activeControlBorderWidth : Theme.subBorderWidth
+                                border.color: root.isExecNow ? Theme.success : Theme.hairlineBorder
 
                                 Text {
                                     id: xLbl
@@ -538,7 +553,7 @@ Rectangle {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(8)
                                     font.weight: Font.Bold
-                                    color: root.isExecNow ? Theme.success : Theme.fgSurfaceVariant
+                                    color: root.isExecNow ? Theme.contrastInk(Theme.success) : Theme.fgSurfaceVariant
                                 }
                                 MouseArea {
                                     anchors.fill: parent
@@ -568,8 +583,8 @@ Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 22
                             radius: Theme.r(6)
-                            color: cpMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                            border.width: 1
+                            color: cpMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg
+                            border.width: Theme.activeControlBorderWidth
                             border.color: Theme.cardBorder
 
                             Text {
@@ -585,6 +600,53 @@ Rectangle {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: root.copyTextRequested(root.pPath, "Path copied")
+                            }
+                        }
+
+                        Rectangle {
+                            visible: root.pPath.length > 0 && !root.d.isSymlink
+                            Layout.fillWidth: true
+                            implicitHeight: 22
+                            radius: Theme.r(6)
+                            color: extraMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg
+                            border.width: 0
+
+                            Text {
+                                anchors.centerIn: parent
+                                width: parent.width - 12
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideMiddle
+                                text: {
+                                    if (!root.d.isDir) {
+                                        if (root.computedHash.length > 0)
+                                            return "󰒃 " + root.computedHash.slice(0, 10) + "..." + root.computedHash.slice(-8);
+                                        return root.computingExtra ? "󰒃 Computing SHA-256..." : "󰒃 Compute SHA-256";
+                                    }
+                                    if (root.computedDirSummary.length > 0)
+                                        return "󰉋 " + root.computedDirSummary;
+                                    return root.computingExtra ? "󰉋 Calculating Size..." : "󰉋 Calculate Folder Size";
+                                }
+                                font.family: (!root.d.isDir && root.computedHash.length > 0) ? Theme.monoFont : Theme.fontFamily
+                                font.pixelSize: Theme.fs(9)
+                                color: (root.computedHash.length > 0 || root.computedDirSummary.length > 0) ? Theme.primary : Theme.fgSurfaceVariant
+                            }
+                            MouseArea {
+                                id: extraMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: root.computingExtra ? Qt.BusyCursor : Qt.PointingHandCursor
+                                onClicked: {
+                                    if (root.computingExtra)
+                                        return;
+                                    if (!root.d.isDir) {
+                                        if (root.computedHash.length > 0)
+                                            root.copyTextRequested(root.computedHash, "SHA-256 copied");
+                                        else
+                                            root.checksumRequested(root.pPath);
+                                    } else {
+                                        root.dirSizeRequested(root.pPath);
+                                    }
+                                }
                             }
                         }
                     }

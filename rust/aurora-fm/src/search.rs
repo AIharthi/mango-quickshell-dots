@@ -70,7 +70,7 @@ pub fn search_dir(
     let query_trimmed = query.trim();
     let query_lower = query_trimmed.to_ascii_lowercase();
     let include_hidden = show_hidden || query_lower.starts_with('.');
-    let cap = max_results.clamp(10, 400);
+    let cap = max_results.clamp(1, 2000);
 
     let mut seen_dirs: HashSet<(u64, u64)> = HashSet::new();
     seen_dirs.insert((root_meta.dev(), root_meta.ino()));

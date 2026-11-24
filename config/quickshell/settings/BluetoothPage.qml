@@ -215,10 +215,22 @@ ColumnLayout {
                     implicitHeight: 38
                     radius: Theme.r(10)
                     color: devRow.modelData.connected
-                        ? Theme.withAlpha(Theme.secondary, 0.20)
-                        : (devMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: devRow.modelData.connected ? 1 : Theme.subBorderWidth
-                    border.color: devRow.modelData.connected ? Theme.secondary : Theme.cardBorder
+                        ? Theme.tileActiveBg
+                        : (devMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: devRow.modelData.connected ? Theme.activeControlBorderWidth : 0
+                    border.color: Theme.secondary
+
+                    Rectangle {
+                        visible: devRow.modelData.connected
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 8
+                        anchors.bottomMargin: 8
+                        width: 3
+                        radius: 1.5
+                        color: Theme.secondary
+                    }
 
                     RowLayout {
                         anchors.fill: parent

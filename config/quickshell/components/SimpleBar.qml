@@ -12,10 +12,8 @@ Rectangle {
     property string monitorName: ""
     property string currentLayout: "T"
     property string activeWindowTitle: ""
-    property real cpuPercent: 0
-    property real _prevTotal: 0
-    property real _prevIdle: 0
-    property real ramPercent: 0
+    readonly property real cpuPercent: SystemTelemetry.cpuPercent
+    readonly property real ramPercent: SystemTelemetry.memPercent
     property int volPercent: 50
     property bool volMuted: false
     property string kbLayoutShort: ""
@@ -114,64 +112,6 @@ Rectangle {
         } catch (err) {}
     }
 
-    function parseCpuStat(raw: string): void {
-        if (!raw)
-            return;
-        const firstLine = raw.split("\n")[0] || "";
-        if (!firstLine.startsWith("cpu "))
-            return;
-        const parts = firstLine.trim().split(/\s+/);
-        if (parts.length < 5)
-            return;
-        const user = parseFloat(parts[1]) || 0;
-        const nice = parseFloat(parts[2]) || 0;
-        const system = parseFloat(parts[3]) || 0;
-        const idle = parseFloat(parts[4]) || 0;
-        const iowait = parseFloat(parts[5]) || 0;
-        const irq = parseFloat(parts[6]) || 0;
-        const softirq = parseFloat(parts[7]) || 0;
-        const steal = parseFloat(parts[8]) || 0;
-        const idleAll = idle + iowait;
-        const totalAll = user + nice + system + idleAll + irq + softirq + steal;
-        if (root._prevTotal > 0 && totalAll > root._prevTotal) {
-            const totalDelta = totalAll - root._prevTotal;
-            const idleDelta = idleAll - root._prevIdle;
-            root.cpuPercent = Math.max(0, Math.min(100, ((totalDelta - idleDelta) / totalDelta) * 100));
-        }
-        root._prevTotal = totalAll;
-        root._prevIdle = idleAll;
-    }
-
-    function parseMeminfo(raw: string): void {
-        if (!raw)
-            return;
-        let totalKb = 0;
-        let availKb = -1;
-        let freeKb = 0;
-        let buffersKb = 0;
-        let cachedKb = 0;
-        const lines = raw.split("\n");
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (line.startsWith("MemTotal:"))
-                totalKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("MemAvailable:"))
-                availKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("MemFree:"))
-                freeKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("Buffers:"))
-                buffersKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("Cached:"))
-                cachedKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-        }
-        if (totalKb <= 0)
-            return;
-        if (availKb < 0)
-            availKb = freeKb + buffersKb + cachedKb;
-        const usedKb = Math.max(0, totalKb - availKb);
-        root.ramPercent = Math.max(0, Math.min(100, (usedKb / totalKb) * 100));
-    }
-
     function parseVolOut(raw: string): void {
         const parts = (raw || "").split("---");
         if (parts.length > 0) {
@@ -226,31 +166,6 @@ Rectangle {
         running: root.active && ShellState.barShowKbLayout
         stdout: SplitParser {
             onRead: line => root.parseKbJson(line)
-        }
-    }
-
-    Process {
-        id: sysProc
-        command: ["sh", "-c", "head -n 1 /proc/stat; echo '---'; grep -E '^(MemTotal|MemAvailable|MemFree|Buffers|Cached):' /proc/meminfo"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const parts = (text || "").split("---");
-                if (parts.length >= 2) {
-                    root.parseCpuStat(parts[0].trim());
-                    root.parseMeminfo(parts[1].trim());
-                }
-            }
-        }
-    }
-
-    Timer {
-        interval: 3000
-        repeat: true
-        running: root.active && ShellState.barShowSystem
-        triggeredOnStart: true
-        onTriggered: {
-            if (!sysProc.running)
-                sysProc.running = true;
         }
     }
 
@@ -456,7 +371,7 @@ Rectangle {
                     font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: root.cpuPercent > 85 ? Theme.error : Theme.primary
+                    color: root.cpuPercent > 85 ? Theme.error : Theme.fgSurface
                 }
 
                 Text {
@@ -464,13 +379,51 @@ Rectangle {
                     font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: root.ramPercent > 85 ? Theme.warning : Theme.secondary
+                    color: root.ramPercent > 85 ? Theme.warning : Theme.fgSurfaceVariant
                 }
             }
         }
 
         Rectangle {
             visible: ShellState.barShowSystem
+            width: 1
+            height: parent.height
+            color: Theme.outlineVariant
+        }
+
+        // Optional Live Network Throughput
+        Rectangle {
+            visible: ShellState.barShowNetSpeed
+            width: netBarRow.implicitWidth + 14
+            height: parent.height
+            radius: 0
+            color: "transparent"
+
+            Row {
+                id: netBarRow
+                anchors.centerIn: parent
+                spacing: 6
+
+                Text {
+                    text: "↓" + SystemTelemetry.netDown
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fs(10)
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Text {
+                    text: "↑" + SystemTelemetry.netUp
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fs(10)
+                    font.weight: Font.Bold
+                    color: Theme.fgSurfaceVariant
+                }
+            }
+        }
+
+        Rectangle {
+            visible: ShellState.barShowNetSpeed
             width: 1
             height: parent.height
             color: Theme.outlineVariant
@@ -570,19 +523,19 @@ Rectangle {
             height: parent.height
             radius: 0
             visible: ShellState.gameModeActive
-            color: sbGmMouse.containsMouse ? Theme.withAlpha(Theme.tertiary, 0.30) : Theme.withAlpha(Theme.tertiary, 0.18)
+            color: sbGmMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
             Row {
                 id: sbGmRow
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.tertiary }
+                Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
                 Text {
                     text: "Game"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: Theme.tertiary
+                    color: Theme.fgSurface
                 }
             }
 
@@ -608,19 +561,19 @@ Rectangle {
             height: parent.height
             radius: 0
             visible: ShellState.stopwatchActive
-            color: sbSwMouse.containsMouse ? Theme.hoverBg : "transparent"
+            color: sbSwMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
             Row {
                 id: sbSwRow
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.secondary }
+                Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
                 Text {
                     text: ShellState.formatTimer(ShellState.stopwatchElapsedSec)
                     font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: Theme.secondary
+                    color: Theme.fgSurface
                 }
             }
 
@@ -646,13 +599,13 @@ Rectangle {
             height: parent.height
             radius: 0
             visible: ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable
-            color: sbWMouse.containsMouse ? Theme.hoverBg : "transparent"
+            color: sbWMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
             Row {
                 id: sbWRow
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.primary }
+                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
                 Text {
                     text: ShellState.weatherTemp
                     font.family: Theme.monoFont
@@ -728,7 +681,7 @@ Rectangle {
             height: parent.height
             radius: 0
             visible: ShellState.timerActive
-            color: sbTimerMouse.containsMouse ? Theme.hoverBg : "transparent"
+            color: sbTimerMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
             Row {
                 id: sbTimerRow
@@ -739,14 +692,14 @@ Rectangle {
                     text: "󰔛"
                     font.family: Theme.iconFont
                     font.pixelSize: Theme.fs(11)
-                    color: Theme.primary
+                    color: Theme.fgSurfaceVariant
                 }
                 Text {
                     text: ShellState.formatTimer(ShellState.timerRemainingSec)
                     font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: Theme.primary
+                    color: Theme.fgSurface
                 }
             }
 
@@ -772,7 +725,7 @@ Rectangle {
             height: parent.height
             radius: 0
             visible: ShellState.unreadCount > 0
-            color: sbUnreadMouse.containsMouse ? Theme.hoverBg : "transparent"
+            color: sbUnreadMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
             Row {
                 id: sbUnreadRow
@@ -783,7 +736,7 @@ Rectangle {
                     text: "󰂚"
                     font.family: Theme.iconFont
                     font.pixelSize: Theme.fs(11)
-                    color: Theme.secondary
+                    color: Theme.fgSurface
                 }
                 Text {
                     text: String(ShellState.unreadCount)
@@ -816,14 +769,14 @@ Rectangle {
             height: parent.height
             radius: 0
             visible: ShellState.dnd
-            color: dndBarMouse.containsMouse ? Theme.hoverBg : "transparent"
+            color: dndBarMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
             Text {
                 anchors.centerIn: parent
                 text: "󰂛"
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(12)
-                color: Theme.warning
+                color: Theme.fgSurfaceVariant
             }
 
             MouseArea {
@@ -847,14 +800,14 @@ Rectangle {
             height: parent.height
             radius: 0
             visible: ShellState.keepAwake
-            color: awakeBarMouse.containsMouse ? Theme.hoverBg : "transparent"
+            color: awakeBarMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
             Text {
                 anchors.centerIn: parent
                 text: "󰅶"
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(12)
-                color: Theme.tertiary
+                color: Theme.fgSurfaceVariant
             }
 
             MouseArea {

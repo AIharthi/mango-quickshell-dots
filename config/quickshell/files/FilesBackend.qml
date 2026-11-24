@@ -230,6 +230,14 @@ Item {
         request("copy_text", { text: text }, cb);
     }
 
+    function checksum(path: string, cb: var): void {
+        request("checksum", { path: path }, cb);
+    }
+
+    function dirSize(path: string, cb: var): void {
+        request("dir_size", { path: path }, cb);
+    }
+
     function openPath(path: string, cb: var): void {
         request("open", { path: path }, cb);
     }
@@ -244,7 +252,7 @@ Item {
 
     Process {
         id: daemon
-        command: [Quickshell.shellPath("bin/mango-fm"), "serve"]
+        command: [Quickshell.shellPath("bin/aurora-fm"), "serve"]
         stdinEnabled: true
         running: root.active
         stdout: SplitParser {

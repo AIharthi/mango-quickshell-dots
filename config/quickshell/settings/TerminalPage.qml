@@ -112,10 +112,10 @@ ColumnLayout {
                             implicitWidth: fCurTxt.implicitWidth + 14
                             radius: Theme.r(7)
                             color: fCurPill.selected
-                                ? Theme.withAlpha(Theme.primary, 0.22)
-                                : (fCurMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: fCurPill.selected ? 1 : Theme.subBorderWidth
-                            border.color: fCurPill.selected ? Theme.primary : Theme.cardBorder
+                                ? Theme.primary
+                                : (fCurMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: fCurPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: fCurTxt
@@ -124,7 +124,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: fCurPill.selected ? Font.Bold : Font.Medium
-                                color: fCurPill.selected ? Theme.primary : Theme.fgSurface
+                                color: fCurPill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -184,10 +184,10 @@ ColumnLayout {
                             implicitWidth: fScrTxt.implicitWidth + 12
                             radius: Theme.r(7)
                             color: fScrPill.selected
-                                ? Theme.withAlpha(Theme.secondary, 0.22)
-                                : (fScrMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: fScrPill.selected ? 1 : Theme.subBorderWidth
-                            border.color: fScrPill.selected ? Theme.secondary : Theme.cardBorder
+                                ? Theme.primary
+                                : (fScrMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: fScrPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: fScrTxt
@@ -196,7 +196,7 @@ ColumnLayout {
                                 font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: fScrPill.selected ? Font.Bold : Font.Medium
-                                color: fScrPill.selected ? Theme.secondary : Theme.fgSurface
+                                color: fScrPill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -280,10 +280,10 @@ ColumnLayout {
                             implicitWidth: kCurTxt.implicitWidth + 14
                             radius: Theme.r(7)
                             color: kCurPill.selected
-                                ? Theme.withAlpha(Theme.secondary, 0.22)
-                                : (kCurMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: kCurPill.selected ? 1 : Theme.subBorderWidth
-                            border.color: kCurPill.selected ? Theme.secondary : Theme.cardBorder
+                                ? Theme.primary
+                                : (kCurMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: kCurPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: kCurTxt
@@ -292,7 +292,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: kCurPill.selected ? Font.Bold : Font.Medium
-                                color: kCurPill.selected ? Theme.secondary : Theme.fgSurface
+                                color: kCurPill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -372,10 +372,10 @@ ColumnLayout {
                             implicitWidth: kScrTxt.implicitWidth + 12
                             radius: Theme.r(7)
                             color: kScrPill.selected
-                                ? Theme.withAlpha(Theme.secondary, 0.22)
-                                : (kScrMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: kScrPill.selected ? 1 : Theme.subBorderWidth
-                            border.color: kScrPill.selected ? Theme.secondary : Theme.cardBorder
+                                ? Theme.primary
+                                : (kScrMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: kScrPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: kScrTxt
@@ -384,7 +384,7 @@ ColumnLayout {
                                 font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: kScrPill.selected ? Font.Bold : Font.Medium
-                                color: kScrPill.selected ? Theme.secondary : Theme.fgSurface
+                                color: kScrPill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {

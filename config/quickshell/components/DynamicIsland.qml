@@ -158,24 +158,36 @@ Item {
     }
 
     // --- Target Geometry per State ---
+    readonly property int _extraControlsHeight:
+        (DeviceCaps.hasBacklight ? 38 : 0) + ((DeviceCaps.hasWifi || DeviceCaps.hasBluetooth) ? 42 : 0)
+
     readonly property int expandedWidth: {
         if (root.activeTab === "launcher")
             return 700;
+        if (root.activeTab === "overview")
+            return 740;
         return 760;
     }
 
     readonly property int expandedHeight: {
-        let h = 486;
-        if (root.activeTab === "launcher")
+        let h = 468;
+        if (root.activeTab === "launcher") {
             h = 488;
-        else if (root.activeTab === "notifications")
+        } else if (root.activeTab === "notifications") {
             h = 492;
-        else if (root.activeTab === "files")
+        } else if (root.activeTab === "files" || root.activeTab === "themes") {
             h = 468;
-        else if (root.activeTab === "themes")
-            h = 468;
-        else
-            h = DeviceCaps.hasExtraQuickControls ? 526 : 486;
+        } else {
+            const hubStyle = ShellState.hubUiStyle;
+            if (hubStyle === "cupertino")
+                h = 358 + root._extraControlsHeight;
+            else if (hubStyle === "stage")
+                h = 366 + (DeviceCaps.hasBacklight ? 38 : 0);
+            else if (hubStyle === "cockpit")
+                h = 368 + root._extraControlsHeight;
+            else
+                h = 438 + root._extraControlsHeight;
+        }
         return h + (root.powerMenuOpen ? 48 : 0);
     }
 

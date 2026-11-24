@@ -450,8 +450,8 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 56
                         radius: Theme.r(11)
-                        color: vibeMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                        border.width: vibeMouse.containsMouse ? 1 : Theme.subBorderWidth
+                        color: vibeMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                        border.width: Theme.activeControlBorderWidth
                         border.color: vibeMouse.containsMouse ? Theme.primary : Theme.cardBorder
                         scale: vibeMouse.pressed ? 0.97 : 1.0
 
@@ -574,8 +574,8 @@ ColumnLayout {
                     radius: Theme.r(12)
                     color: root.confirmResetTheme
                         ? Theme.warning
-                        : (rstThmMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg)
-                    border.width: 1
+                        : (rstThmMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: Theme.activeControlBorderWidth
                     border.color: root.confirmResetTheme ? Theme.warning : Theme.cardBorder
 
                     Text {
@@ -585,7 +585,7 @@ ColumnLayout {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
-                        color: root.confirmResetTheme ? Theme.fgPrimary : Theme.warning
+                        color: root.confirmResetTheme ? Theme.contrastInk(Theme.warning) : Theme.warning
                     }
 
                     MouseArea {
@@ -674,9 +674,9 @@ ColumnLayout {
                         radius: Theme.r(10)
                         color: engBtn.selected
                             ? Theme.primary
-                            : (engMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: engBtn.selected ? 1 : Theme.subBorderWidth
-                        border.color: engBtn.selected ? Theme.primary : Theme.cardBorder
+                            : (engMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: engBtn.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
                         scale: engMouse.pressed ? 0.97 : 1.0
 
                         Behavior on color {
@@ -760,11 +760,23 @@ ColumnLayout {
                         implicitHeight: 34
                         radius: Theme.r(9)
                         color: preBtn.selected
-                            ? Theme.activeBg
-                            : (preMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: preBtn.selected ? 1 : Theme.subBorderWidth
-                        border.color: preBtn.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.tileActiveBg
+                            : (preMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: preBtn.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
                         scale: preMouse.pressed ? 0.96 : 1.0
+
+                        Rectangle {
+                            visible: preBtn.selected
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.topMargin: 7
+                            anchors.bottomMargin: 7
+                            width: 3
+                            radius: 1.5
+                            color: Theme.primary
+                        }
 
                         Behavior on color {
                             enabled: !Theme.reducedMotion
@@ -773,7 +785,7 @@ ColumnLayout {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 8
+                            anchors.leftMargin: 9
                             anchors.rightMargin: 8
                             spacing: 6
 
@@ -783,7 +795,7 @@ ColumnLayout {
                                 radius: Theme.r(4)
                                 color: preBtn.modelData.bg
                                 border.width: 1
-                                border.color: Theme.withAlpha(Theme.outline, 0.35)
+                                border.color: Theme.hairlineBorder
 
                                 Row {
                                     anchors.centerIn: parent
@@ -812,7 +824,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: preBtn.selected ? Font.Bold : Font.Medium
-                                color: preBtn.selected ? Theme.primary : Theme.fgSurface
+                                color: Theme.fgSurface
                             }
                         }
 
@@ -881,9 +893,18 @@ ColumnLayout {
                         implicitHeight: 24
                         radius: Theme.r(12)
                         color: swCircle.modelData
-                        border.width: swCircle.selected ? 2 : 1
-                        border.color: swCircle.selected ? Theme.fgSurface : Theme.withAlpha(Theme.outline, 0.35)
-                        scale: swCircleMouse.pressed ? 0.90 : 1.0
+                        border.width: 1
+                        border.color: Theme.hairlineBorder
+                        scale: swCircle.selected ? 1.12 : (swCircleMouse.pressed ? 0.90 : 1.0)
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: swCircle.selected
+                            text: "󰄬"
+                            font.family: Theme.iconFont
+                            font.pixelSize: Theme.fs(11)
+                            color: Theme.contrastInk(swCircle.modelData)
+                        }
 
                         Behavior on scale {
                             enabled: !Theme.reducedMotion
@@ -1236,10 +1257,17 @@ ColumnLayout {
                             height: 18
                             radius: Theme.r(5)
                             color: solidSwatch.modelData
-                            border.width: ShellState.solidWallpaperColor.toLowerCase() === solidSwatch.modelData.toLowerCase() ? 2 : 1
-                            border.color: ShellState.solidWallpaperColor.toLowerCase() === solidSwatch.modelData.toLowerCase()
-                                ? Theme.primary
-                                : Theme.withAlpha(Theme.outline, 0.4)
+                            border.width: 1
+                            border.color: Theme.hairlineBorder
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: ShellState.solidWallpaperColor.toLowerCase() === solidSwatch.modelData.toLowerCase()
+                                text: "󰄬"
+                                font.family: Theme.iconFont
+                                font.pixelSize: Theme.fs(9)
+                                color: Theme.contrastInk(solidSwatch.modelData)
+                            }
 
                             MouseArea {
                                 anchors.fill: parent
@@ -1290,8 +1318,8 @@ ColumnLayout {
                             radius: Theme.r(10)
                             color: Theme.subCardBg
                             clip: true
-                            border.width: wpTile.selected ? 2 : 1
-                            border.color: wpTile.selected ? Theme.primary : Theme.cardBorder
+                            border.width: wpTile.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Image {
                                 anchors.fill: parent
@@ -1301,6 +1329,26 @@ ColumnLayout {
                                 fillMode: Image.PreserveAspectCrop
                                 sourceSize.width: 240
                                 sourceSize.height: 135
+                            }
+
+                            Rectangle {
+                                visible: wpTile.selected
+                                anchors.top: parent.top
+                                anchors.right: parent.right
+                                anchors.margins: 6
+                                width: 18
+                                height: 18
+                                radius: 9
+                                color: Theme.primary
+                                z: 2
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰄬"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: Theme.fs(10)
+                                    color: Theme.fgPrimary
+                                }
                             }
 
                             Rectangle {
@@ -1366,8 +1414,18 @@ ColumnLayout {
                             height: 22
                             radius: Theme.r(11)
                             color: root.isValidHex(extCircle.modelData) ? extCircle.modelData : Theme.primary
-                            border.width: extCircle.selected ? 2 : 1
-                            border.color: extCircle.selected ? Theme.fgSurface : Theme.withAlpha(Theme.outline, 0.45)
+                            border.width: 1
+                            border.color: Theme.hairlineBorder
+                            scale: extCircle.selected ? 1.12 : 1.0
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: extCircle.selected
+                                text: "󰄬"
+                                font.family: Theme.iconFont
+                                font.pixelSize: Theme.fs(10)
+                                color: Theme.contrastInk(root.isValidHex(extCircle.modelData) ? extCircle.modelData : Theme.primary)
+                            }
 
                             MouseArea {
                                 anchors.fill: parent
@@ -1408,10 +1466,10 @@ ColumnLayout {
                         implicitWidth: schemeChipTxt.implicitWidth + 12
                         radius: Theme.r(7)
                         color: schemeChip.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (schemeChipMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: schemeChip.selected ? 1 : Theme.subBorderWidth
-                        border.color: schemeChip.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.primary
+                            : (schemeChipMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: schemeChip.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             id: schemeChipTxt
@@ -1420,7 +1478,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: schemeChip.selected ? Font.Bold : Font.Medium
-                            color: schemeChip.selected ? Theme.primary : Theme.fgSurface
+                            color: schemeChip.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -1463,10 +1521,10 @@ ColumnLayout {
                             implicitWidth: prefChipTxt.implicitWidth + 12
                             radius: Theme.r(7)
                             color: prefChip.selected
-                                ? Theme.withAlpha(Theme.secondary, 0.22)
-                                : (prefChipMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: prefChip.selected ? 1 : Theme.subBorderWidth
-                            border.color: prefChip.selected ? Theme.secondary : Theme.cardBorder
+                                ? Theme.primary
+                                : (prefChipMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: prefChip.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: prefChipTxt
@@ -1475,7 +1533,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: prefChip.selected ? Font.Bold : Font.Medium
-                                color: prefChip.selected ? Theme.secondary : Theme.fgSurface
+                                color: prefChip.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -1749,9 +1807,9 @@ ColumnLayout {
                     Layout.fillWidth: true
                     implicitHeight: 36
                     radius: Theme.r(9)
-                    color: custItem.selected ? Theme.activeBg : Theme.subCardBg
-                    border.width: custItem.selected ? 1 : Theme.subBorderWidth
-                    border.color: custItem.selected ? Theme.primary : Theme.cardBorder
+                    color: custItem.selected ? Theme.tileActiveBg : Theme.subCardBg
+                    border.width: custItem.selected ? Theme.activeControlBorderWidth : 0
+                    border.color: Theme.primary
 
                     RowLayout {
                         anchors.fill: parent

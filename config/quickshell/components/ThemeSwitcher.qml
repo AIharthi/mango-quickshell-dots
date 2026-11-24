@@ -259,9 +259,9 @@ ColumnLayout {
                         implicitWidth: presetChipRow.implicitWidth + 12
                         radius: Theme.r(13)
                         color: presetChip.isSelected
-                            ? Theme.activeBg
-                            : (presetMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: presetChip.isSelected ? 1 : Theme.subBorderWidth
+                            ? Theme.primary
+                            : (presetMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: presetChip.isSelected ? Theme.activeControlBorderWidth : Theme.subBorderWidth
                         border.color: presetChip.isSelected ? Theme.primary : Theme.cardBorder
 
                         RowLayout {
@@ -274,6 +274,8 @@ ColumnLayout {
                                 implicitHeight: 9
                                 radius: 4.5
                                 color: presetChip.modelData.swatch
+                                border.width: 1
+                                border.color: presetChip.isSelected ? Theme.fgPrimary : "transparent"
                             }
 
                             Text {
@@ -281,7 +283,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 9
                                 font.weight: presetChip.isSelected ? Font.Bold : Font.Medium
-                                color: presetChip.isSelected ? Theme.primary : Theme.fgSurface
+                                color: presetChip.isSelected ? Theme.fgPrimary : Theme.fgSurface
                             }
                         }
 
@@ -336,8 +338,8 @@ ColumnLayout {
                     implicitHeight: 26
                     radius: 13
                     color: accChip.modelData
-                    border.width: accChip.isSelected ? 2 : 1
-                    border.color: accChip.isSelected ? Theme.fgSurface : Qt.rgba(1, 1, 1, 0.16)
+                    border.width: Theme.activeControlBorderWidth > 0 && accChip.isSelected ? 2 : 1
+                    border.color: accChip.isSelected ? Theme.fgSurface : Theme.hairlineBorder
                     scale: accChip.isSelected ? 1.12 : (accMouse.containsMouse ? 1.08 : 1.0)
 
                     Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 100 } }
@@ -348,7 +350,7 @@ ColumnLayout {
                         text: "󰄬"
                         font.family: Theme.iconFont
                         font.pixelSize: 12
-                        color: "#11111b"
+                        color: Theme.contrastInk(accChip.modelData)
                     }
 
                     MouseArea {
@@ -411,7 +413,7 @@ ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 5
                     radius: Theme.r(14)
-                    color: wallDelegate.isCurrent ? Theme.primary : Theme.subCardBg
+                    color: Theme.subCardBg
                     scale: wallArea.containsMouse ? 1.02 : 1.0
 
                     Behavior on scale {
@@ -421,9 +423,11 @@ ColumnLayout {
 
                     ClippingRectangle {
                         anchors.fill: parent
-                        anchors.margins: wallDelegate.isCurrent ? 2 : 0
+                        anchors.margins: 0
                         radius: Theme.r(12)
                         color: Theme.surfaceContainerLowest
+                        border.width: wallDelegate.isCurrent ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
                         contentUnderBorder: false
                         contentInsideBorder: true
 

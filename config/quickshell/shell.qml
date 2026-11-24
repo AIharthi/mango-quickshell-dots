@@ -549,6 +549,212 @@ ShellRoot {
             root.openSettings(page);
         }
 
+        function openDoctor(): void {
+            root.openSettings("system");
+        }
+
+        function closeSettings(): void {
+            root.closeSettings();
+        }
+
+        function toggleFiles(): void {
+            root.toggleFiles();
+        }
+
+        function openFiles(path: string): void {
+            root.openFiles(path);
+        }
+
+        function closeFiles(): void {
+            root.closeFiles();
+        }
+
+        function toggleFilesTab(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleFilesTab();
+        }
+
+        function resetFiles(): void {
+            ShellState.resetFiles();
+        }
+
+        function toggleDnd(): void {
+            ShellState.toggleDnd();
+        }
+
+        function toggleKeepAwake(): void {
+            ShellState.toggleKeepAwake();
+        }
+
+        function clearClipboard(): void {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "clear-clipboard"]);
+        }
+
+        function randomWallpaper(): void {
+            Theme.randomWallpaper();
+        }
+
+        function applyVibe(vibeId: string): void {
+            Theme.applyVibe(vibeId);
+        }
+
+        function applyAccent(hex: string): void {
+            Theme.applyAccentColor(hex);
+        }
+
+        function applyPreset(presetId: string): void {
+            Theme.applyPreset(presetId);
+        }
+
+        function toggleDarkLight(): void {
+            Theme.toggleScheme();
+        }
+
+        function resetAppearance(): void {
+            ShellState.resetAppearance();
+        }
+
+        function resetBar(): void {
+            ShellState.resetBar();
+        }
+
+        function resetAllSettings(): void {
+            ShellState.resetAllSettings();
+        }
+
+        function togglePip(): void {
+            ShellState.togglePip();
+        }
+
+        function cyclePipCorner(): void {
+            ShellState.cyclePipCorner();
+        }
+
+        function snapPip(): void {
+            ShellState.snapPip();
+        }
+    }
+
+    IpcHandler {
+        target: "aurora"
+
+        function lockSession(): void {
+            root.collapseAll();
+            root.closeSettings();
+            root.closeFiles();
+            root.closeKeybinds();
+            root.closeWindowSwitcher();
+            root.closePowerOverlay();
+            lockScreen.lock();
+        }
+
+        function toggleWindowSwitcher(): void {
+            root.toggleWindowSwitcher();
+        }
+
+        function togglePowerOverlay(): void {
+            root.togglePowerOverlay();
+        }
+
+        function toggleGameMode(): void {
+            ShellState.toggleGameMode();
+        }
+
+        function refreshWeather(): void {
+            ShellState.refreshWeather(true);
+        }
+
+        function syncSddmTheme(): void {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/sync-sddm-theme.sh")]);
+        }
+
+        function toggleLauncher(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleLauncher();
+        }
+
+        function toggleClipboard(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleClipboard();
+        }
+
+        function toggleNotifications(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleNotifications();
+        }
+
+        function toggleKeybindSheet(): void {
+            root.toggleKeybindSheet();
+        }
+
+        function syncRecordingState(): void {
+            ShellState.syncRecordingState();
+        }
+
+        function toggleThemeTab(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleThemeTab();
+        }
+
+        function showOsd(osdType: string): void {
+            root.forEachIsland(isl => isl.triggerOsd(osdType));
+        }
+
+        function toggleDashboard(): void {
+            const isl = root.primaryIsland();
+            if (isl)
+                isl.toggleDashboard();
+        }
+
+        function collapse(): void {
+            root.collapseAll();
+        }
+
+        function setShellMode(mode: string): void {
+            Theme.setShellMode(mode);
+        }
+
+        function toggleShellMode(mode: string): void {
+            Theme.toggleShellMode(mode);
+        }
+
+        function cycleShellMode(): void {
+            Theme.cycleShellMode();
+        }
+
+        function setHubUiStyle(style: string): void {
+            ShellState.setHubUiStyle(style);
+        }
+
+        function cycleHubUiStyle(): void {
+            ShellState.cycleHubUiStyle();
+        }
+
+        function setBarUiStyle(style: string): void {
+            ShellState.setBarUiStyle(style);
+        }
+
+        function cycleBarUiStyle(): void {
+            ShellState.cycleBarUiStyle();
+        }
+
+        function toggleSettings(): void {
+            root.toggleSettings();
+        }
+
+        function openSettings(page: string): void {
+            root.openSettings(page);
+        }
+
+        function openDoctor(): void {
+            root.openSettings("system");
+        }
+
         function closeSettings(): void {
             root.closeSettings();
         }

@@ -5,13 +5,22 @@ CMD="${1:-}"
 shift || true
 
 case "$CMD" in
-    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings)
+    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor)
         ;;
     *)
-        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings> [args...]" >&2
+        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor> [args...]" >&2
         exit 1
         ;;
 esac
+
+BACKEND_BIN="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/bin/aurora-backend"
+if [[ -x "$BACKEND_BIN" ]]; then
+    case "$CMD" in
+        hwmon|processes|doctor)
+            exec "$BACKEND_BIN" "$CMD" "$@"
+            ;;
+    esac
+fi
 
 exec python3 - "$CMD" "$@" <<'PY'
 import glob
@@ -796,8 +805,14 @@ def cmd_user_info():
 
 
 def list_backup_files():
-    pattern = os.path.expanduser("~/mango-settings-backup-*.tar.gz")
-    files = sorted(glob.glob(pattern), key=lambda p: os.path.getmtime(p), reverse=True)
+    patterns = [
+        os.path.expanduser("~/aurora-settings-backup-*.tar.gz"),
+        os.path.expanduser("~/mango-settings-backup-*.tar.gz"),
+    ]
+    matched = []
+    for pat in patterns:
+        matched.extend(glob.glob(pat))
+    files = sorted(set(matched), key=lambda p: os.path.getmtime(p), reverse=True)
     out = []
     for p in files[:6]:
         try:
@@ -817,7 +832,7 @@ def cmd_list_backups():
 
 def cmd_backup_settings():
     ts = time.strftime("%Y%m%d_%H%M%S")
-    dest = os.path.expanduser(f"~/mango-settings-backup-{ts}.tar.gz")
+    dest = os.path.expanduser(f"~/aurora-settings-backup-{ts}.tar.gz")
     sources = [
         (os.path.join(QS_DIR, "shell-prefs.json"), "quickshell/shell-prefs.json"),
         (os.path.join(QS_DIR, "mode-prefs.json"), "quickshell/mode-prefs.json"),
@@ -870,6 +885,39 @@ def cmd_restore_settings():
     print(json.dumps({"restored": restored, "path": src_path, "backups": list_backup_files()}))
 
 
+def cmd_doctor():
+    checks = []
+    if shutil.which("mango"):
+        res = subprocess.run(["mango", "-p"], capture_output=True, text=True)
+        checks.append({
+            "id": "mango-config",
+            "label": "MangoWC & Config",
+            "status": "ok" if res.returncode == 0 else "fail",
+            "detail": "mango -p configuration syntax valid" if res.returncode == 0 else (res.stderr.strip().splitlines()[:1] or ["Validation failed"])[0],
+        })
+    else:
+        checks.append({"id": "mango-config", "label": "MangoWC & Config", "status": "fail", "detail": "'mango' binary not found"})
+    has_fm = os.path.exists(os.path.join(QS_DIR, "bin", "aurora-fm"))
+    has_be = os.path.exists(os.path.join(QS_DIR, "bin", "aurora-backend"))
+    checks.append({
+        "id": "aurora-bins",
+        "label": "Aurora Rust Backends",
+        "status": "ok" if (has_fm and has_be) else "warn",
+        "detail": "aurora-fm and aurora-backend installed" if (has_fm and has_be) else "Run ./install.sh to compile Rust backends",
+    })
+    pass_c = sum(1 for c in checks if c["status"] == "ok")
+    warn_c = sum(1 for c in checks if c["status"] == "warn")
+    fail_c = sum(1 for c in checks if c["status"] == "fail")
+    print(json.dumps({
+        "ok": fail_c == 0,
+        "summary": f"{pass_c} passed, {warn_c} warnings, {fail_c} failed",
+        "passCount": pass_c,
+        "warnCount": warn_c,
+        "failCount": fail_c,
+        "checks": checks,
+    }))
+
+
 DISPATCH = {
     "gtk-get": cmd_gtk_get,
     "gtk-set": cmd_gtk_set,
@@ -894,6 +942,7 @@ DISPATCH = {
     "backup-settings": cmd_backup_settings,
     "list-backups": cmd_list_backups,
     "restore-settings": cmd_restore_settings,
+    "doctor": cmd_doctor,
 }
 
 DISPATCH[cmd]()

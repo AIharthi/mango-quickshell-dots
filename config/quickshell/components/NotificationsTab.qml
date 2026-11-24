@@ -918,10 +918,10 @@ RowLayout {
                     implicitWidth: dndRow.implicitWidth + 12
                     radius: Theme.r(12)
                     color: ShellState.dnd
-                        ? Theme.withAlpha(Theme.warning, 0.20)
-                        : (dndMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: ShellState.dnd ? 1 : Theme.subBorderWidth
-                    border.color: ShellState.dnd ? Theme.warning : Theme.cardBorder
+                        ? Theme.primary
+                        : (dndMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: ShellState.dnd ? Theme.activeControlBorderWidth : Theme.subBorderWidth
+                    border.color: ShellState.dnd ? Theme.primary : Theme.cardBorder
 
                     RowLayout {
                         id: dndRow
@@ -932,14 +932,14 @@ RowLayout {
                             text: ShellState.dnd ? "󰂛" : "󰂚"
                             font.family: Theme.iconFont
                             font.pixelSize: 11
-                            color: ShellState.dnd ? Theme.warning : Theme.fgSurfaceVariant
+                            color: ShellState.dnd ? Theme.fgPrimary : Theme.fgSurfaceVariant
                         }
                         Text {
                             text: ShellState.dnd ? "DND On" : "DND"
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold
-                            color: ShellState.dnd ? Theme.warning : Theme.fgSurfaceVariant
+                            color: ShellState.dnd ? Theme.fgPrimary : Theme.fgSurfaceVariant
                         }
                     }
 
@@ -1002,8 +1002,8 @@ RowLayout {
                         implicitHeight: nCol.implicitHeight + 18
                         radius: Theme.r(14)
                         color: Theme.subCardBg
-                        border.width: nCard.urgent ? 1 : Theme.subBorderWidth
-                        border.color: nCard.urgent ? Theme.withAlpha(Theme.error, 0.65) : Theme.cardBorder
+                        border.width: nCard.urgent ? Theme.activeControlBorderWidth : Theme.subBorderWidth
+                        border.color: nCard.urgent ? Theme.error : Theme.cardBorder
                         clip: true
 
                         Rectangle {

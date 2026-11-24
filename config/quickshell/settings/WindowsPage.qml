@@ -435,10 +435,10 @@ ColumnLayout {
                         implicitHeight: 26
                         radius: Theme.r(8)
                         color: pipCorChip.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (pipCorMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: pipCorChip.selected ? 1 : Theme.subBorderWidth
-                        border.color: pipCorChip.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.primary
+                            : (pipCorMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: pipCorChip.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             anchors.centerIn: parent
@@ -446,7 +446,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(9)
                             font.weight: pipCorChip.selected ? Font.Bold : Font.Medium
-                            color: pipCorChip.selected ? Theme.primary : Theme.fgSurface
+                            color: pipCorChip.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -492,10 +492,10 @@ ColumnLayout {
                         implicitHeight: 26
                         radius: Theme.r(8)
                         color: pipSzChip.selected
-                            ? Theme.withAlpha(Theme.secondary, 0.22)
-                            : (pipSzMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: pipSzChip.selected ? 1 : Theme.subBorderWidth
-                        border.color: pipSzChip.selected ? Theme.secondary : Theme.cardBorder
+                            ? Theme.secondary
+                            : (pipSzMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: pipSzChip.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.secondary
 
                         Text {
                             anchors.centerIn: parent
@@ -503,7 +503,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(9)
                             font.weight: pipSzChip.selected ? Font.Bold : Font.Medium
-                            color: pipSzChip.selected ? Theme.secondary : Theme.fgSurface
+                            color: pipSzChip.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -730,10 +730,10 @@ ColumnLayout {
                         implicitHeight: 26
                         radius: Theme.r(8)
                         color: scrollerChip.selected
-                            ? Theme.withAlpha(Theme.secondary, 0.22)
-                            : (scMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: scrollerChip.selected ? 1 : Theme.subBorderWidth
-                        border.color: scrollerChip.selected ? Theme.secondary : Theme.cardBorder
+                            ? Theme.secondary
+                            : (scMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: scrollerChip.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.secondary
                         scale: scMouse.pressed ? 0.95 : 1.0
 
                         Behavior on color {
@@ -751,7 +751,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: scrollerChip.selected ? Font.Bold : Font.Normal
-                            color: scrollerChip.selected ? Theme.secondary : Theme.fgSurface
+                            color: scrollerChip.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -974,9 +974,9 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Theme.r(7)
-                        color: hcBtn.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                        border.width: hcBtn.selected ? 1 : Theme.subBorderWidth
-                        border.color: hcBtn.selected ? Theme.secondary : Theme.cardBorder
+                        color: hcBtn.selected ? Theme.secondary : Theme.subCardBg
+                        border.width: hcBtn.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.secondary
 
                         Text {
                             anchors.centerIn: parent
@@ -984,7 +984,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(9)
                             font.weight: hcBtn.selected ? Font.Bold : Font.Medium
-                            color: hcBtn.selected ? Theme.secondary : Theme.fgSurface
+                            color: hcBtn.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -1067,9 +1067,9 @@ ColumnLayout {
                             implicitHeight: 22
                             implicitWidth: lTxt.implicitWidth + 10
                             radius: Theme.r(6)
-                            color: lChip.selected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                            border.width: lChip.selected ? 1 : Theme.subBorderWidth
-                            border.color: lChip.selected ? Theme.primary : Theme.cardBorder
+                            color: lChip.selected ? Theme.primary : Theme.subCardBg
+                            border.width: lChip.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: lTxt
@@ -1078,7 +1078,7 @@ ColumnLayout {
                                 font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(9)
                                 font.weight: lChip.selected ? Font.Bold : Font.Normal
-                                color: lChip.selected ? Theme.primary : Theme.fgSurface
+                                color: lChip.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -1246,9 +1246,9 @@ ColumnLayout {
                         implicitHeight: 22
                         implicitWidth: wrFlTxt.implicitWidth + 12
                         radius: Theme.r(6)
-                        color: wrFlagChip.active ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                        border.width: wrFlagChip.active ? 1 : Theme.subBorderWidth
-                        border.color: wrFlagChip.active ? Theme.secondary : Theme.cardBorder
+                        color: wrFlagChip.active ? Theme.secondary : Theme.subCardBg
+                        border.width: wrFlagChip.active ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.secondary
 
                         Text {
                             id: wrFlTxt
@@ -1256,7 +1256,8 @@ ColumnLayout {
                             text: wrFlagChip.modelData.label
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
-                            color: wrFlagChip.active ? Theme.secondary : Theme.fgSurface
+                            font.weight: wrFlagChip.active ? Font.Bold : Font.Normal
+                            color: wrFlagChip.active ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                         }
 
                         MouseArea {

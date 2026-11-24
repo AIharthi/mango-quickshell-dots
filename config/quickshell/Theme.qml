@@ -288,6 +288,10 @@ Singleton {
         return ShellState.uiBorderWidth;
     }
     readonly property int subBorderWidth: (ShellState.highContrast || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow" || isRetro || isSimple) ? cardBorderWidth : 0
+    readonly property int activeControlBorderWidth: (ShellState.highContrast || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow" || isRetro) ? Math.max(1, cardBorderWidth) : 0
+    readonly property color tileActiveBg: isDark ? withAlpha("#ffffff", (isOled || ShellState.surfaceStyle === "oled") ? 0.11 : 0.13) : withAlpha("#ffffff", 0.94)
+    readonly property color controlFillHover: isDark ? withAlpha("#ffffff", 0.08) : withAlpha("#000000", 0.06)
+    readonly property color rowSelectedBg: isDark ? withAlpha("#ffffff", 0.10) : withAlpha("#000000", 0.07)
     readonly property color hairlineBorder: isDark ? withAlpha(fgSurface, 0.08) : withAlpha(outline, 0.18)
     readonly property color hoverBg: withAlpha(primary, 0.14)
     readonly property color activeBg: withAlpha(primary, 0.22)
@@ -325,6 +329,11 @@ Singleton {
 
     function withAlpha(col: color, alpha: real): color {
         return Qt.rgba(col.r, col.g, col.b, alpha);
+    }
+
+    function contrastInk(bgCol: color): color {
+        const lum = 0.2126 * bgCol.r + 0.7152 * bgCol.g + 0.0722 * bgCol.b;
+        return lum > 0.42 ? "#11111b" : "#ffffff";
     }
 
     function r(val: real): real {

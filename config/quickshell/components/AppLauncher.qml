@@ -51,6 +51,8 @@ ColumnLayout {
             return "emoji";
         if (trimmed.toLowerCase().startsWith("cb "))
             return "clip";
+        if (root.activeMode === "apps" && isQuickCalcOrConvert(trimmed))
+            return "calc";
         return root.activeMode;
     }
 
@@ -61,6 +63,18 @@ ColumnLayout {
         if (trimmed.toLowerCase().startsWith("cb "))
             return trimmed.slice(3).trim();
         return trimmed.trim();
+    }
+
+    function isQuickCalcOrConvert(s: string): bool {
+        if (!s || s.length === 0 || s.length > 160)
+            return false;
+        if (/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s))
+            return true;
+        if (/^rgb\s*\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/i.test(s))
+            return true;
+        if (/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)\s*[a-zA-Z°]+\s+(?:to|in)\s+[a-zA-Z°]+$/i.test(s))
+            return true;
+        return false;
     }
 
     function openInMode(modeName: string): void {
@@ -336,53 +350,393 @@ ColumnLayout {
         return items.filter(it => String(it.text || "").toLowerCase().indexOf(q) !== -1);
     }
 
-    // --- Safe Calculator Evaluation ---
+    // --- Safe Calculator, Unit Converter & Color Inspector (zero eval) ---
+    function inspectColorExpr(s: string): var {
+        let r = -1;
+        let g = -1;
+        let b = -1;
+        const mShort = /^#([0-9a-fA-F]{3})$/.exec(s);
+        const mLong = /^#([0-9a-fA-F]{6})$/.exec(s);
+        const mRgb = /^rgb\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i.exec(s);
+        if (mShort) {
+            const h = mShort[1];
+            r = parseInt(h[0] + h[0], 16);
+            g = parseInt(h[1] + h[1], 16);
+            b = parseInt(h[2] + h[2], 16);
+        } else if (mLong) {
+            const h = mLong[1];
+            r = parseInt(h.slice(0, 2), 16);
+            g = parseInt(h.slice(2, 4), 16);
+            b = parseInt(h.slice(4, 6), 16);
+        } else if (mRgb) {
+            r = parseInt(mRgb[1], 10);
+            g = parseInt(mRgb[2], 10);
+            b = parseInt(mRgb[3], 10);
+            if (r > 255 || g > 255 || b > 255)
+                return null;
+        } else {
+            return null;
+        }
+
+        const hex2 = n => (n < 16 ? "0" : "") + n.toString(16).toUpperCase();
+        const hexStr = "#" + hex2(r) + hex2(g) + hex2(b);
+        const rgbStr = "rgb(" + r + ", " + g + ", " + b + ")";
+
+        const rn = r / 255.0;
+        const gn = g / 255.0;
+        const bn = b / 255.0;
+        const maxC = Math.max(rn, gn, bn);
+        const minC = Math.min(rn, gn, bn);
+        const l = (maxC + minC) / 2.0;
+        let h = 0.0;
+        let sat = 0.0;
+        if (maxC !== minC) {
+            const d = maxC - minC;
+            sat = l > 0.5 ? d / (2.0 - maxC - minC) : d / (maxC + minC);
+            if (maxC === rn)
+                h = (gn - bn) / d + (gn < bn ? 6.0 : 0.0);
+            else if (maxC === gn)
+                h = (bn - rn) / d + 2.0;
+            else
+                h = (rn - gn) / d + 4.0;
+            h /= 6.0;
+        }
+        const hslStr = "hsl(" + Math.round(h * 360) + ", " + Math.round(sat * 100) + "%, " + Math.round(l * 100) + "%)";
+
+        return [
+            { title: hexStr + " · " + rgbStr, sub: hslStr + " · Enter to copy hex", copyVal: hexStr, icon: "󰏘" },
+            { title: rgbStr, sub: "CSS RGB · Enter to copy", copyVal: rgbStr, icon: "󰏘" },
+            { title: hslStr, sub: "CSS HSL · Enter to copy", copyVal: hslStr, icon: "󰏘" }
+        ];
+    }
+
+    function convertUnitsExpr(s: string): var {
+        const m = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))\s*([a-zA-Z°]+)\s+(?:to|in)\s+([a-zA-Z°]+)$/i.exec(s);
+        if (!m)
+            return null;
+        const val = parseFloat(m[1]);
+        if (!isFinite(val))
+            return null;
+        const srcRaw = m[2].replace("°", "").toLowerCase();
+        const dstRaw = m[3].replace("°", "").toLowerCase();
+
+        const fmtVal = v => {
+            if (Math.abs(v - Math.round(v)) < 1e-9)
+                return String(Math.round(v));
+            return Number(v.toPrecision(8)).toString();
+        };
+
+        const tempNorm = u => (u === "c" || u === "celsius") ? "c" : ((u === "f" || u === "fahrenheit") ? "f" : ((u === "k" || u === "kelvin") ? "k" : ""));
+        const tSrc = tempNorm(srcRaw);
+        const tDst = tempNorm(dstRaw);
+        if (tSrc.length > 0 && tDst.length > 0) {
+            let celsius = val;
+            if (tSrc === "f") celsius = (val - 32.0) * 5.0 / 9.0;
+            else if (tSrc === "k") celsius = val - 273.15;
+            let out = celsius;
+            if (tDst === "f") out = celsius * 9.0 / 5.0 + 32.0;
+            else if (tDst === "k") out = celsius + 273.15;
+            const labelMap = { c: "°C", f: "°F", k: "K" };
+            const formatted = fmtVal(out);
+            return [{
+                title: formatted + " " + labelMap[tDst],
+                sub: m[1] + " " + labelMap[tSrc] + " converted · Enter to copy",
+                copyVal: formatted,
+                icon: "󰑭"
+            }];
+        }
+
+        const groups = [
+            { units: { mm: 0.001, cm: 0.01, m: 1.0, km: 1000.0, "in": 0.0254, inch: 0.0254, inches: 0.0254, ft: 0.3048, foot: 0.3048, feet: 0.3048, yd: 0.9144, yard: 0.9144, yards: 0.9144, mi: 1609.344, mile: 1609.344, miles: 1609.344 } },
+            { units: { mg: 0.001, g: 1.0, gram: 1.0, grams: 1.0, kg: 1000.0, oz: 28.349523125, lb: 453.59237, lbs: 453.59237 } },
+            { units: { b: 1.0, byte: 1.0, bytes: 1.0, kb: 1000.0, mb: 1e6, gb: 1e9, tb: 1e12, kib: 1024.0, mib: 1048576.0, gib: 1073741824.0, tib: 1099511627776.0 } },
+            { units: { ms: 0.001, s: 1.0, sec: 1.0, secs: 1.0, second: 1.0, seconds: 1.0, min: 60.0, mins: 60.0, minute: 60.0, minutes: 60.0, h: 3600.0, hr: 3600.0, hrs: 3600.0, hour: 3600.0, hours: 3600.0, d: 86400.0, day: 86400.0, days: 86400.0 } }
+        ];
+
+        for (let gi = 0; gi < groups.length; gi++) {
+            const tbl = groups[gi].units;
+            if (tbl[srcRaw] !== undefined && tbl[dstRaw] !== undefined) {
+                const out = (val * tbl[srcRaw]) / tbl[dstRaw];
+                const formatted = fmtVal(out);
+                return [{
+                    title: formatted + " " + m[3],
+                    sub: m[1] + " " + m[2] + " converted · Enter to copy",
+                    copyVal: formatted,
+                    icon: "󰑭"
+                }];
+            }
+        }
+        return null;
+    }
+
+    function parseSafeMath(src: string): var {
+        const toks = [];
+        let i = 0;
+        const n = src.length;
+        while (i < n) {
+            const ch = src[i];
+            if (ch === " " || ch === "\t") {
+                i++;
+                continue;
+            }
+            if ((ch >= "0" && ch <= "9") || (ch === "." && i + 1 < n && src[i + 1] >= "0" && src[i + 1] <= "9")) {
+                if (ch === "0" && i + 1 < n && (src[i + 1] === "x" || src[i + 1] === "X" || src[i + 1] === "b" || src[i + 1] === "B" || src[i + 1] === "o" || src[i + 1] === "O")) {
+                    const baseChar = src[i + 1].toLowerCase();
+                    let j = i + 2;
+                    while (j < n && /[0-9a-fA-F]/.test(src[j]))
+                        j++;
+                    const digits = src.slice(i + 2, j);
+                    if (digits.length === 0)
+                        return NaN;
+                    const radix = baseChar === "x" ? 16 : (baseChar === "b" ? 2 : 8);
+                    const parsedInt = parseInt(digits, radix);
+                    if (isNaN(parsedInt))
+                        return NaN;
+                    toks.push({ t: "num", v: parsedInt });
+                    i = j;
+                    continue;
+                }
+                let j = i;
+                while (j < n && ((src[j] >= "0" && src[j] <= "9") || src[j] === "."))
+                    j++;
+                if (j < n && (src[j] === "e" || src[j] === "E")) {
+                    j++;
+                    if (j < n && (src[j] === "+" || src[j] === "-"))
+                        j++;
+                    while (j < n && src[j] >= "0" && src[j] <= "9")
+                        j++;
+                }
+                const numVal = Number(src.slice(i, j));
+                if (!isFinite(numVal))
+                    return NaN;
+                toks.push({ t: "num", v: numVal });
+                i = j;
+                continue;
+            }
+            if ((ch >= "a" && ch <= "z") || (ch >= "A" && ch <= "Z") || ch === "_") {
+                let j = i + 1;
+                while (j < n && (/[a-zA-Z0-9_]/.test(src[j])))
+                    j++;
+                toks.push({ t: "id", v: src.slice(i, j).toLowerCase() });
+                i = j;
+                continue;
+            }
+            if (i + 1 < n) {
+                const two = src.slice(i, i + 2);
+                if (two === "**" || two === "<<" || two === ">>") {
+                    toks.push({ t: "op", v: two });
+                    i += 2;
+                    continue;
+                }
+            }
+            if (ch === "(" || ch === ")" || ch === ",") {
+                toks.push({ t: ch, v: ch });
+                i++;
+                continue;
+            }
+            if ("+-*/%^~&|".indexOf(ch) !== -1) {
+                toks.push({ t: "op", v: ch });
+                i++;
+                continue;
+            }
+            return NaN;
+        }
+        if (toks.length === 0)
+            return NaN;
+
+        let pos = 0;
+        const peek = () => pos < toks.length ? toks[pos] : null;
+        const consume = () => toks[pos++];
+
+        let parseBitOr = null;
+        let parseUnary = null;
+
+        const callFn = (name, args) => {
+            if (name === "sqrt" && args.length === 1) return Math.sqrt(args[0]);
+            if (name === "cbrt" && args.length === 1) return Math.cbrt(args[0]);
+            if (name === "sin" && args.length === 1) return Math.sin(args[0]);
+            if (name === "cos" && args.length === 1) return Math.cos(args[0]);
+            if (name === "tan" && args.length === 1) return Math.tan(args[0]);
+            if (name === "abs" && args.length === 1) return Math.abs(args[0]);
+            if (name === "round" && args.length === 1) return Math.round(args[0]);
+            if (name === "floor" && args.length === 1) return Math.floor(args[0]);
+            if (name === "ceil" && args.length === 1) return Math.ceil(args[0]);
+            if ((name === "log" || name === "ln") && args.length === 1) return Math.log(args[0]);
+            if (name === "log10" && args.length === 1) return Math.log10(args[0]);
+            if (name === "exp" && args.length === 1) return Math.exp(args[0]);
+            if (name === "min" && args.length >= 1) return Math.min.apply(null, args);
+            if (name === "max" && args.length >= 1) return Math.max.apply(null, args);
+            if (name === "pow" && args.length === 2) return Math.pow(args[0], args[1]);
+            return NaN;
+        };
+
+        const parsePrimary = () => {
+            const tk = peek();
+            if (!tk)
+                return NaN;
+            if (tk.t === "num") {
+                consume();
+                return tk.v;
+            }
+            if (tk.t === "id") {
+                consume();
+                if (peek() && peek().t === "(") {
+                    consume();
+                    const args = [];
+                    if (peek() && peek().t !== ")") {
+                        while (true) {
+                            args.push(parseBitOr());
+                            if (peek() && peek().t === ",") {
+                                consume();
+                                continue;
+                            }
+                            break;
+                        }
+                    }
+                    if (!peek() || peek().t !== ")")
+                        return NaN;
+                    consume();
+                    return callFn(tk.v, args);
+                }
+                if (tk.v === "pi") return Math.PI;
+                if (tk.v === "e") return Math.E;
+                if (tk.v === "tau") return Math.PI * 2.0;
+                return NaN;
+            }
+            if (tk.t === "(") {
+                consume();
+                const inner = parseBitOr();
+                if (!peek() || peek().t !== ")")
+                    return NaN;
+                consume();
+                return inner;
+            }
+            return NaN;
+        };
+
+        const parsePower = () => {
+            const base = parsePrimary();
+            if (peek() && peek().t === "op" && (peek().v === "^" || peek().v === "**")) {
+                consume();
+                const exp = parseUnary();
+                return Math.pow(base, exp);
+            }
+            return base;
+        };
+
+        parseUnary = () => {
+            if (peek() && peek().t === "op" && (peek().v === "+" || peek().v === "-" || peek().v === "~")) {
+                const op = consume().v;
+                const val = parseUnary();
+                if (op === "+") return val;
+                if (op === "-") return -val;
+                return ~(val | 0);
+            }
+            return parsePower();
+        };
+
+        const parseMul = () => {
+            let left = parseUnary();
+            while (peek() && peek().t === "op" && (peek().v === "*" || peek().v === "/" || peek().v === "%")) {
+                const op = consume().v;
+                const right = parseUnary();
+                if (op === "*") left *= right;
+                else if (op === "/") left = right === 0 ? NaN : left / right;
+                else left = right === 0 ? NaN : left % right;
+            }
+            return left;
+        };
+
+        const parseAdd = () => {
+            let left = parseMul();
+            while (peek() && peek().t === "op" && (peek().v === "+" || peek().v === "-")) {
+                const op = consume().v;
+                const right = parseMul();
+                left = op === "+" ? left + right : left - right;
+            }
+            return left;
+        };
+
+        const parseShift = () => {
+            let left = parseAdd();
+            while (peek() && peek().t === "op" && (peek().v === "<<" || peek().v === ">>")) {
+                const op = consume().v;
+                const right = parseAdd();
+                left = op === "<<" ? ((left | 0) << (right | 0)) : ((left | 0) >> (right | 0));
+            }
+            return left;
+        };
+
+        const parseBitAnd = () => {
+            let left = parseShift();
+            while (peek() && peek().t === "op" && peek().v === "&") {
+                consume();
+                const right = parseShift();
+                left = (left | 0) & (right | 0);
+            }
+            return left;
+        };
+
+        parseBitOr = () => {
+            let left = parseBitAnd();
+            while (peek() && peek().t === "op" && peek().v === "|") {
+                consume();
+                const right = parseBitAnd();
+                left = (left | 0) | (right | 0);
+            }
+            return left;
+        };
+
+        const result = parseBitOr();
+        if (pos !== toks.length)
+            return NaN;
+        return result;
+    }
+
     function evalExpression(rawExpr: string): var {
         const s = (rawExpr || "").trim();
         if (s.length === 0 || s.length > 160)
             return [];
-        try {
-            let expr = s.replace(/\^/g, "**");
-            expr = expr.replace(/\bpi\b/gi, "Math.PI");
-            expr = expr.replace(/\be\b/gi, "Math.E");
-            expr = expr.replace(/\b(sqrt|cbrt|sin|cos|tan|abs|round|floor|ceil|log|log10|exp|min|max|pow)\b/gi, (_, fn) => "Math." + fn.toLowerCase());
-            const stripped = expr.replace(/Math\.(?:PI|E|sqrt|cbrt|sin|cos|tan|abs|round|floor|ceil|log10|log|exp|min|max|pow)/g, "");
-            if (!/^[0-9a-fA-FxXbBoO+\-*/%().,\s&|~<>]*$/.test(stripped))
-                return [];
-            const fn = new Function("\"use strict\"; return (" + expr + ");");
-            const val = fn();
-            if (typeof val !== "number" || !isFinite(val) || isNaN(val))
-                return [];
-            const rounded = Math.abs(val - Math.round(val)) < 1e-12
-                ? String(Math.round(val))
-                : Number(val.toPrecision(12)).toString();
-            const cards = [{
-                title: rounded,
-                sub: "Result · Enter to copy",
-                copyVal: rounded,
-                icon: "󰪚"
-            }];
-            if (Math.abs(val - Math.round(val)) < 1e-9 && Math.abs(val) <= 0x7FFFFFFF) {
-                const iv = Math.round(val);
-                const hexStr = (iv < 0 ? "-0x" + Math.abs(iv).toString(16) : "0x" + iv.toString(16)).toUpperCase().replace("0X", "0x");
-                cards.push({
-                    title: hexStr,
-                    sub: "Hexadecimal",
-                    copyVal: hexStr,
-                    icon: "󰅪"
-                });
-                const binStr = "0b" + (iv >>> 0).toString(2);
-                cards.push({
-                    title: binStr,
-                    sub: "Binary (32-bit)",
-                    copyVal: binStr,
-                    icon: "󰌋"
-                });
-            }
-            return cards;
-        } catch (err) {
+
+        const colorCards = inspectColorExpr(s);
+        if (colorCards !== null)
+            return colorCards;
+
+        const unitCards = convertUnitsExpr(s);
+        if (unitCards !== null)
+            return unitCards;
+
+        const val = parseSafeMath(s);
+        if (typeof val !== "number" || !isFinite(val) || isNaN(val))
             return [];
+
+        const rounded = Math.abs(val - Math.round(val)) < 1e-12
+            ? String(Math.round(val))
+            : Number(val.toPrecision(12)).toString();
+        const cards = [{
+            title: rounded,
+            sub: "Result · Enter to copy",
+            copyVal: rounded,
+            icon: "󰪚"
+        }];
+        if (Math.abs(val - Math.round(val)) < 1e-9 && Math.abs(val) <= 0x7FFFFFFF) {
+            const iv = Math.round(val);
+            const hexStr = (iv < 0 ? "-0x" + Math.abs(iv).toString(16) : "0x" + iv.toString(16)).toUpperCase().replace("0X", "0x");
+            cards.push({
+                title: hexStr,
+                sub: "Hexadecimal",
+                copyVal: hexStr,
+                icon: "󰅪"
+            });
+            const binStr = "0b" + (iv >>> 0).toString(2);
+            cards.push({
+                title: binStr,
+                sub: "Binary (32-bit)",
+                copyVal: binStr,
+                icon: "󰌋"
+            });
         }
+        return cards;
     }
 
     readonly property var calcResults: {
@@ -420,8 +774,12 @@ ColumnLayout {
         { id: "game-mode",   title: "Toggle Game Mode",             sub: "Simple bar + DND + Keep Awake",      icon: "󰊴", kw: "game mode performance dnd" },
         { id: "sync-sddm",   title: "Sync SDDM Login Theme",        sub: "Push palette & wallpaper to SDDM",   icon: "󰍹", kw: "sddm login greeter sync theme" },
         { id: "refresh-wx",  title: "Refresh Weather Forecast",     sub: "Fetch latest conditions (wttr.in)",  icon: "󰖐", kw: "weather forecast temp refresh" },
-        { id: "files",       title: "Open Dynamic File Manager",    sub: "Launch Rust-backed mango-fm",        icon: "󰉋", kw: "files manager explorer" },
-        { id: "settings",    title: "Open Desktop Settings",        sub: "16-page configuration studio",       icon: "󰒓", kw: "settings preferences config" },
+        { id: "files",       title: "Open Dynamic File Manager",    sub: "Launch Rust-backed aurora-fm",        icon: "󰉋", kw: "files manager explorer" },
+        { id: "settings",    title: "Open Aurora Settings",         sub: "16-page configuration studio",       icon: "󰒓", kw: "settings preferences config" },
+        { id: "doctor",      title: "Run Aurora Doctor Health Check",sub: "Inspect compositor, portals, audio & theme health", icon: "󰋼", kw: "doctor health check diagnostics system" },
+        { id: "net-speed",   title: "Toggle Network Speed in Bar",  sub: "Show or hide live ↓/↑ throughput in top bar", icon: "󰇚", kw: "network speed bandwidth bar" },
+        { id: "hub-cycle",   title: "Cycle Hub Layout Style",       sub: "Switch Cupertino, Stage, Cockpit, Bento", icon: "󰕰", kw: "hub layout cycle cupertino stage cockpit bento" },
+        { id: "bar-cycle",   title: "Cycle Top Bar UI Style",       sub: "Switch Island, Split, Sequoia, Modular", icon: "󰘔", kw: "bar style cycle island split menubar" },
         { id: "reload-wm",   title: "Reload MangoWC Config",        sub: "mmsg dispatch reload_config",        icon: "󰑐", kw: "reload mango config wm" }
     ]
 
@@ -613,6 +971,14 @@ ColumnLayout {
             root.openFilesRequested("");
         } else if (cmdId === "settings") {
             root.openSettingsRequested("appearance");
+        } else if (cmdId === "doctor") {
+            root.openSettingsRequested("system");
+        } else if (cmdId === "net-speed") {
+            ShellState.setPref("barShowNetSpeed", !ShellState.barShowNetSpeed);
+        } else if (cmdId === "hub-cycle") {
+            ShellState.cycleHubUiStyle();
+        } else if (cmdId === "bar-cycle") {
+            ShellState.cycleBarUiStyle();
         } else if (cmdId === "reload-wm") {
             Quickshell.execDetached(["mmsg", "dispatch", "reload_config"]);
         }
@@ -680,10 +1046,10 @@ ColumnLayout {
                     visible: searchInput.text.length === 0
                     text: {
                         if (root.effectiveMode === "clip") return "Search clipboard history...";
-                        if (root.effectiveMode === "calc") return "Type math expression (e.g. 1920*1080, 0xff + 16, sqrt(144))...";
+                        if (root.effectiveMode === "calc") return "Math (1920*1080), units (100f to c, 2 gib to mb), or #hex...";
                         if (root.effectiveMode === "cmds") return "Search desktop commands...";
                         if (root.effectiveMode === "emoji") return "Search emojis & Nerd Font icons...";
-                        return "Search apps, clipboard, or type = for math";
+                        return "Search apps, > commands, = math, 100f to c, #hex...";
                     }
                     elide: Text.ElideRight
                     width: parent.width
@@ -962,10 +1328,22 @@ ColumnLayout {
                 height: 48
                 radius: Theme.r(13)
                 color: appRow.isSelected
-                    ? Theme.activeBg
-                    : (rowMouse.containsMouse ? Theme.hoverBg : "transparent")
-                border.width: appRow.isSelected ? 1 : 0
-                border.color: Theme.withAlpha(Theme.primary, 0.35)
+                    ? Theme.rowSelectedBg
+                    : (rowMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                border.width: appRow.isSelected ? Theme.activeControlBorderWidth : 0
+                border.color: Theme.primary
+
+                Rectangle {
+                    visible: appRow.isSelected
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: 10
+                    anchors.bottomMargin: 10
+                    width: 3
+                    radius: 1.5
+                    color: Theme.primary
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -1081,10 +1459,22 @@ ColumnLayout {
                 height: 48
                 radius: Theme.r(13)
                 color: clipRow.isSelected
-                    ? Theme.activeBg
-                    : (clipMouse.containsMouse ? Theme.hoverBg : "transparent")
-                border.width: clipRow.isSelected ? 1 : 0
-                border.color: Theme.withAlpha(Theme.primary, 0.35)
+                    ? Theme.rowSelectedBg
+                    : (clipMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                border.width: clipRow.isSelected ? Theme.activeControlBorderWidth : 0
+                border.color: Theme.primary
+
+                Rectangle {
+                    visible: clipRow.isSelected
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: 10
+                    anchors.bottomMargin: 10
+                    width: 3
+                    radius: 1.5
+                    color: Theme.primary
+                }
 
                 MouseArea {
                     id: clipMouse
@@ -1196,10 +1586,22 @@ ColumnLayout {
                 height: 58
                 radius: Theme.r(14)
                 color: calcRow.isSelected
-                    ? Theme.activeBg
-                    : (calcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: calcRow.isSelected ? 1 : Theme.subBorderWidth
-                border.color: calcRow.isSelected ? Theme.withAlpha(Theme.primary, 0.45) : Theme.cardBorder
+                    ? Theme.rowSelectedBg
+                    : (calcMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                border.width: calcRow.isSelected ? Theme.activeControlBorderWidth : Theme.subBorderWidth
+                border.color: calcRow.isSelected ? Theme.primary : Theme.cardBorder
+
+                Rectangle {
+                    visible: calcRow.isSelected
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: 11
+                    anchors.bottomMargin: 11
+                    width: 3
+                    radius: 1.5
+                    color: Theme.primary
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -1297,10 +1699,22 @@ ColumnLayout {
                 height: 46
                 radius: Theme.r(13)
                 color: cmdRow.isSelected
-                    ? Theme.activeBg
-                    : (cmdMouse.containsMouse ? Theme.hoverBg : "transparent")
-                border.width: cmdRow.isSelected ? 1 : 0
-                border.color: Theme.withAlpha(Theme.primary, 0.35)
+                    ? Theme.rowSelectedBg
+                    : (cmdMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                border.width: cmdRow.isSelected ? Theme.activeControlBorderWidth : 0
+                border.color: Theme.primary
+
+                Rectangle {
+                    visible: cmdRow.isSelected
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: 9
+                    anchors.bottomMargin: 9
+                    width: 3
+                    radius: 1.5
+                    color: Theme.primary
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -1398,9 +1812,9 @@ ColumnLayout {
                 height: emojiGrid.cellHeight - 4
                 radius: Theme.r(12)
                 color: emojiCell.isSelected
-                    ? Theme.activeBg
-                    : (emojiMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: emojiCell.isSelected ? 1 : 0
+                    ? Theme.tileActiveBg
+                    : (emojiMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                border.width: emojiCell.isSelected ? Theme.activeControlBorderWidth : 0
                 border.color: Theme.primary
                 scale: emojiMouse.containsMouse ? 1.06 : 1.0
 

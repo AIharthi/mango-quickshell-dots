@@ -100,7 +100,7 @@ ClippingRectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 12
-        spacing: 10
+        spacing: 8
 
         // --- Header + Album Info ---
         RowLayout {
@@ -109,12 +109,12 @@ ClippingRectangle {
             spacing: 10
 
             ClippingRectangle {
-                implicitWidth: 56
-                implicitHeight: 56
+                implicitWidth: 52
+                implicitHeight: 52
                 radius: Theme.r(12)
                 color: Theme.primaryContainer
-                border.width: root.isPlaying ? 1 : 0
-                border.color: Theme.withAlpha(Theme.primary, 0.72)
+                border.width: Theme.activeControlBorderWidth
+                border.color: Theme.primary
                 contentUnderBorder: false
                 contentInsideBorder: true
 
@@ -133,7 +133,7 @@ ClippingRectangle {
                     visible: !coverImg.visible
                     text: "󰓇"
                     font.family: Theme.iconFont
-                    font.pixelSize: 24
+                    font.pixelSize: 22
                     color: Theme.fgPrimaryContainer
                 }
             }
@@ -152,10 +152,10 @@ ClippingRectangle {
                         implicitWidth: badgeText.implicitWidth + 10
                         radius: Theme.r(8)
                         color: root.isPlaying
-                            ? Theme.withAlpha(Theme.primary, 0.24)
+                            ? Theme.tileActiveBg
                             : Theme.subCardBg
-                        border.width: root.isPlaying ? 1 : Theme.subBorderWidth
-                        border.color: Theme.withAlpha(Theme.primary, 0.45)
+                        border.width: Theme.activeControlBorderWidth
+                        border.color: Theme.primary
 
                         Text {
                             id: badgeText
@@ -166,7 +166,7 @@ ClippingRectangle {
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold
-                            color: root.isPlaying ? Theme.primary : Theme.fgSurfaceVariant
+                            color: root.isPlaying ? Theme.fgSurface : Theme.fgSurfaceVariant
                         }
                     }
 
@@ -238,12 +238,10 @@ ClippingRectangle {
         }
 
         // --- Interactive Track Progress Bar ---
-        Item { Layout.fillHeight: true }
-
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
-            spacing: 4
+            spacing: 3
 
             Item {
                 id: seekBar
@@ -339,8 +337,6 @@ ClippingRectangle {
         }
 
         // --- Transport Controls (Prev / Play-Pause / Next) ---
-        Item { Layout.fillHeight: true }
-
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
@@ -348,13 +344,13 @@ ClippingRectangle {
 
             Item { Layout.fillWidth: true }
 
-                Rectangle {
-                    implicitWidth: 34
-                    implicitHeight: 34
-                    radius: Theme.r(17)
-                    color: prevArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.subBorderWidth
-                    border.color: Theme.cardBorder
+            Rectangle {
+                implicitWidth: 34
+                implicitHeight: 34
+                radius: Theme.r(17)
+                color: prevArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                border.width: Theme.activeControlBorderWidth
+                border.color: Theme.cardBorder
                 opacity: (root.hasPlayer && root.player.canGoPrevious) ? 1.0 : 0.45
                 scale: prevArea.pressed ? 0.90 : 1.0
 
@@ -380,9 +376,9 @@ ClippingRectangle {
 
             // Play / Pause
             Rectangle {
-                implicitWidth: 44
-                implicitHeight: 36
-                radius: Theme.r(18)
+                implicitWidth: 46
+                implicitHeight: 34
+                radius: Theme.r(17)
                 color: playArea.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
                 opacity: (root.hasPlayer && root.player.canTogglePlaying) ? 1.0 : 0.50
                 scale: playArea.pressed ? 0.90 : 1.0
@@ -407,13 +403,13 @@ ClippingRectangle {
                 }
             }
 
-                Rectangle {
-                    implicitWidth: 34
-                    implicitHeight: 34
-                    radius: Theme.r(17)
-                    color: nextArea.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.subBorderWidth
-                    border.color: Theme.cardBorder
+            Rectangle {
+                implicitWidth: 34
+                implicitHeight: 34
+                radius: Theme.r(17)
+                color: nextArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                border.width: Theme.activeControlBorderWidth
+                border.color: Theme.cardBorder
                 opacity: (root.hasPlayer && root.player.canGoNext) ? 1.0 : 0.45
                 scale: nextArea.pressed ? 0.90 : 1.0
 

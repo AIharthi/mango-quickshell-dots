@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "mango-fm"
-version = "0.1.0"
+name = "aurora-backend"
+version = "2.0.0"

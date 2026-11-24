@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Io
 import ".."
 
 Rectangle {
@@ -9,161 +8,26 @@ Rectangle {
 
     property bool active: false
 
-    // CPU State
-    property real cpuPercent: 0
-    property real _prevTotal: 0
-    property real _prevIdle: 0
-    property var cpuHistory: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    readonly property real cpuPercent: SystemTelemetry.cpuPercent
+    readonly property var cpuHistory: SystemTelemetry.cpuHistory
+    readonly property real ramPercent: SystemTelemetry.memPercent
+    readonly property real ramUsedGb: SystemTelemetry.memUsedGb
+    readonly property real ramTotalGb: SystemTelemetry.memTotalGb
+    readonly property int cpuTempC: SystemTelemetry.cpuTempC
+    readonly property string uptimeLabel: SystemTelemetry.uptimeLabel
+    readonly property string loadAvgLabel: SystemTelemetry.loadLabel
+    readonly property string diskUsedLabel: SystemTelemetry.diskLabel
 
-    // RAM State
-    property real ramPercent: 0
-    property real ramUsedGb: 0
-    property real ramTotalGb: 0
-
-    // Telemetry Footer State
-    property int cpuTempC: -1
-    property string uptimeLabel: "--"
-    property string loadAvgLabel: "0.00"
-    property string diskUsedLabel: "--%"
-
-    function parseMeminfo(raw: string): void {
-        if (!raw)
-            return;
-        let totalKb = 0;
-        let availKb = -1;
-        let freeKb = 0;
-        let buffersKb = 0;
-        let cachedKb = 0;
-
-        const lines = raw.split("\n");
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (line.startsWith("MemTotal:"))
-                totalKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("MemAvailable:"))
-                availKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("MemFree:"))
-                freeKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("Buffers:"))
-                buffersKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("Cached:"))
-                cachedKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-        }
-
-        if (totalKb <= 0)
-            return;
-        if (availKb < 0)
-            availKb = freeKb + buffersKb + cachedKb;
-
-        const usedKb = Math.max(0, totalKb - availKb);
-        root.ramTotalGb = totalKb / (1024 * 1024);
-        root.ramUsedGb = usedKb / (1024 * 1024);
-        root.ramPercent = Math.max(0, Math.min(100, (usedKb / totalKb) * 100));
-    }
-
-    function parseCpuStat(raw: string): void {
-        if (!raw)
-            return;
-        const firstLine = raw.split("\n")[0] || "";
-        if (!firstLine.startsWith("cpu "))
-            return;
-
-        const parts = firstLine.trim().split(/\s+/);
-        if (parts.length < 5)
-            return;
-
-        const user = parseFloat(parts[1]) || 0;
-        const nice = parseFloat(parts[2]) || 0;
-        const system = parseFloat(parts[3]) || 0;
-        const idle = parseFloat(parts[4]) || 0;
-        const iowait = parseFloat(parts[5]) || 0;
-        const irq = parseFloat(parts[6]) || 0;
-        const softirq = parseFloat(parts[7]) || 0;
-        const steal = parseFloat(parts[8]) || 0;
-
-        const idleAll = idle + iowait;
-        const totalAll = user + nice + system + idleAll + irq + softirq + steal;
-
-        if (root._prevTotal > 0 && totalAll > root._prevTotal) {
-            const totalDelta = totalAll - root._prevTotal;
-            const idleDelta = idleAll - root._prevIdle;
-            const usage = ((totalDelta - idleDelta) / totalDelta) * 100;
-            root.cpuPercent = Math.max(0, Math.min(100, usage));
-            const nextHist = (root.cpuHistory || []).slice(-23);
-            nextHist.push(root.cpuPercent);
-            root.cpuHistory = nextHist;
+    onActiveChanged: {
+        if (root.active)
             cpuSpark.requestPaint();
-        }
-
-        root._prevTotal = totalAll;
-        root._prevIdle = idleAll;
     }
 
-    function parseMeta(raw: string): void {
-        if (!raw)
-            return;
-        const lines = raw.split("\n");
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line)
-                continue;
-            if (line.startsWith("UP:")) {
-                const secs = Math.floor(parseFloat(line.slice(3)) || 0);
-                const d = Math.floor(secs / 86400);
-                const h = Math.floor((secs % 86400) / 3600);
-                const m = Math.floor((secs % 3600) / 60);
-                if (d > 0)
-                    root.uptimeLabel = d + "d " + h + "h";
-                else if (h > 0)
-                    root.uptimeLabel = h + "h " + m + "m";
-                else
-                    root.uptimeLabel = Math.max(1, m) + "m";
-            } else if (line.startsWith("LOAD:")) {
-                root.loadAvgLabel = line.slice(5).trim();
-            } else if (line.startsWith("DISK:")) {
-                root.diskUsedLabel = line.slice(5).trim();
-            } else if (line.startsWith("TEMP:")) {
-                const rawT = parseInt(line.slice(5), 10) || 0;
-                const deg = rawT > 1000 ? Math.round(rawT / 1000) : Math.round(rawT);
-                if (deg > 0 && deg < 150)
-                    root.cpuTempC = deg;
-            }
-        }
-    }
-
-    Process {
-        id: sysProc
-        command: [
-            "sh", "-c",
-            "head -n 1 /proc/stat; echo '---'; grep -E '^(MemTotal|MemAvailable|MemFree|Buffers|Cached):' /proc/meminfo; echo '---'; " +
-            "awk '{print \"UP:\" $1}' /proc/uptime 2>/dev/null || true; " +
-            "awk '{print \"LOAD:\" $1}' /proc/loadavg 2>/dev/null || true; " +
-            "df -P / 2>/dev/null | awk 'NR==2{print \"DISK:\" $5}' || true; " +
-            "for t in /sys/class/hwmon/hwmon*/temp1_input /sys/class/thermal/thermal_zone*/temp; do " +
-            "[ -r \"$t\" ] && v=$(cat \"$t\" 2>/dev/null) && [ -n \"$v\" ] && [ \"$v\" -gt 10000 ] 2>/dev/null && echo \"TEMP:$v\" && break; done || true"
-        ]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const parts = text.split("---");
-                if (parts.length >= 2) {
-                    root.parseCpuStat(parts[0].trim());
-                    root.parseMeminfo(parts[1].trim());
-                }
-                if (parts.length >= 3) {
-                    root.parseMeta(parts[2].trim());
-                }
-            }
-        }
-    }
-
-    Timer {
-        interval: 1500
-        repeat: true
-        running: root.active
-        triggeredOnStart: true
-        onTriggered: {
-            if (!sysProc.running)
-                sysProc.running = true;
+    Connections {
+        target: SystemTelemetry
+        function onCpuHistoryChanged(): void {
+            if (root.active)
+                cpuSpark.requestPaint();
         }
     }
 
@@ -175,8 +39,8 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: DeviceCaps.hasBattery ? 6 : 8
+        anchors.margins: 11
+        spacing: DeviceCaps.hasBattery ? 5 : 7
 
         RowLayout {
             Layout.fillWidth: true
@@ -193,6 +57,14 @@ Rectangle {
 
             Item { Layout.fillWidth: true }
 
+            Text {
+                visible: SystemTelemetry.netDown.length > 0
+                text: "↓" + SystemTelemetry.netDown + " ↑" + SystemTelemetry.netUp
+                font.family: Theme.monoFont
+                font.pixelSize: 9
+                color: Theme.fgSurfaceVariant
+            }
+
             Rectangle {
                 implicitHeight: 16
                 implicitWidth: upTxt.implicitWidth + 10
@@ -207,13 +79,6 @@ Rectangle {
                     font.pixelSize: 9
                     color: Theme.fgSurfaceVariant
                 }
-            }
-
-            Rectangle {
-                implicitWidth: 8
-                implicitHeight: 8
-                radius: 4
-                color: Theme.success
             }
         }
 
@@ -267,8 +132,9 @@ Rectangle {
                 id: cpuSpark
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumHeight: DeviceCaps.hasBattery ? 18 : 26
-                Layout.maximumHeight: 104
+                Layout.minimumHeight: DeviceCaps.hasBattery ? 16 : 22
+                Layout.preferredHeight: DeviceCaps.hasBattery ? 24 : 34
+                Layout.maximumHeight: 54
                 antialiasing: true
 
                 readonly property color strokeCol: root.cpuPercent > 85 ? Theme.error : Theme.primary
@@ -377,7 +243,7 @@ Rectangle {
                 Item { Layout.fillWidth: true }
 
                     Text {
-                        text: DeviceCaps.batteryPercent + "% · " + DeviceCaps.batteryStatus
+                        text: DeviceCaps.batteryPercent + "% · " + (DeviceCaps.batteryEta.length > 0 ? (DeviceCaps.batteryStatus + " · " + DeviceCaps.batteryEta) : DeviceCaps.batteryStatus)
                         font.family: Theme.monoFont
                         font.pixelSize: 10
                         font.weight: Font.Bold
@@ -419,31 +285,31 @@ Rectangle {
                     {
                         icon: "󰔏",
                         lbl: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : "--°C",
-                        col: root.cpuTempC >= 80 ? Theme.error : Theme.warning
+                        col: root.cpuTempC >= 80 ? Theme.error : Theme.fgSurfaceVariant
                     },
                     {
                         icon: "󰓅",
                         lbl: "Load " + root.loadAvgLabel,
-                        col: Theme.secondary
+                        col: Theme.fgSurfaceVariant
                     },
                     {
                         icon: "󰋊",
                         lbl: "Root " + root.diskUsedLabel,
-                        col: Theme.primary
+                        col: Theme.fgSurfaceVariant
                     }
                 ]
 
                 delegate: Rectangle {
                     id: metaChip
                     required property var modelData
-                        Layout.fillWidth: true
-                        implicitHeight: 22
-                        radius: Theme.r(8)
-                        color: Theme.subCardBg
-                        border.width: Theme.subBorderWidth
-                        border.color: Theme.cardBorder
+                    Layout.fillWidth: true
+                    implicitHeight: 22
+                    radius: Theme.r(8)
+                    color: Theme.subCardBg
+                    border.width: Theme.activeControlBorderWidth
+                    border.color: Theme.cardBorder
 
-                        RowLayout {
+                    RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 6
                             anchors.rightMargin: 6

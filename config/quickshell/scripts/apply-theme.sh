@@ -18,7 +18,10 @@ KITTY_DIR="$CONFIG_DIR/kitty"
 mkdir -p "$QUICKSHELL_DIR" "$CONFIG_DIR/mango" "$GTK3_DIR" "$GTK4_DIR" "$FOOT_DIR" "$KITTY_DIR"
 
 if [[ "${MANGO_THEME_LOCKED:-0}" != "1" ]] && command -v flock >/dev/null 2>&1; then
-    LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/mango-theme-$(id -u).lock"
+    LOCK_DIR="${XDG_RUNTIME_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/quickshell}"
+    mkdir -p "$LOCK_DIR"
+    chmod 700 "$LOCK_DIR" 2>/dev/null || true
+    LOCK_FILE="${LOCK_DIR}/aurora-theme.lock"
     exec 9>"$LOCK_FILE"
     flock -x 9
     export MANGO_THEME_LOCKED=1
@@ -843,7 +846,7 @@ if os.path.isdir(zed_dir):
     theme_doc = {
         "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
         "name": "Mango Matugen",
-        "author": "mango-quickshell-dots",
+        "author": "aurora-shell",
         "themes": [
             {
                 "name": "Mango Matugen",
@@ -939,7 +942,7 @@ reload_wm_and_terminals() {
     if command -v mmsg >/dev/null 2>&1; then
         mmsg dispatch reload_config >/dev/null 2>&1 || mmsg -s -d reload_config >/dev/null 2>&1 || true
     fi
-    pkill -USR1 kitty >/dev/null 2>&1 || true
+    pkill -x -USR1 kitty >/dev/null 2>&1 || true
     push_foot_osc
 }
 

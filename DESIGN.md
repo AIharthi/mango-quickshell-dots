@@ -1,7 +1,7 @@
-# MangoWC + Quickshell Design System
+# Aurora Shell Design System
 
 ## Design Read
-- **Product Surface**: Operate-mode Wayland desktop shell (Dynamic Island bar, expanded Control Hub, 16-page Settings app, Rust-backed File Manager, Spotlight Launcher, Alerts Center, Window Switcher, Keybind Sheet, Power Overlay, Polkit Prompt, Lock Screen, and SDDM Login Theme).
+- **Product Surface**: Operate-mode Wayland desktop shell (Dynamic Island top bar, expanded Control Hub, 16-page Aurora Settings app with System Doctor, `aurora-fm` File Manager, Spotlight Launcher with unit/color/math evaluation, Alerts Center, Window Switcher, Keybind Sheet, Power Overlay, Polkit Prompt, Lock Screen, and Aurora Island SDDM Theme).
 - **Antislop Dials**: `ENERGY 2 / RHYTHM 2 / MOTION 1`
   - **Energy 2 (Calm & Tactile)**: Restraint over ornament; quiet tonal elevation instead of heavy nested borders; clear focal hierarchy on every surface.
   - **Rhythm 2 (Structured Density)**: Grouped controls with deliberate vertical breathing room, aligned tabular telemetry, and clear primary vs secondary vs destructive separation.
@@ -16,7 +16,11 @@
 ## Surface & Border Hierarchy (Maximum 2 Bordered Levels)
 1. **Outer Shell / Modal (`Theme.notchBg` + `Theme.islandBorder`)**: Top-level windows, islands, and overlay dialogs.
 2. **Primary Section Card (`Theme.cardBg` + `Theme.cardBorder`)**: Grouped logical modules inside Settings, Hub, and modals.
-3. **Inner Items & Controls (`Theme.subCardBg` + `Theme.subBorderWidth`)**: Unselected rows, pills, inputs, and action buttons default to `0px` borders in Default/Blur/Minimal/OLED modes, relying on tonal contrast (`subCardBg` inside `cardBg`) and `1px` `Theme.hairlineBorder` dividers. Explicit borders appear only for selected/active/focused states, `highContrast`, `accent`/`glow` border modes, `Tactile (retro)`, or `Simple`.
+3. **Inner Items & Interactive Controls (`Theme.subCardBg` + `Theme.activeControlBorderWidth`)**: Buttons, toggle tiles, option chips, selection cards, list rows, and bar badges default to `0px` borders (`Theme.activeControlBorderWidth`) in Default/Blur/Minimal/OLED/Simple modes, relying on elevated tonal fills (`Theme.tileActiveBg`, `Theme.rowSelectedBg`), crisp solid ink flips (`Theme.primary` + `Theme.fgPrimary`), filled icon medallions, and 3px left accent bars rather than colored wireframe outlines. Reserve `1px` focus rings for text inputs and subtle `Theme.hairlineBorder` dividers (`1px`) for section separators and swatch hairlines; explicit control borders appear only when the user enables `highContrast`, `accent`/`glow` borders, or `Tactile (retro)`.
+
+## Monochrome-First Bar & Adaptive Hub Sizing
+- **Monochrome-First Top Bar**: Idle metrics, workspace numbers, layout badges, Focus/Keep Awake icons, and utility buttons stay calm monochrome (`Theme.fgSurface` / `Theme.fgSurfaceVariant`) on transparent or subtle neutral surfaces without idle green dots or multi-color borders. Reserve semantic accent colors strictly for active recording (`Theme.error`), critical thresholds (`>85%` CPU/RAM or low battery), and live charging states.
+- **Content-Fitted Adaptive Hub Layouts**: The expanded Hub adapts its height dynamically per `hubUiStyle` and hardware capabilities (`DeviceCaps`) instead of forcing tall fixed voids; avoid `Layout.fillHeight: true` spacer gaps inside dashboard cards.
 
 ## Radius Scale (Scaled by `Theme.r()`)
 - **Shell / Modal**: `20px`
@@ -26,7 +30,7 @@
 
 ## Copy & State Discipline
 - **Sentence-case headings**: Clear human section titles (`Visual Mode`, `Quick Controls`, `Workspaces`) replace ALL-CAPS tracked labels and parenthetical config paths.
-- **No em-dashes or decorative button arrows**: Use concise middots (`·`) or direct phrasing instead of `—`, `→`, `↗`, or `↵` in button text.
+- **No em-dashes or decorative button arrows**: Use concise middots (`·`), hyphens, or colons instead of unicode em-dashes or directional symbols in button text.
 - **No redundant status badges**: Hide idle placeholder badges (e.g. when no media player is active) and avoid repeating identical metadata (e.g. app name repeated as summary, or desktop app name repeated as comment).
 - **Safe vs. Destructive Separation**: Session-ending and destructive actions (`Log Out`, `Reboot`, `Power Off`, `Empty Trash`, `Factory Reset`) are visually separated and require explicit confirmation.
 

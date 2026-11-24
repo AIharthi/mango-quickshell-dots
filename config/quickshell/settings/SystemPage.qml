@@ -26,6 +26,15 @@ ColumnLayout {
     property var userInfo: ({ user: "", fullName: "", uid: 1000, shell: "", home: "", groups: [], lang: "", sessionType: "", desktop: "" })
     property var backupsList: []
     property string backupStatus: ""
+    property var doctorReport: ({ ok: true, summary: "Running diagnostics...", passCount: 0, warnCount: 0, failCount: 0, checks: [] })
+    property bool doctorRunning: false
+
+    function runDoctor(): void {
+        if (doctorProc.running)
+            return;
+        root.doctorRunning = true;
+        doctorProc.running = true;
+    }
 
     function loadOverrides(): void {
         if (!localProc.running)
@@ -36,6 +45,7 @@ ColumnLayout {
             userProc.running = true;
         if (!backupsListProc.running)
             backupsListProc.running = true;
+        runDoctor();
     }
 
     function exportBackup(): void {
@@ -191,6 +201,171 @@ ColumnLayout {
         }
     }
 
+    Process {
+        id: doctorProc
+        command: [Quickshell.shellPath("scripts/manage-system.sh"), "doctor"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.doctorRunning = false;
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    if (d && Array.isArray(d.checks))
+                        root.doctorReport = d;
+                } catch (err) {}
+            }
+        }
+        onExited: root.doctorRunning = false
+    }
+
+    // --- 0. Aurora Shell 2.0 · System Health Doctor ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: docCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: docCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Rectangle {
+                    implicitHeight: 20
+                    implicitWidth: verLbl.implicitWidth + 12
+                    radius: Theme.r(10)
+                    color: Theme.withAlpha(Theme.primary, 0.18)
+
+                    Text {
+                        id: verLbl
+                        anchors.centerIn: parent
+                        text: "Aurora Shell 2.0"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+                }
+
+                Text {
+                    text: "System Doctor"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    font.weight: Font.Bold
+                    color: Theme.fgSurface
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: String(root.doctorReport.summary || "")
+                    elide: Text.ElideRight
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fs(9)
+                    color: Number(root.doctorReport.failCount || 0) > 0
+                        ? Theme.error
+                        : (Number(root.doctorReport.warnCount || 0) > 0 ? Theme.warning : Theme.success)
+                }
+
+                Rectangle {
+                    implicitHeight: 26
+                    implicitWidth: runDocLbl.implicitWidth + 16
+                    radius: Theme.r(8)
+                    color: runDocMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    border.width: 0
+
+                    Text {
+                        id: runDocLbl
+                        anchors.centerIn: parent
+                        text: root.doctorRunning ? "Checking..." : "󰑐 Run Diagnostics"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
+                    }
+
+                    MouseArea {
+                        id: runDocMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.runDoctor()
+                    }
+                }
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 3
+                columnSpacing: 8
+                rowSpacing: 8
+                visible: Array.isArray(root.doctorReport.checks) && root.doctorReport.checks.length > 0
+
+                Repeater {
+                    model: root.doctorReport.checks || []
+                    delegate: Rectangle {
+                        id: chkCard
+                        required property var modelData
+                        Layout.fillWidth: true
+                        implicitHeight: chkCol.implicitHeight + 14
+                        radius: Theme.r(10)
+                        color: Theme.subCardBg
+                        border.width: 0
+
+                        ColumnLayout {
+                            id: chkCol
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            spacing: 3
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Rectangle {
+                                    implicitWidth: 7
+                                    implicitHeight: 7
+                                    radius: 3.5
+                                    color: chkCard.modelData.status === "ok"
+                                        ? Theme.success
+                                        : (chkCard.modelData.status === "warn" ? Theme.warning : Theme.error)
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: String(chkCard.modelData.label || "")
+                                    elide: Text.ElideRight
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fs(10)
+                                    font.weight: Font.DemiBold
+                                    color: Theme.fgSurface
+                                }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: String(chkCard.modelData.detail || "")
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(9)
+                                color: Theme.fgSurfaceVariant
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // --- 1. Device & Hardware Summary ---
     Rectangle {
         Layout.fillWidth: true
@@ -257,6 +432,17 @@ ColumnLayout {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         color: Theme.primary
+                    }
+
+                    Text {
+                        visible: DeviceCaps.hasBattery
+                        text: "Battery: " + DeviceCaps.batteryPercent + "% (" + DeviceCaps.batteryStatus + ")"
+                            + (DeviceCaps.batteryWatts > 0 ? (" · " + DeviceCaps.batteryWatts.toFixed(1) + "W") : "")
+                            + (DeviceCaps.batteryEta.length > 0 ? (" · " + DeviceCaps.batteryEta) : "")
+                            + " · Health " + DeviceCaps.batteryHealth + "%"
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(9)
+                        color: DeviceCaps.batteryLow ? Theme.error : Theme.fgSurfaceVariant
                     }
                 }
             }
@@ -459,10 +645,10 @@ ColumnLayout {
                         implicitWidth: dfTxt.implicitWidth + 14
                         radius: Theme.r(7)
                         color: dfPill.selected
-                            ? Theme.withAlpha(Theme.secondary, 0.22)
-                            : (dfMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: dfPill.selected ? 1 : Theme.subBorderWidth
-                        border.color: dfPill.selected ? Theme.secondary : Theme.cardBorder
+                            ? Theme.secondary
+                            : (dfMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: dfPill.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.secondary
 
                         Text {
                             id: dfTxt
@@ -471,7 +657,7 @@ ColumnLayout {
                             font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
                             font.weight: dfPill.selected ? Font.Bold : Font.Medium
-                            color: dfPill.selected ? Theme.secondary : Theme.fgSurface
+                            color: dfPill.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -820,10 +1006,10 @@ ColumnLayout {
                             implicitWidth: ppTxt.implicitWidth + 16
                             radius: Theme.r(8)
                             color: ppPill.selected
-                                ? Theme.withAlpha(Theme.primary, 0.22)
-                                : (ppMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: ppPill.selected ? 1 : Theme.subBorderWidth
-                            border.color: ppPill.selected ? Theme.primary : Theme.cardBorder
+                                ? Theme.primary
+                                : (ppMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: ppPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: ppTxt
@@ -832,7 +1018,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: ppPill.selected ? Font.Bold : Font.Medium
-                                color: ppPill.selected ? Theme.primary : Theme.fgSurface
+                                color: ppPill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -1112,8 +1298,8 @@ ColumnLayout {
                     radius: Theme.r(8)
                     color: root.confirmResetApp
                         ? Theme.warning
-                        : (rstSysAppMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg)
-                    border.width: 1
+                        : (rstSysAppMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: Theme.activeControlBorderWidth
                     border.color: root.confirmResetApp ? Theme.warning : Theme.cardBorder
 
                     Text {
@@ -1122,7 +1308,7 @@ ColumnLayout {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
-                        color: root.confirmResetApp ? Theme.fgPrimary : Theme.warning
+                        color: root.confirmResetApp ? Theme.contrastInk(Theme.warning) : Theme.warning
                     }
 
                     MouseArea {
@@ -1150,8 +1336,8 @@ ColumnLayout {
                     radius: Theme.r(8)
                     color: root.confirmResetBar
                         ? Theme.secondary
-                        : (rstSysBarMouse.containsMouse ? Theme.withAlpha(Theme.secondary, 0.20) : Theme.subCardBg)
-                    border.width: 1
+                        : (rstSysBarMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: Theme.activeControlBorderWidth
                     border.color: root.confirmResetBar ? Theme.secondary : Theme.cardBorder
 
                     Text {
@@ -1160,7 +1346,7 @@ ColumnLayout {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
-                        color: root.confirmResetBar ? Theme.fgSecondary : Theme.secondary
+                        color: root.confirmResetBar ? Theme.contrastInk(Theme.secondary) : Theme.secondary
                     }
 
                     MouseArea {
@@ -1188,8 +1374,8 @@ ColumnLayout {
                     radius: Theme.r(8)
                     color: root.confirmFactoryAll
                         ? Theme.error
-                        : (rstFactoryMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg)
-                    border.width: 1
+                        : (rstFactoryMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.18) : Theme.subCardBg)
+                    border.width: Theme.activeControlBorderWidth
                     border.color: root.confirmFactoryAll ? Theme.error : Theme.withAlpha(Theme.error, 0.45)
 
                     Text {

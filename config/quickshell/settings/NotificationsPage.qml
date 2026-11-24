@@ -48,16 +48,16 @@ ColumnLayout {
                     implicitWidth: 34
                     implicitHeight: 34
                     radius: Theme.r(10)
-                    color: ShellState.dnd ? Theme.withAlpha(Theme.warning, 0.20) : Theme.subCardBg
-                    border.width: ShellState.dnd ? 1 : Theme.subBorderWidth
-                    border.color: ShellState.dnd ? Theme.withAlpha(Theme.warning, 0.45) : Theme.cardBorder
+                    color: ShellState.dnd ? Theme.warning : Theme.subCardBg
+                    border.width: Theme.activeControlBorderWidth
+                    border.color: ShellState.dnd ? Theme.warning : Theme.cardBorder
 
                     Text {
                         anchors.centerIn: parent
                         text: ShellState.dnd ? "󰂛" : "󰂚"
                         font.family: Theme.iconFont
                         font.pixelSize: Theme.fs(16)
-                        color: ShellState.dnd ? Theme.warning : Theme.primary
+                        color: ShellState.dnd ? Theme.contrastInk(Theme.warning) : Theme.fgSurfaceVariant
                     }
                 }
 
@@ -118,10 +118,10 @@ ColumnLayout {
                             implicitWidth: durTxt.implicitWidth + 14
                             radius: Theme.r(7)
                             color: durPill.selected
-                                ? Theme.withAlpha(Theme.primary, 0.22)
-                                : (durMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: durPill.selected ? 1 : Theme.subBorderWidth
-                            border.color: durPill.selected ? Theme.primary : Theme.cardBorder
+                                ? Theme.primary
+                                : (durMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: durPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
                             scale: durMouse.pressed ? 0.95 : 1.0
 
                             Behavior on color {
@@ -140,7 +140,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: durPill.selected ? Font.Bold : Font.Medium
-                                color: durPill.selected ? Theme.primary : Theme.fgSurface
+                                color: durPill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -217,9 +217,9 @@ ColumnLayout {
                             implicitHeight: 24
                             implicitWidth: hCapTxt.implicitWidth + 12
                             radius: Theme.r(7)
-                            color: hCapPill.selected ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.subCardBg
-                            border.width: hCapPill.selected ? 1 : Theme.subBorderWidth
-                            border.color: hCapPill.selected ? Theme.secondary : Theme.cardBorder
+                            color: hCapPill.selected ? Theme.primary : Theme.subCardBg
+                            border.width: hCapPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
 
                             Text {
                                 id: hCapTxt
@@ -228,7 +228,7 @@ ColumnLayout {
                                 font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: hCapPill.selected ? Font.Bold : Font.Medium
-                                color: hCapPill.selected ? Theme.secondary : Theme.fgSurface
+                                color: hCapPill.selected ? Theme.fgPrimary : Theme.fgSurface
                             }
 
                             MouseArea {
@@ -301,7 +301,7 @@ ColumnLayout {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: Quickshell.execDetached([
                             "sh", "-c",
-                            "command -v notify-send >/dev/null && notify-send -a Settings 'Test Notification' 'Dynamic Island notifications are active'"
+                            "command -v notify-send >/dev/null && notify-send -a Settings 'Test Notification' 'Aurora Shell notifications are active'"
                         ])
                     }
                 }

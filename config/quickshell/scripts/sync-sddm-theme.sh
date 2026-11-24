@@ -1,33 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync active Quickshell / Matugen palette & wallpaper into SDDM Mango Island theme.
+# Sync active Quickshell / Matugen palette & wallpaper into SDDM Aurora Island theme.
 
 MODE="${1:-sync}"
 QUICKSHELL_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
 COLORS_JSON="${QUICKSHELL_DIR}/colors.json"
 STATE_JSON="${QUICKSHELL_DIR}/theme-state.json"
 PREFS_JSON="${QUICKSHELL_DIR}/shell-prefs.json"
-SDDM_DIR="/usr/share/sddm/themes/mango-island"
+SDDM_THEME_NAME="aurora-island"
+SDDM_DIR="/usr/share/sddm/themes/aurora-island"
+SDDM_DROPIN="/etc/sddm.conf.d/99-aurora-shell.conf"
+if [[ ! -d "$SDDM_DIR" && -d "/usr/share/sddm/themes/mango-island" ]]; then
+    SDDM_THEME_NAME="mango-island"
+    SDDM_DIR="/usr/share/sddm/themes/mango-island"
+    SDDM_DROPIN="/etc/sddm.conf.d/99-mango-island.conf"
+fi
 SDDM_CONF="${SDDM_DIR}/theme.conf"
-SDDM_DROPIN="/etc/sddm.conf.d/99-mango-island.conf"
 
 if [[ "$MODE" == "--status" ]]; then
-    python3 - "$SDDM_DIR" "$SDDM_CONF" "$SDDM_DROPIN" <<'PY'
+    python3 - "$SDDM_DIR" "$SDDM_CONF" "$SDDM_DROPIN" "$SDDM_THEME_NAME" <<'PY'
 import json, os, sys
-sddm_dir, sddm_conf, dropin = sys.argv[1:4]
+sddm_dir, sddm_conf, dropin, theme_name = sys.argv[1:5]
 installed = os.path.isdir(sddm_dir) and os.path.isfile(os.path.join(sddm_dir, "Main.qml"))
 writable = installed and (os.access(sddm_dir, os.W_OK) or (os.path.exists(sddm_conf) and os.access(sddm_conf, os.W_OK)))
 active = False
-for p in (dropin, "/etc/sddm.conf.d/mango.conf", "/etc/sddm.conf"):
+for p in (dropin, "/etc/sddm.conf.d/99-aurora-shell.conf", "/etc/sddm.conf.d/99-mango-island.conf", "/etc/sddm.conf.d/mango.conf", "/etc/sddm.conf"):
     if os.path.isfile(p):
         try:
-            if "Current=mango-island" in open(p, encoding="utf-8", errors="ignore").read():
+            txt = open(p, encoding="utf-8", errors="ignore").read()
+            if f"Current={theme_name}" in txt or "Current=aurora-island" in txt or "Current=mango-island" in txt:
                 active = True
                 break
         except Exception:
             pass
-print(json.dumps({"installed": installed, "writable": writable, "active": active}))
+print(json.dumps({"installed": installed, "writable": writable, "active": active, "theme": theme_name}))
 PY
     exit 0
 fi

@@ -108,7 +108,7 @@ PanelWindow {
         { label: "Cursor Theme & Size",        pageId: "appearance",    keywords: "cursor pointer size theme hide" },
         { label: "Dynamic Island & Pill",      pageId: "shell",         keywords: "island hover delay collapse media spin equalizer osd pill" },
         { label: "Bar & Hub UI Designs",       pageId: "shell",         keywords: "bar ui style hub layout cupertino control center split islands sequoia menu bar stage cockpit bento apple capsule" },
-        { label: "Bar Widgets & Modules",      pageId: "shell",         keywords: "bar widgets modules date active window title workspaces tags layout cpu ram volume mute keyboard layout tray quick icons files battery presets minimal balanced full" },
+        { label: "Bar Widgets & Modules",      pageId: "shell",         keywords: "bar widgets modules date active window title workspaces tags layout cpu ram volume mute keyboard layout tray quick icons files battery presets minimal balanced full network speed net throughput barShowNetSpeed aurora" },
         { label: "Dynamic File Manager (Rust)",pageId: "shell",         keywords: "file manager files rust explorer miller columns dual pane grid preview customize bar icon" },
         { label: "Simple Bar & Screenshots",   pageId: "shell",         keywords: "bar height top bottom layout screenshot grim slurp clipboard delay screen record video weather slideshow" },
         { label: "Weather & Wallpaper Slideshow", pageId: "shell",      keywords: "weather wttr city temperature celsius fahrenheit bar slideshow rotate wallpaper" },
@@ -131,7 +131,7 @@ PanelWindow {
         { label: "Shortcuts & Custom Binds",   pageId: "shortcuts",     keywords: "shortcut keybind hotkeys super mod mousebind custom bind cheat sheet" },
         { label: "Clipboard, Idle Lock & SDDM",    pageId: "privacy",   keywords: "privacy clipboard history clear middle paste recent files camera microphone lock idle timeout suspend sddm greeter login sync" },
         { label: "Sensors, Processes & Init",  pageId: "monitor",       keywords: "temp temperature cpu gpu process pid kill openrc systemd services" },
-        { label: "User, Clock & Backup",       pageId: "system",        keywords: "user account clock 24h seconds date format keep awake disk storage backup export reset" }
+        { label: "User, Clock & Backup",       pageId: "system",        keywords: "user account clock 24h seconds date format keep awake disk storage backup export reset doctor health diagnostics aurora battery watts" }
     ]
 
     readonly property var searchMatches: {
@@ -286,7 +286,7 @@ PanelWindow {
                                 }
 
                                 Text {
-                                    text: "Settings"
+                                    text: "Aurora Settings"
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(15)
                                     font.weight: Font.Bold
@@ -614,7 +614,7 @@ PanelWindow {
                             implicitHeight: rstDrawerCol.implicitHeight + 10
                             radius: Theme.r(9)
                             color: Theme.subCardBg
-                            border.width: root.resetMenuOpen ? 1 : Theme.subBorderWidth
+                            border.width: Theme.activeControlBorderWidth
                             border.color: root.resetMenuOpen ? Theme.warning : Theme.cardBorder
 
                             ColumnLayout {

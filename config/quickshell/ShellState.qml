@@ -110,16 +110,16 @@ Singleton {
     property string barUiStyle: "apple"          // "apple" | "split" | "menubar" | "classic"
 
     readonly property var availableHubStyles: [
-        { id: "cupertino", label: "Cupertino", vibe: "macOS Control Center", desc: "2x2 connectivity platter, tactile capsule sliders, spaces strip & activity rings", icon: "󰕰" },
-        { id: "stage",     label: "Stage",     vibe: "Apple Music & Live Rings", desc: "Full-height album art stage centerpiece paired with live workspace & telemetry pods", icon: "󰓇" },
-        { id: "cockpit",   label: "Cockpit",   vibe: "Pro Telemetry Ribbon", desc: "Unified top media & workspace ribbon over dual waveform & control platters", icon: "󰍛" },
-        { id: "bento",     label: "Bento",     vibe: "Classic 2x2 Grid", desc: "Four balanced cards for Media, System Monitor, MangoWC Tags & Quick Controls", icon: "󰕮" }
+        { id: "cupertino", label: "Cupertino", vibe: "macOS Control Center", desc: "Borderless connectivity platter, sliders, compact spaces & activity rings", icon: "󰕰" },
+        { id: "stage",     label: "Stage",     vibe: "Media Showcase & Controls", desc: "Artwork showcase card paired with live toggles, spaces & metric deck", icon: "󰓇" },
+        { id: "cockpit",   label: "Cockpit",   vibe: "Telemetry & Command Deck", desc: "Top media & workspace ribbon over dual sparkline monitor & controls", icon: "󰍛" },
+        { id: "bento",     label: "Bento",     vibe: "Balanced 2x2 Grid", desc: "Snug four-card grid for Media, System Monitor, Workspaces & Controls", icon: "󰕮" }
     ]
 
     readonly property var availableBarStyles: [
-        { id: "apple",   label: "Dynamic Island", vibe: "iOS / macOS Capsule", desc: "Sleek centered capsule with spinning cover art, clock & live activity dot", icon: "󰀵" },
-        { id: "split",   label: "Split Islands",  vibe: "3 Floating Glass Pods", desc: "Three independent floating glass islands for Spaces, Clock/Media & Status", icon: "󰕰" },
-        { id: "menubar", label: "Sequoia Bar",    vibe: "macOS Top Menu Bar", desc: "Full-width translucent menu bar with active app title, spaces & control center", icon: "󰘔" },
+        { id: "apple",   label: "Dynamic Island", vibe: "iOS / macOS Capsule", desc: "Calm monochrome capsule with clock, cover art & active indicators", icon: "󰀵" },
+        { id: "split",   label: "Split Islands",  vibe: "3 Floating Glass Pods", desc: "Three floating glass pods for Spaces, Clock/Media & System Status", icon: "󰕰" },
+        { id: "menubar", label: "Sequoia Bar",    vibe: "macOS Top Menu Bar", desc: "Full-width translucent menu bar with active app title & controls", icon: "󰘔" },
         { id: "classic", label: "Modular Pill",   vibe: "Custom Widget Bar", desc: "Customizable modular pill, top notch, or full-width desktop bar", icon: "󰕮" }
     ]
     property int matugenSourceIndex: 0
@@ -141,6 +141,7 @@ Singleton {
     property bool barShowWorkspaces: false
     property bool barShowLayout: false
     property bool barShowSystem: false
+    property bool barShowNetSpeed: false
     property bool barShowVolume: false
     property bool barShowKbLayout: false
     property bool barShowTray: false
@@ -308,6 +309,7 @@ Singleton {
             if (d.barShowWorkspaces !== undefined) root.barShowWorkspaces = !!d.barShowWorkspaces;
             if (d.barShowLayout !== undefined) root.barShowLayout = !!d.barShowLayout;
             if (d.barShowSystem !== undefined) root.barShowSystem = !!d.barShowSystem;
+            if (d.barShowNetSpeed !== undefined) root.barShowNetSpeed = !!d.barShowNetSpeed;
             if (d.barShowVolume !== undefined) root.barShowVolume = !!d.barShowVolume;
             if (d.barShowKbLayout !== undefined) root.barShowKbLayout = !!d.barShowKbLayout;
             if (d.barShowTray !== undefined) root.barShowTray = !!d.barShowTray;
@@ -439,6 +441,7 @@ Singleton {
         else if (key === "barShowWorkspaces") root.barShowWorkspaces = !!value;
         else if (key === "barShowLayout") root.barShowLayout = !!value;
         else if (key === "barShowSystem") root.barShowSystem = !!value;
+        else if (key === "barShowNetSpeed") root.barShowNetSpeed = !!value;
         else if (key === "barShowVolume") root.barShowVolume = !!value;
         else if (key === "barShowKbLayout") root.barShowKbLayout = !!value;
         else if (key === "barShowTray") root.barShowTray = !!value;
@@ -650,6 +653,7 @@ Singleton {
                 barShowWorkspaces: false,
                 barShowLayout: false,
                 barShowSystem: false,
+                barShowNetSpeed: false,
                 barShowVolume: false,
                 barShowKbLayout: false,
                 barShowTray: false,
@@ -666,6 +670,7 @@ Singleton {
                 barShowWorkspaces: true,
                 barShowLayout: false,
                 barShowSystem: false,
+                barShowNetSpeed: false,
                 barShowVolume: false,
                 barShowKbLayout: false,
                 barShowTray: false,

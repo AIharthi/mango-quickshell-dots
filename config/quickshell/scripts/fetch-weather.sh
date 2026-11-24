@@ -96,11 +96,11 @@ if (
     print(json.dumps(cached))
     sys.exit(0)
 
-loc_seg = urllib.parse.quote(location, safe=", ")
+loc_seg = urllib.parse.quote(location.replace(" ", "+"), safe=",+")
 url = f"https://wttr.in/{loc_seg}?format=j1" if loc_seg else "https://wttr.in/?format=j1"
 
 try:
-    req = urllib.request.Request(url, headers={"User-Agent": "mango-quickshell-dots/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Aurora-Shell/2.0"})
     with urllib.request.urlopen(req, timeout=4.0) as resp:
         data = json.loads(resp.read().decode("utf-8", errors="replace"))
     cur = (data.get("current_condition") or [{}])[0]

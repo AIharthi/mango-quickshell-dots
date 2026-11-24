@@ -110,9 +110,8 @@ for cmd in candidates:
         os.execvp(exe, parts)
 
 # Final fallback for editor/files inside an available terminal
-term_cmd = next((t for t in fallbacks if role == "terminal" and shutil.which(t)), None)
 if role in ("editor", "files"):
-    term_candidates = ["foot", "kitty", "alacritty", "wezterm", "xterm"]
+    term_candidates = ["foot", "kitty", "alacritty", "wezterm", "ghostty", "xterm"]
     term = next((t for t in term_candidates if shutil.which(t)), None)
     if term:
         if role == "editor":

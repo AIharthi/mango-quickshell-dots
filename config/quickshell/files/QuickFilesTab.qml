@@ -91,7 +91,7 @@ RowLayout {
                 trashProc.running = true;
             return;
         }
-        const args = [Quickshell.shellPath("bin/mango-fm"), "list", root.currentPath, "--sort", ShellState.fmSortBy];
+        const args = [Quickshell.shellPath("bin/aurora-fm"), "list", root.currentPath, "--sort", ShellState.fmSortBy];
         if (ShellState.fmShowHidden) args.push("--hidden");
         if (ShellState.fmSortDesc) args.push("--desc");
         if (!ShellState.fmDirsFirst) args.push("--no-dirs-first");
@@ -131,7 +131,7 @@ RowLayout {
 
     Process {
         id: placesProc
-        command: [Quickshell.shellPath("bin/mango-fm"), "places"]
+        command: [Quickshell.shellPath("bin/aurora-fm"), "places"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -163,7 +163,7 @@ RowLayout {
 
     Process {
         id: trashProc
-        command: [Quickshell.shellPath("bin/mango-fm"), "trash-list"]
+        command: [Quickshell.shellPath("bin/aurora-fm"), "trash-list"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -218,9 +218,19 @@ RowLayout {
                         Layout.fillWidth: true
                         implicitHeight: 28
                         radius: Theme.r(10)
-                        color: cur ? Theme.withAlpha(fstyle.accent, 0.22) : (qpMouse.containsMouse ? Theme.hoverBg : "transparent")
-                        border.width: qpBtn.cur ? 1 : 0
+                        clip: true
+                        color: qpBtn.cur ? Theme.rowSelectedBg : (qpMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                        border.width: qpBtn.cur ? Theme.activeControlBorderWidth : 0
                         border.color: Theme.withAlpha(fstyle.accent, 0.45)
+
+                        Rectangle {
+                            visible: qpBtn.cur
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            width: 3
+                            color: fstyle.accent
+                        }
 
                         RowLayout {
                             anchors.fill: parent
@@ -311,9 +321,19 @@ RowLayout {
                     Layout.topMargin: 6
                     implicitHeight: 28
                     radius: Theme.r(10)
-                    color: root.inTrashView ? Theme.withAlpha(Theme.error, 0.20) : (qtMouse.containsMouse ? Theme.hoverBg : "transparent")
-                    border.width: root.inTrashView ? 1 : 0
+                    clip: true
+                    color: root.inTrashView ? Theme.withAlpha(Theme.error, 0.16) : (qtMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                    border.width: root.inTrashView ? Theme.activeControlBorderWidth : 0
                     border.color: Theme.withAlpha(Theme.error, 0.50)
+
+                    Rectangle {
+                        visible: root.inTrashView
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: 3
+                        color: Theme.error
+                    }
 
                     RowLayout {
                         anchors.fill: parent
@@ -581,7 +601,7 @@ RowLayout {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            Quickshell.execDetached([Quickshell.shellPath("bin/mango-fm"), "terminal", root.currentPath, ShellState.defaultTerminal]);
+                            Quickshell.execDetached([Quickshell.shellPath("bin/aurora-fm"), "terminal", root.currentPath, ShellState.defaultTerminal]);
                             root.showToast("Terminal opened");
                         }
                     }
@@ -591,9 +611,9 @@ RowLayout {
                     implicitHeight: 28
                     implicitWidth: fullLbl.implicitWidth + 16
                     radius: Theme.r(14)
-                    color: fullMouse.containsMouse ? fstyle.accent : Theme.withAlpha(fstyle.accent, 0.20)
-                    border.width: 1
-                    border.color: Theme.withAlpha(fstyle.accent, 0.75)
+                    color: fullMouse.containsMouse ? Qt.lighter(fstyle.accent, 1.08) : fstyle.accent
+                    border.width: Theme.activeControlBorderWidth
+                    border.color: fstyle.accent
 
                     Text {
                         id: fullLbl
@@ -602,7 +622,7 @@ RowLayout {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
-                        color: fullMouse.containsMouse ? fstyle.onAccent : fstyle.accent
+                        color: fstyle.onAccent
                     }
                     MouseArea {
                         id: fullMouse
@@ -707,17 +727,17 @@ RowLayout {
                     implicitHeight: 28
                     radius: Theme.r(14)
                     color: ShellState.fmShowHidden
-                        ? Theme.withAlpha(fstyle.accent, 0.22)
-                        : (hidMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: ShellState.fmShowHidden ? 1 : Theme.subBorderWidth
-                    border.color: ShellState.fmShowHidden ? fstyle.accent : Theme.cardBorder
+                        ? fstyle.accent
+                        : (hidMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: ShellState.fmShowHidden ? Theme.activeControlBorderWidth : 0
+                    border.color: fstyle.accent
 
                     Text {
                         anchors.centerIn: parent
                         text: ShellState.fmShowHidden ? "󰈈" : "󰈉"
                         font.family: Theme.iconFont
                         font.pixelSize: Theme.fs(12)
-                        color: ShellState.fmShowHidden ? fstyle.accent : Theme.fgSurfaceVariant
+                        color: ShellState.fmShowHidden ? fstyle.onAccent : Theme.fgSurfaceVariant
                     }
 
                     MouseArea {
@@ -796,12 +816,12 @@ RowLayout {
                                 implicitHeight: 20
                                 implicitWidth: qwLbl.implicitWidth + 12
                                 radius: Theme.r(10)
-                                color: Theme.withAlpha(fstyle.accent, 0.22)
-                                border.width: 1
+                                color: fstyle.accent
+                                border.width: Theme.activeControlBorderWidth
                                 border.color: fstyle.accent
                                 z: 2
 
-                                Text { id: qwLbl; anchors.centerIn: parent; text: "Wallpaper"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: fstyle.accent }
+                                Text { id: qwLbl; anchors.centerIn: parent; text: "Wallpaper"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: fstyle.onAccent }
                                 MouseArea {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
@@ -840,7 +860,7 @@ RowLayout {
                                 if (qRow.isDir)
                                     root.navigateTo(qRow.itemPath);
                                 else {
-                                    Quickshell.execDetached([Quickshell.shellPath("bin/mango-fm"), "open", qRow.itemPath]);
+                                    Quickshell.execDetached([Quickshell.shellPath("bin/aurora-fm"), "open", qRow.itemPath]);
                                     root.showToast("Opening " + String(qRow.modelData.name || ""));
                                 }
                             }

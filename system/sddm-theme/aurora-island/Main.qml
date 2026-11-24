@@ -107,9 +107,9 @@ Rectangle {
 
     function sessionName(idx) {
         if (typeof sessionModel === "undefined" || !sessionModel || sessionModel.count <= 0)
-            return "MangoWC";
+            return "Aurora Shell";
         var cur = sessionModel.data(sessionModel.index(idx, 0), Qt.UserRole + 4);
-        return cur ? String(cur) : "MangoWC";
+        return cur ? String(cur) : "Aurora Shell";
     }
 
     function currentKbLabel() {

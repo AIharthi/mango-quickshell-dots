@@ -747,7 +747,7 @@ def push_terminal_osc_and_reload():
                         f.write(seq)
                 except Exception:
                     pass
-    subprocess.run(["pkill", "-USR1", "kitty"], stderr=subprocess.DEVNULL)
+    subprocess.run(["pkill", "-x", "-USR1", "kitty"], stderr=subprocess.DEVNULL)
     if shutil.which("mmsg"):
         subprocess.run(["mmsg", "dispatch", "reload_config"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -894,7 +894,7 @@ def cmd_custom_export():
     src = os.path.join(CUSTOM_DIR, f"{slug}.json")
     if not os.path.isfile(src):
         sys.exit(f"Custom theme not found: {slug}")
-    dest = os.path.expanduser(f"~/mango-theme-{slug}.json")
+    dest = os.path.expanduser(f"~/aurora-theme-{slug}.json")
     shutil.copy2(src, dest)
     print(json.dumps({"path": dest}))
 
@@ -1119,8 +1119,12 @@ def acquire_theme_lock():
         return
     try:
         import fcntl
-        rdir = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
-        lpath = os.path.join(rdir, f"mango-theme-{os.getuid()}.lock")
+        rdir = os.environ.get("XDG_RUNTIME_DIR") or os.path.join(
+            os.path.expanduser(os.environ.get("XDG_CACHE_HOME", "~/.cache")),
+            "quickshell",
+        )
+        os.makedirs(rdir, mode=0o700, exist_ok=True)
+        lpath = os.path.join(rdir, "aurora-theme.lock")
         _LOCK_FH = open(lpath, "w", encoding="utf-8")
         fcntl.flock(_LOCK_FH.fileno(), fcntl.LOCK_EX)
         os.environ["MANGO_THEME_LOCKED"] = "1"

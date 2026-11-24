@@ -77,7 +77,7 @@ ColumnLayout {
             implicitWidth: tabRow.implicitWidth + 6
             radius: Theme.r(16)
             color: Theme.cardBg
-            border.width: Theme.subBorderWidth
+            border.width: Theme.activeControlBorderWidth
             border.color: Theme.cardBorder
 
             RowLayout {
@@ -155,11 +155,11 @@ ColumnLayout {
 
         Item { Layout.fillWidth: true }
 
-        // Right Action Cluster (guaranteed to fit cleanly at 700px+ without clipping Close button)
+        // Right Action Cluster (calm monochrome utility buttons, 0px borders by default)
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
             Layout.fillHeight: false
-            spacing: 5
+            spacing: 4
 
             // Compact Hub Layout Switcher Circle (LMB cycles Hub layout, RMB -> Settings -> Shell)
             Rectangle {
@@ -167,9 +167,9 @@ ColumnLayout {
                 implicitHeight: 26
                 implicitWidth: 26
                 radius: Theme.r(13)
-                color: hubSwitchMouse.containsMouse ? Theme.activeBg : Theme.cardBg
-                border.width: hubSwitchMouse.containsMouse ? 1 : Theme.subBorderWidth
-                border.color: hubSwitchMouse.containsMouse ? Theme.primary : Theme.withAlpha(Theme.primary, 0.35)
+                color: hubSwitchMouse.containsMouse ? Theme.controlFillHover : "transparent"
+                border.width: Theme.activeControlBorderWidth
+                border.color: Theme.cardBorder
                 visible: root.activeTab === "overview"
                 scale: hubSwitchMouse.pressed ? 0.92 : 1.0
 
@@ -189,7 +189,7 @@ ColumnLayout {
                     text: hubSwitchPill.curHubObj ? hubSwitchPill.curHubObj.icon : "󰕰"
                     font.family: Theme.iconFont
                     font.pixelSize: 12
-                    color: Theme.primary
+                    color: hubSwitchMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
                 }
 
                 MouseArea {
@@ -207,22 +207,22 @@ ColumnLayout {
                 }
             }
 
-            // Active-only status chips (click to turn off)
+            // Active-only status chips shown outside Overview tab (avoid duplicating Hub toggles)
             Rectangle {
-                visible: ShellState.dnd
+                visible: root.activeTab !== "overview" && ShellState.dnd
                 implicitWidth: 26
                 implicitHeight: 26
                 radius: Theme.r(13)
-                color: dndHeaderArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.warning, 0.16)
-                border.width: Theme.subBorderWidth
-                border.color: Theme.withAlpha(Theme.warning, 0.45)
+                color: dndHeaderArea.containsMouse ? Theme.tileActiveBg : Theme.controlFillHover
+                border.width: Theme.activeControlBorderWidth
+                border.color: Theme.cardBorder
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰂛"
                     font.family: Theme.iconFont
                     font.pixelSize: 12
-                    color: Theme.warning
+                    color: Theme.fgSurface
                 }
 
                 MouseArea {
@@ -235,20 +235,20 @@ ColumnLayout {
             }
 
             Rectangle {
-                visible: ShellState.keepAwake
+                visible: root.activeTab !== "overview" && ShellState.keepAwake
                 implicitWidth: 26
                 implicitHeight: 26
                 radius: Theme.r(13)
-                color: awakeHeaderArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.tertiary, 0.16)
-                border.width: Theme.subBorderWidth
-                border.color: Theme.withAlpha(Theme.tertiary, 0.45)
+                color: awakeHeaderArea.containsMouse ? Theme.tileActiveBg : Theme.controlFillHover
+                border.width: Theme.activeControlBorderWidth
+                border.color: Theme.cardBorder
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰅶"
                     font.family: Theme.iconFont
                     font.pixelSize: 12
-                    color: Theme.tertiary
+                    color: Theme.fgSurface
                 }
 
                 MouseArea {
@@ -264,8 +264,8 @@ ColumnLayout {
                 implicitWidth: 26
                 implicitHeight: 26
                 radius: Theme.r(13)
-                color: settingsArea.containsMouse ? Theme.hoverBg : Theme.cardBg
-                border.width: Theme.subBorderWidth
+                color: settingsArea.containsMouse ? Theme.controlFillHover : "transparent"
+                border.width: Theme.activeControlBorderWidth
                 border.color: Theme.cardBorder
                 scale: settingsArea.pressed ? 0.92 : 1.0
 
@@ -283,7 +283,7 @@ ColumnLayout {
                     text: "󰒓"
                     font.family: Theme.iconFont
                     font.pixelSize: 12
-                    color: settingsArea.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+                    color: settingsArea.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
                     rotation: settingsArea.containsMouse ? 45 : 0
 
                     Behavior on rotation {
@@ -310,9 +310,9 @@ ColumnLayout {
                 implicitHeight: 26
                 radius: Theme.r(13)
                 color: root.powerMenuOpen
-                    ? Theme.withAlpha(Theme.error, 0.22)
-                    : (powerArea.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                border.width: root.powerMenuOpen ? 1 : Theme.subBorderWidth
+                    ? Theme.error
+                    : (powerArea.containsMouse ? Theme.controlFillHover : "transparent")
+                border.width: Theme.activeControlBorderWidth
                 border.color: root.powerMenuOpen ? Theme.error : Theme.cardBorder
                 scale: powerArea.pressed ? 0.92 : 1.0
 
@@ -330,7 +330,9 @@ ColumnLayout {
                     text: "󰐥"
                     font.family: Theme.iconFont
                     font.pixelSize: 12
-                    color: (root.powerMenuOpen || powerArea.containsMouse) ? Theme.error : Theme.fgSurfaceVariant
+                    color: root.powerMenuOpen
+                        ? Theme.fgError
+                        : (powerArea.containsMouse ? Theme.error : Theme.fgSurfaceVariant)
                 }
 
                 MouseArea {
@@ -347,9 +349,9 @@ ColumnLayout {
                 implicitHeight: 26
                 radius: Theme.r(13)
                 color: root.pinnedOpen
-                    ? Theme.activeBg
-                    : (pinArea.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                border.width: root.pinnedOpen ? 1 : Theme.subBorderWidth
+                    ? Theme.tileActiveBg
+                    : (pinArea.containsMouse ? Theme.controlFillHover : "transparent")
+                border.width: Theme.activeControlBorderWidth
                 border.color: root.pinnedOpen ? Theme.primary : Theme.cardBorder
                 scale: pinArea.pressed ? 0.92 : 1.0
 
@@ -367,7 +369,7 @@ ColumnLayout {
                     text: root.pinnedOpen ? "󰐃" : "󰤱"
                     font.family: Theme.iconFont
                     font.pixelSize: 12
-                    color: root.pinnedOpen ? Theme.primary : Theme.fgSurfaceVariant
+                    color: root.pinnedOpen || pinArea.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
                 }
 
                 MouseArea {
@@ -385,8 +387,8 @@ ColumnLayout {
                 radius: Theme.r(13)
                 color: closeArea.containsMouse
                     ? Theme.withAlpha(Theme.error, 0.22)
-                    : Theme.cardBg
-                border.width: Theme.subBorderWidth
+                    : "transparent"
+                border.width: Theme.activeControlBorderWidth
                 border.color: Theme.cardBorder
                 scale: closeArea.pressed ? 0.92 : 1.0
 
@@ -492,10 +494,11 @@ ColumnLayout {
 
                     MediaCard {
                         Layout.fillWidth: true
-                        Layout.fillHeight: true
+                        Layout.fillHeight: false
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: 184
-                        Layout.minimumHeight: 168
+                        Layout.preferredHeight: 172
+                        Layout.minimumHeight: 162
+                        Layout.maximumHeight: 174
                         player: root.player
                         active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
                         onSeekingChanged: seeking => root.controlInteractionChanged(seeking)
@@ -503,10 +506,11 @@ ColumnLayout {
 
                     SystemMonitor {
                         Layout.fillWidth: true
-                        Layout.fillHeight: true
+                        Layout.fillHeight: false
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: 184
-                        Layout.minimumHeight: 168
+                        Layout.preferredHeight: 172
+                        Layout.minimumHeight: 162
+                        Layout.maximumHeight: 174
                         active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
                     }
 
@@ -514,8 +518,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 250 : 216
-                        Layout.minimumHeight: 196
+                        Layout.minimumHeight: 176
                         screenName: root.screenName
                         active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
                     }
@@ -524,8 +527,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: DeviceCaps.hasExtraQuickControls ? 250 : 216
-                        Layout.minimumHeight: 196
+                        Layout.minimumHeight: 176
                         active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
                         onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
                         onOpenSettingsRequested: page => root.openSettingsRequested(page)

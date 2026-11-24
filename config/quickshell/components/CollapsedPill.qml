@@ -46,10 +46,8 @@ Item {
         { index: 9, is_active: false, is_urgent: false, client_count: 0 }
     ]
     property string activeWindowTitle: ""
-    property real cpuPercent: 0
-    property real _prevTotal: 0
-    property real _prevIdle: 0
-    property real ramPercent: 0
+    readonly property real cpuPercent: SystemTelemetry.cpuPercent
+    readonly property real ramPercent: SystemTelemetry.memPercent
     property int volPercent: 50
     property bool volMuted: false
     property string kbLayoutShort: ""
@@ -103,6 +101,7 @@ Item {
         || ShellState.barShowWorkspaces
         || ShellState.barShowLayout
         || ShellState.barShowSystem
+        || ShellState.barShowNetSpeed
         || (ShellState.barShowVolume && DeviceCaps.hasAudio)
         || (ShellState.barShowKbLayout && kbLayoutShort.length > 0)
         || hasTrayChip
@@ -189,59 +188,6 @@ Item {
         } catch (err) {}
     }
 
-    function parseCpuStat(raw: string): void {
-        if (!raw)
-            return;
-        const firstLine = raw.split("\n")[0] || "";
-        if (!firstLine.startsWith("cpu "))
-            return;
-        const parts = firstLine.trim().split(/\s+/);
-        if (parts.length < 5)
-            return;
-        const user = parseFloat(parts[1]) || 0;
-        const nice = parseFloat(parts[2]) || 0;
-        const system = parseFloat(parts[3]) || 0;
-        const idle = parseFloat(parts[4]) || 0;
-        const iowait = parseFloat(parts[5]) || 0;
-        const irq = parseFloat(parts[6]) || 0;
-        const softirq = parseFloat(parts[7]) || 0;
-        const steal = parseFloat(parts[8]) || 0;
-        const idleAll = idle + iowait;
-        const totalAll = user + nice + system + idleAll + irq + softirq + steal;
-        if (root._prevTotal > 0 && totalAll > root._prevTotal) {
-            const totalDelta = totalAll - root._prevTotal;
-            const idleDelta = idleAll - root._prevIdle;
-            root.cpuPercent = Math.max(0, Math.min(100, ((totalDelta - idleDelta) / totalDelta) * 100));
-        }
-        root._prevTotal = totalAll;
-        root._prevIdle = idleAll;
-    }
-
-    function parseMeminfo(raw: string): void {
-        if (!raw)
-            return;
-        let totalKb = 0;
-        let availKb = -1;
-        let freeKb = 0;
-        let buffersKb = 0;
-        let cachedKb = 0;
-        const lines = raw.split("\n");
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (line.startsWith("MemTotal:")) totalKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("MemAvailable:")) availKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("MemFree:")) freeKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("Buffers:")) buffersKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-            else if (line.startsWith("Cached:")) cachedKb = parseInt(line.replace(/[^0-9]/g, ""), 10) || 0;
-        }
-        if (totalKb <= 0)
-            return;
-        if (availKb < 0)
-            availKb = freeKb + buffersKb + cachedKb;
-        const usedKb = Math.max(0, totalKb - availKb);
-        root.ramPercent = Math.max(0, Math.min(100, (usedKb / totalKb) * 100));
-    }
-
     function parseVolOut(raw: string): void {
         const parts = (raw || "").split("---");
         if (parts.length > 0) {
@@ -277,28 +223,6 @@ Item {
         command: ["mmsg", "watch", "keyboardlayout"]
         running: root.active && ShellState.barShowKbLayout
         stdout: SplitParser { onRead: line => root.parseKbJson(line) }
-    }
-
-    Process {
-        id: sysProc
-        command: ["sh", "-c", "head -n 1 /proc/stat; echo '---'; grep -E '^(MemTotal|MemAvailable|MemFree|Buffers|Cached):' /proc/meminfo"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const parts = (text || "").split("---");
-                if (parts.length >= 2) {
-                    root.parseCpuStat(parts[0].trim());
-                    root.parseMeminfo(parts[1].trim());
-                }
-            }
-        }
-    }
-
-    Timer {
-        interval: 3000
-        repeat: true
-        running: root.active && ShellState.barShowSystem
-        triggeredOnStart: true
-        onTriggered: { if (!sysProc.running) sysProc.running = true; }
     }
 
     Process {
@@ -343,23 +267,36 @@ Item {
                 radius: Theme.r(7)
                 color: {
                     if (tgPill.isUrgent) return Theme.error;
-                    if (tgPill.isActive) return Theme.primary;
-                    if (tgMouse.containsMouse) return Theme.hoverBg;
-                    if (tgPill.isOccupied) return Theme.withAlpha(Theme.primary, 0.22);
-                    return Theme.subCardBg;
+                    if (tgPill.isActive) return Theme.isDark ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.11);
+                    if (tgMouse.containsMouse) return Theme.controlFillHover;
+                    return "transparent";
                 }
+                border.width: tgPill.isActive ? Theme.activeControlBorderWidth : 0
+                border.color: Theme.primary
 
                 Text {
                     anchors.centerIn: parent
+                    anchors.verticalCenterOffset: (tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent) ? -1 : 0
                     text: tgPill.modelData.index
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: tgPill.isActive ? Font.Bold : Font.Medium
                     color: {
                         if (tgPill.isUrgent) return Theme.fgError;
-                        if (tgPill.isActive) return Theme.fgPrimary;
-                        return tgPill.isOccupied ? Theme.fgSurface : Theme.fgSurfaceVariant;
+                        if (tgPill.isActive) return Theme.fgSurface;
+                        return tgPill.isOccupied ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.55);
                     }
+                }
+
+                Rectangle {
+                    visible: tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 1.5
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 3
+                    height: 3
+                    radius: 1.5
+                    color: Theme.fgSurfaceVariant
                 }
 
                 MouseArea {
@@ -446,7 +383,7 @@ Item {
                     height: eqBarM.modelData.minH
                     radius: 1.25
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.primary
+                    color: Theme.fgSurfaceVariant
 
                     SequentialAnimation on height {
                         running: root.active && root.isPlaying && root.visible && ShellState.pillShowEqualizer && !Theme.reducedMotion
@@ -464,7 +401,7 @@ Item {
         implicitHeight: 20
         implicitWidth: vpRow.implicitWidth + 10
         radius: Theme.r(7)
-        color: vpMouse.containsMouse ? Theme.hoverBg : "transparent"
+        color: vpMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
         RowLayout {
             id: vpRow
@@ -475,15 +412,15 @@ Item {
                 text: root.volMuted ? "󰝟" : (root.volPercent <= 50 ? "󰖀" : "󰕾")
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(12)
-                color: root.volMuted ? Theme.error : Theme.primary
+                color: root.volMuted ? Theme.withAlpha(Theme.fgSurfaceVariant, 0.65) : Theme.fgSurfaceVariant
             }
 
             Text {
                 text: root.volMuted ? "Mute" : (root.volPercent + "%")
-                font.family: Theme.fontFamily
+                font.family: Theme.monoFont
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.DemiBold
-                color: root.volMuted ? Theme.error : Theme.fgSurfaceVariant
+                color: root.volMuted ? Theme.withAlpha(Theme.fgSurfaceVariant, 0.65) : Theme.fgSurfaceVariant
             }
         }
 
@@ -513,20 +450,20 @@ Item {
             visible: ShellState.gameModeActive
             implicitHeight: 19
             implicitWidth: gmPillRowC.implicitWidth + 10
-            radius: Theme.r(7)
-            color: Theme.withAlpha(Theme.tertiary, 0.22)
-            border.width: 1
-            border.color: Theme.tertiary
+            radius: Theme.r(9)
+            color: gmPillMouseC.containsMouse ? Theme.tileActiveBg : Theme.controlFillHover
+            border.width: Theme.activeControlBorderWidth
+            border.color: Theme.cardBorder
 
             RowLayout {
                 id: gmPillRowC
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.tertiary }
-                Text { text: "Game"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.tertiary }
+                Text { text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
+                Text { text: "Game"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
             }
 
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleGameMode() }
+            MouseArea { id: gmPillMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleGameMode() }
         }
 
         // Live Stopwatch
@@ -535,20 +472,20 @@ Item {
             visible: ShellState.stopwatchActive
             implicitHeight: 19
             implicitWidth: swPillRowC.implicitWidth + 10
-            radius: Theme.r(7)
-            color: Theme.withAlpha(Theme.secondary, 0.18)
-            border.width: 1
-            border.color: Theme.withAlpha(Theme.secondary, 0.55)
+            radius: Theme.r(9)
+            color: swPillMouseC.containsMouse ? Theme.tileActiveBg : Theme.controlFillHover
+            border.width: Theme.activeControlBorderWidth
+            border.color: Theme.cardBorder
 
             RowLayout {
                 id: swPillRowC
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
-                Text { text: ShellState.formatTimer(ShellState.stopwatchElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
+                Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                Text { text: ShellState.formatTimer(ShellState.stopwatchElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
             }
 
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.timerClicked() }
+            MouseArea { id: swPillMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.timerClicked() }
         }
 
         // Opt-In Weather Pill
@@ -557,29 +494,29 @@ Item {
             visible: ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable
             implicitHeight: 19
             implicitWidth: wPillRowC.implicitWidth + 8
-            radius: Theme.r(7)
-            color: wPillMouseC.containsMouse ? Theme.hoverBg : Theme.subCardBg
+            radius: Theme.r(9)
+            color: wPillMouseC.containsMouse ? Theme.controlFillHover : "transparent"
 
             RowLayout {
                 id: wPillRowC
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.primary }
-                Text { text: ShellState.weatherTemp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                Text { text: ShellState.weatherTemp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
             }
 
             MouseArea { id: wPillMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.notificationsClicked() }
         }
 
-        // Live Recording Pill
+        // Live Recording Pill (semantic red status only for live screen recording)
         Rectangle {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.recordingActive
             implicitHeight: 19
             implicitWidth: recRowC.implicitWidth + 10
-            radius: Theme.r(7)
+            radius: Theme.r(9)
             color: Theme.withAlpha(Theme.error, 0.22)
-            border.width: 1
+            border.width: Theme.activeControlBorderWidth
             border.color: Theme.error
 
             RowLayout {
@@ -599,20 +536,20 @@ Item {
             visible: ShellState.timerActive
             implicitHeight: 19
             implicitWidth: tmRowC.implicitWidth + 8
-            radius: Theme.r(7)
-            color: Theme.withAlpha(Theme.primary, 0.18)
-            border.width: 1
-            border.color: Theme.withAlpha(Theme.primary, 0.55)
+            radius: Theme.r(9)
+            color: tmMouseC.containsMouse ? Theme.tileActiveBg : Theme.controlFillHover
+            border.width: Theme.activeControlBorderWidth
+            border.color: Theme.cardBorder
 
             RowLayout {
                 id: tmRowC
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: "󰔛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.primary }
-                Text { text: ShellState.formatTimer(ShellState.timerRemainingSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
+                Text { text: "󰔛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                Text { text: ShellState.formatTimer(ShellState.timerRemainingSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
             }
 
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.timerClicked() }
+            MouseArea { id: tmMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.timerClicked() }
         }
 
         // Unread Notifications Pill
@@ -621,16 +558,16 @@ Item {
             visible: ShellState.unreadCount > 0
             implicitHeight: 19
             implicitWidth: unrRowC.implicitWidth + 8
-            radius: Theme.r(7)
-            color: unrMouseC.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.secondary, 0.18)
-            border.width: 1
-            border.color: Theme.withAlpha(Theme.secondary, 0.45)
+            radius: Theme.r(9)
+            color: unrMouseC.containsMouse ? Theme.tileActiveBg : Theme.controlFillHover
+            border.width: Theme.activeControlBorderWidth
+            border.color: Theme.cardBorder
 
             RowLayout {
                 id: unrRowC
                 anchors.centerIn: parent
                 spacing: 3
-                Text { text: "󰂚"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
+                Text { text: "󰂚"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                 Text { text: String(ShellState.unreadCount); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
             }
 
@@ -643,20 +580,20 @@ Item {
             visible: ShellState.fmOpActive
             implicitHeight: 19
             implicitWidth: fmRowC.implicitWidth + 8
-            radius: Theme.r(7)
-            color: Theme.withAlpha(Theme.primary, 0.22)
-            border.width: 1
-            border.color: Theme.primary
+            radius: Theme.r(9)
+            color: fmOpMouseC.containsMouse ? Theme.tileActiveBg : Theme.controlFillHover
+            border.width: Theme.activeControlBorderWidth
+            border.color: Theme.cardBorder
 
             RowLayout {
                 id: fmRowC
                 anchors.centerIn: parent
                 spacing: 4
-                Text { text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.primary }
-                Text { text: Math.round(ShellState.fmOpProgress * 100) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
+                Text { text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
+                Text { text: Math.round(ShellState.fmOpProgress * 100) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
             }
 
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.filesClicked() }
+            MouseArea { id: fmOpMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.filesClicked() }
         }
     }
 
@@ -675,8 +612,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowQuickIcons
             implicitWidth: 20; implicitHeight: 20; radius: Theme.r(10)
-            color: apLaunchMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.primary }
+            color: apLaunchMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: apLaunchMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
             MouseArea { id: apLaunchMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.launcherClicked() }
         }
 
@@ -685,34 +622,23 @@ Item {
             visible: ShellState.barShowWorkspaces
         }
 
-        // Compact Active Space Dot Pill (when barShowWorkspaces is OFF and idle)
+        // Compact Active Space Badge (when barShowWorkspaces is OFF and idle)
         Rectangle {
             Layout.alignment: Qt.AlignVCenter
             visible: !ShellState.barShowWorkspaces && !root.hasMedia
             implicitHeight: 18
-            implicitWidth: spDotRow.implicitWidth + 10
+            implicitWidth: Math.max(18, spDotLbl.implicitWidth + 10)
             radius: Theme.r(9)
-            color: Theme.withAlpha(Theme.primary, 0.18)
+            color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.06)
 
-            RowLayout {
-                id: spDotRow
+            Text {
+                id: spDotLbl
                 anchors.centerIn: parent
-                spacing: 4
-
-                Rectangle {
-                    implicitWidth: 5
-                    implicitHeight: 5
-                    radius: 2.5
-                    color: Theme.primary
-                }
-
-                Text {
-                    text: String(root.activeTagIndex)
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(9)
-                    font.weight: Font.Bold
-                    color: Theme.primary
-                }
+                text: String(root.activeTagIndex)
+                font.family: Theme.monoFont
+                font.pixelSize: Theme.fs(9)
+                font.weight: Font.Bold
+                color: Theme.fgSurfaceVariant
             }
         }
 
@@ -720,9 +646,9 @@ Item {
         Rectangle {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowLayout
-            implicitHeight: 18; implicitWidth: apLayLbl.implicitWidth + 10; radius: Theme.r(9)
-            color: apLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { id: apLayLbl; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
+            implicitHeight: 18; implicitWidth: apLayLbl.implicitWidth + 8; radius: Theme.r(6)
+            color: apLayMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { id: apLayLbl; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: apLayMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
             MouseArea { id: apLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
         }
 
@@ -731,7 +657,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowWindow && root.activeWindowTitle.length > 0
             spacing: 4
-            Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.secondary }
+            Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
             Text {
                 Layout.maximumWidth: root.barMode ? 220 : 140
                 elide: Text.ElideRight
@@ -774,9 +700,18 @@ Item {
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowSystem
+            spacing: 6
+            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.fgSurfaceVariant }
+            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.fgSurfaceVariant }
+        }
+
+        // Optional Live Network Throughput
+        RowLayout {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowNetSpeed
             spacing: 5
-            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
-            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
+            Text { text: "󰇚 " + SystemTelemetry.netDown; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+            Text { text: "󰕒 " + SystemTelemetry.netUp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
         }
 
         // Optional Volume & Mute
@@ -789,13 +724,13 @@ Item {
         Rectangle {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowKbLayout && root.kbLayoutShort.length > 0
-            implicitHeight: 18; implicitWidth: kbPillRowAp.implicitWidth + 8; radius: Theme.r(7)
-            color: Theme.subCardBg
+            implicitHeight: 18; implicitWidth: kbPillRowAp.implicitWidth + 8; radius: Theme.r(6)
+            color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(0, 0, 0, 0.05)
             RowLayout {
                 id: kbPillRowAp
                 anchors.centerIn: parent; spacing: 3
-                Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
-                Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
             }
         }
 
@@ -806,16 +741,16 @@ Item {
                 || (ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable)
         }
 
-        // Active Focus/Battery Indicators
-        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.warning }
-        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.tertiary }
+        // Active Focus/Keep-Awake Indicators (calm monochrome)
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
 
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
             spacing: 3
             visible: root.hasBatteryChip
             Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
-            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.error : Theme.fgSurfaceVariant }
         }
 
         SystemTrayStrip {
@@ -829,8 +764,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowFiles || ShellState.barShowQuickIcons
             implicitWidth: 20; implicitHeight: 20; radius: Theme.r(10)
-            color: apFilesMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: apFilesMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant }
+            color: apFilesMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: apFilesMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
             MouseArea { id: apFilesMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.filesClicked() }
         }
 
@@ -838,20 +773,9 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowQuickIcons
             implicitWidth: 20; implicitHeight: 20; radius: Theme.r(10)
-            color: apGearMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: apGearMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant }
+            color: apGearMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: apGearMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
             MouseArea { id: apGearMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.settingsClicked() }
-        }
-
-        // Subtle Idle Live Dot when minimal
-        Rectangle {
-            Layout.alignment: Qt.AlignVCenter
-            visible: !root.barMode && !root.hasMedia && !root.hasBatteryChip && ShellState.unreadCount === 0
-                && !ShellState.barShowSystem && !ShellState.barShowVolume && !ShellState.barShowQuickIcons && !ShellState.barShowFiles
-            implicitWidth: 6
-            implicitHeight: 6
-            radius: 3
-            color: Theme.success
         }
     }
 
@@ -884,9 +808,9 @@ Item {
                     implicitWidth: 20
                     implicitHeight: 20
                     radius: Theme.r(10)
-                    color: spLaunchMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    color: spLaunchMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
-                    Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.primary }
+                    Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spLaunchMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
                     MouseArea { id: spLaunchMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.launcherClicked() }
                 }
 
@@ -895,27 +819,29 @@ Item {
                 Rectangle {
                     visible: !ShellState.barShowWorkspaces
                     implicitHeight: 18
-                    implicitWidth: spDotRowSplit.implicitWidth + 10
+                    implicitWidth: spDotLblSplit.implicitWidth + 10
                     radius: Theme.r(9)
-                    color: Theme.withAlpha(Theme.primary, 0.18)
+                    color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.06)
 
-                    RowLayout {
-                        id: spDotRowSplit
+                    Text {
+                        id: spDotLblSplit
                         anchors.centerIn: parent
-                        spacing: 4
-                        Rectangle { implicitWidth: 5; implicitHeight: 5; radius: 2.5; color: Theme.primary }
-                        Text { text: "Tag " + root.activeTagIndex; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
+                        text: "Tag " + root.activeTagIndex
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurfaceVariant
                     }
                 }
 
                 Rectangle {
                     visible: ShellState.barShowLayout
                     implicitHeight: 18
-                    implicitWidth: spLayTxt.implicitWidth + 10
-                    radius: Theme.r(9)
-                    color: spLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    implicitWidth: spLayTxt.implicitWidth + 8
+                    radius: Theme.r(6)
+                    color: spLayMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
-                    Text { id: spLayTxt; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
+                    Text { id: spLayTxt; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: spLayMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
                     MouseArea { id: spLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
                 }
 
@@ -995,13 +921,20 @@ Item {
             RowLayout {
                 id: podRightRow
                 anchors.centerIn: parent
-                spacing: 7
+                spacing: 6
 
                 RowLayout {
                     visible: ShellState.barShowSystem
+                    spacing: 5
+                    Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.fgSurfaceVariant }
+                    Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.fgSurfaceVariant }
+                }
+
+                RowLayout {
+                    visible: ShellState.barShowNetSpeed
                     spacing: 4
-                    Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
-                    Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
+                    Text { text: "󰇚 " + SystemTelemetry.netDown; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+                    Text { text: "󰕒 " + SystemTelemetry.netUp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
                 }
 
                 LiveActivityChips {}
@@ -1011,23 +944,23 @@ Item {
                 Rectangle {
                     visible: ShellState.barShowKbLayout && root.kbLayoutShort.length > 0
                     implicitHeight: 18; implicitWidth: kbPillRowSp.implicitWidth + 8; radius: Theme.r(6)
-                    color: Theme.subCardBg
+                    color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(0, 0, 0, 0.05)
                     RowLayout {
                         id: kbPillRowSp
                         anchors.centerIn: parent; spacing: 3
-                        Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.secondary }
-                        Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                        Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                        Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
                     }
                 }
 
-                Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.warning }
-                Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.tertiary }
+                Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
+                Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
 
                 RowLayout {
                     visible: root.hasBatteryChip
                     spacing: 3
                     Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
-                    Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+                    Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.error : Theme.fgSurfaceVariant }
                 }
 
                 SystemTrayStrip {
@@ -1039,16 +972,16 @@ Item {
                 Rectangle {
                     visible: ShellState.barShowFiles || ShellState.barShowQuickIcons
                     implicitWidth: 20; implicitHeight: 20; radius: Theme.r(10)
-                    color: spFilesMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spFilesMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant }
+                    color: spFilesMouse.containsMouse ? Theme.controlFillHover : "transparent"
+                    Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spFilesMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
                     MouseArea { id: spFilesMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.filesClicked() }
                 }
 
                 Rectangle {
                     visible: ShellState.barShowQuickIcons
                     implicitWidth: 20; implicitHeight: 20; radius: Theme.r(10)
-                    color: spGearMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spGearMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant }
+                    color: spGearMouse.containsMouse ? Theme.controlFillHover : "transparent"
+                    Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spGearMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
                     MouseArea { id: spGearMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.settingsClicked() }
                 }
 
@@ -1056,8 +989,8 @@ Item {
                     implicitWidth: 20
                     implicitHeight: 20
                     radius: Theme.r(10)
-                    color: spNotifMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    Text { anchors.centerIn: parent; text: "󰂚"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: ShellState.unreadCount > 0 ? Theme.secondary : Theme.fgSurfaceVariant }
+                    color: spNotifMouse.containsMouse ? Theme.controlFillHover : "transparent"
+                    Text { anchors.centerIn: parent; text: "󰂚"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spNotifMouse.containsMouse || ShellState.unreadCount > 0 ? Theme.fgSurface : Theme.fgSurfaceVariant }
                     MouseArea { id: spNotifMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.notificationsClicked() }
                 }
 
@@ -1065,8 +998,8 @@ Item {
                     implicitWidth: 20
                     implicitHeight: 20
                     radius: Theme.r(10)
-                    color: spCcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    Text { anchors.centerIn: parent; text: "󰕰"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.primary }
+                    color: spCcMouse.containsMouse ? Theme.controlFillHover : "transparent"
+                    Text { anchors.centerIn: parent; text: "󰕰"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spCcMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
                     MouseArea { id: spCcMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.expandRequested() }
                 }
             }
@@ -1087,9 +1020,9 @@ Item {
             implicitWidth: 22
             implicitHeight: 20
             radius: Theme.r(6)
-            color: mbAppMouse.containsMouse ? Theme.hoverBg : "transparent"
+            color: mbAppMouse.containsMouse ? Theme.controlFillHover : "transparent"
 
-            Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.primary }
+            Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
             MouseArea { id: mbAppMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.launcherClicked() }
         }
 
@@ -1098,7 +1031,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             Layout.maximumWidth: 210
             elide: Text.ElideRight
-            text: (ShellState.barShowWindow && root.activeWindowTitle.length > 0) ? root.activeWindowTitle : "MangoWC"
+            text: (ShellState.barShowWindow && root.activeWindowTitle.length > 0) ? root.activeWindowTitle : "Aurora"
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(11)
             font.weight: Font.Bold
@@ -1111,16 +1044,18 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: !ShellState.barShowWorkspaces
             implicitHeight: 18
-            implicitWidth: spDotRowMenu.implicitWidth + 10
+            implicitWidth: spDotLblMenu.implicitWidth + 10
             radius: Theme.r(6)
-            color: Theme.withAlpha(Theme.primary, 0.16)
+            color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.06)
 
-            RowLayout {
-                id: spDotRowMenu
+            Text {
+                id: spDotLblMenu
                 anchors.centerIn: parent
-                spacing: 4
-                Rectangle { implicitWidth: 5; implicitHeight: 5; radius: 2.5; color: Theme.primary }
-                Text { text: String(root.activeTagIndex); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
+                text: String(root.activeTagIndex)
+                font.family: Theme.monoFont
+                font.pixelSize: Theme.fs(9)
+                font.weight: Font.DemiBold
+                color: Theme.fgSurfaceVariant
             }
         }
 
@@ -1130,8 +1065,8 @@ Item {
             implicitHeight: 18
             implicitWidth: mbLayTxt.implicitWidth + 8
             radius: Theme.r(6)
-            color: mbLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { id: mbLayTxt; anchors.centerIn: parent; text: root.currentLayout; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.secondary }
+            color: mbLayMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { id: mbLayTxt; anchors.centerIn: parent; text: root.currentLayout; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: mbLayMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
             MouseArea { id: mbLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
         }
 
@@ -1145,13 +1080,21 @@ Item {
 
         Item { Layout.fillWidth: true }
 
-        // Right macOS Status Menu Cluster
+        // Right macOS Status Menu Cluster (calm monochrome-first)
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowSystem
+            spacing: 6
+            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.fgSurfaceVariant }
+            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.fgSurfaceVariant }
+        }
+
+        RowLayout {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowNetSpeed
             spacing: 5
-            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
-            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
+            Text { text: "󰇚 " + SystemTelemetry.netDown; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+            Text { text: "󰕒 " + SystemTelemetry.netUp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
         }
 
         LiveActivityChips {}
@@ -1162,24 +1105,24 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowKbLayout && root.kbLayoutShort.length > 0
             implicitHeight: 18; implicitWidth: kbPillRowMb.implicitWidth + 8; radius: Theme.r(6)
-            color: Theme.subCardBg
+            color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(0, 0, 0, 0.05)
             RowLayout {
                 id: kbPillRowMb
                 anchors.centerIn: parent; spacing: 3
-                Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
-                Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
             }
         }
 
-        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.warning }
-        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.tertiary }
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
 
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
             visible: root.hasBatteryChip
             spacing: 3
             Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
-            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+            Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.error : Theme.fgSurfaceVariant }
         }
 
         SystemTrayStrip {
@@ -1193,8 +1136,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowFiles || ShellState.barShowQuickIcons
             implicitWidth: 20; implicitHeight: 20; radius: Theme.r(6)
-            color: mbFilesMouse.containsMouse ? Theme.hoverBg : "transparent"
-            Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: mbFilesMouse.containsMouse ? Theme.primary : Theme.fgSurface }
+            color: mbFilesMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
             MouseArea { id: mbFilesMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.filesClicked() }
         }
 
@@ -1202,8 +1145,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowQuickIcons
             implicitWidth: 20; implicitHeight: 20; radius: Theme.r(6)
-            color: mbGearMouse.containsMouse ? Theme.hoverBg : "transparent"
-            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: mbGearMouse.containsMouse ? Theme.primary : Theme.fgSurface }
+            color: mbGearMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
             MouseArea { id: mbGearMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.settingsClicked() }
         }
 
@@ -1213,7 +1156,7 @@ Item {
             implicitWidth: 20
             implicitHeight: 20
             radius: Theme.r(6)
-            color: mbCcMouse.containsMouse ? Theme.hoverBg : "transparent"
+            color: mbCcMouse.containsMouse ? Theme.controlFillHover : "transparent"
             Text { anchors.centerIn: parent; text: "󰕰"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
             MouseArea { id: mbCcMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.expandRequested() }
         }
@@ -1269,8 +1212,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowQuickIcons
             implicitWidth: 22; implicitHeight: 22; radius: Theme.r(7)
-            color: clLaunchMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.primary }
+            color: clLaunchMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { anchors.centerIn: parent; text: "󰀻"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: clLaunchMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
             MouseArea { id: clLaunchMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.launcherClicked() }
         }
 
@@ -1279,9 +1222,9 @@ Item {
         Rectangle {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowLayout
-            implicitHeight: 18; implicitWidth: clLayLbl.implicitWidth + 10; radius: Theme.r(6)
-            color: clLayMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { id: clLayLbl; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.secondary }
+            implicitHeight: 18; implicitWidth: clLayLbl.implicitWidth + 8; radius: Theme.r(6)
+            color: clLayMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { id: clLayLbl; anchors.centerIn: parent; text: "[" + root.currentLayout + "]"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: clLayMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
             MouseArea { id: clLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
         }
 
@@ -1289,7 +1232,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowWindow && root.activeWindowTitle.length > 0
             spacing: 4
-            Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.secondary }
+            Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
             Text {
                 Layout.maximumWidth: root.barMode ? 250 : 160
                 elide: Text.ElideRight
@@ -1323,9 +1266,17 @@ Item {
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowSystem
+            spacing: 6
+            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.fgSurfaceVariant }
+            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.fgSurfaceVariant }
+        }
+
+        RowLayout {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.barShowNetSpeed
             spacing: 5
-            Text { text: "󰍛 " + Math.round(root.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.cpuPercent > 85 ? Theme.error : Theme.primary }
-            Text { text: "󰘚 " + Math.round(root.ramPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.ramPercent > 85 ? Theme.warning : Theme.secondary }
+            Text { text: "󰇚 " + SystemTelemetry.netDown; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+            Text { text: "󰕒 " + SystemTelemetry.netUp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
         }
 
         VolumePillButton { visible: ShellState.barShowVolume && DeviceCaps.hasAudio }
@@ -1334,17 +1285,17 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowKbLayout && root.kbLayoutShort.length > 0
             implicitHeight: 18; implicitWidth: kbPillRowCl.implicitWidth + 8; radius: Theme.r(6)
-            color: Theme.subCardBg
+            color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(0, 0, 0, 0.05)
             RowLayout {
                 id: kbPillRowCl
                 anchors.centerIn: parent; spacing: 3
-                Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.secondary }
-                Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                Text { text: root.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
             }
         }
 
-        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.warning }
-        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.tertiary }
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.dnd; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
+        Text { Layout.alignment: Qt.AlignVCenter; visible: ShellState.keepAwake; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
 
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
@@ -1367,8 +1318,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowFiles || ShellState.barShowQuickIcons
             implicitWidth: 22; implicitHeight: 22; radius: Theme.r(7)
-            color: filesBtnMouseCl.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: filesBtnMouseCl.containsMouse ? Theme.primary : Theme.fgSurfaceVariant }
+            color: filesBtnMouseCl.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: filesBtnMouseCl.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
             MouseArea { id: filesBtnMouseCl; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.filesClicked() }
         }
 
@@ -1376,8 +1327,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             visible: ShellState.barShowQuickIcons
             implicitWidth: 22; implicitHeight: 22; radius: Theme.r(7)
-            color: gearBtnMouseCl.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: gearBtnMouseCl.containsMouse ? Theme.primary : Theme.fgSurfaceVariant }
+            color: gearBtnMouseCl.containsMouse ? Theme.controlFillHover : "transparent"
+            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: gearBtnMouseCl.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
             MouseArea { id: gearBtnMouseCl; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.settingsClicked() }
         }
     }

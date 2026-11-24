@@ -468,10 +468,22 @@ ColumnLayout {
                     implicitHeight: 32
                     radius: Theme.r(10)
                     color: sinkRow.isDefault
-                        ? Theme.withAlpha(Theme.primary, 0.20)
-                        : (sinkMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: sinkRow.isDefault ? 1 : Theme.subBorderWidth
-                    border.color: sinkRow.isDefault ? Theme.primary : Theme.cardBorder
+                        ? Theme.tileActiveBg
+                        : (sinkMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: sinkRow.isDefault ? Theme.activeControlBorderWidth : 0
+                    border.color: Theme.primary
+
+                    Rectangle {
+                        visible: sinkRow.isDefault
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 7
+                        anchors.bottomMargin: 7
+                        width: 3
+                        radius: 1.5
+                        color: Theme.primary
+                    }
                     scale: sinkMouse.pressed ? 0.98 : 1.0
 
                     Behavior on color {
@@ -634,10 +646,22 @@ ColumnLayout {
                     implicitHeight: 32
                     radius: Theme.r(10)
                     color: srcRow.isDefault
-                        ? Theme.withAlpha(Theme.secondary, 0.20)
-                        : (srcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: srcRow.isDefault ? 1 : Theme.subBorderWidth
-                    border.color: srcRow.isDefault ? Theme.secondary : Theme.cardBorder
+                        ? Theme.tileActiveBg
+                        : (srcMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                    border.width: srcRow.isDefault ? Theme.activeControlBorderWidth : 0
+                    border.color: Theme.secondary
+
+                    Rectangle {
+                        visible: srcRow.isDefault
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 7
+                        anchors.bottomMargin: 7
+                        width: 3
+                        radius: 1.5
+                        color: Theme.secondary
+                    }
                     scale: srcMouse.pressed ? 0.98 : 1.0
 
                     Behavior on color {
@@ -943,10 +967,10 @@ ColumnLayout {
                                     implicitWidth: profTxt.implicitWidth + 12
                                     radius: Theme.r(6)
                                     color: profChip.selected
-                                        ? Theme.withAlpha(Theme.secondary, 0.22)
-                                        : (profMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                                    border.width: profChip.selected ? 1 : Theme.subBorderWidth
-                                    border.color: profChip.selected ? Theme.secondary : Theme.cardBorder
+                                        ? Theme.primary
+                                        : (profMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+                                    border.width: profChip.selected ? Theme.activeControlBorderWidth : 0
+                                    border.color: Theme.primary
 
                                     Text {
                                         id: profTxt
@@ -955,7 +979,7 @@ ColumnLayout {
                                         font.family: Theme.fontFamily
                                         font.pixelSize: Theme.fs(9)
                                         font.weight: profChip.selected ? Font.Bold : Font.Normal
-                                        color: profChip.selected ? Theme.secondary : Theme.fgSurface
+                                        color: profChip.selected ? Theme.fgPrimary : Theme.fgSurface
                                     }
 
                                     MouseArea {

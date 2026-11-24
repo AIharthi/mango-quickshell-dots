@@ -132,8 +132,8 @@ Rectangle {
                 implicitHeight: 20
                 implicitWidth: layoutLabel.implicitWidth + 14
                 radius: Theme.r(10)
-                color: layoutArea.containsMouse ? Theme.activeBg : Theme.subCardBg
-                border.width: Theme.subBorderWidth
+                color: layoutArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                border.width: Theme.activeControlBorderWidth
                 border.color: Theme.cardBorder
 
                 Text {
@@ -143,7 +143,7 @@ Rectangle {
                     font.family: Theme.monoFont
                     font.pixelSize: 10
                     font.weight: Font.Bold
-                    color: Theme.primary
+                    color: Theme.fgSurface
                 }
 
                 MouseArea {
@@ -191,13 +191,13 @@ Rectangle {
                         if (tagBtn.isActive)
                             return Theme.primary;
                         if (tagMouse.containsMouse)
-                            return Theme.hoverBg;
+                            return Theme.tileActiveBg;
                         if (tagBtn.isOccupied)
-                            return Theme.withAlpha(Theme.primary, 0.16);
+                            return Theme.controlFillHover;
                         return Theme.subCardBg;
                     }
 
-                    border.width: tagBtn.isActive ? 1 : Theme.subBorderWidth
+                    border.width: Theme.activeControlBorderWidth
                     border.color: tagBtn.isActive ? Theme.primary : Theme.cardBorder
 
                     Behavior on color {
@@ -236,7 +236,7 @@ Rectangle {
                                     return Theme.fgError;
                                 if (tagBtn.isActive)
                                     return Theme.fgPrimary;
-                                return Theme.secondary;
+                                return Theme.fgSurfaceVariant;
                             }
                         }
                     }
@@ -258,10 +258,10 @@ Rectangle {
                 Layout.preferredHeight: 40
                 radius: Theme.r(12)
                 color: winTileMouse.containsMouse
-                    ? Theme.withAlpha(Theme.secondary, 0.24)
-                    : Theme.withAlpha(Theme.secondary, 0.12)
-                border.width: winTileMouse.containsMouse ? 1 : Theme.subBorderWidth
-                border.color: winTileMouse.containsMouse ? Theme.secondary : Theme.withAlpha(Theme.secondary, 0.38)
+                    ? Theme.tileActiveBg
+                    : Theme.subCardBg
+                border.width: Theme.activeControlBorderWidth
+                border.color: Theme.cardBorder
                 scale: winTileMouse.pressed ? 0.92 : 1.0
 
                 Behavior on scale {
@@ -278,7 +278,7 @@ Rectangle {
                         text: "󰖯"
                         font.family: Theme.iconFont
                         font.pixelSize: 13
-                        color: Theme.secondary
+                        color: winTileMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
                     }
 
                     Text {

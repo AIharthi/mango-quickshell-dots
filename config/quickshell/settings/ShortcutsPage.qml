@@ -263,8 +263,8 @@ ColumnLayout {
                     implicitWidth: addToggleLbl.implicitWidth + 16
                     radius: Theme.r(8)
                     color: root.showAddForm ? Theme.primary : Theme.subCardBg
-                    border.width: root.showAddForm ? 1 : Theme.subBorderWidth
-                    border.color: root.showAddForm ? Theme.primary : Theme.cardBorder
+                    border.width: root.showAddForm ? Theme.activeControlBorderWidth : 0
+                    border.color: Theme.primary
 
                     Text {
                         id: addToggleLbl
@@ -304,10 +304,10 @@ ColumnLayout {
                             required property string modelData
                             readonly property bool selected: root.newMods.indexOf(modPick.modelData) !== -1
                             implicitHeight: 22; implicitWidth: modPickTxt.implicitWidth + 10; radius: Theme.r(6)
-                            color: modPick.selected ? Theme.withAlpha(Theme.primary, 0.20) : Theme.subCardBg
-                            border.width: modPick.selected ? 1 : Theme.subBorderWidth
-                            border.color: modPick.selected ? Theme.primary : Theme.cardBorder
-                            Text { id: modPickTxt; anchors.centerIn: parent; text: modPick.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: modPick.selected ? Font.Bold : Font.Normal; color: modPick.selected ? Theme.primary : Theme.fgSurface }
+                            color: modPick.selected ? Theme.primary : Theme.subCardBg
+                            border.width: modPick.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
+                            Text { id: modPickTxt; anchors.centerIn: parent; text: modPick.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: modPick.selected ? Font.Bold : Font.Normal; color: modPick.selected ? Theme.fgPrimary : Theme.fgSurface }
                             MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.toggleMod(modPick.modelData) }
                         }
                     }
@@ -321,10 +321,10 @@ ColumnLayout {
                             required property string modelData
                             readonly property bool selected: root.newAction === actPick.modelData
                             implicitHeight: 22; implicitWidth: actPickTxt.implicitWidth + 10; radius: Theme.r(6)
-                            color: actPick.selected ? Theme.withAlpha(Theme.secondary, 0.20) : Theme.subCardBg
-                            border.width: actPick.selected ? 1 : Theme.subBorderWidth
-                            border.color: actPick.selected ? Theme.secondary : Theme.cardBorder
-                            Text { id: actPickTxt; anchors.centerIn: parent; text: actPick.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: actPick.selected ? Theme.secondary : Theme.fgSurface }
+                            color: actPick.selected ? Theme.secondary : Theme.subCardBg
+                            border.width: actPick.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.secondary
+                            Text { id: actPickTxt; anchors.centerIn: parent; text: actPick.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: actPick.selected ? Font.Bold : Font.Normal; color: actPick.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface }
                             MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.newAction = actPick.modelData }
                         }
                     }
@@ -416,10 +416,10 @@ ColumnLayout {
                         implicitWidth: catTxt.implicitWidth + 12
                         radius: Theme.r(7)
                         color: catPill.selected
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (catMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: catPill.selected ? 1 : Theme.subBorderWidth
-                        border.color: catPill.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.primary
+                            : (catMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: catPill.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
                         Text {
                             id: catTxt
@@ -428,7 +428,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: catPill.selected ? Font.Bold : Font.Medium
-                            color: catPill.selected ? Theme.primary : Theme.fgSurface
+                            color: catPill.selected ? Theme.fgPrimary : Theme.fgSurface
                         }
 
                         MouseArea {
@@ -525,7 +525,7 @@ ColumnLayout {
                                 implicitWidth: modTxt.implicitWidth + 10
                                 radius: Theme.r(6)
                                 color: Theme.withAlpha(Theme.primary, 0.16)
-                                border.width: 1
+                                border.width: Theme.activeControlBorderWidth
                                 border.color: Theme.withAlpha(Theme.primary, 0.35)
 
                                 Text {
@@ -590,8 +590,8 @@ ColumnLayout {
                         implicitHeight: 24
                         implicitWidth: editBindLbl.implicitWidth + 12
                         radius: Theme.r(6)
-                        color: editBindMouse.containsMouse ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
-                        border.width: editBindMouse.containsMouse ? 1 : Theme.subBorderWidth
+                        color: editBindMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                        border.width: Theme.activeControlBorderWidth
                         border.color: editBindMouse.containsMouse ? Theme.primary : Theme.cardBorder
 
                         Text {
@@ -617,8 +617,8 @@ ColumnLayout {
                         implicitWidth: 24
                         implicitHeight: 24
                         radius: Theme.r(6)
-                        color: delBindMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
-                        border.width: delBindMouse.containsMouse ? 1 : Theme.subBorderWidth
+                        color: delBindMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.18) : Theme.subCardBg
+                        border.width: Theme.activeControlBorderWidth
                         border.color: delBindMouse.containsMouse ? Theme.error : Theme.cardBorder
 
                         Text {

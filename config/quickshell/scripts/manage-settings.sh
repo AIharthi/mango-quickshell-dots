@@ -105,6 +105,7 @@ def default_prefs():
         "barShowWorkspaces": False,
         "barShowLayout": False,
         "barShowSystem": False,
+        "barShowNetSpeed": False,
         "barShowVolume": False,
         "barShowKbLayout": False,
         "barShowTray": False,
@@ -294,7 +295,7 @@ def update_kitty_font(family, size):
         if not rep_sz:
             out.insert(1, f"font_size {size}\n")
         atomic_write_text(path, "".join(out))
-        subprocess.run(["pkill", "-USR1", "kitty"], stderr=subprocess.DEVNULL)
+        subprocess.run(["pkill", "-x", "-USR1", "kitty"], stderr=subprocess.DEVNULL)
     except Exception:
         pass
 
@@ -566,7 +567,7 @@ def cmd_reset_bar():
         "hubUiStyle", "barUiStyle",
         "simpleBarHeight", "simpleBarPosition", "simpleBarShowLayout", "simpleBarShowDate",
         "barShowDate", "barShowWindow", "barShowWorkspaces", "barShowLayout",
-        "barShowSystem", "barShowVolume", "barShowKbLayout", "barShowTray",
+        "barShowSystem", "barShowNetSpeed", "barShowVolume", "barShowKbLayout", "barShowTray",
         "barShowQuickIcons", "barShowFiles", "barShowBattery",
         "screenshotDir", "screenshotCopyClipboard", "screenshotNotify", "screenshotDelay",
         "reducedMotion", "highContrast",

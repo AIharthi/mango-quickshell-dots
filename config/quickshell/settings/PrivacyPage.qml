@@ -135,7 +135,7 @@ ColumnLayout {
         command: [Quickshell.shellPath("scripts/sync-sddm-theme.sh")]
         onExited: exitCode => {
             root.statusMsg = (exitCode === 0)
-                ? "SDDM Mango Island theme synced with current wallpaper & palette"
+                ? "SDDM Aurora Island theme synced with current wallpaper & palette"
                 : "Unable to sync SDDM theme (check permissions)";
             if (!sddmStatusProc.running)
                 sddmStatusProc.running = true;
@@ -582,7 +582,7 @@ ColumnLayout {
                     spacing: 1
 
                     Text {
-                        text: "SDDM Login Theme Sync (mango-island)"
+                        text: "SDDM Login Theme Sync (aurora-island)"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(11)
                         color: Theme.fgSurface

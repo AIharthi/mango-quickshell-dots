@@ -1022,11 +1022,11 @@ PanelWindow {
                                     implicitHeight: 26
                                     implicitWidth: Math.min(170, tabInner.implicitWidth + 14)
                                     radius: Theme.r(8)
-                                    color: cur
-                                        ? Theme.withAlpha(fstyle.accent, 0.22)
-                                        : (tcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: 1
-                                    border.color: cur ? fstyle.accent : Theme.cardBorder
+                                    color: tabChip.cur
+                                        ? Theme.tileActiveBg
+                                        : (tcMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: tabChip.cur ? Theme.activeControlBorderWidth : 0
+                                    border.color: tabChip.cur ? fstyle.accent : Theme.cardBorder
 
                                     RowLayout {
                                         id: tabInner
@@ -1113,10 +1113,10 @@ PanelWindow {
                                     implicitWidth: 26
                                     implicitHeight: 26
                                     radius: Theme.r(7)
-                                    color: sel ? Theme.withAlpha(fstyle.accent, 0.22) : (qvmMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                                    border.width: sel ? 1 : 0
+                                    color: qvmBtn.sel ? fstyle.accent : (qvmMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                    border.width: qvmBtn.sel ? Theme.activeControlBorderWidth : 0
                                     border.color: fstyle.accent
-                                    Text { anchors.centerIn: parent; text: qvmBtn.modelData.icon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: qvmBtn.sel ? fstyle.accent : Theme.fgSurfaceVariant }
+                                    Text { anchors.centerIn: parent; text: qvmBtn.modelData.icon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: qvmBtn.sel ? fstyle.onAccent : Theme.fgSurfaceVariant }
                                     MouseArea { id: qvmMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmViewMode", qvmBtn.modelData.id) }
                                 }
                             }
@@ -1127,10 +1127,10 @@ PanelWindow {
                             implicitWidth: 26
                             implicitHeight: 26
                             radius: Theme.r(7)
-                            color: ShellState.fmDualPane ? Theme.withAlpha(fstyle.accent, 0.22) : (dpMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: ShellState.fmDualPane ? 1 : 0
+                            color: ShellState.fmDualPane ? fstyle.accent : (dpMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: ShellState.fmDualPane ? Theme.activeControlBorderWidth : 0
                             border.color: fstyle.accent
-                            Text { anchors.centerIn: parent; text: "󰤼"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: ShellState.fmDualPane ? fstyle.accent : Theme.fgSurfaceVariant }
+                            Text { anchors.centerIn: parent; text: "󰤼"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: ShellState.fmDualPane ? fstyle.onAccent : Theme.fgSurfaceVariant }
                             MouseArea { id: dpMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmDualPane", !ShellState.fmDualPane) }
                         }
 
@@ -1139,10 +1139,10 @@ PanelWindow {
                             implicitWidth: 26
                             implicitHeight: 26
                             radius: Theme.r(7)
-                            color: ShellState.fmPreviewVisible ? Theme.withAlpha(fstyle.accent, 0.22) : (pvMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: ShellState.fmPreviewVisible ? 1 : 0
+                            color: ShellState.fmPreviewVisible ? fstyle.accent : (pvMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: ShellState.fmPreviewVisible ? Theme.activeControlBorderWidth : 0
                             border.color: fstyle.accent
-                            Text { anchors.centerIn: parent; text: "󰈙"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: ShellState.fmPreviewVisible ? fstyle.accent : Theme.fgSurfaceVariant }
+                            Text { anchors.centerIn: parent; text: "󰈙"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: ShellState.fmPreviewVisible ? fstyle.onAccent : Theme.fgSurfaceVariant }
                             MouseArea { id: pvMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmPreviewVisible", !ShellState.fmPreviewVisible) }
                         }
 
@@ -1151,8 +1151,8 @@ PanelWindow {
                             implicitHeight: 26
                             implicitWidth: custLbl.implicitWidth + 14
                             radius: Theme.r(7)
-                            color: root.customizeOpen ? fstyle.accent : (custMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                            border.width: 1
+                            color: root.customizeOpen ? fstyle.accent : (custMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: Theme.activeControlBorderWidth
                             border.color: root.customizeOpen ? fstyle.accent : Theme.cardBorder
 
                             Text {
@@ -1245,7 +1245,7 @@ PanelWindow {
                         implicitHeight: 28
                         radius: Theme.r(8)
                         color: Theme.cardBg
-                        border.width: 1
+                        border.width: root.pathEditOpen ? 1.5 : Theme.subBorderWidth
                         border.color: root.pathEditOpen ? fstyle.accent : Theme.cardBorder
                         clip: true
 
@@ -1387,7 +1387,7 @@ PanelWindow {
                         implicitHeight: 28
                         radius: Theme.r(8)
                         color: Theme.cardBg
-                        border.width: 1
+                        border.width: filterInput.activeFocus ? 1.5 : Theme.subBorderWidth
                         border.color: filterInput.activeFocus ? fstyle.accent : Theme.cardBorder
 
                         RowLayout {
@@ -1429,9 +1429,9 @@ PanelWindow {
                                 implicitWidth: recLbl.implicitWidth + 8
                                 radius: Theme.r(5)
                                 readonly property bool recOn: root.activePane() ? !!root.activePane().recursiveSearch : false
-                                color: recOn ? Theme.withAlpha(fstyle.accent, 0.24) : Theme.subCardBg
-                                border.width: 1
-                                border.color: recOn ? fstyle.accent : Theme.cardBorder
+                                color: recOn ? fstyle.accent : Theme.subCardBg
+                                border.width: recOn ? Theme.activeControlBorderWidth : 0
+                                border.color: fstyle.accent
 
                                 Text {
                                     id: recLbl
@@ -1440,7 +1440,7 @@ PanelWindow {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(8)
                                     font.weight: Font.Bold
-                                    color: parent.recOn ? fstyle.accent : Theme.fgSurfaceVariant
+                                    color: parent.recOn ? fstyle.onAccent : Theme.fgSurfaceVariant
                                 }
                                 MouseArea {
                                     anchors.fill: parent
@@ -1514,9 +1514,9 @@ PanelWindow {
 
                     Rectangle {
                         implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
-                        color: ShellState.fmShowHidden ? Theme.withAlpha(fstyle.accent, 0.22) : (hidMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                        border.width: ShellState.fmShowHidden ? 1 : Theme.subBorderWidth; border.color: ShellState.fmShowHidden ? fstyle.accent : Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: ShellState.fmShowHidden ? "󰈈" : "󰈉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: ShellState.fmShowHidden ? fstyle.accent : Theme.fgSurfaceVariant }
+                        color: ShellState.fmShowHidden ? fstyle.accent : (hidMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+                        border.width: ShellState.fmShowHidden ? Theme.activeControlBorderWidth : 0; border.color: fstyle.accent
+                        Text { anchors.centerIn: parent; text: ShellState.fmShowHidden ? "󰈈" : "󰈉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: ShellState.fmShowHidden ? fstyle.onAccent : Theme.fgSurfaceVariant }
                         MouseArea { id: hidMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmShowHidden", !ShellState.fmShowHidden) }
                     }
 
@@ -2019,8 +2019,8 @@ PanelWindow {
 
                                 Rectangle {
                                     implicitHeight: 22; implicitWidth: mvOtherLbl.implicitWidth + 12; radius: Theme.r(6)
-                                    color: mvOtherMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                                    border.width: 1; border.color: Theme.cardBorder
+                                    color: mvOtherMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                                    border.width: Theme.activeControlBorderWidth; border.color: Theme.cardBorder
                                     Text { id: mvOtherLbl; anchors.centerIn: parent; text: "Move to Other Pane"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
                                     MouseArea { id: mvOtherMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.transferToOtherPane(true) }
                                 }
@@ -2030,6 +2030,7 @@ PanelWindow {
 
                     // RIGHT INSPECTOR / PREVIEW PANE
                     FilePreviewPane {
+                        id: previewPane
                         Layout.preferredWidth: 262
                         Layout.fillHeight: true
                         visible: ShellState.fmPreviewVisible && !root.customizeOpen
@@ -2068,6 +2069,32 @@ PanelWindow {
                         onCopyTextRequested: (txt, lbl) => {
                             backend.copyText(txt, null);
                             root.showToast(lbl, false);
+                        }
+                        onChecksumRequested: p => {
+                            previewPane.computingExtra = true;
+                            backend.checksum(p, (ok, d, e) => {
+                                previewPane.computingExtra = false;
+                                if (ok && d && d.sha256) {
+                                    if (previewPane.pPath === p || previewPane.pPath === String(d.path || ""))
+                                        previewPane.computedHash = String(d.sha256);
+                                } else {
+                                    root.showToast(e || "Checksum failed", true);
+                                }
+                            });
+                        }
+                        onDirSizeRequested: p => {
+                            previewPane.computingExtra = true;
+                            backend.dirSize(p, (ok, d, e) => {
+                                previewPane.computingExtra = false;
+                                if (ok && d && d.humanSize !== undefined) {
+                                    if (previewPane.pPath === p || previewPane.pPath === String(d.path || "")) {
+                                        const summary = String(d.humanSize) + " · " + Number(d.files || 0) + " files, " + Number(d.dirs || 0) + " dirs" + (d.capped ? " (capped)" : "");
+                                        previewPane.computedDirSummary = summary;
+                                    }
+                                } else {
+                                    root.showToast(e || "Folder size failed", true);
+                                }
+                            });
                         }
                         onImportThemeRequested: p => {
                             Quickshell.execDetached([Quickshell.shellPath("scripts/manage-themes.sh"), "custom-import", p]);
@@ -2123,8 +2150,8 @@ PanelWindow {
                             implicitHeight: 20
                             implicitWidth: clipRow.implicitWidth + 12
                             radius: Theme.r(6)
-                            color: Theme.withAlpha(fstyle.accent, 0.18)
-                            border.width: 1
+                            color: Theme.tileActiveBg
+                            border.width: Theme.activeControlBorderWidth
                             border.color: fstyle.accent
 
                             RowLayout {
@@ -2369,7 +2396,7 @@ PanelWindow {
 
                         Rectangle {
                             implicitHeight: 28; implicitWidth: 74; radius: Theme.r(8)
-                            color: Theme.subCardBg; border.width: 1; border.color: Theme.cardBorder
+                            color: Theme.subCardBg; border.width: Theme.activeControlBorderWidth; border.color: Theme.cardBorder
                             Text { anchors.centerIn: parent; text: "Cancel"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.promptOpen = false }
                         }

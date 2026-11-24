@@ -140,17 +140,17 @@ PanelWindow {
         Layout.fillWidth: true
         implicitHeight: 108
         radius: Theme.r(18)
-        color: actCard.isPending
-            ? Theme.withAlpha(Theme.error, 0.28)
-            : (actMouse.containsMouse || actCard.isSel
-                ? Theme.activeBg
-                : (actCard.actionData.danger ? Theme.withAlpha(actCard.tintCol, 0.08) : Theme.cardBg))
-        border.width: (actCard.isPending || actCard.isSel || actMouse.containsMouse) ? 1.5 : Theme.subBorderWidth
+        color: {
+            if (actCard.isPending)
+                return Theme.error;
+            if (actCard.isSel || actMouse.containsMouse)
+                return Theme.tileActiveBg;
+            return actCard.actionData.danger ? Theme.withAlpha(actCard.tintCol, 0.10) : Theme.cardBg;
+        }
+        border.width: (actCard.isPending || actCard.isSel || actMouse.containsMouse) ? Theme.activeControlBorderWidth : Theme.subBorderWidth
         border.color: actCard.isPending
             ? Theme.error
-            : ((actCard.isSel || actMouse.containsMouse)
-                ? actCard.tintCol
-                : (actCard.actionData.danger ? Theme.withAlpha(actCard.tintCol, 0.28) : Theme.cardBorder))
+            : ((actCard.isSel || actMouse.containsMouse) ? actCard.tintCol : Theme.cardBorder)
         scale: actMouse.pressed ? 0.95 : (actMouse.containsMouse ? 1.02 : 1.0)
 
         Behavior on scale {
@@ -162,6 +162,18 @@ PanelWindow {
             ColorAnimation { duration: 140 }
         }
 
+        // Bottom active indicator pill (replaces AI wireframe outline)
+        Rectangle {
+            visible: (actCard.isSel || actMouse.containsMouse) && !actCard.isPending
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 7
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 24
+            height: 3
+            radius: 1.5
+            color: actCard.tintCol
+        }
+
         Rectangle {
             anchors.top: parent.top
             anchors.right: parent.right
@@ -169,7 +181,7 @@ PanelWindow {
             implicitWidth: 20
             implicitHeight: 20
             radius: Theme.r(6)
-            color: Theme.subCardBg
+            color: actCard.isPending ? Theme.withAlpha(Theme.fgError, 0.16) : Theme.subCardBg
 
             Text {
                 anchors.centerIn: parent
@@ -177,7 +189,7 @@ PanelWindow {
                 font.family: Theme.monoFont
                 font.pixelSize: Theme.fs(9)
                 font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                color: actCard.isPending ? Theme.fgError : Theme.fgSurfaceVariant
             }
         }
 
@@ -190,14 +202,26 @@ PanelWindow {
                 implicitWidth: 40
                 implicitHeight: 40
                 radius: Theme.r(14)
-                color: Theme.withAlpha(actCard.tintCol, 0.18)
+                color: {
+                    if (actCard.isPending)
+                        return Theme.withAlpha(Theme.fgError, 0.18);
+                    if (actCard.isSel || actMouse.containsMouse)
+                        return actCard.tintCol;
+                    return Theme.withAlpha(actCard.tintCol, 0.18);
+                }
 
                 Text {
                     anchors.centerIn: parent
                     text: actCard.actionData.icon
                     font.family: Theme.iconFont
                     font.pixelSize: Theme.fs(20)
-                    color: actCard.isPending ? Theme.error : actCard.tintCol
+                    color: {
+                        if (actCard.isPending)
+                            return Theme.fgError;
+                        if (actCard.isSel || actMouse.containsMouse)
+                            return Theme.contrastInk(actCard.tintCol);
+                        return actCard.tintCol;
+                    }
                 }
             }
 
@@ -207,7 +231,7 @@ PanelWindow {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(12)
                 font.weight: Font.Bold
-                color: actCard.isPending ? Theme.error : Theme.fgSurface
+                color: actCard.isPending ? Theme.fgError : Theme.fgSurface
             }
 
             Text {
@@ -215,7 +239,7 @@ PanelWindow {
                 text: actCard.actionData.sub
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(9)
-                color: Theme.fgSurfaceVariant
+                color: actCard.isPending ? Theme.withAlpha(Theme.fgError, 0.85) : Theme.fgSurfaceVariant
             }
         }
 

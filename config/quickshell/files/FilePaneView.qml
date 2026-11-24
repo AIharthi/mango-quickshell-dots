@@ -65,7 +65,7 @@ Rectangle {
             implicitHeight: 32
             radius: Theme.r(8)
             color: Theme.withAlpha(Theme.error, 0.12)
-            border.width: 1
+            border.width: Theme.subBorderWidth
             border.color: Theme.withAlpha(Theme.error, 0.35)
 
             RowLayout {
@@ -93,8 +93,8 @@ Rectangle {
                     implicitHeight: 22
                     implicitWidth: empLbl.implicitWidth + 14
                     radius: Theme.r(6)
-                    color: empMouse.containsMouse ? Theme.error : Theme.withAlpha(Theme.error, 0.22)
-                    border.width: 1
+                    color: empMouse.containsMouse ? Theme.error : Theme.withAlpha(Theme.error, 0.18)
+                    border.width: Theme.activeControlBorderWidth
                     border.color: Theme.error
 
                     Text {
@@ -204,18 +204,28 @@ Rectangle {
                     width: listView.width
                     height: root.fileStyle.rowHeight
                     radius: root.fileStyle.rowRadius
+                    clip: true
                     opacity: rowCard.modelData.isHidden ? 0.68 : 1.0
                     color: {
-                        if (sel)
-                            return Theme.withAlpha(root.fileStyle.accent, 0.22);
-                        if (rowMouse.containsMouse)
-                            return Theme.hoverBg;
+                        if (rowCard.sel)
+                            return Theme.rowSelectedBg;
+                        if (rowCard.foc || rowMouse.containsMouse)
+                            return Theme.controlFillHover;
                         if (ShellState.fmRowAlternating && (rowCard.index % 2 === 1))
                             return root.fileStyle.altRowBg;
                         return "transparent";
                     }
-                    border.width: foc ? 1 : 0
-                    border.color: foc ? root.fileStyle.accent : "transparent"
+                    border.width: rowCard.foc ? Theme.activeControlBorderWidth : 0
+                    border.color: rowCard.foc ? root.fileStyle.accent : "transparent"
+
+                    Rectangle {
+                        visible: rowCard.sel || rowCard.foc
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: 3
+                        color: root.fileStyle.accent
+                    }
 
                     RowLayout {
                         anchors.fill: parent
@@ -332,8 +342,8 @@ Rectangle {
                             implicitHeight: 22
                             implicitWidth: rstRowLbl.implicitWidth + 12
                             radius: Theme.r(6)
-                            color: rstRowMouse.containsMouse ? root.fileStyle.accent : Theme.withAlpha(root.fileStyle.accent, 0.20)
-                            border.width: 1
+                            color: rstRowMouse.containsMouse ? root.fileStyle.accent : Theme.withAlpha(root.fileStyle.accent, 0.18)
+                            border.width: Theme.activeControlBorderWidth
                             border.color: root.fileStyle.accent
 
                             Text {
@@ -416,12 +426,12 @@ Rectangle {
                         opacity: gridWrap.modelData.isHidden ? 0.68 : 1.0
                         color: {
                             if (gridWrap.sel)
-                                return Theme.withAlpha(root.fileStyle.accent, 0.22);
-                            if (gridMouse.containsMouse)
-                                return Theme.hoverBg;
+                                return Theme.tileActiveBg;
+                            if (gridWrap.foc || gridMouse.containsMouse)
+                                return Theme.controlFillHover;
                             return Theme.subCardBg;
                         }
-                        border.width: (gridWrap.foc || gridWrap.sel) ? 1 : Theme.subBorderWidth
+                        border.width: (gridWrap.foc || gridWrap.sel) ? Theme.activeControlBorderWidth : 0
                         border.color: (gridWrap.foc || gridWrap.sel) ? root.fileStyle.accent : Theme.cardBorder
 
                         ColumnLayout {
@@ -576,8 +586,8 @@ Rectangle {
                     Layout.fillHeight: true
                     radius: Theme.r(8)
                     color: Theme.surfaceContainerLowest
-                    border.width: (ShellState.fmDualPane && root.isActivePane) ? 1 : Theme.subBorderWidth
-                    border.color: (ShellState.fmDualPane && root.isActivePane) ? Theme.withAlpha(root.fileStyle.accent, 0.48) : Theme.cardBorder
+                    border.width: Theme.subBorderWidth
+                    border.color: Theme.cardBorder
                     clip: true
 
                     ListView {
@@ -599,11 +609,21 @@ Rectangle {
                             width: millerCurView.width
                             height: root.fileStyle.rowHeight
                             radius: Theme.r(6)
-                            color: sel
-                                ? Theme.withAlpha(root.fileStyle.accent, 0.22)
-                                : (milCMouse.containsMouse ? Theme.hoverBg : "transparent")
-                            border.width: foc ? 1 : 0
-                            border.color: foc ? root.fileStyle.accent : "transparent"
+                            clip: true
+                            color: milCurRow.sel
+                                ? Theme.rowSelectedBg
+                                : ((milCurRow.foc || milCMouse.containsMouse) ? Theme.controlFillHover : "transparent")
+                            border.width: milCurRow.foc ? Theme.activeControlBorderWidth : 0
+                            border.color: milCurRow.foc ? root.fileStyle.accent : "transparent"
+
+                            Rectangle {
+                                visible: milCurRow.sel || milCurRow.foc
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                width: 3
+                                color: root.fileStyle.accent
+                            }
 
                             RowLayout {
                                 anchors.fill: parent

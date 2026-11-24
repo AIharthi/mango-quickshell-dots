@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# MangoWC + Quickshell Dynamic Island Dotfiles Uninstaller
+# Aurora Shell (MangoWC + Quickshell) Dotfiles Uninstaller
 
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
@@ -25,9 +25,9 @@ Options:
   --dry-run             Print planned removals/restores without modifying files
   --with-session        Also remove /usr/local/bin/mango-session and
                         /usr/share/wayland-sessions/mango.desktop (requires sudo/root)
-  --with-sddm           Also remove /usr/share/sddm/themes/mango-island and
-                        /etc/sddm.conf.d/99-mango-island.conf (requires sudo/root)
-  --restore-backup      Restore the latest ~/.config-backup-mango-* backup after removal
+  --with-sddm           Also remove /usr/share/sddm/themes/{aurora-island,mango-island} and
+                        /etc/sddm.conf.d/{99-aurora-shell,99-mango-island}.conf (requires sudo/root)
+  --restore-backup      Restore the latest ~/.config-backup-{aurora,mango}-* backup after removal
   --backup <dir>        Restore a specific backup directory (implies --restore-backup)
   --keep-fonts          Do not remove bundled fonts from ~/.local/share/fonts
   -y, --yes             Skip confirmation prompt
@@ -90,9 +90,9 @@ find_latest_backup() {
     local latest=""
     local candidate
     shopt -s nullglob
-    for candidate in "$HOME"/.config-backup-mango-*; do
+    for candidate in "$HOME"/.config-backup-aurora-* "$HOME"/.config-backup-mango-*; do
         [[ -d "$candidate" ]] || continue
-        if [[ -z "$latest" || "$candidate" > "$latest" ]]; then
+        if [[ -z "$latest" || "$candidate" -nt "$latest" ]]; then
             latest="$candidate"
         fi
     done
@@ -103,7 +103,7 @@ find_latest_backup() {
 if [[ "$RESTORE_BACKUP" -eq 1 && -z "$BACKUP_PATH" ]]; then
     BACKUP_PATH="$(find_latest_backup)"
     if [[ -z "$BACKUP_PATH" ]]; then
-        echo "ERROR: --restore-backup requested, but no $HOME/.config-backup-mango-* directory was found." >&2
+        echo "ERROR: --restore-backup requested, but no $HOME/.config-backup-{aurora,mango}-* directory was found." >&2
         exit 1
     fi
 fi
@@ -133,7 +133,7 @@ if [[ "$WITH_SESSION" -eq 1 ]]; then
     echo "  Remove system: /usr/local/bin/mango-session, /usr/share/wayland-sessions/mango.desktop"
 fi
 if [[ "$WITH_SDDM" -eq 1 ]]; then
-    echo "  Remove SDDM:   /usr/share/sddm/themes/mango-island, /etc/sddm.conf.d/99-mango-island.conf"
+    echo "  Remove SDDM:   /usr/share/sddm/themes/{aurora-island,mango-island}, /etc/sddm.conf.d/{99-aurora-shell,99-mango-island}.conf"
 fi
 if [[ "$RESTORE_BACKUP" -eq 1 ]]; then
     echo "  Restore from:  $BACKUP_PATH"
@@ -196,7 +196,7 @@ if [[ "$WITH_SESSION" -eq 1 ]]; then
 fi
 
 if [[ "$WITH_SDDM" -eq 1 ]]; then
-    echo "==> Removing Mango Island SDDM theme"
+    echo "==> Removing Aurora Shell SDDM themes"
     priv=()
     if [[ "$EUID" -ne 0 ]]; then
         if ! command -v sudo >/dev/null 2>&1; then
@@ -205,12 +205,16 @@ if [[ "$WITH_SDDM" -eq 1 ]]; then
         fi
         priv=(sudo)
     fi
-    if [[ -d /usr/share/sddm/themes/mango-island ]]; then
-        run_cmd "${priv[@]}" rm -rf /usr/share/sddm/themes/mango-island
-    fi
-    if [[ -e /etc/sddm.conf.d/99-mango-island.conf ]]; then
-        run_cmd "${priv[@]}" rm -f /etc/sddm.conf.d/99-mango-island.conf
-    fi
+    for sddm_dir in /usr/share/sddm/themes/aurora-island /usr/share/sddm/themes/mango-island; do
+        if [[ -d "$sddm_dir" ]]; then
+            run_cmd "${priv[@]}" rm -rf "$sddm_dir"
+        fi
+    done
+    for sddm_conf in /etc/sddm.conf.d/99-aurora-shell.conf /etc/sddm.conf.d/99-mango-island.conf; do
+        if [[ -e "$sddm_conf" ]]; then
+            run_cmd "${priv[@]}" rm -f "$sddm_conf"
+        fi
+    done
 fi
 
 if [[ "$RESTORE_BACKUP" -eq 1 ]]; then

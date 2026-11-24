@@ -21,7 +21,7 @@ Default compositor keybindings live in [`config/mango/config.conf`](../config/ma
 | `Super + D` | Toggle Dynamic Island Hub |
 | `Super + S` | Toggle Built-in Settings App (`16` hardware-aware pages) |
 | `Super + Shift + T` | Toggle Theme & Wallpaper Switcher |
-| `Super + Shift + E` | Toggle Dynamic File Manager (`mango-fm`) |
+| `Super + Shift + E` | Toggle Dynamic File Manager (`aurora-fm`) |
 | `Super + Alt + E` | Toggle Dynamic Island Quick Files Tab |
 | `Super + Shift + L` | Lock screen (`lock.sh`: native `WlSessionLock` PAM screen, or `hyprlock`/`swaylock`/`waylock` fallback) |
 | `Super + =` | Area screenshot (`screenshot.sh --area`) |
@@ -107,56 +107,57 @@ Default compositor keybindings live in [`config/mango/config.conf`](../config/ma
 
 ---
 
-## Quickshell IPC Commands (`qs ipc call island ...`)
+## Quickshell IPC Commands (`qs ipc call aurora ...` or legacy `qs ipc call island ...`)
 
 ```bash
 # Drawers, Launcher, Lock, Power, Switcher, Settings & Files
-qs ipc call island lockSession
-qs ipc call island toggleLauncher
-qs ipc call island toggleWindowSwitcher
-qs ipc call island togglePowerOverlay
-qs ipc call island toggleGameMode
-qs ipc call island toggleClipboard
-qs ipc call island toggleNotifications
-qs ipc call island toggleKeybindSheet
-qs ipc call island toggleThemeTab
-qs ipc call island toggleDashboard
-qs ipc call island refreshWeather
-qs ipc call island syncSddmTheme
-qs ipc call island collapse
-qs ipc call island showOsd <volume|mute|brightness|mic|kb|media-play|media-next|media-prev>
-qs ipc call island syncRecordingState
-qs ipc call island toggleSettings
-qs ipc call island openSettings <appearance|themes|shell|windows|audio|displays|network|bluetooth|input|terminals|notifications|apps|shortcuts|privacy|monitor|system>
-qs ipc call island closeSettings
-qs ipc call island toggleFiles
-qs ipc call island openFiles <path>
-qs ipc call island closeFiles
-qs ipc call island toggleFilesTab
-qs ipc call island resetFiles
+qs ipc call aurora lockSession
+qs ipc call aurora toggleLauncher
+qs ipc call aurora toggleWindowSwitcher
+qs ipc call aurora togglePowerOverlay
+qs ipc call aurora toggleGameMode
+qs ipc call aurora toggleClipboard
+qs ipc call aurora toggleNotifications
+qs ipc call aurora toggleKeybindSheet
+qs ipc call aurora toggleThemeTab
+qs ipc call aurora toggleDashboard
+qs ipc call aurora refreshWeather
+qs ipc call aurora syncSddmTheme
+qs ipc call aurora collapse
+qs ipc call aurora showOsd <volume|mute|brightness|mic|kb|media-play|media-next|media-prev>
+qs ipc call aurora syncRecordingState
+qs ipc call aurora toggleSettings
+qs ipc call aurora openSettings <appearance|themes|shell|windows|audio|displays|network|bluetooth|input|terminals|notifications|apps|shortcuts|privacy|monitor|system>
+qs ipc call aurora openDoctor
+qs ipc call aurora closeSettings
+qs ipc call aurora toggleFiles
+qs ipc call aurora openFiles <path>
+qs ipc call aurora closeFiles
+qs ipc call aurora toggleFilesTab
+qs ipc call aurora resetFiles
 
 # Bar UI Styles, Hub Layouts & Visual Modes
-qs ipc call island setBarUiStyle <apple|split|menubar|classic>
-qs ipc call island cycleBarUiStyle
-qs ipc call island setHubUiStyle <cupertino|stage|cockpit|bento>
-qs ipc call island cycleHubUiStyle
-qs ipc call island setShellMode <default|blur|neon|minimal|retro|oled|simple>
-qs ipc call island toggleShellMode <blur|neon|minimal|retro|oled|simple>
-qs ipc call island cycleShellMode
-qs ipc call island applyVibe <aurora-glass|minimal-square|oled-stealth|neon-cyber|cozy-paper|full-dock-bar|warm-gruvbox|dracula-notch>
-qs ipc call island applyPreset <preset-id>
-qs ipc call island applyAccent "#cba6f7"
-qs ipc call island randomWallpaper
-qs ipc call island toggleDarkLight
+qs ipc call aurora setBarUiStyle <apple|split|menubar|classic>
+qs ipc call aurora cycleBarUiStyle
+qs ipc call aurora setHubUiStyle <cupertino|stage|cockpit|bento>
+qs ipc call aurora cycleHubUiStyle
+qs ipc call aurora setShellMode <default|blur|neon|minimal|retro|oled|simple>
+qs ipc call aurora toggleShellMode <blur|neon|minimal|retro|oled|simple>
+qs ipc call aurora cycleShellMode
+qs ipc call aurora applyVibe <aurora-glass|minimal-square|oled-stealth|neon-cyber|cozy-paper|full-dock-bar|warm-gruvbox|dracula-notch>
+qs ipc call aurora applyPreset <preset-id>
+qs ipc call aurora applyAccent "#cba6f7"
+qs ipc call aurora randomWallpaper
+qs ipc call aurora toggleDarkLight
 
 # System Toggles, Resets & PiP
-qs ipc call island toggleDnd
-qs ipc call island toggleKeepAwake
-qs ipc call island clearClipboard
-qs ipc call island resetAppearance
-qs ipc call island resetBar
-qs ipc call island resetAllSettings
-qs ipc call island togglePip
-qs ipc call island cyclePipCorner
-qs ipc call island snapPip
+qs ipc call aurora toggleDnd
+qs ipc call aurora toggleKeepAwake
+qs ipc call aurora clearClipboard
+qs ipc call aurora resetAppearance
+qs ipc call aurora resetBar
+qs ipc call aurora resetAllSettings
+qs ipc call aurora togglePip
+qs ipc call aurora cyclePipCorner
+qs ipc call aurora snapPip
 ```

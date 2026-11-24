@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+Name=Aurora Island
+Description=Animated glassmorphic SDDM login theme for Aurora Shell
+Author=AIharthi
+License=MIT
+Type=sddm-theme
+Version=2.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=aurora-island
+Theme-API=2.0
+QtVersion=6
