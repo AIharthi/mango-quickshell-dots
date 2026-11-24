@@ -1,5 +1,7 @@
 # Aurora Shell 2.1 (MangoWC + Quickshell)
 
+[![Codebase](https://img.shields.io/badge/Codebase-65%2C555%20lines-a7c080?style=flat-square&labelColor=2d353b)](#codebase-size)
+
 A reactive, pure-Rust-accelerated Wayland desktop shell built around **MangoWC** (`mangowm` + `scenefx`) and **Quickshell**, hardened for **Arch Linux, Fedora, and Gentoo** (`systemd` and `OpenRC + elogind`), across both **desktop PCs and laptops** with multi-monitor support.
 
 ---
@@ -66,6 +68,19 @@ A reactive, pure-Rust-accelerated Wayland desktop shell built around **MangoWC**
     ├── mango.desktop             # Optional /usr/share/wayland-sessions/mango.desktop (Aurora Shell)
     └── sddm-theme/aurora-island/ # Optional Qt6 SDDM theme synced live with active wallpaper & palette (--with-sddm)
 ```
+
+### Codebase Size
+
+Measured across tracked code and configuration files in `git ls-files` (excluding Markdown docs, license texts, `Cargo.lock`, fonts, and PNG assets):
+
+| Component | Files | Total Lines | Non-Blank Lines |
+| --- | ---: | ---: | ---: |
+| QML (Quickshell UI & SDDM) | 53 | 45,118 | 40,094 |
+| Shell (Bash / POSIX sh) | 20 | 8,277 | 7,539 |
+| Rust (`aurora-backend`) | 15 | 6,965 | 6,494 |
+| Rust (`aurora-fm`) | 10 | 4,083 | 3,812 |
+| Config, CSS Templates & CI | 28 | 1,112 | 1,030 |
+| **Total (Code & Config)** | **126** | **65,555** | **58,969** |
 
 ---
 
