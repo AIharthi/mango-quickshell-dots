@@ -107,8 +107,8 @@ RowLayout {
 
     // ==================== LEFT COLUMN: Calendar + Focus Timer + Scratchpad ====================
     ColumnLayout {
-        Layout.preferredWidth: 288
-        Layout.minimumWidth: 280
+        Layout.preferredWidth: Math.min(288, Math.max(228, Math.round(root.width * 0.42)))
+        Layout.minimumWidth: 224
         Layout.maximumWidth: 294
         Layout.fillHeight: true
         spacing: 8
@@ -1046,6 +1046,8 @@ RowLayout {
                                 }
 
                                 Text {
+                                    Layout.maximumWidth: 160
+                                    elide: Text.ElideRight
                                     text: nCard.modelData.appName || "System"
                                     font.family: Theme.fontFamily
                                     font.pixelSize: 10

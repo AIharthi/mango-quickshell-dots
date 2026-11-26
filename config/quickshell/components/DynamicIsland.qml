@@ -173,11 +173,12 @@ Item {
         (DeviceCaps.hasBacklight ? 38 : 0) + ((DeviceCaps.hasWifi || DeviceCaps.hasBluetooth) ? 42 : 0)
 
     readonly property int expandedWidth: {
+        let w = 760;
         if (root.activeTab === "launcher")
-            return 700;
-        if (root.activeTab === "overview")
-            return 740;
-        return 760;
+            w = 700;
+        else if (root.activeTab === "overview")
+            w = 740;
+        return Math.min(w, Math.max(360, Math.round(root.width) - 24));
     }
 
     readonly property int expandedHeight: {
@@ -199,7 +200,7 @@ Item {
             else
                 h = 438 + root._extraControlsHeight;
         }
-        return h + (root.powerMenuOpen ? 48 : 0);
+        return Math.min(h + (root.powerMenuOpen ? 48 : 0), Math.max(280, Math.round(root.height) - ShellState.islandTopMargin - 24));
     }
 
     readonly property int notchPad: (!Theme.isSimple && !isSplitBar && ShellState.islandStyle === "notch") ? 14 : 0

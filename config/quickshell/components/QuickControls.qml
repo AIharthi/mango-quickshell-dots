@@ -172,12 +172,14 @@ Rectangle {
     }
 
     radius: Theme.r(18)
+    implicitHeight: qcCol.implicitHeight + 20
     color: Theme.cardBg
     border.width: Theme.cardBorderWidth
     border.color: Theme.cardBorder
     clip: true
 
     ColumnLayout {
+        id: qcCol
         anchors.fill: parent
         anchors.margins: root.hideHeader ? 10 : 10
         spacing: root.hideHeader ? 8 : 6
@@ -774,6 +776,7 @@ Rectangle {
                     }
                     border.width: qaBtn.modelData.active ? Theme.activeControlBorderWidth : 0
                     border.color: qaBtn.modelData.tint
+                    clip: true
                     scale: qaMouse.pressed ? 0.94 : 1.0
 
                     Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
@@ -795,6 +798,8 @@ Rectangle {
 
                         Text {
                             Layout.alignment: Qt.AlignHCenter
+                            Layout.maximumWidth: Math.max(24, qaBtn.width - 8)
+                            elide: Text.ElideRight
                             text: qaBtn.modelData.label
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
@@ -820,6 +825,8 @@ Rectangle {
                         }
 
                         Text {
+                            Layout.maximumWidth: Math.max(20, qaBtn.width - 22)
+                            elide: Text.ElideRight
                             text: qaBtn.modelData.label
                             font.family: Theme.fontFamily
                             font.pixelSize: 9

@@ -70,6 +70,7 @@ ClippingRectangle {
     }
 
     radius: Theme.r(18)
+    implicitHeight: mediaCol.implicitHeight + 24
     color: Theme.cardBg
     border.width: Theme.cardBorderWidth
     border.color: Theme.cardBorder
@@ -99,6 +100,7 @@ ClippingRectangle {
     }
 
     ColumnLayout {
+        id: mediaCol
         anchors.fill: parent
         anchors.margins: 12
         spacing: 8

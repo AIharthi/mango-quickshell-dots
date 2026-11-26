@@ -179,9 +179,10 @@ RowLayout {
 
     // --- Left macOS Finder Sidebar ---
     Rectangle {
-        Layout.preferredWidth: 174
-        Layout.minimumWidth: 168
-        Layout.maximumWidth: 178
+        readonly property int sideW: root.width < 520 ? 142 : 174
+        Layout.preferredWidth: sideW
+        Layout.minimumWidth: Math.min(136, sideW)
+        Layout.maximumWidth: sideW
         Layout.fillHeight: true
         radius: Theme.r(18)
         color: Theme.cardBg
@@ -190,13 +191,14 @@ RowLayout {
         clip: true
 
         ScrollView {
+            id: sideScroll
             anchors.fill: parent
             anchors.margins: 8
             clip: true
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
             ColumnLayout {
-                width: 156
+                width: Math.max(110, sideScroll.availableWidth)
                 spacing: 3
 
                 Text {

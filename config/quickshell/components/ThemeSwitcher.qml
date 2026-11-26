@@ -10,6 +10,7 @@ ColumnLayout {
     id: root
 
     property bool active: false
+    readonly property bool narrowLayout: root.width < 450
     signal openSettingsRequested(string page)
     spacing: 10
 
@@ -22,200 +23,288 @@ ColumnLayout {
         return clean.length > 0 ? clean : String(fname || "");
     }
 
-    // --- Apple Segmented Mode, Shuffle, Studio & Dark/Light Bar ---
-    RowLayout {
+    // --- Responsive Segmented Mode, Shuffle, Studio & Dark/Light Bar ---
+    ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: 34
-        Layout.minimumHeight: 34
-        Layout.maximumHeight: 34
-        spacing: 8
+        spacing: 6
 
-        // Dynamic / Presets / Accent Mode Switch
-        Rectangle {
-            implicitHeight: 32
-            implicitWidth: modeRow.implicitWidth + 6
-            radius: Theme.r(16)
-            color: Theme.cardBg
-            border.width: Theme.subBorderWidth
-            border.color: Theme.cardBorder
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            Layout.preferredHeight: 34
+            spacing: 6
 
-            RowLayout {
-                id: modeRow
-                anchors.centerIn: parent
-                spacing: 2
+            // Dynamic / Presets / Accent Mode Switch
+            Rectangle {
+                implicitHeight: 32
+                implicitWidth: modeRow.implicitWidth + 6
+                radius: Theme.r(16)
+                color: Theme.cardBg
+                border.width: Theme.subBorderWidth
+                border.color: Theme.cardBorder
 
-                Repeater {
-                    model: [
-                        { id: "dynamic", label: "Dynamic", icon: "󰚰" },
-                        { id: "preset",  label: "Presets", icon: "󰏘" },
-                        { id: "accent",  label: "Accent",  icon: "󰌁" }
-                    ]
+                RowLayout {
+                    id: modeRow
+                    anchors.centerIn: parent
+                    spacing: 2
 
-                    delegate: Rectangle {
-                        id: modeBtn
-                        required property var modelData
-                        readonly property bool selected: Theme.themeMode === modeBtn.modelData.id
+                    Repeater {
+                        model: [
+                            { id: "dynamic", label: "Dynamic", icon: "󰚰" },
+                            { id: "preset",  label: "Presets", icon: "󰏘" },
+                            { id: "accent",  label: "Accent",  icon: "󰌁" }
+                        ]
 
-                        implicitHeight: 26
-                        implicitWidth: modeContent.implicitWidth + 14
-                        radius: Theme.r(13)
-                        color: modeBtn.selected
-                            ? Theme.primary
-                            : (modeMouse.containsMouse ? Theme.hoverBg : "transparent")
+                        delegate: Rectangle {
+                            id: modeBtn
+                            required property var modelData
+                            readonly property bool selected: Theme.themeMode === modeBtn.modelData.id
 
-                        Behavior on color {
-                            enabled: !Theme.isSimple
-                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                        }
+                            implicitHeight: 26
+                            implicitWidth: modeContent.implicitWidth + 12
+                            radius: Theme.r(13)
+                            color: modeBtn.selected
+                                ? Theme.primary
+                                : (modeMouse.containsMouse ? Theme.hoverBg : "transparent")
 
-                        RowLayout {
-                            id: modeContent
-                            anchors.centerIn: parent
-                            spacing: 4
-
-                            Text {
-                                text: modeBtn.modelData.icon
-                                font.family: Theme.iconFont
-                                font.pixelSize: 11
-                                color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                            Behavior on color {
+                                enabled: !Theme.isSimple
+                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                             }
-                            Text {
-                                text: modeBtn.modelData.label
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 10
-                                font.weight: modeBtn.selected ? Font.Bold : Font.Medium
-                                color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
-                            }
-                        }
 
-                        MouseArea {
-                            id: modeMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Theme.setMode(modeBtn.modelData.id)
+                            RowLayout {
+                                id: modeContent
+                                anchors.centerIn: parent
+                                spacing: 4
+
+                                Text {
+                                    text: modeBtn.modelData.icon
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 11
+                                    color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                }
+                                Text {
+                                    text: modeBtn.modelData.label
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 10
+                                    font.weight: modeBtn.selected ? Font.Bold : Font.Medium
+                                    color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                }
+                            }
+
+                            MouseArea {
+                                id: modeMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Theme.setMode(modeBtn.modelData.id)
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Shuffle Wallpaper Capsule
-        Rectangle {
-            implicitHeight: 32
-            implicitWidth: rndLbl.implicitWidth + 16
-            radius: Theme.r(16)
-            color: rndMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-            border.width: Theme.subBorderWidth
-            border.color: Theme.cardBorder
-            scale: rndMouse.pressed ? 0.95 : 1.0
+            // Shuffle Wallpaper Capsule (wide row)
+            Rectangle {
+                visible: !root.narrowLayout
+                implicitHeight: 32
+                implicitWidth: rndLbl.implicitWidth + 14
+                radius: Theme.r(16)
+                color: rndMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
+                border.width: Theme.subBorderWidth
+                border.color: Theme.cardBorder
+                scale: rndMouse.pressed ? 0.95 : 1.0
 
-            Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-            Text {
-                id: rndLbl
-                anchors.centerIn: parent
-                text: "󰒝 Shuffle"
-                font.family: Theme.fontFamily
-                font.pixelSize: 10
-                font.weight: Font.Bold
-                color: Theme.secondary
-            }
-
-            MouseArea {
-                id: rndMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Theme.randomWallpaper()
-            }
-        }
-
-        // Studio Button
-        Rectangle {
-            implicitHeight: 32
-            implicitWidth: stuLbl.implicitWidth + 16
-            radius: Theme.r(16)
-            color: stuMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-            border.width: Theme.subBorderWidth
-            border.color: Theme.cardBorder
-            scale: stuMouse.pressed ? 0.95 : 1.0
-
-            Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-            Text {
-                id: stuLbl
-                anchors.centerIn: parent
-                text: "Studio"
-                font.family: Theme.fontFamily
-                font.pixelSize: 10
-                font.weight: Font.Bold
-                color: Theme.primary
-            }
-
-            MouseArea {
-                id: stuMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.openSettingsRequested("themes")
-            }
-        }
-
-        Item { Layout.fillWidth: true }
-
-        // Status / Error Indicator
-        Text {
-            visible: Theme.applyingTheme || Theme.lastError.length > 0
-            Layout.maximumWidth: 120
-            elide: Text.ElideRight
-            text: Theme.applyingTheme ? "Applying..." : Theme.lastError
-            font.family: Theme.fontFamily
-            font.pixelSize: 9
-            font.weight: Font.Medium
-            color: Theme.applyingTheme ? Theme.primary : Theme.error
-        }
-
-        // Dark / Light Appearance Toggle Capsule
-        Rectangle {
-            implicitHeight: 32
-            implicitWidth: schemeRow.implicitWidth + 16
-            radius: Theme.r(16)
-            color: schemeArea.containsMouse ? Theme.hoverBg : Theme.cardBg
-            border.width: Theme.subBorderWidth
-            border.color: Theme.cardBorder
-            scale: schemeArea.pressed ? 0.95 : 1.0
-
-            Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-            RowLayout {
-                id: schemeRow
-                anchors.centerIn: parent
-                spacing: 5
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 Text {
-                    text: Theme.colorScheme === "dark" ? "󰖔" : "󰖙"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 13
-                    color: Theme.primary
-                }
-
-                Text {
-                    text: Theme.colorScheme === "dark" ? "Dark" : "Light"
+                    id: rndLbl
+                    anchors.centerIn: parent
+                    text: "󰒝 Shuffle"
                     font.family: Theme.fontFamily
                     font.pixelSize: 10
                     font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    color: Theme.secondary
+                }
+
+                MouseArea {
+                    id: rndMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Theme.randomWallpaper()
                 }
             }
 
-            MouseArea {
-                id: schemeArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Theme.toggleScheme()
+            // Studio Button (wide row)
+            Rectangle {
+                visible: !root.narrowLayout
+                implicitHeight: 32
+                implicitWidth: stuLbl.implicitWidth + 14
+                radius: Theme.r(16)
+                color: stuMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
+                border.width: Theme.subBorderWidth
+                border.color: Theme.cardBorder
+                scale: stuMouse.pressed ? 0.95 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                Text {
+                    id: stuLbl
+                    anchors.centerIn: parent
+                    text: "Studio"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.primary
+                }
+
+                MouseArea {
+                    id: stuMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.openSettingsRequested("themes")
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            // Status / Error Indicator (wide row)
+            Text {
+                visible: !root.narrowLayout && (Theme.applyingTheme || Theme.lastError.length > 0)
+                Layout.maximumWidth: 120
+                elide: Text.ElideRight
+                text: Theme.applyingTheme ? "Applying..." : Theme.lastError
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Medium
+                color: Theme.applyingTheme ? Theme.primary : Theme.error
+            }
+
+            // Dark / Light Appearance Toggle Capsule
+            Rectangle {
+                implicitHeight: 32
+                implicitWidth: schemeRow.implicitWidth + 14
+                radius: Theme.r(16)
+                color: schemeArea.containsMouse ? Theme.hoverBg : Theme.cardBg
+                border.width: Theme.subBorderWidth
+                border.color: Theme.cardBorder
+                scale: schemeArea.pressed ? 0.95 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                RowLayout {
+                    id: schemeRow
+                    anchors.centerIn: parent
+                    spacing: 5
+
+                    Text {
+                        text: Theme.colorScheme === "dark" ? "󰖔" : "󰖙"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 13
+                        color: Theme.primary
+                    }
+
+                    Text {
+                        text: Theme.colorScheme === "dark" ? "Dark" : "Light"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        color: Theme.fgSurface
+                    }
+                }
+
+                MouseArea {
+                    id: schemeArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Theme.toggleScheme()
+                }
+            }
+        }
+
+        // Narrow-width Wrap Row (Shuffle, Studio, Status)
+        RowLayout {
+            visible: root.narrowLayout
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            Layout.preferredHeight: 30
+            spacing: 6
+
+            Rectangle {
+                implicitHeight: 28
+                implicitWidth: rndLblNarrow.implicitWidth + 14
+                radius: Theme.r(14)
+                color: rndMouseNarrow.containsMouse ? Theme.hoverBg : Theme.cardBg
+                border.width: Theme.subBorderWidth
+                border.color: Theme.cardBorder
+                scale: rndMouseNarrow.pressed ? 0.95 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                Text {
+                    id: rndLblNarrow
+                    anchors.centerIn: parent
+                    text: "󰒝 Shuffle"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.secondary
+                }
+
+                MouseArea {
+                    id: rndMouseNarrow
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Theme.randomWallpaper()
+                }
+            }
+
+            Rectangle {
+                implicitHeight: 28
+                implicitWidth: stuLblNarrow.implicitWidth + 14
+                radius: Theme.r(14)
+                color: stuMouseNarrow.containsMouse ? Theme.hoverBg : Theme.cardBg
+                border.width: Theme.subBorderWidth
+                border.color: Theme.cardBorder
+                scale: stuMouseNarrow.pressed ? 0.95 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                Text {
+                    id: stuLblNarrow
+                    anchors.centerIn: parent
+                    text: "Studio"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.primary
+                }
+
+                MouseArea {
+                    id: stuMouseNarrow
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.openSettingsRequested("themes")
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Text {
+                visible: Theme.applyingTheme || Theme.lastError.length > 0
+                Layout.maximumWidth: 120
+                elide: Text.ElideRight
+                text: Theme.applyingTheme ? "Applying..." : Theme.lastError
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.weight: Font.Medium
+                color: Theme.applyingTheme ? Theme.primary : Theme.error
             }
         }
     }
@@ -225,9 +314,8 @@ ColumnLayout {
         visible: Theme.themeMode === "preset"
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: 74
-        Layout.minimumHeight: 74
-        Layout.maximumHeight: 74
+        Layout.preferredHeight: Math.min(118, Math.max(70, presetFlow.implicitHeight + 16))
+        Layout.minimumHeight: 68
         radius: Theme.r(16)
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth
@@ -305,9 +393,8 @@ ColumnLayout {
         visible: Theme.themeMode === "accent"
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: 46
+        Layout.preferredHeight: Math.max(46, accOuter.implicitHeight + 18)
         Layout.minimumHeight: 46
-        Layout.maximumHeight: 46
         radius: Theme.r(16)
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth
@@ -315,10 +402,14 @@ ColumnLayout {
         clip: true
 
         RowLayout {
-            anchors.centerIn: parent
-            spacing: 12
+            id: accOuter
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            spacing: 10
 
             Text {
+                Layout.alignment: Qt.AlignVCenter
                 text: "Accent"
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
@@ -326,39 +417,45 @@ ColumnLayout {
                 color: Theme.fgSurfaceVariant
             }
 
-            Repeater {
-                model: ["#cba6f7", "#89b4fa", "#7aa2f7", "#9ece6a", "#fabd2f", "#fe8019", "#f38ba8", "#ff7eb6", "#00f0ff", "#ebbcba", "#268bd2", "#a7c080"]
+            Flow {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 8
 
-                delegate: Rectangle {
-                    id: accChip
-                    required property string modelData
-                    readonly property bool isSelected: Theme.accentColor.toLowerCase() === accChip.modelData.toLowerCase()
+                Repeater {
+                    model: ["#cba6f7", "#89b4fa", "#7aa2f7", "#9ece6a", "#fabd2f", "#fe8019", "#f38ba8", "#ff7eb6", "#00f0ff", "#ebbcba", "#268bd2", "#a7c080"]
 
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: 13
-                    color: accChip.modelData
-                    border.width: Theme.activeControlBorderWidth > 0 && accChip.isSelected ? 2 : 1
-                    border.color: accChip.isSelected ? Theme.fgSurface : Theme.hairlineBorder
-                    scale: accChip.isSelected ? 1.12 : (accMouse.containsMouse ? 1.08 : 1.0)
+                    delegate: Rectangle {
+                        id: accChip
+                        required property string modelData
+                        readonly property bool isSelected: Theme.accentColor.toLowerCase() === accChip.modelData.toLowerCase()
 
-                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 100 } }
+                        width: 24
+                        height: 24
+                        radius: 12
+                        color: accChip.modelData
+                        border.width: Theme.activeControlBorderWidth > 0 && accChip.isSelected ? 2 : 1
+                        border.color: accChip.isSelected ? Theme.fgSurface : Theme.hairlineBorder
+                        scale: accChip.isSelected ? 1.12 : (accMouse.containsMouse ? 1.08 : 1.0)
 
-                    Text {
-                        anchors.centerIn: parent
-                        visible: accChip.isSelected
-                        text: "󰄬"
-                        font.family: Theme.iconFont
-                        font.pixelSize: 12
-                        color: Theme.contrastInk(accChip.modelData)
-                    }
+                        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 100 } }
 
-                    MouseArea {
-                        id: accMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Theme.applyAccentColor(accChip.modelData)
+                        Text {
+                            anchors.centerIn: parent
+                            visible: accChip.isSelected
+                            text: "󰄬"
+                            font.family: Theme.iconFont
+                            font.pixelSize: 12
+                            color: Theme.contrastInk(accChip.modelData)
+                        }
+
+                        MouseArea {
+                            id: accMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Theme.applyAccentColor(accChip.modelData)
+                        }
                     }
                 }
             }
@@ -387,14 +484,26 @@ ColumnLayout {
             nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.PNG", "*.JPG", "*.JPEG", "*.WEBP"]
             showDirs: false
             sortField: FolderListModel.Name
+            onStatusChanged: {
+                if (status === FolderListModel.Ready && !wallpaperGrid._initialScrollDone) {
+                    wallpaperGrid._initialScrollDone = true;
+                    Qt.callLater(() => {
+                        if (!wallpaperGrid.dragging && !wallpaperGrid.flicking)
+                            wallpaperGrid.positionViewAtBeginning();
+                    });
+                }
+            }
         }
 
         GridView {
             id: wallpaperGrid
+            property bool _initialScrollDone: false
+            readonly property int gridCols: width >= 300 ? 3 : 2
             anchors.fill: parent
             anchors.margins: 10
-            cellWidth: Math.floor(width / 3)
+            cellWidth: Math.floor(width / gridCols)
             cellHeight: 124
+            boundsBehavior: Flickable.StopAtBounds
             clip: true
             model: wallpaperFolder
 

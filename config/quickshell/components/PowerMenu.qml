@@ -8,6 +8,7 @@ Rectangle {
     id: root
 
     property string pendingAction: ""
+    readonly property bool compact: root.width < 440
     signal actionTriggered(string actionId)
 
     function clearPending(): void {
@@ -53,9 +54,9 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 6
-        anchors.rightMargin: 6
-        spacing: 6
+        anchors.leftMargin: root.compact ? 4 : 6
+        anchors.rightMargin: root.compact ? 4 : 6
+        spacing: root.compact ? 4 : 6
 
         Repeater {
             model: root.actionsModel
@@ -68,6 +69,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 26
                 radius: Theme.r(13)
+                clip: true
                 color: {
                     if (btn.isPending)
                         return Theme.error;
@@ -90,7 +92,7 @@ Rectangle {
 
                 RowLayout {
                     anchors.centerIn: parent
-                    spacing: 5
+                    spacing: root.compact ? 3 : 5
 
                     Text {
                         text: btn.modelData.icon
@@ -108,7 +110,7 @@ Rectangle {
                     Text {
                         text: btn.isPending ? "Confirm?" : btn.modelData.label
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: root.compact ? 9 : 10
                         font.weight: btn.isPending ? Font.Bold : Font.DemiBold
                         color: {
                             if (btn.isPending)

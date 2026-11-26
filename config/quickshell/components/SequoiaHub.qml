@@ -261,7 +261,11 @@ PanelWindow {
         anchors.topMargin: root.topBarOffset + 6
         anchors.right: parent.right
         anchors.rightMargin: 10
-        width: 392
+        readonly property int targetControlsWidth: root.controlsTab === "files"
+            ? 680
+            : (root.controlsTab === "themes" ? 560 : 416)
+        readonly property int tabViewportH: Math.min(460, Math.max(280, root.height - root.topBarOffset - 92))
+        width: Math.min(Math.max(340, root.width - 20), targetControlsWidth)
         height: Math.min(Math.max(200, root.height - root.topBarOffset - 24), controlsCol.implicitHeight + 24)
         radius: Theme.r(20)
         color: Theme.notchBg
@@ -273,6 +277,7 @@ PanelWindow {
         scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
         transformOrigin: Item.TopRight
 
+        Behavior on width { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
         Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
         Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
@@ -440,10 +445,22 @@ PanelWindow {
             }
 
             // Sub-Tab 1: Sequoia Control Center / Compact Stack / Studio Platter
-            ColumnLayout {
-                Layout.fillWidth: true
+            Flickable {
                 visible: root.controlsTab === "controls"
-                spacing: 8
+                Layout.fillWidth: true
+                Layout.preferredHeight: visible
+                    ? Math.min(controlsInnerCol.implicitHeight, Math.max(180, root.height - root.topBarOffset - (root.powerMenuOpen ? 132 : 86)))
+                    : 0
+                contentWidth: width
+                contentHeight: controlsInnerCol.implicitHeight
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+
+                ColumnLayout {
+                    id: controlsInnerCol
+                    width: parent.width
+                    spacing: 8
 
                 // 2x2 Connectivity & Focus Platter (Control Center style)
                 Rectangle {
@@ -593,7 +610,7 @@ PanelWindow {
                 // Studio Media Card + Output Switcher (Media Studio style)
                 Loader {
                     Layout.fillWidth: true
-                    readonly property int cardH: ShellState.sequoiaHubStyle === "media" ? 168 : 134
+                    readonly property int cardH: item ? Math.max(166, Math.ceil(item.implicitHeight)) : 168
                     readonly property bool showCard: root.panelMode === "controls" && root.controlsTab === "controls" && ShellState.sequoiaHubStyle === "media"
                     Layout.preferredHeight: showCard ? cardH : 0
                     active: root._controlsMainLoaded && ShellState.sequoiaHubStyle === "media"
@@ -650,10 +667,10 @@ PanelWindow {
                     id: qcLoader
                     Layout.fillWidth: true
                     readonly property int qcH: (ShellState.sequoiaHubStyle === "compact" ? 104 : 114)
-                        + (DeviceCaps.hasBacklight ? 36 : 0)
+                        + (DeviceCaps.hasBacklight ? 38 : 0)
                         + ((DeviceCaps.hasWifi || DeviceCaps.hasBluetooth) ? 42 : 0)
                     readonly property bool showQc: root.panelMode === "controls" && root.controlsTab === "controls"
-                    Layout.preferredHeight: showQc ? qcH : 0
+                    Layout.preferredHeight: showQc ? (item ? Math.max(92, Math.ceil(item.implicitHeight)) : qcH) : 0
                     active: root._controlsMainLoaded
                     visible: showQc
                     source: "QuickControls.qml"
@@ -679,7 +696,7 @@ PanelWindow {
                         && root.controlsTab === "controls"
                         && ShellState.sequoiaHubStyle !== "media"
                         && (ShellState.sequoiaHubStyle === "controlcenter" || root.player !== null)
-                    Layout.preferredHeight: showCompactMedia ? 132 : 0
+                    Layout.preferredHeight: showCompactMedia ? (item ? Math.max(158, Math.ceil(item.implicitHeight)) : 160) : 0
                     active: root._controlsMainLoaded && ShellState.sequoiaHubStyle !== "media"
                     visible: showCompactMedia
                     source: "MediaCard.qml"
@@ -826,13 +843,14 @@ PanelWindow {
                         }
                     }
                 }
+                }
             }
 
             // Sub-Tab 2: Theme & Wallpaper Switcher (sticky warm loader)
             Loader {
                 Layout.fillWidth: true
                 readonly property bool showThemes: root.panelMode === "controls" && root.controlsTab === "themes"
-                Layout.preferredHeight: showThemes ? 420 : 0
+                Layout.preferredHeight: showThemes ? controlsCard.tabViewportH : 0
                 active: root._themesTabLoaded
                 visible: showThemes
                 source: "ThemeSwitcher.qml"
@@ -851,7 +869,7 @@ PanelWindow {
             Loader {
                 Layout.fillWidth: true
                 readonly property bool showFiles: root.panelMode === "controls" && root.controlsTab === "files"
-                Layout.preferredHeight: showFiles ? 430 : 0
+                Layout.preferredHeight: showFiles ? controlsCard.tabViewportH : 0
                 active: root._filesTabLoaded
                 visible: showFiles
                 source: "../files/QuickFilesTab.qml"
@@ -875,8 +893,8 @@ PanelWindow {
         anchors.topMargin: root.topBarOffset + 6
         anchors.right: parent.right
         anchors.rightMargin: 10
-        width: 400
-        height: Math.min(496, Math.max(320, root.height - root.topBarOffset - 24))
+        width: Math.min(720, Math.max(360, root.width - 20))
+        height: Math.min(504, Math.max(320, root.height - root.topBarOffset - 24))
         radius: Theme.r(20)
         color: Theme.notchBg
         border.width: Math.max(1, Theme.islandBorderWidth)
