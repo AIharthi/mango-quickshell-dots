@@ -216,6 +216,38 @@ def cmd_gtk_set():
     cmd_gtk_get()
 
 
+def detect_foot_colors_section(ver_str=None):
+    if ver_str is None:
+        if not shutil.which("foot"):
+            return "colors-dark"
+        ver_str = run_out(["foot", "--version"], timeout=2.0)
+    m = re.search(r"(\d+)\.(\d+)", ver_str or "")
+    if not m:
+        return "colors-dark"
+    maj, min_v = int(m.group(1)), int(m.group(2))
+    return "colors-dark" if (maj > 1 or (maj == 1 and min_v >= 26)) else "colors"
+
+
+def normalize_foot_section_headers(path, target_section):
+    if not os.path.isfile(path):
+        return
+    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        lines = f.readlines()
+    changed = False
+    out = []
+    for line in lines:
+        m = re.match(r"^(\s*)\[(colors|colors-dark)\](\s*)$", line)
+        if m:
+            new_line = f"{m.group(1)}[{target_section}]{m.group(3)}"
+            if new_line != line:
+                changed = True
+            out.append(new_line)
+        else:
+            out.append(line)
+    if changed:
+        atomic_write(path, "".join(out))
+
+
 def parse_foot_ini(path):
     res = {
         "exists": os.path.isfile(path),
@@ -240,7 +272,7 @@ def parse_foot_ini(path):
                 if "=" not in s:
                     continue
                 k, v = [x.strip() for x in s.split("=", 1)]
-                if section == "colors" and k == "alpha":
+                if section in ("colors", "colors-dark") and k == "alpha":
                     res["alpha"] = max(0.5, min(1.0, float(v)))
                 elif section == "main" and k == "pad":
                     m = re.match(r"(\d+)", v)
@@ -375,7 +407,9 @@ def cmd_terminal_set():
         foot_path = os.path.join(CONFIG_DIR, "foot", "foot.ini")
         if key == "alpha":
             v = f"{max(0.50, min(1.00, float(val))):.2f}"
-            update_ini_section_kv(foot_path, "colors", "alpha", v)
+            foot_sec = detect_foot_colors_section()
+            normalize_foot_section_headers(foot_path, foot_sec)
+            update_ini_section_kv(foot_path, foot_sec, "alpha", v)
         elif key == "pad":
             n = max(0, min(32, int(float(val))))
             update_ini_section_kv(foot_path, "main", "pad", f"{n}x{n}")
