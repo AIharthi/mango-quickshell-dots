@@ -4,16 +4,19 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Notifications
+import Quickshell.Services.Mpris
 import "components"
-import "settings"
-import "files"
 
 ShellRoot {
     id: root
 
+    // --- Modal Lazy States ---
     property bool settingsOpen: false
     property bool _settingsLoaded: false
     property string settingsPage: "appearance"
+
+    property bool storeOpen: false
+    property bool _storeLoaded: false
 
     property bool filesOpen: false
     property bool _filesLoaded: false
@@ -30,6 +33,65 @@ ShellRoot {
 
     property bool captureHubOpen: false
     property bool _captureHubLoaded: false
+
+    // --- Sequoia Dedicated Hub State (active only when barUiStyle === "menubar") ---
+    readonly property bool isSequoiaActive: !Theme.isSimple && ShellState.barUiStyle === "menubar"
+    property bool sequoiaHubOpen: false
+    property bool _sequoiaHubLoaded: false
+    property string sequoiaHubMode: "controls"      // "controls" | "notifications" | "launcher" | "osd" | "notification"
+    property string sequoiaLauncherMode: "apps"
+    property string sequoiaControlsTab: "controls"  // "controls" | "themes" | "files"
+    property bool sequoiaPowerMenuOpen: false
+    property string sequoiaScreenName: ""
+    property string sequoiaOsdType: "volume"
+    property int sequoiaOsdSeq: 0
+    property var sequoiaPendingNotif: null
+    property int sequoiaNotifSeq: 0
+
+    readonly property var activePlayer: root.isSequoiaActive ? root._resolveActivePlayer() : null
+
+    onIsSequoiaActiveChanged: {
+        if (!root.isSequoiaActive) {
+            root.sequoiaHubOpen = false;
+            root.sequoiaPowerMenuOpen = false;
+            root._sequoiaHubLoaded = false;
+            sequoiaUnloadTimer.stop();
+        }
+    }
+
+    function _resolveActivePlayer(): var {
+        const players = Mpris.players.values;
+        if (!players || players.length === 0)
+            return null;
+
+        let playingSpotify = null;
+        let idleSpotify = null;
+        let playingFallback = null;
+        let idleFallback = null;
+
+        for (let i = 0; i < players.length; i++) {
+            const p = players[i];
+            if (!p)
+                continue;
+            const idStr = ((p.identity || "") + " " + (p.desktopEntry || "")).toLowerCase();
+            const isSpotify = idStr.includes("spotify");
+            const hasTrack = (p.trackTitle && p.trackTitle.length > 0);
+            if (isSpotify) {
+                if (p.isPlaying && !playingSpotify) playingSpotify = p;
+                else if (hasTrack && !idleSpotify) idleSpotify = p;
+            } else {
+                if (p.isPlaying && !playingFallback) playingFallback = p;
+                else if (hasTrack && !idleFallback) idleFallback = p;
+            }
+        }
+        return playingSpotify || playingFallback || idleSpotify || idleFallback || null;
+    }
+
+    function primaryScreenName(): string {
+        if (Quickshell.screens && Quickshell.screens.length > 0 && Quickshell.screens[0])
+            return Quickshell.screens[0].name || "";
+        return "";
+    }
 
     function primaryIsland(): var {
         const list = screenVariants.instances;
@@ -52,14 +114,23 @@ ShellRoot {
         forEachIsland(isl => isl.collapse());
     }
 
-    function openSettings(page: string): void {
-        root.closeFiles();
-        root.closeKeybinds();
-        root.closeWindowSwitcher();
-        root.closePowerOverlay();
-        root.closeCaptureHub();
-        root.settingsPage = (page && page.length > 0) ? page : "appearance";
+    function _closeOtherModals(keep: string): void {
+        if (keep !== "settings") root.closeSettings();
+        if (keep !== "store") root.closeStore();
+        if (keep !== "files") root.closeFiles();
+        if (keep !== "keybinds") root.closeKeybinds();
+        if (keep !== "switcher") root.closeWindowSwitcher();
+        if (keep !== "power") root.closePowerOverlay();
+        if (keep !== "capture") root.closeCaptureHub();
+        if (keep !== "sequoia") root.closeSequoiaHub();
         root.collapseAll();
+    }
+
+    function openSettings(page: string): void {
+        root._closeOtherModals("settings");
+        root.settingsPage = (page && page.length > 0)
+            ? page
+            : (root.isSequoiaActive ? "sequoia" : "appearance");
         settingsUnloadTimer.stop();
         root._settingsLoaded = true;
         root.settingsOpen = true;
@@ -75,17 +146,32 @@ ShellRoot {
         if (root.settingsOpen)
             root.closeSettings();
         else
-            root.openSettings("appearance");
+            root.openSettings(root.isSequoiaActive ? "sequoia" : "appearance");
+    }
+
+    function openStore(): void {
+        root._closeOtherModals("store");
+        storeUnloadTimer.stop();
+        root._storeLoaded = true;
+        root.storeOpen = true;
+    }
+
+    function closeStore(): void {
+        root.storeOpen = false;
+        if (root._storeLoaded)
+            storeUnloadTimer.restart();
+    }
+
+    function toggleStore(): void {
+        if (root.storeOpen)
+            root.closeStore();
+        else
+            root.openStore();
     }
 
     function openFiles(startPath: string): void {
-        root.closeSettings();
-        root.closeKeybinds();
-        root.closeWindowSwitcher();
-        root.closePowerOverlay();
-        root.closeCaptureHub();
+        root._closeOtherModals("files");
         root.filesStartPath = (startPath && startPath.length > 0) ? startPath : "";
-        root.collapseAll();
         filesUnloadTimer.stop();
         root._filesLoaded = true;
         root.filesOpen = true;
@@ -105,12 +191,7 @@ ShellRoot {
     }
 
     function openKeybinds(): void {
-        root.closeSettings();
-        root.closeFiles();
-        root.closeWindowSwitcher();
-        root.closePowerOverlay();
-        root.closeCaptureHub();
-        root.collapseAll();
+        root._closeOtherModals("keybinds");
         keybindsUnloadTimer.stop();
         root._keybindsLoaded = true;
         root.keybindsOpen = true;
@@ -130,12 +211,7 @@ ShellRoot {
     }
 
     function openWindowSwitcher(): void {
-        root.closeSettings();
-        root.closeFiles();
-        root.closeKeybinds();
-        root.closePowerOverlay();
-        root.closeCaptureHub();
-        root.collapseAll();
+        root._closeOtherModals("switcher");
         switcherUnloadTimer.stop();
         root._windowSwitcherLoaded = true;
         root.windowSwitcherOpen = true;
@@ -155,12 +231,7 @@ ShellRoot {
     }
 
     function openPowerOverlay(): void {
-        root.closeSettings();
-        root.closeFiles();
-        root.closeKeybinds();
-        root.closeWindowSwitcher();
-        root.closeCaptureHub();
-        root.collapseAll();
+        root._closeOtherModals("power");
         powerUnloadTimer.stop();
         root._powerOverlayLoaded = true;
         root.powerOverlayOpen = true;
@@ -180,12 +251,7 @@ ShellRoot {
     }
 
     function openCaptureHub(): void {
-        root.closeSettings();
-        root.closeFiles();
-        root.closeKeybinds();
-        root.closeWindowSwitcher();
-        root.closePowerOverlay();
-        root.collapseAll();
+        root._closeOtherModals("capture");
         captureHubUnloadTimer.stop();
         root._captureHubLoaded = true;
         root.captureHubOpen = true;
@@ -204,63 +270,264 @@ ShellRoot {
             root.openCaptureHub();
     }
 
+    // --- Sequoia Hub Control ---
+    function closeSequoiaHub(): void {
+        root.sequoiaHubOpen = false;
+        root.sequoiaPowerMenuOpen = false;
+        if (root._sequoiaHubLoaded)
+            sequoiaUnloadTimer.restart();
+    }
+
+    function openSequoiaControls(tab: string, screenName: string): void {
+        if (!root.isSequoiaActive)
+            return;
+        root._closeOtherModals("sequoia");
+        sequoiaUnloadTimer.stop();
+        root.sequoiaScreenName = (screenName && screenName.length > 0) ? screenName : root.primaryScreenName();
+        root.sequoiaControlsTab = (tab && tab.length > 0) ? tab : "controls";
+        root.sequoiaPowerMenuOpen = false;
+        root.sequoiaHubMode = "controls";
+        root._sequoiaHubLoaded = true;
+        root.sequoiaHubOpen = true;
+    }
+
+    function toggleSequoiaControls(tab: string, screenName: string): void {
+        const wantTab = (tab && tab.length > 0) ? tab : "controls";
+        if (root.sequoiaHubOpen && root.sequoiaHubMode === "controls" && root.sequoiaControlsTab === wantTab)
+            root.closeSequoiaHub();
+        else
+            root.openSequoiaControls(wantTab, screenName);
+    }
+
+    function openSequoiaNotifications(screenName: string): void {
+        if (!root.isSequoiaActive)
+            return;
+        root._closeOtherModals("sequoia");
+        sequoiaUnloadTimer.stop();
+        root.sequoiaScreenName = (screenName && screenName.length > 0) ? screenName : root.primaryScreenName();
+        root.sequoiaPowerMenuOpen = false;
+        root.sequoiaHubMode = "notifications";
+        ShellState.clearUnread();
+        root._sequoiaHubLoaded = true;
+        root.sequoiaHubOpen = true;
+    }
+
+    function toggleSequoiaNotifications(screenName: string): void {
+        if (root.sequoiaHubOpen && root.sequoiaHubMode === "notifications")
+            root.closeSequoiaHub();
+        else
+            root.openSequoiaNotifications(screenName);
+    }
+
+    function openSequoiaLauncher(mode: string): void {
+        if (!root.isSequoiaActive)
+            return;
+        root._closeOtherModals("sequoia");
+        sequoiaUnloadTimer.stop();
+        root.sequoiaLauncherMode = (mode && mode.length > 0) ? mode : "apps";
+        root.sequoiaPowerMenuOpen = false;
+        root.sequoiaHubMode = "launcher";
+        root._sequoiaHubLoaded = true;
+        root.sequoiaHubOpen = true;
+    }
+
+    function toggleSequoiaLauncher(mode: string): void {
+        const wantMode = (mode && mode.length > 0) ? mode : "apps";
+        if (root.sequoiaHubOpen && root.sequoiaHubMode === "launcher" && root.sequoiaLauncherMode === wantMode)
+            root.closeSequoiaHub();
+        else
+            root.openSequoiaLauncher(wantMode);
+    }
+
+    function showSequoiaOsd(osdType: string): void {
+        if (!root.isSequoiaActive || !ShellState.osdEnabled)
+            return;
+        if (root.sequoiaHubOpen && (root.sequoiaHubMode === "controls" || root.sequoiaHubMode === "notifications" || root.sequoiaHubMode === "launcher"))
+            return;
+        sequoiaUnloadTimer.stop();
+        root.sequoiaHubMode = "osd";
+        root.sequoiaOsdType = (osdType && osdType.length > 0) ? osdType : "volume";
+        root.sequoiaOsdSeq += 1;
+        root._sequoiaHubLoaded = true;
+        root.sequoiaHubOpen = true;
+    }
+
+    function showSequoiaNotification(notif: var): void {
+        if (!root.isSequoiaActive || !notif)
+            return;
+        if (root.sequoiaHubOpen && (root.sequoiaHubMode === "controls" || root.sequoiaHubMode === "notifications" || root.sequoiaHubMode === "launcher"))
+            return;
+        sequoiaUnloadTimer.stop();
+        root.sequoiaHubMode = "notification";
+        root.sequoiaPendingNotif = notif;
+        root.sequoiaNotifSeq += 1;
+        root._sequoiaHubLoaded = true;
+        root.sequoiaHubOpen = true;
+    }
+
+    // --- Shared IPC Dispatchers (Sequoia Hub vs Dynamic Island) ---
+    function dispatchDashboard(): void {
+        if (root.isSequoiaActive) {
+            root.toggleSequoiaControls("controls", "");
+            return;
+        }
+        const isl = root.primaryIsland();
+        if (isl) isl.toggleDashboard();
+    }
+
+    function dispatchLauncher(mode: string): void {
+        if (root.isSequoiaActive) {
+            root.toggleSequoiaLauncher(mode);
+            return;
+        }
+        const isl = root.primaryIsland();
+        if (!isl) return;
+        if (mode === "clipboard") isl.toggleClipboard();
+        else if (mode === "snippets") isl.toggleSnippets();
+        else isl.toggleLauncher();
+    }
+
+    function dispatchNotifications(): void {
+        if (root.isSequoiaActive) {
+            root.toggleSequoiaNotifications("");
+            return;
+        }
+        const isl = root.primaryIsland();
+        if (isl) isl.toggleNotifications();
+    }
+
+    function dispatchThemeTab(): void {
+        if (root.isSequoiaActive) {
+            root.toggleSequoiaControls("themes", "");
+            return;
+        }
+        const isl = root.primaryIsland();
+        if (isl) isl.toggleThemeTab();
+    }
+
+    function dispatchFilesTab(): void {
+        if (root.isSequoiaActive) {
+            root.toggleSequoiaControls("files", "");
+            return;
+        }
+        const isl = root.primaryIsland();
+        if (isl) isl.toggleFilesTab();
+    }
+
+    function dispatchOsd(osdType: string): void {
+        if (root.isSequoiaActive) {
+            root.showSequoiaOsd(osdType);
+            return;
+        }
+        root.forEachIsland(isl => isl.triggerOsd(osdType));
+    }
+
+    function dispatchCollapse(): void {
+        root.closeSequoiaHub();
+        root.collapseAll();
+    }
+
+    // --- Unload Timers + Explicit GC Sweep ---
+    Timer {
+        id: gcTimer
+        interval: 250
+        repeat: false
+        onTriggered: gc()
+    }
+
     Timer {
         id: settingsUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 150
+        interval: Theme.reducedMotion ? 10 : 400
         repeat: false
         onTriggered: {
-            if (!root.settingsOpen)
+            if (!root.settingsOpen) {
                 root._settingsLoaded = false;
+                gcTimer.restart();
+            }
+        }
+    }
+
+    Timer {
+        id: storeUnloadTimer
+        interval: Theme.reducedMotion ? 10 : 400
+        repeat: false
+        onTriggered: {
+            if (!root.storeOpen) {
+                root._storeLoaded = false;
+                gcTimer.restart();
+            }
         }
     }
 
     Timer {
         id: filesUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 150
+        interval: Theme.reducedMotion ? 10 : 400
         repeat: false
         onTriggered: {
-            if (!root.filesOpen)
+            if (!root.filesOpen) {
                 root._filesLoaded = false;
+                gcTimer.restart();
+            }
         }
     }
 
     Timer {
         id: keybindsUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 150
+        interval: Theme.reducedMotion ? 10 : 400
         repeat: false
         onTriggered: {
-            if (!root.keybindsOpen)
+            if (!root.keybindsOpen) {
                 root._keybindsLoaded = false;
+                gcTimer.restart();
+            }
         }
     }
 
     Timer {
         id: switcherUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 170
+        interval: Theme.reducedMotion ? 10 : 400
         repeat: false
         onTriggered: {
-            if (!root.windowSwitcherOpen)
+            if (!root.windowSwitcherOpen) {
                 root._windowSwitcherLoaded = false;
+                gcTimer.restart();
+            }
         }
     }
 
     Timer {
         id: powerUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 170
+        interval: Theme.reducedMotion ? 10 : 400
         repeat: false
         onTriggered: {
-            if (!root.powerOverlayOpen)
+            if (!root.powerOverlayOpen) {
                 root._powerOverlayLoaded = false;
+                gcTimer.restart();
+            }
         }
     }
 
     Timer {
         id: captureHubUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 160
+        interval: Theme.reducedMotion ? 10 : 400
         repeat: false
         onTriggered: {
-            if (!root.captureHubOpen)
+            if (!root.captureHubOpen) {
                 root._captureHubLoaded = false;
+                gcTimer.restart();
+            }
+        }
+    }
+
+    Timer {
+        id: sequoiaUnloadTimer
+        interval: Theme.reducedMotion ? 10 : 400
+        repeat: false
+        onTriggered: {
+            if (!root.sequoiaHubOpen) {
+                root._sequoiaHubLoaded = false;
+                gcTimer.restart();
+            }
         }
     }
 
@@ -300,7 +567,10 @@ ShellRoot {
             ShellState.recordNotification(notification);
             const allowBanner = !ShellState.dnd || (ShellState.dndAllowCritical && Number(notification.urgency || 0) === 2);
             if (allowBanner) {
-                root.forEachIsland(isl => isl.showNotification(notification));
+                if (root.isSequoiaActive)
+                    root.showSequoiaNotification(notification);
+                else
+                    root.forEachIsland(isl => isl.showNotification(notification));
                 if (ShellState.notifSoundEnabled && !ShellState.dnd) {
                     Quickshell.execDetached([
                         "sh", "-c",
@@ -311,7 +581,7 @@ ShellRoot {
         }
     }
 
-    // Per-Monitor Dynamic Island & Simple Square Top Bar
+    // Per-monitor exclusive top shell architecture (Mode A Simple / Mode B Sequoia / Mode C Dynamic Island)
     Variants {
         id: screenVariants
         model: Quickshell.screens
@@ -319,10 +589,11 @@ ShellRoot {
         delegate: Scope {
             id: screenScope
             required property var modelData
-            readonly property alias island: islandItem
+            readonly property var island: (islandLoader.item && islandLoader.item.island) ? islandLoader.item.island : null
 
-            // Extremely Simple Square Top Bar (loaded only in Simple Mode)
+            // Mode A: Minimal Flat Edge Bar
             LazyLoader {
+                id: simpleBarLoader
                 active: Theme.isSimple
 
                 PanelWindow {
@@ -348,138 +619,338 @@ ShellRoot {
                         anchors.fill: parent
                         active: Theme.isSimple
                         screenName: screenScope.modelData ? screenScope.modelData.name : ""
-                        onToggleDashboardRequested: islandItem.toggleDashboard()
-                        onToggleLauncherRequested: islandItem.toggleLauncher()
+                        onToggleDashboardRequested: if (screenScope.island) screenScope.island.toggleDashboard()
+                        onToggleLauncherRequested: if (screenScope.island) screenScope.island.toggleLauncher()
                         onToggleSettingsRequested: root.toggleSettings()
                         onToggleFilesRequested: root.toggleFiles()
-                        onToggleNotificationsRequested: islandItem.toggleNotifications()
+                        onToggleNotificationsRequested: if (screenScope.island) screenScope.island.toggleNotifications()
                     }
                 }
             }
 
-            PanelWindow {
-                id: islandWindow
-                screen: screenScope.modelData
+            // Mode B: Stationary macOS Sequoia Top Menu Bar
+            LazyLoader {
+                id: sequoiaBarLoader
+                active: root.isSequoiaActive
 
-                anchors {
-                    top: true
-                    left: true
-                    right: true
+                PanelWindow {
+                    id: sequoiaBarWin
+                    screen: screenScope.modelData
+
+                    anchors {
+                        top: true
+                        left: true
+                        right: true
+                    }
+
+                    exclusiveZone: ShellState.sequoiaBarHeight + (ShellState.sequoiaBarFloating ? 6 : 0)
+                    exclusionMode: ExclusionMode.Normal
+                    implicitHeight: ShellState.sequoiaBarHeight + (ShellState.sequoiaBarFloating ? 8 : 2)
+                    color: "transparent"
+
+                    WlrLayershell.layer: WlrLayer.Top
+                    WlrLayershell.namespace: "quickshell-sequoia-bar"
+                    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+
+                    IdleInhibitor {
+                        enabled: ShellState.keepAwake && (Quickshell.screens.length === 0 || screenScope.modelData === Quickshell.screens[0])
+                        window: sequoiaBarWin
+                    }
+
+                    Loader {
+                        id: sequoiaBarContentLoader
+                        anchors.fill: parent
+                        active: root.isSequoiaActive
+                        source: active ? Qt.resolvedUrl("components/SequoiaBar.qml") : ""
+                        onLoaded: {
+                            if (!item)
+                                return;
+                            item.screenName = Qt.binding(() => screenScope.modelData ? screenScope.modelData.name : "");
+                            item.player = Qt.binding(() => root.activePlayer);
+                            item.openPanelMode = Qt.binding(() => root.sequoiaHubOpen ? root.sequoiaHubMode : "");
+                        }
+                    }
+
+                    Connections {
+                        target: sequoiaBarContentLoader.item
+                        ignoreUnknownSignals: true
+                        function onToggleControlCenterRequested() {
+                            root.toggleSequoiaControls("controls", screenScope.modelData ? screenScope.modelData.name : "");
+                        }
+                        function onToggleNotificationsRequested() {
+                            root.toggleSequoiaNotifications(screenScope.modelData ? screenScope.modelData.name : "");
+                        }
+                        function onToggleSpotlightRequested() {
+                            root.toggleSequoiaLauncher("apps");
+                        }
+                        function onOpenSettingsRequested(page) {
+                            root.openSettings(page);
+                        }
+                        function onOpenFilesRequested(path) {
+                            root.openFiles(path);
+                        }
+                        function onOpenStoreRequested() {
+                            root.openStore();
+                        }
+                    }
                 }
+            }
 
-                // Reserve top bar space cleanly: full-width/notch flush modes omit floating pill top margin
-                exclusiveZone: Theme.isSimple ? 0 : (
-                    ShellState.barUiStyle === "menubar" ? 28 : (
+            // Mode C (or Simple Mode popup layer): Morphing Dynamic Island / Split / Modular Pill
+            LazyLoader {
+                id: islandLoader
+                active: Theme.isSimple || ShellState.barUiStyle !== "menubar"
+
+                PanelWindow {
+                    id: islandWindow
+                    readonly property alias island: islandItem
+                    screen: screenScope.modelData
+
+                    anchors {
+                        top: true
+                        left: true
+                        right: true
+                    }
+
+                    exclusiveZone: Theme.isSimple ? 0 : (
                         ShellState.pillHeight + (
                             (ShellState.barUiStyle === "classic" && (ShellState.islandStyle === "notch" || ShellState.islandStyle === "bar"))
                                 ? 2
                                 : ShellState.islandTopMargin + 2
                         )
                     )
-                )
-                exclusionMode: ExclusionMode.Normal
-                implicitHeight: 620
-                color: "transparent"
+                    exclusionMode: ExclusionMode.Normal
+                    // Dynamic Wayland surface height: tight ~54px strip when collapsed, 620px only while expanding/expanded
+                    implicitHeight: (islandItem.islandState === "collapsed" && !islandItem.surfaceExpanded)
+                        ? Math.max(48, ShellState.pillHeight + ShellState.islandTopMargin + 16)
+                        : 620
+                    color: "transparent"
 
-                // Only the visible Dynamic Island pill (or active square dropdown in Simple Mode) intercepts mouse events.
-                mask: Region {
-                    item: islandItem.maskTarget
-                }
+                    mask: Region {
+                        item: islandItem.maskTarget
+                    }
 
-                WlrLayershell.layer: WlrLayer.Top
-                WlrLayershell.namespace: "quickshell-island"
-                WlrLayershell.keyboardFocus: islandItem.needsKeyboardFocus
-                    ? WlrKeyboardFocus.Exclusive
-                    : WlrKeyboardFocus.None
+                    WlrLayershell.layer: WlrLayer.Top
+                    WlrLayershell.namespace: "quickshell-island"
+                    WlrLayershell.keyboardFocus: islandItem.needsKeyboardFocus
+                        ? WlrKeyboardFocus.Exclusive
+                        : WlrKeyboardFocus.None
 
-                IdleInhibitor {
-                    enabled: ShellState.keepAwake && (Quickshell.screens.length === 0 || screenScope.modelData === Quickshell.screens[0])
-                    window: islandWindow
-                }
+                    IdleInhibitor {
+                        enabled: ShellState.keepAwake && (Quickshell.screens.length === 0 || screenScope.modelData === Quickshell.screens[0])
+                        window: islandWindow
+                    }
 
-                DynamicIsland {
-                    id: islandItem
-                    anchors.fill: parent
-                    screenName: screenScope.modelData ? screenScope.modelData.name : ""
-                    onOpenSettingsRequested: page => root.openSettings(page)
-                    onOpenFilesRequested: path => root.openFiles(path)
-                    onOpenKeybindsRequested: root.openKeybinds()
-                    onOpenCaptureHubRequested: root.openCaptureHub()
+                    DynamicIsland {
+                        id: islandItem
+                        anchors.fill: parent
+                        screenName: screenScope.modelData ? screenScope.modelData.name : ""
+                        onOpenSettingsRequested: page => root.openSettings(page)
+                        onOpenFilesRequested: path => root.openFiles(path)
+                        onOpenKeybindsRequested: root.openKeybinds()
+                        onOpenCaptureHubRequested: root.openCaptureHub()
+                        onOpenStoreRequested: root.openStore()
+                    }
                 }
             }
         }
     }
 
-    // Built-in Hardware-Aware Settings Window (lazy-loaded on demand, unloaded after exit animation)
+    // Dedicated Sequoia Control Center / Notifications / Spotlight / OSD Hub (on demand)
+    LazyLoader {
+        id: sequoiaHubLoader
+        active: root._sequoiaHubLoaded && root.isSequoiaActive
+        source: active ? Qt.resolvedUrl("components/SequoiaHub.qml") : ""
+
+        onItemChanged: {
+            if (!item)
+                return;
+            item.isOpen = Qt.binding(() => root.sequoiaHubOpen);
+            item.panelMode = Qt.binding(() => root.sequoiaHubMode);
+            item.launcherMode = Qt.binding(() => root.sequoiaLauncherMode);
+            item.controlsTab = Qt.binding(() => root.sequoiaControlsTab);
+            item.powerMenuOpen = Qt.binding(() => root.sequoiaPowerMenuOpen);
+            item.screenName = Qt.binding(() => root.sequoiaScreenName);
+            item.player = Qt.binding(() => root.activePlayer);
+            item.osdType = Qt.binding(() => root.sequoiaOsdType);
+            item.osdTriggerSeq = Qt.binding(() => root.sequoiaOsdSeq);
+            item.pendingNotif = Qt.binding(() => root.sequoiaPendingNotif);
+            item.notifTriggerSeq = Qt.binding(() => root.sequoiaNotifSeq);
+        }
+    }
+
+    Connections {
+        target: sequoiaHubLoader.item
+        ignoreUnknownSignals: true
+        function onCloseRequested() { root.closeSequoiaHub(); }
+        function onOpenSettingsRequested(page) {
+            root.closeSequoiaHub();
+            root.openSettings(page);
+        }
+        function onOpenFilesRequested(path) {
+            root.closeSequoiaHub();
+            root.openFiles(path);
+        }
+        function onOpenKeybindsRequested() {
+            root.closeSequoiaHub();
+            root.openKeybinds();
+        }
+        function onOpenCaptureHubRequested() {
+            root.closeSequoiaHub();
+            root.openCaptureHub();
+        }
+        function onOpenStoreRequested() {
+            root.closeSequoiaHub();
+            root.openStore();
+        }
+        function onSwitchControlsTab(tab) {
+            root.sequoiaPowerMenuOpen = false;
+            root.sequoiaControlsTab = tab;
+        }
+        function onTogglePowerMenuRequested() {
+            root.sequoiaPowerMenuOpen = !root.sequoiaPowerMenuOpen;
+        }
+    }
+
+    // URL-loaded Hardware-Aware Settings Window (compiled only when opened)
     LazyLoader {
         id: settingsLoader
         active: root._settingsLoaded
+        source: active ? Qt.resolvedUrl("settings/SettingsWindow.qml") : ""
 
-        SettingsWindow {
-            isOpen: root.settingsOpen
-            activePage: root.settingsPage
-            onPageSelected: page => { root.settingsPage = page; }
-            onCloseRequested: root.closeSettings()
+        onItemChanged: {
+            if (!item)
+                return;
+            item.isOpen = Qt.binding(() => root.settingsOpen);
+            item.activePage = Qt.binding(() => root.settingsPage);
         }
     }
 
-    // Rust-Backed Dynamic File Manager Window (lazy-loaded on demand, zero idle daemon)
+    Connections {
+        target: settingsLoader.item
+        ignoreUnknownSignals: true
+        function onPageSelected(page) { root.settingsPage = page; }
+        function onCloseRequested() { root.closeSettings(); }
+        function onOpenStoreRequested() { root.openStore(); }
+    }
+
+    // URL-loaded Native Aurora App Store Window
+    LazyLoader {
+        id: storeLoader
+        active: root._storeLoaded
+        source: active ? Qt.resolvedUrl("components/StoreWindow.qml") : ""
+
+        onItemChanged: {
+            if (!item)
+                return;
+            item.isOpen = Qt.binding(() => root.storeOpen);
+        }
+    }
+
+    Connections {
+        target: storeLoader.item
+        ignoreUnknownSignals: true
+        function onCloseRequested() { root.closeStore(); }
+        function onOpenSettingsRequested(page) { root.openSettings(page); }
+    }
+
+    // URL-loaded Rust-Backed Dynamic File Manager Window
     LazyLoader {
         id: filesLoader
         active: root._filesLoaded
+        source: active ? Qt.resolvedUrl("files/FileManagerWindow.qml") : ""
 
-        FileManagerWindow {
-            isOpen: root.filesOpen
-            initialPath: root.filesStartPath
-            onCloseRequested: root.closeFiles()
-            onOpenSettingsRequested: page => root.openSettings(page)
+        onItemChanged: {
+            if (!item)
+                return;
+            item.isOpen = Qt.binding(() => root.filesOpen);
+            item.initialPath = Qt.binding(() => root.filesStartPath);
         }
     }
 
-    // Keybind Cheat Sheet Modal (lazy-loaded on demand)
+    Connections {
+        target: filesLoader.item
+        ignoreUnknownSignals: true
+        function onCloseRequested() { root.closeFiles(); }
+        function onOpenSettingsRequested(page) { root.openSettings(page); }
+    }
+
+    // URL-loaded Keybind Cheat Sheet Modal
     LazyLoader {
         id: keybindsLoader
         active: root._keybindsLoaded
+        source: active ? Qt.resolvedUrl("components/KeybindSheet.qml") : ""
 
-        KeybindSheet {
-            isOpen: root.keybindsOpen
-            onCloseRequested: root.closeKeybinds()
+        onItemChanged: {
+            if (!item)
+                return;
+            item.isOpen = Qt.binding(() => root.keybindsOpen);
         }
     }
 
-    // Window Switcher Modal (lazy-loaded on demand)
+    Connections {
+        target: keybindsLoader.item
+        ignoreUnknownSignals: true
+        function onCloseRequested() { root.closeKeybinds(); }
+    }
+
+    // URL-loaded Window Switcher Modal
     LazyLoader {
         id: switcherLoader
         active: root._windowSwitcherLoaded
+        source: active ? Qt.resolvedUrl("components/WindowSwitcher.qml") : ""
 
-        WindowSwitcher {
-            isOpen: root.windowSwitcherOpen
-            onCloseRequested: root.closeWindowSwitcher()
+        onItemChanged: {
+            if (!item)
+                return;
+            item.isOpen = Qt.binding(() => root.windowSwitcherOpen);
         }
     }
 
-    // Full-Screen Power & Session Overlay (lazy-loaded on demand)
+    Connections {
+        target: switcherLoader.item
+        ignoreUnknownSignals: true
+        function onCloseRequested() { root.closeWindowSwitcher(); }
+    }
+
+    // URL-loaded Full-Screen Power & Session Overlay
     LazyLoader {
         id: powerOverlayLoader
         active: root._powerOverlayLoaded
+        source: active ? Qt.resolvedUrl("components/PowerOverlay.qml") : ""
 
-        PowerOverlay {
-            isOpen: root.powerOverlayOpen
-            onCloseRequested: root.closePowerOverlay()
-            onLockRequested: lockScreen.lock()
+        onItemChanged: {
+            if (!item)
+                return;
+            item.isOpen = Qt.binding(() => root.powerOverlayOpen);
         }
     }
 
-    // Rust-Backed Capture Studio Modal (lazy-loaded on demand)
+    Connections {
+        target: powerOverlayLoader.item
+        ignoreUnknownSignals: true
+        function onCloseRequested() { root.closePowerOverlay(); }
+        function onLockRequested() { lockScreen.lock(); }
+    }
+
+    // URL-loaded Rust-Backed Capture Studio Modal
     LazyLoader {
         id: captureHubLoader
         active: root._captureHubLoaded
+        source: active ? Qt.resolvedUrl("components/CaptureHubModal.qml") : ""
 
-        CaptureHubModal {
-            isOpen: root.captureHubOpen
-            onCloseRequested: root.closeCaptureHub()
-            onOpenFilesRequested: path => root.openFiles(path)
+        onItemChanged: {
+            if (!item)
+                return;
+            item.isOpen = Qt.binding(() => root.captureHubOpen);
         }
+    }
+
+    Connections {
+        target: captureHubLoader.item
+        ignoreUnknownSignals: true
+        function onCloseRequested() { root.closeCaptureHub(); }
+        function onOpenFilesRequested(path) { root.openFiles(path); }
     }
 
     // Native Polkit Authentication Agent Modal
@@ -494,425 +965,125 @@ ShellRoot {
         target: "island"
 
         function lockSession(): void {
-            root.collapseAll();
-            root.closeSettings();
-            root.closeFiles();
-            root.closeKeybinds();
-            root.closeWindowSwitcher();
-            root.closePowerOverlay();
-            root.closeCaptureHub();
+            root._closeOtherModals("");
             lockScreen.lock();
         }
 
-        function toggleCaptureHub(): void {
-            root.toggleCaptureHub();
-        }
-
-        function toggleSnippets(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleSnippets();
-        }
-
-        function toggleWindowSwitcher(): void {
-            root.toggleWindowSwitcher();
-        }
-
-        function togglePowerOverlay(): void {
-            root.togglePowerOverlay();
-        }
-
-        function toggleGameMode(): void {
-            ShellState.toggleGameMode();
-        }
-
-        function refreshWeather(): void {
-            ShellState.refreshWeather(true);
-        }
-
-        function syncSddmTheme(): void {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/sync-sddm-theme.sh")]);
-        }
-
-        function toggleLauncher(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleLauncher();
-        }
-
-        function toggleClipboard(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleClipboard();
-        }
-
-        function toggleNotifications(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleNotifications();
-        }
-
-        function toggleKeybindSheet(): void {
-            root.toggleKeybindSheet();
-        }
-
-        function syncRecordingState(): void {
-            ShellState.syncRecordingState();
-        }
-
-        function toggleThemeTab(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleThemeTab();
-        }
-
-        function showOsd(osdType: string): void {
-            root.forEachIsland(isl => isl.triggerOsd(osdType));
-        }
-
-        function toggleDashboard(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleDashboard();
-        }
-
-        function collapse(): void {
-            root.collapseAll();
-        }
-
-        function setShellMode(mode: string): void {
-            Theme.setShellMode(mode);
-        }
-
-        function toggleShellMode(mode: string): void {
-            Theme.toggleShellMode(mode);
-        }
-
-        function cycleShellMode(): void {
-            Theme.cycleShellMode();
-        }
-
-        function setHubUiStyle(style: string): void {
-            ShellState.setHubUiStyle(style);
-        }
-
-        function cycleHubUiStyle(): void {
-            ShellState.cycleHubUiStyle();
-        }
-
-        function setBarUiStyle(style: string): void {
-            ShellState.setBarUiStyle(style);
-        }
-
-        function cycleBarUiStyle(): void {
-            ShellState.cycleBarUiStyle();
-        }
-
-        function toggleSettings(): void {
-            root.toggleSettings();
-        }
-
-        function openSettings(page: string): void {
-            root.openSettings(page);
-        }
-
-        function openDoctor(): void {
-            root.openSettings("system");
-        }
-
-        function closeSettings(): void {
-            root.closeSettings();
-        }
-
-        function toggleFiles(): void {
-            root.toggleFiles();
-        }
-
-        function openFiles(path: string): void {
-            root.openFiles(path);
-        }
-
-        function closeFiles(): void {
-            root.closeFiles();
-        }
-
-        function toggleFilesTab(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleFilesTab();
-        }
-
-        function resetFiles(): void {
-            ShellState.resetFiles();
-        }
-
-        function toggleDnd(): void {
-            ShellState.toggleDnd();
-        }
-
-        function toggleKeepAwake(): void {
-            ShellState.toggleKeepAwake();
-        }
-
-        function clearClipboard(): void {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "clear-clipboard"]);
-        }
-
-        function randomWallpaper(): void {
-            Theme.randomWallpaper();
-        }
-
-        function applyVibe(vibeId: string): void {
-            Theme.applyVibe(vibeId);
-        }
-
-        function applyAccent(hex: string): void {
-            Theme.applyAccentColor(hex);
-        }
-
-        function applyPreset(presetId: string): void {
-            Theme.applyPreset(presetId);
-        }
-
-        function toggleDarkLight(): void {
-            Theme.toggleScheme();
-        }
-
-        function resetAppearance(): void {
-            ShellState.resetAppearance();
-        }
-
-        function resetBar(): void {
-            ShellState.resetBar();
-        }
-
-        function resetAllSettings(): void {
-            ShellState.resetAllSettings();
-        }
-
-        function togglePip(): void {
-            ShellState.togglePip();
-        }
-
-        function cyclePipCorner(): void {
-            ShellState.cyclePipCorner();
-        }
-
-        function snapPip(): void {
-            ShellState.snapPip();
-        }
+        function toggleCaptureHub(): void { root.toggleCaptureHub(); }
+        function toggleSnippets(): void { root.dispatchLauncher("snippets"); }
+        function toggleWindowSwitcher(): void { root.toggleWindowSwitcher(); }
+        function togglePowerOverlay(): void { root.togglePowerOverlay(); }
+        function toggleGameMode(): void { ShellState.toggleGameMode(); }
+        function refreshWeather(): void { ShellState.refreshWeather(true); }
+        function syncSddmTheme(): void { Quickshell.execDetached([Quickshell.shellPath("scripts/sync-sddm-theme.sh")]); }
+        function toggleLauncher(): void { root.dispatchLauncher("apps"); }
+        function toggleClipboard(): void { root.dispatchLauncher("clipboard"); }
+        function toggleNotifications(): void { root.dispatchNotifications(); }
+        function toggleKeybindSheet(): void { root.toggleKeybindSheet(); }
+        function syncRecordingState(): void { ShellState.syncRecordingState(); }
+        function toggleThemeTab(): void { root.dispatchThemeTab(); }
+        function showOsd(osdType: string): void { root.dispatchOsd(osdType); }
+        function toggleDashboard(): void { root.dispatchDashboard(); }
+        function collapse(): void { root.dispatchCollapse(); }
+        function setShellMode(mode: string): void { Theme.setShellMode(mode); }
+        function toggleShellMode(mode: string): void { Theme.toggleShellMode(mode); }
+        function cycleShellMode(): void { Theme.cycleShellMode(); }
+        function setHubUiStyle(style: string): void { ShellState.setHubUiStyle(style); }
+        function cycleHubUiStyle(): void { ShellState.cycleHubUiStyle(); }
+        function setSequoiaHubStyle(style: string): void { ShellState.setSequoiaHubStyle(style); }
+        function cycleSequoiaHubStyle(): void { ShellState.cycleSequoiaHubStyle(); }
+        function setBarUiStyle(style: string): void { ShellState.setBarUiStyle(style); }
+        function cycleBarUiStyle(): void { ShellState.cycleBarUiStyle(); }
+        function toggleSettings(): void { root.toggleSettings(); }
+        function openSettings(page: string): void { root.openSettings(page); }
+        function openDoctor(): void { root.openSettings("system"); }
+        function closeSettings(): void { root.closeSettings(); }
+        function toggleStore(): void { root.toggleStore(); }
+        function openStore(): void { root.openStore(); }
+        function closeStore(): void { root.closeStore(); }
+        function toggleFiles(): void { root.toggleFiles(); }
+        function openFiles(path: string): void { root.openFiles(path); }
+        function closeFiles(): void { root.closeFiles(); }
+        function toggleFilesTab(): void { root.dispatchFilesTab(); }
+        function resetFiles(): void { ShellState.resetFiles(); }
+        function toggleDnd(): void { ShellState.toggleDnd(); }
+        function toggleKeepAwake(): void { ShellState.toggleKeepAwake(); }
+        function clearClipboard(): void { Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "clear-clipboard"]); }
+        function randomWallpaper(): void { Theme.randomWallpaper(); }
+        function applyVibe(vibeId: string): void { Theme.applyVibe(vibeId); }
+        function applyAccent(hex: string): void { Theme.applyAccentColor(hex); }
+        function applyPreset(presetId: string): void { Theme.applyPreset(presetId); }
+        function toggleDarkLight(): void { Theme.toggleScheme(); }
+        function resetAppearance(): void { ShellState.resetAppearance(); }
+        function resetBar(): void { ShellState.resetBar(); }
+        function resetIsland(): void { ShellState.resetIsland(); }
+        function resetSequoia(): void { ShellState.resetSequoia(); }
+        function resetAllSettings(): void { ShellState.resetAllSettings(); }
+        function togglePip(): void { ShellState.togglePip(); }
+        function cyclePipCorner(): void { ShellState.cyclePipCorner(); }
+        function snapPip(): void { ShellState.snapPip(); }
     }
 
     IpcHandler {
         target: "aurora"
 
         function lockSession(): void {
-            root.collapseAll();
-            root.closeSettings();
-            root.closeFiles();
-            root.closeKeybinds();
-            root.closeWindowSwitcher();
-            root.closePowerOverlay();
-            root.closeCaptureHub();
+            root._closeOtherModals("");
             lockScreen.lock();
         }
 
-        function toggleCaptureHub(): void {
-            root.toggleCaptureHub();
-        }
-
-        function toggleSnippets(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleSnippets();
-        }
-
-        function toggleWindowSwitcher(): void {
-            root.toggleWindowSwitcher();
-        }
-
-        function togglePowerOverlay(): void {
-            root.togglePowerOverlay();
-        }
-
-        function toggleGameMode(): void {
-            ShellState.toggleGameMode();
-        }
-
-        function refreshWeather(): void {
-            ShellState.refreshWeather(true);
-        }
-
-        function syncSddmTheme(): void {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/sync-sddm-theme.sh")]);
-        }
-
-        function toggleLauncher(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleLauncher();
-        }
-
-        function toggleClipboard(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleClipboard();
-        }
-
-        function toggleNotifications(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleNotifications();
-        }
-
-        function toggleKeybindSheet(): void {
-            root.toggleKeybindSheet();
-        }
-
-        function syncRecordingState(): void {
-            ShellState.syncRecordingState();
-        }
-
-        function toggleThemeTab(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleThemeTab();
-        }
-
-        function showOsd(osdType: string): void {
-            root.forEachIsland(isl => isl.triggerOsd(osdType));
-        }
-
-        function toggleDashboard(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleDashboard();
-        }
-
-        function collapse(): void {
-            root.collapseAll();
-        }
-
-        function setShellMode(mode: string): void {
-            Theme.setShellMode(mode);
-        }
-
-        function toggleShellMode(mode: string): void {
-            Theme.toggleShellMode(mode);
-        }
-
-        function cycleShellMode(): void {
-            Theme.cycleShellMode();
-        }
-
-        function setHubUiStyle(style: string): void {
-            ShellState.setHubUiStyle(style);
-        }
-
-        function cycleHubUiStyle(): void {
-            ShellState.cycleHubUiStyle();
-        }
-
-        function setBarUiStyle(style: string): void {
-            ShellState.setBarUiStyle(style);
-        }
-
-        function cycleBarUiStyle(): void {
-            ShellState.cycleBarUiStyle();
-        }
-
-        function toggleSettings(): void {
-            root.toggleSettings();
-        }
-
-        function openSettings(page: string): void {
-            root.openSettings(page);
-        }
-
-        function openDoctor(): void {
-            root.openSettings("system");
-        }
-
-        function closeSettings(): void {
-            root.closeSettings();
-        }
-
-        function toggleFiles(): void {
-            root.toggleFiles();
-        }
-
-        function openFiles(path: string): void {
-            root.openFiles(path);
-        }
-
-        function closeFiles(): void {
-            root.closeFiles();
-        }
-
-        function toggleFilesTab(): void {
-            const isl = root.primaryIsland();
-            if (isl)
-                isl.toggleFilesTab();
-        }
-
-        function resetFiles(): void {
-            ShellState.resetFiles();
-        }
-
-        function toggleDnd(): void {
-            ShellState.toggleDnd();
-        }
-
-        function toggleKeepAwake(): void {
-            ShellState.toggleKeepAwake();
-        }
-
-        function clearClipboard(): void {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "clear-clipboard"]);
-        }
-
-        function randomWallpaper(): void {
-            Theme.randomWallpaper();
-        }
-
-        function applyVibe(vibeId: string): void {
-            Theme.applyVibe(vibeId);
-        }
-
-        function applyAccent(hex: string): void {
-            Theme.applyAccentColor(hex);
-        }
-
-        function applyPreset(presetId: string): void {
-            Theme.applyPreset(presetId);
-        }
-
-        function toggleDarkLight(): void {
-            Theme.toggleScheme();
-        }
-
-        function resetAppearance(): void {
-            ShellState.resetAppearance();
-        }
-
-        function resetBar(): void {
-            ShellState.resetBar();
-        }
-
-        function resetAllSettings(): void {
-            ShellState.resetAllSettings();
-        }
-
-        function togglePip(): void {
-            ShellState.togglePip();
-        }
-
-        function cyclePipCorner(): void {
-            ShellState.cyclePipCorner();
-        }
-
-        function snapPip(): void {
-            ShellState.snapPip();
-        }
+        function toggleCaptureHub(): void { root.toggleCaptureHub(); }
+        function toggleSnippets(): void { root.dispatchLauncher("snippets"); }
+        function toggleWindowSwitcher(): void { root.toggleWindowSwitcher(); }
+        function togglePowerOverlay(): void { root.togglePowerOverlay(); }
+        function toggleGameMode(): void { ShellState.toggleGameMode(); }
+        function refreshWeather(): void { ShellState.refreshWeather(true); }
+        function syncSddmTheme(): void { Quickshell.execDetached([Quickshell.shellPath("scripts/sync-sddm-theme.sh")]); }
+        function toggleLauncher(): void { root.dispatchLauncher("apps"); }
+        function toggleClipboard(): void { root.dispatchLauncher("clipboard"); }
+        function toggleNotifications(): void { root.dispatchNotifications(); }
+        function toggleKeybindSheet(): void { root.toggleKeybindSheet(); }
+        function syncRecordingState(): void { ShellState.syncRecordingState(); }
+        function toggleThemeTab(): void { root.dispatchThemeTab(); }
+        function showOsd(osdType: string): void { root.dispatchOsd(osdType); }
+        function toggleDashboard(): void { root.dispatchDashboard(); }
+        function collapse(): void { root.dispatchCollapse(); }
+        function setShellMode(mode: string): void { Theme.setShellMode(mode); }
+        function toggleShellMode(mode: string): void { Theme.toggleShellMode(mode); }
+        function cycleShellMode(): void { Theme.cycleShellMode(); }
+        function setHubUiStyle(style: string): void { ShellState.setHubUiStyle(style); }
+        function cycleHubUiStyle(): void { ShellState.cycleHubUiStyle(); }
+        function setSequoiaHubStyle(style: string): void { ShellState.setSequoiaHubStyle(style); }
+        function cycleSequoiaHubStyle(): void { ShellState.cycleSequoiaHubStyle(); }
+        function setBarUiStyle(style: string): void { ShellState.setBarUiStyle(style); }
+        function cycleBarUiStyle(): void { ShellState.cycleBarUiStyle(); }
+        function toggleSettings(): void { root.toggleSettings(); }
+        function openSettings(page: string): void { root.openSettings(page); }
+        function openDoctor(): void { root.openSettings("system"); }
+        function closeSettings(): void { root.closeSettings(); }
+        function toggleStore(): void { root.toggleStore(); }
+        function openStore(): void { root.openStore(); }
+        function closeStore(): void { root.closeStore(); }
+        function toggleFiles(): void { root.toggleFiles(); }
+        function openFiles(path: string): void { root.openFiles(path); }
+        function closeFiles(): void { root.closeFiles(); }
+        function toggleFilesTab(): void { root.dispatchFilesTab(); }
+        function resetFiles(): void { ShellState.resetFiles(); }
+        function toggleDnd(): void { ShellState.toggleDnd(); }
+        function toggleKeepAwake(): void { ShellState.toggleKeepAwake(); }
+        function clearClipboard(): void { Quickshell.execDetached([Quickshell.shellPath("scripts/manage-system.sh"), "clear-clipboard"]); }
+        function randomWallpaper(): void { Theme.randomWallpaper(); }
+        function applyVibe(vibeId: string): void { Theme.applyVibe(vibeId); }
+        function applyAccent(hex: string): void { Theme.applyAccentColor(hex); }
+        function applyPreset(presetId: string): void { Theme.applyPreset(presetId); }
+        function toggleDarkLight(): void { Theme.toggleScheme(); }
+        function resetAppearance(): void { ShellState.resetAppearance(); }
+        function resetBar(): void { ShellState.resetBar(); }
+        function resetIsland(): void { ShellState.resetIsland(); }
+        function resetSequoia(): void { ShellState.resetSequoia(); }
+        function resetAllSettings(): void { ShellState.resetAllSettings(); }
+        function togglePip(): void { ShellState.togglePip(); }
+        function cyclePipCorner(): void { ShellState.cyclePipCorner(); }
+        function snapPip(): void { ShellState.snapPip(); }
     }
 }

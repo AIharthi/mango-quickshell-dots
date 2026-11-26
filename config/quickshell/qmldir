@@ -2,3 +2,4 @@ singleton Theme 1.0 Theme.qml
 singleton DeviceCaps 1.0 DeviceCaps.qml
 singleton ShellState 1.0 ShellState.qml
 singleton SystemTelemetry 1.0 SystemTelemetry.qml
+singleton MangoState 1.0 MangoState.qml

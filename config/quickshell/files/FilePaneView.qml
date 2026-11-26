@@ -449,7 +449,7 @@ Rectangle {
                                     source: gridWrap.showImg ? root.fileStyle.fileUrl(gridWrap.itemPath) : ""
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
-                                    cache: true
+                                    cache: false
                                     sourceSize.width: 220
                                     sourceSize.height: 220
                                     clip: true

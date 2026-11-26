@@ -17,9 +17,9 @@ Rectangle {
     signal draggingChanged(bool dragging)
     signal openSettingsRequested(string page)
 
-    property real volumeLevel: 0.5
-    property bool volumeMuted: false
-    property bool micMuted: false
+    readonly property real volumeLevel: Math.max(0.0, Math.min(1.0, MangoState.volPercent / 100.0))
+    readonly property bool volumeMuted: MangoState.volMuted
+    readonly property bool micMuted: MangoState.micMuted
     property bool _dragging: false
 
     property real brightnessLevel: 0.8
@@ -31,7 +31,7 @@ Rectangle {
     property bool btEnabled: false
     property string btDevice: "Off"
 
-    property string defaultSinkLabel: "Audio Output"
+    readonly property string defaultSinkLabel: MangoState.defaultSinkLabel
     property string hoveredActionLabel: ""
 
     onActiveChanged: {
@@ -56,28 +56,19 @@ Rectangle {
     }
 
     function refreshAll(): void {
-        if (DeviceCaps.hasAudio && !volReadProc.running)
-            volReadProc.running = true;
+        MangoState.refreshAudioFallback();
         if (DeviceCaps.hasBacklight && !brightReadProc.running)
             brightReadProc.running = true;
         if (DeviceCaps.hasWifi && !wifiReadProc.running)
             wifiReadProc.running = true;
         if (DeviceCaps.hasBluetooth && !btReadProc.running)
             btReadProc.running = true;
-        if (!DeviceCaps.hasExtraQuickControls && DeviceCaps.hasAudio && !sinkLabelProc.running)
-            sinkLabelProc.running = true;
     }
 
-    property int _pendingVolPct: -1
     property int _pendingBrightPct: -1
 
     function applyVolume(ratio: real): void {
-        const clamped = Math.max(0.0, Math.min(1.0, ratio));
-        root.volumeLevel = clamped;
-        root.volumeMuted = clamped <= 0.001;
-        root._pendingVolPct = Math.round(clamped * 100);
-        if (!volApplyTimer.running)
-            volApplyTimer.start();
+        MangoState.setVolumeRatio(Math.max(0.0, Math.min(1.0, ratio)));
     }
 
     function applyBrightness(ratio: real): void {
@@ -88,19 +79,6 @@ Rectangle {
         root._pendingBrightPct = Math.round(clamped * 100);
         if (!brightApplyTimer.running)
             brightApplyTimer.start();
-    }
-
-    Timer {
-        id: volApplyTimer
-        interval: 35
-        repeat: false
-        onTriggered: {
-            if (root._pendingVolPct >= 0) {
-                const pct = root._pendingVolPct;
-                root._pendingVolPct = -1;
-                Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", pct + "%"]);
-            }
-        }
     }
 
     Timer {
@@ -118,45 +96,7 @@ Rectangle {
 
     // --- System Queries (gated on detected hardware) ---
     function cycleAudioSink(): void {
-        if (toggleCmdProc.running)
-            return;
-        toggleCmdProc.command = [
-            "sh", "-c",
-            "def=$(pactl get-default-sink 2>/dev/null); nxt=$(pactl list short sinks 2>/dev/null | awk -v d=\"$def\" '{a[NR]=$2; if($2==d) idx=NR} END{if(NR>0){print a[(idx%NR)+1]}}'); [ -n \"$nxt\" ] && pactl set-default-sink \"$nxt\""
-        ];
-        toggleCmdProc.running = true;
-    }
-
-    Process {
-        id: volReadProc
-        command: ["sh", "-c", "pactl get-sink-volume @DEFAULT_SINK@; pactl get-sink-mute @DEFAULT_SINK@; echo '---MIC---'; pactl get-source-mute @DEFAULT_SOURCE@ 2>/dev/null || true"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const parts = (text || "").split("---MIC---");
-                const sinkTxt = parts[0] || "";
-                const match = sinkTxt.match(/([0-9]+)%/);
-                if (match)
-                    root.volumeLevel = Math.max(0.0, Math.min(1.0, parseInt(match[1], 10) / 100.0));
-                root.volumeMuted = sinkTxt.indexOf("Mute: yes") !== -1 || root.volumeLevel <= 0.001;
-                if (parts.length > 1)
-                    root.micMuted = parts[1].indexOf("Mute: yes") !== -1;
-            }
-        }
-    }
-
-    Process {
-        id: sinkLabelProc
-        command: [
-            "sh", "-c",
-            "def=$(pactl get-default-sink 2>/dev/null); pactl list sinks 2>/dev/null | awk -v d=\"$def\" 'BEGIN{m=0} /^[[:space:]]*Name:/{m=($2==d)} m && /^[[:space:]]*Description:/{sub(/^[[:space:]]*Description:[[:space:]]*/,\"\"); print; exit}'"
-        ]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const s = (text || "").trim();
-                if (s.length > 0)
-                    root.defaultSinkLabel = s;
-            }
-        }
+        MangoState.cycleAudioSink();
     }
 
     Process {
@@ -311,10 +251,7 @@ Rectangle {
                                 anchors.fill: parent
                                 anchors.margins: -6
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    toggleCmdProc.command = ["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"];
-                                    toggleCmdProc.running = true;
-                                }
+                                onClicked: MangoState.toggleMute()
                             }
                         }
 
@@ -385,10 +322,7 @@ Rectangle {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        toggleCmdProc.command = ["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "toggle"];
-                        toggleCmdProc.running = true;
-                    }
+                    onClicked: MangoState.toggleMicMute()
                 }
             }
         }
@@ -551,7 +485,7 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
                         if (mouse.button === Qt.RightButton) {
-                            root.openSettingsRequested("network");
+                            Qt.callLater(() => root.openSettingsRequested("network"));
                         } else {
                             const target = root.wifiEnabled ? "off" : "on";
                             root.runDbusGuardedToggle("org.freedesktop.NetworkManager", ["timeout", "2", "nmcli", "radio", "wifi", target]);
@@ -623,7 +557,7 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
                         if (mouse.button === Qt.RightButton) {
-                            root.openSettingsRequested("bluetooth");
+                            Qt.callLater(() => root.openSettingsRequested("bluetooth"));
                         } else {
                             const target = root.btEnabled ? "off" : "on";
                             root.runDbusGuardedToggle("org.bluez", ["timeout", "2", "bluetoothctl", "power", target]);
@@ -1009,7 +943,7 @@ Rectangle {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: mouse => {
                     if (mouse.button === Qt.RightButton)
-                        Theme.cycleShellMode();
+                        Qt.callLater(() => Theme.cycleShellMode());
                     else
                         root.openSettingsRequested("appearance");
                 }

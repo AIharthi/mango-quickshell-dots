@@ -139,7 +139,7 @@ Rectangle {
                         source: (root.pKind === "image" && root.pPath.length > 0) ? root.fileStyle.fileUrl(root.pPath) : ""
                         fillMode: Image.PreserveAspectFit
                         asynchronous: true
-                        cache: true
+                        cache: false
                         sourceSize.width: 340
                         sourceSize.height: 240
                     }

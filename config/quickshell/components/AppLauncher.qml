@@ -43,6 +43,7 @@ ColumnLayout {
     signal openFilesRequested(string path)
     signal openKeybindsRequested()
     signal openCaptureHubRequested()
+    signal openStoreRequested()
 
     spacing: 8
 
@@ -904,6 +905,7 @@ ColumnLayout {
         { id: "game-mode",   title: "Toggle Game Mode",             sub: "Simple bar + DND + Keep Awake",      icon: "󰊴", kw: "game mode performance dnd" },
         { id: "sync-sddm",   title: "Sync SDDM Login Theme",        sub: "Push palette & wallpaper to SDDM",   icon: "󰍹", kw: "sddm login greeter sync theme" },
         { id: "refresh-wx",  title: "Refresh Weather Forecast",     sub: "Fetch latest conditions (wttr.in)",  icon: "󰖐", kw: "weather forecast temp refresh" },
+        { id: "store",       title: "Open Aurora App Store",        sub: "Install & update Arch, AUR, Fedora & Flatpak apps", icon: "󰏖", kw: "store app software install pacman aur paru yay dnf rpm flatpak updates" },
         { id: "files",       title: "Open Dynamic File Manager",    sub: "Launch Rust-backed aurora-fm",        icon: "󰉋", kw: "files manager explorer" },
         { id: "settings",    title: "Open Aurora Settings",         sub: "16-page configuration studio",       icon: "󰒓", kw: "settings preferences config" },
         { id: "doctor",      title: "Run Aurora Doctor Health Check",sub: "Inspect compositor, portals, audio & theme health", icon: "󰋼", kw: "doctor health check diagnostics system" },
@@ -1106,6 +1108,8 @@ ColumnLayout {
             Quickshell.execDetached([Quickshell.shellPath("scripts/sync-sddm-theme.sh")]);
         } else if (cmdId === "refresh-wx") {
             ShellState.refreshWeather(true);
+        } else if (cmdId === "store") {
+            root.openStoreRequested();
         } else if (cmdId === "files") {
             root.openFilesRequested("");
         } else if (cmdId === "settings") {

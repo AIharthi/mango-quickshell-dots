@@ -8,6 +8,8 @@ ColumnLayout {
     id: root
     spacing: 12
 
+    signal openPageRequested(string page)
+
     property bool confirmResetBar: false
     property string barStatusMsg: ""
 
@@ -98,548 +100,244 @@ ColumnLayout {
         }
     }
 
-    // --- 0. Bar Widgets & Modules (Dynamic Island + Simple Bar) ---
+    // --- 0. Active Top Bar Architecture ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: widgetsCol.implicitHeight + 24
+        implicitHeight: archCol.implicitHeight + 24
         radius: Theme.r(16)
         color: Theme.cardBg
         border.width: Theme.cardBorderWidth
         border.color: Theme.cardBorder
 
         ColumnLayout {
-            id: widgetsCol
+            id: archCol
             anchors.fill: parent
             anchors.margins: 12
             spacing: 10
 
             RowLayout {
                 Layout.fillWidth: true
+                spacing: 8
 
                 Text {
-                    text: "Bar & Hub Layout"
+                    Layout.fillWidth: true
+                    text: "Active Top Bar Architecture"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(12)
                     font.weight: Font.DemiBold
                     color: Theme.fgSurface
                 }
 
-                Item { Layout.fillWidth: true }
+                Rectangle {
+                    implicitHeight: 26
+                    implicitWidth: jIslLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: jIslMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    border.width: Theme.subBorderWidth
+                    border.color: Theme.cardBorder
 
-                Text {
-                    text: "Top bar style, hub view & modules"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    color: Theme.fgSurfaceVariant
+                    Text {
+                        id: jIslLbl
+                        anchors.centerIn: parent
+                        text: "󰀵 Island Settings"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.DemiBold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        id: jIslMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.openPageRequested("island")
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 26
+                    implicitWidth: jSeqLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: jSeqMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    border.width: Theme.subBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: jSeqLbl
+                        anchors.centerIn: parent
+                        text: "󰘔 Sequoia Settings"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.DemiBold
+                        color: Theme.secondary
+                    }
+
+                    MouseArea {
+                        id: jSeqMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.openPageRequested("sequoia")
+                    }
                 }
             }
 
-            // Collapsed Top Bar / Island UI Styles
             Text {
-                text: "Top Bar Style"
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: "Dynamic Island and Sequoia Bar now have their own dedicated settings pages, hubs, and popovers. Switch your active top bar mode here, then customize its modules on its dedicated page."
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(11)
-                font.weight: Font.DemiBold
+                font.pixelSize: Theme.fs(10)
                 color: Theme.fgSurfaceVariant
             }
 
             GridLayout {
                 Layout.fillWidth: true
                 columns: 2
-                rowSpacing: 8
                 columnSpacing: 8
+                rowSpacing: 8
 
                 Repeater {
                     model: ShellState.availableBarStyles
 
                     delegate: Rectangle {
-                        id: barStyleCard
+                        id: archCard
                         required property var modelData
-                        readonly property bool selected: ShellState.barUiStyle === barStyleCard.modelData.id
+                        readonly property bool selected: !Theme.isSimple && ShellState.barUiStyle === archCard.modelData.id
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 62
+                        implicitHeight: archCardCol.implicitHeight + 16
                         radius: Theme.r(12)
-                        color: barStyleCard.selected
-                            ? Theme.tileActiveBg
-                            : (barStyleMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                        border.width: barStyleCard.selected ? Theme.activeControlBorderWidth : 0
-                        border.color: Theme.primary
-                        scale: barStyleMouse.pressed ? 0.97 : 1.0
+                        color: archCard.selected
+                            ? Theme.withAlpha(Theme.primary, 0.16)
+                            : (archMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                        border.width: archCard.selected ? 2 : Theme.subBorderWidth
+                        border.color: archCard.selected ? Theme.primary : Theme.cardBorder
 
-                        Rectangle {
-                            visible: barStyleCard.selected
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            anchors.topMargin: 10
-                            anchors.bottomMargin: 10
-                            width: 3
-                            radius: 1.5
-                            color: Theme.primary
-                        }
-
-                        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-                        RowLayout {
+                        ColumnLayout {
+                            id: archCardCol
                             anchors.fill: parent
-                            anchors.margins: 10
-                            anchors.leftMargin: 12
-                            spacing: 10
+                            anchors.margins: 8
+                            spacing: 3
 
-                            Rectangle {
-                                implicitWidth: 34
-                                implicitHeight: 34
-                                radius: Theme.r(10)
-                                color: barStyleCard.selected ? Theme.primary : Theme.surfaceContainerHighest
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
 
                                 Text {
-                                    anchors.centerIn: parent
-                                    text: barStyleCard.modelData.icon
+                                    text: archCard.modelData.icon
                                     font.family: Theme.iconFont
-                                    font.pixelSize: Theme.fs(15)
-                                    color: barStyleCard.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                    font.pixelSize: Theme.fs(14)
+                                    color: archCard.selected ? Theme.primary : Theme.fgSurfaceVariant
                                 }
-                            }
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 1
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 6
-                                    Text { text: barStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.fgSurface }
-                                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + barStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                                Text {
+                                    text: archCard.modelData.label
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fs(11)
+                                    font.weight: Font.Bold
+                                    color: Theme.fgSurface
                                 }
 
                                 Text {
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
-                                    maximumLineCount: 2
-                                    wrapMode: Text.WordWrap
-                                    text: barStyleCard.modelData.desc
+                                    text: "· " + archCard.modelData.vibe
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(9)
                                     color: Theme.fgSurfaceVariant
                                 }
                             }
+
+                            Text {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                text: archCard.modelData.desc
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(9)
+                                color: Theme.fgSurfaceVariant
+                            }
                         }
 
                         MouseArea {
-                            id: barStyleMouse
+                            id: archMouse
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                ShellState.setBarUiStyle(barStyleCard.modelData.id);
-                                root.barStatusMsg = "Top Bar UI: " + barStyleCard.modelData.label;
-                                barStatusTimer.restart();
+                                if (Theme.isSimple)
+                                    ShellState.setPrefsBatch({ shellMode: "default", barUiStyle: archCard.modelData.id });
+                                else
+                                    ShellState.setBarUiStyle(archCard.modelData.id);
                             }
                         }
                     }
                 }
             }
 
-            // Expanded Dynamic Island Hub UI Layouts
-            Text {
-                text: "Expanded Hub Layout"
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(11)
-                font.weight: Font.DemiBold
-                color: Theme.fgSurfaceVariant
-            }
-
-            GridLayout {
+            // Simple Edge Bar Quick Card
+            Rectangle {
                 Layout.fillWidth: true
-                columns: 2
-                rowSpacing: 8
-                columnSpacing: 8
+                implicitHeight: simplePickRow.implicitHeight + 14
+                radius: Theme.r(11)
+                color: Theme.isSimple
+                    ? Theme.withAlpha(Theme.tertiary, 0.16)
+                    : (simplePickMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                border.width: Theme.isSimple ? 2 : Theme.subBorderWidth
+                border.color: Theme.isSimple ? Theme.tertiary : Theme.cardBorder
 
-                Repeater {
-                    model: ShellState.availableHubStyles
+                RowLayout {
+                    id: simplePickRow
+                    anchors.fill: parent
+                    anchors.margins: 7
+                    spacing: 8
 
-                    delegate: Rectangle {
-                        id: hubStyleCard
-                        required property var modelData
-                        readonly property bool selected: ShellState.hubUiStyle === hubStyleCard.modelData.id
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 62
-                        radius: Theme.r(12)
-                        color: hubStyleCard.selected
-                            ? Theme.tileActiveBg
-                            : (hubStyleMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                        border.width: hubStyleCard.selected ? Theme.activeControlBorderWidth : 0
-                        border.color: Theme.primary
-                        scale: hubStyleMouse.pressed ? 0.97 : 1.0
-
-                        Rectangle {
-                            visible: hubStyleCard.selected
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            anchors.topMargin: 10
-                            anchors.bottomMargin: 10
-                            width: 3
-                            radius: 1.5
-                            color: Theme.primary
-                        }
-
-                        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 10
-                            anchors.leftMargin: 12
-                            spacing: 10
-
-                            Rectangle {
-                                implicitWidth: 34
-                                implicitHeight: 34
-                                radius: Theme.r(10)
-                                color: hubStyleCard.selected ? Theme.primary : Theme.surfaceContainerHighest
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: hubStyleCard.modelData.icon
-                                    font.family: Theme.iconFont
-                                    font.pixelSize: Theme.fs(15)
-                                    color: hubStyleCard.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
-                                }
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 1
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 6
-                                    Text { text: hubStyleCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.fgSurface }
-                                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: "· " + hubStyleCard.modelData.vibe; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    elide: Text.ElideRight
-                                    maximumLineCount: 2
-                                    wrapMode: Text.WordWrap
-                                    text: hubStyleCard.modelData.desc
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(9)
-                                    color: Theme.fgSurfaceVariant
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            id: hubStyleMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                ShellState.setHubUiStyle(hubStyleCard.modelData.id);
-                                root.barStatusMsg = "Hub UI Layout: " + hubStyleCard.modelData.label;
-                                barStatusTimer.restart();
-                            }
-                        }
+                    Text {
+                        text: "󰕮"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(15)
+                        color: Theme.isSimple ? Theme.tertiary : Theme.fgSurfaceVariant
                     }
-                }
-            }
 
-            // 1-Click Bar Presets
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 6
-
-                Text {
-                    Layout.preferredWidth: 106
-                    text: "Bar Presets"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(11)
-                    color: Theme.fgSurface
-                }
-
-                Repeater {
-                    model: [
-                        { id: "minimal",  label: "Minimal Pill" },
-                        { id: "balanced", label: "Balanced Island" },
-                        { id: "full",     label: "Full Desktop Bar" }
-                    ]
-
-                    delegate: Rectangle {
-                        id: bpBtn
-                        required property var modelData
-                        readonly property bool active: (
-                            (bpBtn.modelData.id === "minimal"
-                                && ShellState.islandStyle === "pill"
-                                && !ShellState.barShowDate && !ShellState.barShowWindow && !ShellState.barShowWorkspaces && !ShellState.barShowSystem)
-                            || (bpBtn.modelData.id === "balanced"
-                                && ShellState.islandStyle === "pill"
-                                && ShellState.barShowDate && ShellState.barShowWindow && ShellState.barShowWorkspaces && !ShellState.barShowSystem)
-                            || (bpBtn.modelData.id === "full"
-                                && ShellState.islandStyle === "bar"
-                                && ShellState.barShowDate && ShellState.barShowWindow && ShellState.barShowWorkspaces && ShellState.barShowSystem)
-                        )
-
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        implicitHeight: 28
-                        radius: Theme.r(8)
-                        color: bpBtn.active
-                            ? Theme.primary
-                            : (bpMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                        border.width: bpBtn.active ? Theme.activeControlBorderWidth : 0
-                        border.color: Theme.primary
+                        spacing: 1
 
                         Text {
-                            anchors.centerIn: parent
-                            text: bpBtn.modelData.label
+                            text: "Simple Edge Bar (Minimal Flat Mode)"
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(10)
-                            font.weight: bpBtn.active ? Font.Bold : Font.Medium
-                            color: bpBtn.active ? Theme.fgPrimary : Theme.fgSurface
+                            font.pixelSize: Theme.fs(11)
+                            font.weight: Font.Bold
+                            color: Theme.fgSurface
                         }
 
-                        MouseArea {
-                            id: bpMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                ShellState.applyBarPreset(bpBtn.modelData.id);
-                                root.barStatusMsg = "Applied preset: " + bpBtn.modelData.label;
-                                barStatusTimer.restart();
-                            }
+                        Text {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            text: "Classic full-width edge bar configured below without floating morphing surfaces"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            color: Theme.fgSurfaceVariant
                         }
-                    }
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "Date Next to Clock (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowDate; onToggled: ShellState.setPref("barShowDate", !ShellState.barShowDate) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "Active Window Title"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowWindow; onToggled: ShellState.setPref("barShowWindow", !ShellState.barShowWindow) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "Workspaces / Tags Strip (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowWorkspaces; onToggled: ShellState.setPref("barShowWorkspaces", !ShellState.barShowWorkspaces) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "Window Layout Badge ([T]) (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowLayout; onToggled: ShellState.setPref("barShowLayout", !ShellState.barShowLayout) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "Now-Playing Media Strip"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.pillShowMedia; onToggled: ShellState.setPref("pillShowMedia", !ShellState.pillShowMedia) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "CPU & RAM Usage"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowSystem; onToggled: ShellState.setPref("barShowSystem", !ShellState.barShowSystem) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "Live Network Speed (↓ / ↑)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowNetSpeed; onToggled: ShellState.setPref("barShowNetSpeed", !ShellState.barShowNetSpeed) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                visible: DeviceCaps.hasAudio
-                Text { Layout.fillWidth: true; text: "Volume Indicator (Click Mute / Scroll ±5%)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowVolume; onToggled: ShellState.setPref("barShowVolume", !ShellState.barShowVolume) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "Keyboard Layout Indicator (US / AR)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowKbLayout; onToggled: ShellState.setPref("barShowKbLayout", !ShellState.barShowKbLayout) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "System Tray Icons (Island Pill / Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowTray; onToggled: ShellState.setPref("barShowTray", !ShellState.barShowTray) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "App Launcher & Settings Shortcut Icons"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowQuickIcons; onToggled: ShellState.setPref("barShowQuickIcons", !ShellState.barShowQuickIcons) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                Text { Layout.fillWidth: true; text: "Files Manager Shortcut Icon (Island / Simple Bar)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowFiles; onToggled: ShellState.setPref("barShowFiles", !ShellState.barShowFiles) }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                visible: DeviceCaps.hasBattery
-                Text { Layout.fillWidth: true; text: "Battery Percentage"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
-                ToggleSwitch { checked: ShellState.barShowBattery; onToggled: ShellState.setPref("barShowBattery", !ShellState.barShowBattery) }
-            }
-        }
-    }
-
-    // --- 1. Dynamic Island & Pill Behavior ---
-    Rectangle {
-        Layout.fillWidth: true
-        implicitHeight: islCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
-
-        ColumnLayout {
-            id: islCol
-            anchors.fill: parent
-            anchors.margins: 12
-            spacing: 10
-
-            Text {
-                text: "Dynamic Island & Compact Pill"
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(12)
-                font.weight: Font.DemiBold
-                color: Theme.fgSurface
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 1
-
-                    Text {
-                        text: "Expand Hub on Pointer Hover"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(11)
-                        color: Theme.fgSurface
                     }
 
                     Text {
-                        text: "When disabled, click the pill or press Super + D to expand"
+                        text: Theme.isSimple ? "Active" : "Enable"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
-                        color: Theme.fgSurfaceVariant
+                        font.weight: Font.Bold
+                        color: Theme.isSimple ? Theme.tertiary : Theme.fgSurfaceVariant
                     }
                 }
 
-                ToggleSwitch {
-                    checked: ShellState.islandHoverExpand
-                    onToggled: ShellState.setPref("islandHoverExpand", !ShellState.islandHoverExpand)
+                MouseArea {
+                    id: simplePickMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Theme.setShellMode(Theme.isSimple ? "default" : "simple")
                 }
-            }
-
-            StepControl {
-                label: "Hover Expand Delay"
-                displayValue: ShellState.islandHoverDelayMs + " ms"
-                controlEnabled: ShellState.islandHoverExpand
-                onDecremented: ShellState.setPref("islandHoverDelayMs", Math.max(50, ShellState.islandHoverDelayMs - 50))
-                onIncremented: ShellState.setPref("islandHoverDelayMs", Math.min(1500, ShellState.islandHoverDelayMs + 50))
-            }
-
-            StepControl {
-                label: "Auto-Collapse Leave Delay"
-                displayValue: ShellState.islandCollapseDelayMs + " ms"
-                onDecremented: ShellState.setPref("islandCollapseDelayMs", Math.max(200, ShellState.islandCollapseDelayMs - 100))
-                onIncremented: ShellState.setPref("islandCollapseDelayMs", Math.min(4000, ShellState.islandCollapseDelayMs + 100))
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                opacity: ShellState.pillShowMedia ? 1.0 : 0.45
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "Rotate Album Cover Art While Playing"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(11)
-                    color: Theme.fgSurface
-                }
-
-                ToggleSwitch {
-                    checked: ShellState.pillSpinArt
-                    onToggled: ShellState.setPref("pillSpinArt", !ShellState.pillSpinArt)
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                opacity: ShellState.pillShowMedia ? 1.0 : 0.45
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "Show Animated Mini Equalizer Bars"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(11)
-                    color: Theme.fgSurface
-                }
-
-                ToggleSwitch {
-                    checked: ShellState.pillShowEqualizer
-                    onToggled: ShellState.setPref("pillShowEqualizer", !ShellState.pillShowEqualizer)
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "On-Screen Volume & Brightness OSD Popups"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(11)
-                    color: Theme.fgSurface
-                }
-
-                ToggleSwitch {
-                    checked: ShellState.osdEnabled
-                    onToggled: ShellState.setPref("osdEnabled", !ShellState.osdEnabled)
-                }
-            }
-
-            StepControl {
-                label: "OSD Popup Duration"
-                displayValue: (ShellState.osdTimeoutMs / 1000.0).toFixed(1) + " s"
-                controlEnabled: ShellState.osdEnabled
-                onDecremented: ShellState.setPref("osdTimeoutMs", Math.max(800, ShellState.osdTimeoutMs - 200))
-                onIncremented: ShellState.setPref("osdTimeoutMs", Math.min(6000, ShellState.osdTimeoutMs + 200))
             }
         }
     }

@@ -21,6 +21,31 @@ Item {
     signal openFilesRequested(string path)
     signal openKeybindsRequested()
     signal openCaptureHubRequested()
+    signal openStoreRequested()
+
+    property bool surfaceExpanded: false
+
+    onIslandStateChanged: {
+        if (root.islandState !== "collapsed") {
+            surfaceCollapseTimer.stop();
+            root.surfaceExpanded = true;
+        } else if (Theme.reducedMotion) {
+            surfaceCollapseTimer.stop();
+            root.surfaceExpanded = false;
+        } else {
+            surfaceCollapseTimer.restart();
+        }
+    }
+
+    Timer {
+        id: surfaceCollapseTimer
+        interval: 220
+        repeat: false
+        onTriggered: {
+            if (root.islandState === "collapsed")
+                root.surfaceExpanded = false;
+        }
+    }
 
     readonly property bool needsKeyboardFocus:
         (islandState === "expanded" && activeTab === "launcher") || launcherSearchFocused
@@ -201,17 +226,13 @@ Item {
         return h + (root.powerMenuOpen ? 48 : 0);
     }
 
-    readonly property int notchPad: (!Theme.isSimple && !isSplitBar && !isMenuBar && ShellState.islandStyle === "notch") ? 14 : 0
+    readonly property int notchPad: (!Theme.isSimple && !isSplitBar && ShellState.islandStyle === "notch") ? 14 : 0
     readonly property bool isSplitBar: !Theme.isSimple && ShellState.barUiStyle === "split"
-    readonly property bool isMenuBar: !Theme.isSimple && ShellState.barUiStyle === "menubar"
     readonly property bool isApplePill: !Theme.isSimple && ShellState.barUiStyle === "apple"
     readonly property bool splitCollapsed: isSplitBar && islandState === "collapsed"
-    readonly property bool menuCollapsed: isMenuBar && islandState === "collapsed"
 
     readonly property int targetWidth: {
         if (root.islandState === "collapsed") {
-            if (root.isMenuBar)
-                return Math.max(320, Math.round(root.width) - Math.max(0, ShellState.islandTopMargin - 8) * 2);
             if (root.isSplitBar)
                 return Math.max(480, Math.round(root.width) - Math.max(12, ShellState.islandTopMargin * 3));
             if (ShellState.islandStyle === "bar")
@@ -227,8 +248,6 @@ Item {
 
     readonly property int targetHeight: {
         if (root.islandState === "collapsed") {
-            if (root.isMenuBar)
-                return Math.max(24, ShellState.pillHeight - 6);
             if (root.isSplitBar)
                 return ShellState.pillHeight;
             return ShellState.pillHeight + root.notchPad;
@@ -244,7 +263,7 @@ Item {
         if (Theme.isSimple)
             return 0;
         if (root.islandState === "collapsed") {
-            if (root.isMenuBar || root.isSplitBar)
+            if (root.isSplitBar)
                 return 0;
             if (ShellState.islandStyle === "bar")
                 return Math.round(Theme.r(12));
@@ -317,7 +336,7 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: Theme.isSimple
             ? (ShellState.simpleBarPosition === "bottom" ? 8 : (ShellState.simpleBarHeight + 4))
-            : (root.notchPad > 0 ? -root.notchPad : (root.menuCollapsed ? Math.max(0, ShellState.islandTopMargin - 8) : ShellState.islandTopMargin))
+            : (root.notchPad > 0 ? -root.notchPad : ShellState.islandTopMargin)
         anchors.horizontalCenter: parent.horizontalCenter
 
         width: hiddenInSimple ? 0 : root.targetWidth
@@ -428,18 +447,7 @@ Item {
             color: "transparent"
             border.width: 1
             border.color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.09)
-            visible: !Theme.isSimple && !root.splitCollapsed && !root.menuCollapsed && Theme.islandBorderWidth === 0
-            z: 5
-        }
-
-        // macOS Sequoia Menu Bar Crisp Bottom Hairline
-        Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: 1
-            color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.10)
-            visible: root.menuCollapsed
+            visible: !Theme.isSimple && !root.splitCollapsed && Theme.islandBorderWidth === 0
             z: 5
         }
 
@@ -484,17 +492,17 @@ Item {
             onClicked: root.expandTo("overview", false)
         }
 
-        // 1. Collapsed Compact Pill / Split Islands / Sequoia Bar / Modular Bar
+        // 1. Collapsed Compact Pill / Split Islands / Modular Bar
         CollapsedPill {
             id: collapsedPill
             anchors.centerIn: parent
             anchors.verticalCenterOffset: Math.round(root.notchPad / 2)
-            width: (root.isSplitBar || root.menuCollapsed || ShellState.islandStyle === "bar")
+            width: (root.isSplitBar || ShellState.islandStyle === "bar")
                 ? Math.max(0, parent.width - (root.isSplitBar ? 0 : 24))
                 : implicitWidth
             screenName: root.screenName
             active: !Theme.isSimple && root.islandState === "collapsed"
-            barMode: root.isMenuBar || root.isSplitBar || ShellState.islandStyle === "bar"
+            barMode: root.isSplitBar || ShellState.islandStyle === "bar"
             barUiStyle: ShellState.barUiStyle
             player: root.activePlayer
             opacity: (!Theme.isSimple && root.islandState === "collapsed") ? 1.0 : 0.0
@@ -502,7 +510,7 @@ Item {
 
             onExpandRequested: root.expandTo("overview", true)
             onLauncherClicked: root.toggleLauncher()
-            onSettingsClicked: root.openSettingsRequested("appearance")
+            onSettingsClicked: root.openSettingsRequested("island")
             onFilesClicked: root.openFilesRequested("")
             onNotificationsClicked: root.toggleNotifications()
             onTimerClicked: root.toggleNotifications()
@@ -536,7 +544,7 @@ Item {
             }
         }
 
-        // 3. Expanded Interactive Dashboard Hub (lazy-loaded on demand, kept warm 60s)
+        // 3. Expanded Interactive Dashboard Hub (lazy URL-loaded on demand, unloaded 8s after close)
         property bool _expandedLoaded: false
 
         Connections {
@@ -553,7 +561,7 @@ Item {
 
         Timer {
             id: expandedUnloadTimer
-            interval: 60000
+            interval: 8000
             repeat: false
             onTriggered: {
                 if (root.islandState !== "expanded")
@@ -570,44 +578,42 @@ Item {
             height: root.expandedHeight - 28
             active: islandContainer._expandedLoaded
             visible: active
+            source: active ? "ExpandedDashboard.qml" : ""
 
-            sourceComponent: ExpandedDashboard {
-                anchors.fill: parent
-                isOpen: root.islandState === "expanded"
-                screenName: root.screenName
-                activeTab: root.activeTab
-                launcherMode: root.launcherMode
-                pinnedOpen: root.pinnedOpen
-                powerMenuOpen: root.powerMenuOpen
-                player: root.activePlayer
-                opacity: root.islandState === "expanded" ? 1.0 : 0.0
-                visible: opacity > 0.01
+            onLoaded: {
+                if (!item)
+                    return;
+                item.isOpen = Qt.binding(() => root.islandState === "expanded");
+                item.screenName = Qt.binding(() => root.screenName);
+                item.activeTab = Qt.binding(() => root.activeTab);
+                item.launcherMode = Qt.binding(() => root.launcherMode);
+                item.pinnedOpen = Qt.binding(() => root.pinnedOpen);
+                item.powerMenuOpen = Qt.binding(() => root.powerMenuOpen);
+                item.player = Qt.binding(() => root.activePlayer);
+                item.opacity = Qt.binding(() => root.islandState === "expanded" ? 1.0 : 0.0);
+                item.visible = Qt.binding(() => item.opacity > 0.01);
 
-                onTabSelected: tab => {
+                item.tabSelected.connect(tab => {
                     root.activeTab = tab;
                     if (tab === "launcher")
                         root.pinnedOpen = true;
-                }
-                onTogglePinRequested: root.pinnedOpen = !root.pinnedOpen
-                onTogglePowerMenuRequested: root.powerMenuOpen = !root.powerMenuOpen
-                onOpenSettingsRequested: page => root.openSettingsRequested(page)
-                onOpenFilesRequested: path => root.openFilesRequested(path)
-                onOpenKeybindsRequested: root.openKeybindsRequested()
-                onOpenCaptureHubRequested: root.openCaptureHubRequested()
-                onCloseRequested: root.collapse()
-                onSearchFocusChanged: focused => { root.launcherSearchFocused = focused; }
-                onControlInteractionChanged: interacting => {
+                });
+                item.togglePinRequested.connect(() => { root.pinnedOpen = !root.pinnedOpen; });
+                item.togglePowerMenuRequested.connect(() => { root.powerMenuOpen = !root.powerMenuOpen; });
+                item.openSettingsRequested.connect(page => root.openSettingsRequested(page));
+                item.openFilesRequested.connect(path => root.openFilesRequested(path));
+                item.openKeybindsRequested.connect(() => root.openKeybindsRequested());
+                item.openCaptureHubRequested.connect(() => root.openCaptureHubRequested());
+                item.openStoreRequested.connect(() => root.openStoreRequested());
+                item.closeRequested.connect(() => root.collapse());
+                item.searchFocusChanged.connect(focused => { root.launcherSearchFocused = focused; });
+                item.controlInteractionChanged.connect(interacting => {
                     root.interactiveControlActive = interacting;
                     if (!interacting && !hoverHandler.hovered && !root.pinnedOpen
                         && root.islandState === "expanded" && root.activeTab !== "launcher") {
                         hoverCollapseTimer.restart();
                     }
-                }
-
-                Behavior on opacity {
-                    enabled: !Theme.reducedMotion
-                    NumberAnimation { duration: 130; easing.type: Easing.OutCubic }
-                }
+                });
             }
         }
     }

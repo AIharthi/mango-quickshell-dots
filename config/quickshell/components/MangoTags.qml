@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import ".."
 
 Rectangle {
@@ -10,97 +9,9 @@ Rectangle {
 
     property bool active: false
     property string screenName: ""
-    property string monitorName: ""
-    property string currentLayout: "T"
-    readonly property int totalClients: {
-        let sum = 0;
-        const arr = root.tagsModel || [];
-        for (let i = 0; i < arr.length; i++)
-            sum += (arr[i].client_count || 0);
-        return sum;
-    }
-    property var tagsModel: [
-        { index: 1, is_active: true,  is_urgent: false, client_count: 0 },
-        { index: 2, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 3, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 4, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 5, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 6, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 7, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 8, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 9, is_active: false, is_urgent: false, client_count: 0 }
-    ]
-
-    onActiveChanged: {
-        if (!active)
-            restartTimer.stop();
-    }
-
-    function parseTagsJson(raw: string): void {
-        const trimmed = (raw || "").trim();
-        if (trimmed.length === 0)
-            return;
-        try {
-            const payload = JSON.parse(trimmed);
-            const list = payload.all_tags;
-            if (!list || list.length === 0)
-                return;
-
-            // Prefer the assigned screen monitor name, else fallback to monitorName / first
-            const targetMon = root.screenName.length > 0 ? root.screenName : root.monitorName;
-            let chosen = list[0];
-            for (let i = 0; i < list.length; i++) {
-                if (list[i].monitor === targetMon) {
-                    chosen = list[i];
-                    break;
-                }
-            }
-
-            if (chosen.monitor)
-                root.monitorName = chosen.monitor;
-            if (chosen.tags && chosen.tags.length > 0) {
-                const normalized = [];
-                let activeLayout = root.currentLayout;
-                for (let j = 0; j < Math.min(9, chosen.tags.length); j++) {
-                    const t = chosen.tags[j];
-                    if (t.is_active && t.layout)
-                        activeLayout = t.layout;
-                    normalized.push({
-                        index: t.index,
-                        is_active: !!t.is_active,
-                        is_urgent: !!t.is_urgent,
-                        client_count: t.client_count || 0
-                    });
-                }
-                root.currentLayout = activeLayout;
-                root.tagsModel = normalized;
-            }
-        } catch (err) {}
-    }
-
-    // Stream live tag state via MangoWC 0.18.5 mmsg JSON stream only while active
-    Process {
-        id: tagStream
-        command: ["mmsg", "watch", "all-tags"]
-        running: root.active
-        stdout: SplitParser {
-            onRead: line => root.parseTagsJson(line)
-        }
-        onExited: exitCode => {
-            if (root.active)
-                restartTimer.restart();
-        }
-    }
-
-    Timer {
-        id: restartTimer
-        interval: 2000
-        repeat: false
-        onTriggered: {
-            if (root.active)
-                tagStream.running = true;
-        }
-    }
+    readonly property string currentLayout: MangoState.layoutForScreen(root.screenName)
+    readonly property int totalClients: MangoState.totalClientsForScreen(root.screenName)
+    readonly property var tagsModel: MangoState.tagsForScreen(root.screenName)
 
     radius: Theme.r(18)
     color: Theme.cardBg
@@ -299,7 +210,7 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
                         if (mouse.button === Qt.RightButton)
-                            Quickshell.execDetached(["mmsg", "dispatch", "toggleoverview"]);
+                            Qt.callLater(() => Quickshell.execDetached(["mmsg", "dispatch", "toggleoverview"]));
                         else
                             Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleWindowSwitcher"]);
                     }

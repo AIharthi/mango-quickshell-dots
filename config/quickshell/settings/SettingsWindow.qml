@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Widgets
 import ".."
 
 PanelWindow {
@@ -16,6 +15,7 @@ PanelWindow {
 
     signal pageSelected(string page)
     signal closeRequested()
+    signal openStoreRequested()
 
     property string searchQuery: ""
     property bool resetMenuOpen: false
@@ -68,14 +68,16 @@ PanelWindow {
 
     readonly property var navItems: {
         const items = [
-            { id: "appearance",    section: "Personalize",     label: "Appearance",    icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, surfaces, island shape, typography, cursor, and blur" },
+            { id: "appearance",    section: "Personalize",     label: "Appearance",     icon: "󰏘", source: "AppearancePage.qml",    sub: "Modes, surfaces, typography, cursor, and wallpaper transitions" },
             { id: "themes",        section: "Personalize",     label: "Themes & Colors",icon: "󰌁", source: "ThemesPage.qml",       sub: "Vibes, curated presets, Matugen extraction, and wallpapers" },
-            { id: "shell",         section: "Personalize",     label: "Shell & Bar",   icon: "󰕮", source: "ShellPage.qml",         sub: "Bar style, hub layout, widgets, file manager, and screenshots" },
-            { id: "windows",       section: "Desktop & Input", label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Picture-in-Picture, tiling layouts, gaps, and window rules" },
+            { id: "island",        section: "Personalize",     label: "Dynamic Island", icon: "󰀵", source: "IslandPage.qml",       sub: "Floating pill, pods, morphing, expanded hub, and pill widgets" },
+            { id: "sequoia",       section: "Personalize",     label: "Sequoia Bar",    icon: "󰘔", source: "SequoiaPage.qml",      sub: "macOS top menu bar, Control Center popover, Spotlight, and modules" },
+            { id: "shell",         section: "Personalize",     label: "Shell & Bar",    icon: "󰕮", source: "ShellPage.qml",        sub: "Active bar switcher, Simple bar, file manager, and screenshots" },
+            { id: "windows",       section: "Desktop & Input", label: "Windows",        icon: "󰖲", source: "WindowsPage.qml",      sub: "Picture-in-Picture, tiling layouts, gaps, and window rules" },
             { id: "input",         section: "Desktop & Input", label: "Input & Touchpad", icon: "󰌌", source: "InputPage.qml",      sub: "Keyboard, mouse, touchpad, and MSI I2C fix" },
-            { id: "shortcuts",     section: "Desktop & Input", label: "Shortcuts",     icon: "󰌌", source: "ShortcutsPage.qml",     sub: "Browse, edit, and add MangoWC keybindings" },
-            { id: "notifications", section: "Desktop & Input", label: "Notifications", icon: "󰂚", source: "NotificationsPage.qml", sub: "Do Not Disturb, alert timeouts, and notification history" },
-            { id: "apps",          section: "Desktop & Input", label: "Apps & Startup",icon: "󰀻", source: "AppsPage.qml",          sub: "Default applications, hidden launcher apps, and startup" }
+            { id: "shortcuts",     section: "Desktop & Input", label: "Shortcuts",      icon: "󰌌", source: "ShortcutsPage.qml",    sub: "Browse, edit, and add MangoWC keybindings" },
+            { id: "notifications", section: "Desktop & Input", label: "Notifications",  icon: "󰂚", source: "NotificationsPage.qml", sub: "Do Not Disturb, alert timeouts, and notification history" },
+            { id: "apps",          section: "Desktop & Input", label: "Apps & Startup", icon: "󰀻", source: "AppsPage.qml",         sub: "Default applications, hidden launcher apps, and startup" }
         ];
         if (DeviceCaps.hasAudio)
             items.push({ id: "audio",     section: "Hardware", label: "Audio",     icon: "󰋋", source: "AudioPage.qml",     sub: "Volume, card profiles, per-app mixer, and channel test" });
@@ -89,6 +91,7 @@ PanelWindow {
             items.push({ id: "terminals", section: "System",   label: "Terminals", icon: "󰆍", source: "TerminalPage.qml",  sub: "Foot and Kitty opacity, padding, cursor, and scrollback" });
         items.push({ id: "privacy",       section: "System",   label: "Privacy",   icon: "󰌾", source: "PrivacyPage.qml",   sub: "Clipboard, history, camera, mic, lock, and login screen" });
         items.push({ id: "monitor",       section: "System",   label: "Monitor",   icon: "󰍛", source: "MonitorPage.qml",   sub: "Thermal sensors, running processes, and system services" });
+        items.push({ id: "store",         section: "System",   label: "App Store", icon: "󰏖", source: "StorePage.qml",     sub: "Arch & Fedora native packages, AUR helpers, Flatpak, and updates" });
         items.push({ id: "system",        section: "System",   label: "System",    icon: "󰋼", source: "SystemPage.qml",    sub: "Doctor, config updater, power daemon, storage, and backup" });
         return items;
     }
@@ -100,19 +103,21 @@ PanelWindow {
         { label: "Wallpaper Studio & Matugen", pageId: "themes",        keywords: "wallpaper random solid dominant source color matugen extraction lightness prefer contrast tonal expressive vibrant monochrome rainbow" },
         { label: "Live Palette & Custom Themes",pageId: "themes",       keywords: "custom theme palette slot primary secondary surface outline error export import json save" },
         { label: "MangoWC Border & Shadow Colors",pageId: "themes",     keywords: "focus color border color colored shadow tint shadow opacity dim strength mango theme" },
-        { label: "Shell Modes & Surface Finish",pageId: "appearance",   keywords: "mode simple blur surface style default glass frosted oled flat tinted panel opacity card opacity roundness border glow width" },
-        { label: "Dynamic Island Shape & Scale",pageId: "appearance",   keywords: "island style floating pill top notch full-width bar pill height top margin ui text font scale" },
+        { label: "Shell Modes & Surface Finish",pageId: "appearance",   keywords: "mode simple blur surface style default glass frosted oled flat tinted panel opacity card opacity roundness border glow width ui text font scale" },
         { label: "Wallpaper Transitions",      pageId: "appearance",    keywords: "wallpaper transition effect speed duration resize fps grow wipe fade wave outer awww swww" },
         { label: "GTK & Icon Theme",           pageId: "appearance",    keywords: "gtk icon theme hinting antialiasing rgba cursor blink text scale" },
         { label: "UI & Terminal Font",         pageId: "appearance",    keywords: "font typography family size jetbrains mono foot kitty gtk" },
         { label: "Cursor Theme & Size",        pageId: "appearance",    keywords: "cursor pointer size theme hide" },
-        { label: "Dynamic Island & Pill",      pageId: "shell",         keywords: "island hover delay collapse media spin equalizer osd pill" },
-        { label: "Bar & Hub UI Designs",       pageId: "shell",         keywords: "bar ui style hub layout cupertino control center split islands sequoia menu bar stage cockpit bento apple capsule" },
-        { label: "Bar Widgets & Modules",      pageId: "shell",         keywords: "bar widgets modules date active window title workspaces tags layout cpu ram volume mute keyboard layout tray quick icons files battery presets minimal balanced full network speed net throughput barShowNetSpeed aurora" },
+        { label: "Dynamic Island & Pill",      pageId: "island",        keywords: "island hover delay collapse media spin equalizer osd pill height notch floating margin bento cupertino stage cockpit hub capsule split" },
+        { label: "Dynamic Island Widgets & Presets", pageId: "island",  keywords: "island bar widgets modules date window title workspaces tags layout cpu ram volume mute keyboard layout tray quick icons files battery presets minimal balanced full network speed" },
+        { label: "Sequoia Bar & Control Center", pageId: "sequoia",     keywords: "sequoia menubar macos top bar control center spotlight popover floating translucent menu icon aurora apple arch fedora gentoo" },
+        { label: "Sequoia Menu Bar Modules",   pageId: "sequoia",       keywords: "sequoia modules app title workspaces layout media system cpu ram net speed volume battery tray store spotlight date" },
+        { label: "Active Top Bar Switcher",    pageId: "shell",         keywords: "bar ui style switcher simple edge bar apple split menubar classic" },
         { label: "Dynamic File Manager (Rust)",pageId: "shell",         keywords: "file manager files rust explorer miller columns dual pane grid preview customize bar icon" },
         { label: "Simple Bar & Screenshots",   pageId: "shell",         keywords: "bar height top bottom layout screenshot grim slurp clipboard delay screen record video weather slideshow" },
         { label: "Weather & Wallpaper Slideshow", pageId: "shell",      keywords: "weather wttr city temperature celsius fahrenheit bar slideshow rotate wallpaper" },
         { label: "Accessibility & Motion",     pageId: "shell",         keywords: "reduced motion animations high contrast borders a11y" },
+        { label: "Aurora App Store (Arch & Fedora)", pageId: "store",   keywords: "store app software pacman aur paru yay fedora dnf rpmfusion flatpak flathub install remove updates catalog search" },
         { label: "Reset & Factory Recovery",   pageId: "system",        keywords: "reset restore undo default factory recovery reset appearance reset bar" },
         { label: "Picture-in-Picture (PiP)",   pageId: "windows",       keywords: "pip picture in picture video youtube float sticky global overlay corner bottom right top left firefox helium chrome discord popout" },
         { label: "Tiling, Hotarea & Overview", pageId: "windows",       keywords: "tiling scroller master gaps snap floating focus warp monocle hotarea tearing overview" },
@@ -214,15 +219,14 @@ PanelWindow {
         }
 
         // Centered Settings Dialog
-        ClippingRectangle {
+        Rectangle {
             id: dialog
             anchors.centerIn: parent
             width: Math.min(parent.width - 40, 940)
             height: Math.min(parent.height - 40, 640)
             radius: Theme.r(22)
             color: Theme.notchBg
-            contentUnderBorder: false
-            contentInsideBorder: true
+            clip: true
             border.width: Theme.islandBorderWidth
             border.color: Theme.islandBorder
 
@@ -951,6 +955,18 @@ PanelWindow {
                                         pageEnterAnim.restart();
                                     else
                                         pageLoader.opacity = 1.0;
+                                }
+                            }
+
+                            Connections {
+                                target: pageLoader.item
+                                ignoreUnknownSignals: true
+                                function onOpenPageRequested(page) {
+                                    root.pageSelected(page);
+                                }
+                                function onOpenStoreRequested() {
+                                    root.closeRequested();
+                                    root.openStoreRequested();
                                 }
                             }
                         }

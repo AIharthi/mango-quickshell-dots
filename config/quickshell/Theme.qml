@@ -296,36 +296,45 @@ Singleton {
     readonly property color hoverBg: withAlpha(primary, 0.14)
     readonly property color activeBg: withAlpha(primary, 0.22)
 
-    // Smooth color transitions across the entire shell on live reload
-    Behavior on primary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on fgPrimary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on primaryContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on fgPrimaryContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on secondary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on fgSecondary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on secondaryContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on fgSecondaryContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on tertiary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on fgTertiary { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on background { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on fgBackground { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on surface { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on surfaceDim { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on surfaceBright { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainerLowest { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainerLow { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainer { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainerHigh { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on surfaceContainerHighest { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on fgSurface { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on fgSurfaceVariant { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on outline { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on outlineVariant { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on error { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on fgError { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on success { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on warning { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
-    Behavior on info { enabled: !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    // Smooth color transitions across the entire shell on live palette reload only
+    property bool _paletteAnimating: false
+
+    Timer {
+        id: paletteAnimTimer
+        interval: 180
+        repeat: false
+        onTriggered: root._paletteAnimating = false
+    }
+
+    Behavior on primary { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgPrimary { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on primaryContainer { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgPrimaryContainer { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on secondary { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgSecondary { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on secondaryContainer { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgSecondaryContainer { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on tertiary { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgTertiary { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on background { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgBackground { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surface { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceDim { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceBright { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainerLowest { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainerLow { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainer { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainerHigh { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on surfaceContainerHighest { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgSurface { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgSurfaceVariant { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on outline { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on outlineVariant { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on error { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on fgError { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on success { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on warning { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on info { enabled: root._paletteAnimating && !root.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
     function withAlpha(col: color, alpha: real): color {
         return Qt.rgba(col.r, col.g, col.b, alpha);
@@ -363,6 +372,10 @@ Singleton {
             return;
         try {
             const data = JSON.parse(raw);
+            if (!root.reducedMotion) {
+                root._paletteAnimating = true;
+                paletteAnimTimer.restart();
+            }
             if (typeof data.isDark === "boolean")
                 root.isDark = data.isDark;
 

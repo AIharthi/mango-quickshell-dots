@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import Qt.labs.folderlistmodel
 import Quickshell
-import Quickshell.Widgets
 import ".."
 
 ColumnLayout {
@@ -421,22 +420,21 @@ ColumnLayout {
                         NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
                     }
 
-                    ClippingRectangle {
+                    Rectangle {
                         anchors.fill: parent
                         anchors.margins: 0
                         radius: Theme.r(12)
                         color: Theme.surfaceContainerLowest
+                        clip: true
                         border.width: wallDelegate.isCurrent ? Theme.activeControlBorderWidth : 0
                         border.color: Theme.primary
-                        contentUnderBorder: false
-                        contentInsideBorder: true
 
                         Image {
                             anchors.fill: parent
                             source: wallDelegate.fileUrl
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
-                            cache: true
+                            cache: false
                             sourceSize: Qt.size(260, 150)
                         }
 

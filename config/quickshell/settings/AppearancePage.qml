@@ -9,6 +9,8 @@ ColumnLayout {
     id: root
     spacing: 12
 
+    signal openPageRequested(string page)
+
     property string cursorTheme: "catppuccin-mocha-dark-cursors"
     property int cursorSize: 24
     property int cursorHideTimeout: 0
@@ -700,110 +702,6 @@ ColumnLayout {
                 onDecremented: ShellState.setPref("uiBorderWidth", Math.max(0, ShellState.uiBorderWidth - 1))
                 onIncremented: ShellState.setPref("uiBorderWidth", Math.min(3, ShellState.uiBorderWidth + 1))
             }
-        }
-    }
-
-    // --- 3. Dynamic Island Shape & UI Text Scale ---
-    Rectangle {
-        Layout.fillWidth: true
-        implicitHeight: shapeCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
-
-        ColumnLayout {
-            id: shapeCol
-            anchors.fill: parent
-            anchors.margins: 12
-            spacing: 10
-
-            Text {
-                text: "Island Shape & Text Scale"
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(12)
-                font.weight: Font.DemiBold
-                color: Theme.fgSurface
-            }
-
-            // Island Layout Style
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 6
-
-                Text {
-                    Layout.preferredWidth: 112
-                    text: "Island Style"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(11)
-                    color: Theme.fgSurface
-                }
-
-                Repeater {
-                    model: [
-                        { id: "pill",  label: "Floating Pill" },
-                        { id: "notch", label: "Top Notch" },
-                        { id: "bar",   label: "Full-Width Bar" }
-                    ]
-
-                    delegate: Rectangle {
-                        id: islChip
-                        required property var modelData
-                        readonly property bool selected: ShellState.islandStyle === islChip.modelData.id
-
-                        Layout.fillWidth: true
-                        implicitHeight: 28
-                        radius: Theme.r(8)
-                        color: islChip.selected
-                            ? Theme.primary
-                            : (islChipMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                        border.width: islChip.selected ? Theme.activeControlBorderWidth : 0
-                        border.color: Theme.primary
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: islChip.modelData.label
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(10)
-                            font.weight: islChip.selected ? Font.Bold : Font.Medium
-                            color: islChip.selected ? Theme.fgPrimary : Theme.fgSurface
-                        }
-
-                        MouseArea {
-                            id: islChipMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (Theme.isSimple)
-                                    Theme.setShellMode("default");
-                                const nextBarStyle = (ShellState.barUiStyle === "split" || ShellState.barUiStyle === "menubar")
-                                    ? "apple"
-                                    : ShellState.barUiStyle;
-                                ShellState.setPrefsBatch({
-                                    islandStyle: islChip.modelData.id,
-                                    barUiStyle: nextBarStyle
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-
-            StepControl {
-                label: "Compact Pill Height"
-                displayValue: ShellState.pillHeight + " px"
-                onDecremented: ShellState.setPref("pillHeight", Math.max(26, ShellState.pillHeight - 2))
-                onIncremented: ShellState.setPref("pillHeight", Math.min(40, ShellState.pillHeight + 2))
-            }
-
-            StepControl {
-                label: "Island Top Margin"
-                displayValue: ShellState.islandTopMargin + " px"
-                controlEnabled: ShellState.islandStyle !== "notch"
-                onDecremented: ShellState.setPref("islandTopMargin", Math.max(0, ShellState.islandTopMargin - 2))
-                onIncremented: ShellState.setPref("islandTopMargin", Math.min(20, ShellState.islandTopMargin + 2))
-            }
 
             // Shell UI Text Scale
             RowLayout {
@@ -851,6 +749,74 @@ ColumnLayout {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: ShellState.setPref("uiFontScale", fsScaleChip.modelData)
                         }
+                    }
+                }
+            }
+
+            // Quick Links to Island & Sequoia pages
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Bar Shape & Menu Layout"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: appGoIslTxt.implicitWidth + 14
+                    radius: Theme.r(7)
+                    color: appGoIslMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    border.width: Theme.subBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: appGoIslTxt
+                        anchors.centerIn: parent
+                        text: "󰀵 Island Settings"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.DemiBold
+                        color: Theme.primary
+                    }
+
+                    MouseArea {
+                        id: appGoIslMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.openPageRequested("island")
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: appGoSeqTxt.implicitWidth + 14
+                    radius: Theme.r(7)
+                    color: appGoSeqMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    border.width: Theme.subBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: appGoSeqTxt
+                        anchors.centerIn: parent
+                        text: "󰘔 Sequoia Settings"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.DemiBold
+                        color: Theme.secondary
+                    }
+
+                    MouseArea {
+                        id: appGoSeqMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.openPageRequested("sequoia")
                     }
                 }
             }
@@ -1047,7 +1013,7 @@ ColumnLayout {
                             id: fontNameTxt
                             anchors.centerIn: parent
                             text: fontPill.modelData
-                            font.family: fontPill.modelData
+                            font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(11)
                             font.weight: fontPill.selected ? Font.Bold : Font.Normal
                             color: fontPill.selected ? Theme.fgPrimary : Theme.fgSurface
@@ -1065,6 +1031,41 @@ ColumnLayout {
                                     ShellState.setFont(fontPill.modelData, ShellState.uiFontSize);
                             }
                         }
+                    }
+                }
+            }
+
+            // Lightweight 2-Font Live Preview (UI + Monospace without mmap'ing 24 list fonts)
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: fontPrevCol.implicitHeight + 14
+                radius: Theme.r(10)
+                color: Theme.subCardBg
+                border.width: Theme.subBorderWidth
+                border.color: Theme.cardBorder
+
+                ColumnLayout {
+                    id: fontPrevCol
+                    anchors.fill: parent
+                    anchors.margins: 7
+                    spacing: 3
+
+                    Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: ShellState.uiFontFamily + ": Pack my box with five dozen liquor jugs 0123456789"
+                        font.family: ShellState.uiFontFamily
+                        font.pixelSize: Theme.fs(11)
+                        color: Theme.fgSurface
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: ShellState.monoFontFamily + ": const aurora = () => [0x1F, true, null];"
+                        font.family: ShellState.monoFontFamily
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.primary
                     }
                 }
             }

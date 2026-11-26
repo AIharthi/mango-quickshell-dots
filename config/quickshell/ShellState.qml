@@ -109,6 +109,25 @@ Singleton {
     property string hubUiStyle: "cupertino"      // "cupertino" | "stage" | "cockpit" | "bento"
     property string barUiStyle: "apple"          // "apple" | "split" | "menubar" | "classic"
 
+    // --- Sequoia Menu Bar & Dedicated Control Center ---
+    property int sequoiaBarHeight: 28
+    property bool sequoiaBarFloating: false
+    property bool sequoiaBarTranslucent: true
+    property string sequoiaHubStyle: "controlcenter" // "controlcenter" | "compact" | "media"
+    property string sequoiaMenuIcon: "aurora"        // "aurora" | "apple" | "arch" | "fedora" | "gentoo" | "minimal"
+    property bool sequoiaShowAppTitle: true
+    property bool sequoiaShowWorkspaces: true
+    property bool sequoiaShowLayout: false
+    property bool sequoiaShowMedia: true
+    property bool sequoiaShowSystem: false
+    property bool sequoiaShowNetSpeed: false
+    property bool sequoiaShowVolume: true
+    property bool sequoiaShowBattery: true
+    property bool sequoiaShowTray: true
+    property bool sequoiaShowStore: true
+    property bool sequoiaShowSpotlightIcon: true
+    property bool sequoiaShowDate: true
+
     readonly property var availableHubStyles: [
         { id: "cupertino", label: "Cupertino", vibe: "macOS Control Center", desc: "Borderless connectivity platter, sliders, compact spaces & activity rings", icon: "󰕰" },
         { id: "stage",     label: "Stage",     vibe: "Media Showcase & Controls", desc: "Artwork showcase card paired with live toggles, spaces & metric deck", icon: "󰓇" },
@@ -116,10 +135,16 @@ Singleton {
         { id: "bento",     label: "Bento",     vibe: "Balanced 2x2 Grid", desc: "Snug four-card grid for Media, System Monitor, Workspaces & Controls", icon: "󰕮" }
     ]
 
+    readonly property var availableSequoiaHubStyles: [
+        { id: "controlcenter", label: "Control Center", vibe: "macOS Sequoia", desc: "2x2 connectivity platter, display & sound sliders, Now Playing, and spaces", icon: "󰕰" },
+        { id: "compact",       label: "Compact Stack",  vibe: "Minimal Popover", desc: "Streamlined quick toggles, audio slider, and active workspaces", icon: "󰘔" },
+        { id: "media",         label: "Studio Platter", vibe: "Audio & Media", desc: "Expanded album artwork, output routing, sliders, and telemetry rings", icon: "󰓇" }
+    ]
+
     readonly property var availableBarStyles: [
         { id: "apple",   label: "Dynamic Island", vibe: "iOS / macOS Capsule", desc: "Calm monochrome capsule with clock, cover art & active indicators", icon: "󰀵" },
         { id: "split",   label: "Split Islands",  vibe: "3 Floating Glass Pods", desc: "Three floating glass pods for Spaces, Clock/Media & System Status", icon: "󰕰" },
-        { id: "menubar", label: "Sequoia Bar",    vibe: "macOS Top Menu Bar", desc: "Full-width translucent menu bar with active app title & controls", icon: "󰘔" },
+        { id: "menubar", label: "Sequoia Bar",    vibe: "macOS Top Menu Bar", desc: "Dedicated menu bar with right-side Control Center & Spotlight", icon: "󰘔" },
         { id: "classic", label: "Modular Pill",   vibe: "Custom Widget Bar", desc: "Customizable modular pill, top notch, or full-width desktop bar", icon: "󰕮" }
     ]
     property int matugenSourceIndex: 0
@@ -292,6 +317,31 @@ Singleton {
                 if (bs === "apple" || bs === "split" || bs === "menubar" || bs === "classic")
                     root.barUiStyle = bs;
             }
+            if (d.sequoiaBarHeight !== undefined) root.sequoiaBarHeight = Math.max(24, Math.min(36, Number(d.sequoiaBarHeight)));
+            if (d.sequoiaBarFloating !== undefined) root.sequoiaBarFloating = !!d.sequoiaBarFloating;
+            if (d.sequoiaBarTranslucent !== undefined) root.sequoiaBarTranslucent = !!d.sequoiaBarTranslucent;
+            if (d.sequoiaHubStyle !== undefined) {
+                const shs = String(d.sequoiaHubStyle).toLowerCase();
+                if (shs === "controlcenter" || shs === "compact" || shs === "media")
+                    root.sequoiaHubStyle = shs;
+            }
+            if (d.sequoiaMenuIcon !== undefined) {
+                const smi = String(d.sequoiaMenuIcon).toLowerCase();
+                if (smi === "aurora" || smi === "apple" || smi === "arch" || smi === "fedora" || smi === "gentoo" || smi === "minimal")
+                    root.sequoiaMenuIcon = smi;
+            }
+            if (d.sequoiaShowAppTitle !== undefined) root.sequoiaShowAppTitle = !!d.sequoiaShowAppTitle;
+            if (d.sequoiaShowWorkspaces !== undefined) root.sequoiaShowWorkspaces = !!d.sequoiaShowWorkspaces;
+            if (d.sequoiaShowLayout !== undefined) root.sequoiaShowLayout = !!d.sequoiaShowLayout;
+            if (d.sequoiaShowMedia !== undefined) root.sequoiaShowMedia = !!d.sequoiaShowMedia;
+            if (d.sequoiaShowSystem !== undefined) root.sequoiaShowSystem = !!d.sequoiaShowSystem;
+            if (d.sequoiaShowNetSpeed !== undefined) root.sequoiaShowNetSpeed = !!d.sequoiaShowNetSpeed;
+            if (d.sequoiaShowVolume !== undefined) root.sequoiaShowVolume = !!d.sequoiaShowVolume;
+            if (d.sequoiaShowBattery !== undefined) root.sequoiaShowBattery = !!d.sequoiaShowBattery;
+            if (d.sequoiaShowTray !== undefined) root.sequoiaShowTray = !!d.sequoiaShowTray;
+            if (d.sequoiaShowStore !== undefined) root.sequoiaShowStore = !!d.sequoiaShowStore;
+            if (d.sequoiaShowSpotlightIcon !== undefined) root.sequoiaShowSpotlightIcon = !!d.sequoiaShowSpotlightIcon;
+            if (d.sequoiaShowDate !== undefined) root.sequoiaShowDate = !!d.sequoiaShowDate;
             if (d.matugenSourceIndex !== undefined) root.matugenSourceIndex = Math.max(0, Math.min(4, Number(d.matugenSourceIndex)));
             if (d.matugenPrefer !== undefined && String(d.matugenPrefer).length > 0) root.matugenPrefer = String(d.matugenPrefer);
             if (d.matugenLightnessDark !== undefined) root.matugenLightnessDark = Math.max(-0.5, Math.min(0.3, Number(d.matugenLightnessDark)));
@@ -424,6 +474,41 @@ Singleton {
         else if (key === "islandStyle") root.islandStyle = String(value);
         else if (key === "islandTopMargin") root.islandTopMargin = Math.max(0, Math.min(20, Number(value)));
         else if (key === "pillHeight") root.pillHeight = Math.max(26, Math.min(40, Number(value)));
+        else if (key === "hubUiStyle") {
+            const hs = String(value).toLowerCase();
+            if (hs === "cupertino" || hs === "stage" || hs === "cockpit" || hs === "bento")
+                root.hubUiStyle = hs;
+        }
+        else if (key === "barUiStyle") {
+            const bs = String(value).toLowerCase();
+            if (bs === "apple" || bs === "split" || bs === "menubar" || bs === "classic")
+                root.barUiStyle = bs;
+        }
+        else if (key === "sequoiaBarHeight") root.sequoiaBarHeight = Math.max(24, Math.min(36, Number(value)));
+        else if (key === "sequoiaBarFloating") root.sequoiaBarFloating = !!value;
+        else if (key === "sequoiaBarTranslucent") root.sequoiaBarTranslucent = !!value;
+        else if (key === "sequoiaHubStyle") {
+            const shs = String(value).toLowerCase();
+            if (shs === "controlcenter" || shs === "compact" || shs === "media")
+                root.sequoiaHubStyle = shs;
+        }
+        else if (key === "sequoiaMenuIcon") {
+            const smi = String(value).toLowerCase();
+            if (smi === "aurora" || smi === "apple" || smi === "arch" || smi === "fedora" || smi === "gentoo" || smi === "minimal")
+                root.sequoiaMenuIcon = smi;
+        }
+        else if (key === "sequoiaShowAppTitle") root.sequoiaShowAppTitle = !!value;
+        else if (key === "sequoiaShowWorkspaces") root.sequoiaShowWorkspaces = !!value;
+        else if (key === "sequoiaShowLayout") root.sequoiaShowLayout = !!value;
+        else if (key === "sequoiaShowMedia") root.sequoiaShowMedia = !!value;
+        else if (key === "sequoiaShowSystem") root.sequoiaShowSystem = !!value;
+        else if (key === "sequoiaShowNetSpeed") root.sequoiaShowNetSpeed = !!value;
+        else if (key === "sequoiaShowVolume") root.sequoiaShowVolume = !!value;
+        else if (key === "sequoiaShowBattery") root.sequoiaShowBattery = !!value;
+        else if (key === "sequoiaShowTray") root.sequoiaShowTray = !!value;
+        else if (key === "sequoiaShowStore") root.sequoiaShowStore = !!value;
+        else if (key === "sequoiaShowSpotlightIcon") root.sequoiaShowSpotlightIcon = !!value;
+        else if (key === "sequoiaShowDate") root.sequoiaShowDate = !!value;
         else if (key === "matugenSourceIndex") root.matugenSourceIndex = Math.max(0, Math.min(4, Number(value)));
         else if (key === "matugenPrefer") root.matugenPrefer = String(value);
         else if (key === "matugenLightnessDark") root.matugenLightnessDark = Math.max(-0.5, Math.min(0.3, Number(value)));
@@ -530,6 +615,14 @@ Singleton {
 
     function resetBar(): void {
         _runResetCmd("reset-bar");
+    }
+
+    function resetIsland(): void {
+        _runResetCmd("reset-island");
+    }
+
+    function resetSequoia(): void {
+        _runResetCmd("reset-sequoia");
     }
 
     function resetFiles(): void {
@@ -639,6 +732,83 @@ Singleton {
         setBarUiStyle(order[(idx + 1) % order.length]);
     }
 
+    function setSequoiaHubStyle(style: string): void {
+        if (style !== "controlcenter" && style !== "compact" && style !== "media")
+            return;
+        root.sequoiaHubStyle = style;
+        setPref("sequoiaHubStyle", style);
+    }
+
+    function cycleSequoiaHubStyle(): void {
+        const order = ["controlcenter", "compact", "media"];
+        const idx = order.indexOf(root.sequoiaHubStyle);
+        setSequoiaHubStyle(order[(idx + 1) % order.length]);
+    }
+
+    function applySequoiaPreset(preset: string): void {
+        let map = null;
+        if (preset === "macos") {
+            map = {
+                barUiStyle: "menubar",
+                sequoiaBarHeight: 28,
+                sequoiaBarFloating: false,
+                sequoiaBarTranslucent: true,
+                sequoiaShowAppTitle: true,
+                sequoiaShowWorkspaces: true,
+                sequoiaShowLayout: false,
+                sequoiaShowMedia: true,
+                sequoiaShowSystem: false,
+                sequoiaShowNetSpeed: false,
+                sequoiaShowVolume: true,
+                sequoiaShowBattery: true,
+                sequoiaShowTray: true,
+                sequoiaShowStore: true,
+                sequoiaShowSpotlightIcon: true,
+                sequoiaShowDate: true
+            };
+        } else if (preset === "minimal") {
+            map = {
+                barUiStyle: "menubar",
+                sequoiaBarHeight: 26,
+                sequoiaBarFloating: false,
+                sequoiaBarTranslucent: true,
+                sequoiaShowAppTitle: true,
+                sequoiaShowWorkspaces: false,
+                sequoiaShowLayout: false,
+                sequoiaShowMedia: false,
+                sequoiaShowSystem: false,
+                sequoiaShowNetSpeed: false,
+                sequoiaShowVolume: true,
+                sequoiaShowBattery: true,
+                sequoiaShowTray: false,
+                sequoiaShowStore: false,
+                sequoiaShowSpotlightIcon: true,
+                sequoiaShowDate: true
+            };
+        } else if (preset === "developer") {
+            map = {
+                barUiStyle: "menubar",
+                sequoiaBarHeight: 28,
+                sequoiaBarFloating: false,
+                sequoiaBarTranslucent: true,
+                sequoiaShowAppTitle: true,
+                sequoiaShowWorkspaces: true,
+                sequoiaShowLayout: true,
+                sequoiaShowMedia: true,
+                sequoiaShowSystem: true,
+                sequoiaShowNetSpeed: true,
+                sequoiaShowVolume: true,
+                sequoiaShowBattery: true,
+                sequoiaShowTray: true,
+                sequoiaShowStore: true,
+                sequoiaShowSpotlightIcon: true,
+                sequoiaShowDate: true
+            };
+        }
+        if (map)
+            setPrefsBatch(map);
+    }
+
     function applyBarPreset(preset: string): void {
         const nextBarStyle = (root.barUiStyle === "split" || root.barUiStyle === "menubar")
             ? "apple"
@@ -680,7 +850,7 @@ Singleton {
             };
         } else if (preset === "full") {
             map = {
-                barUiStyle: nextBarStyle,
+                barUiStyle: "classic",
                 islandStyle: "bar",
                 barShowDate: true,
                 barShowWindow: true,

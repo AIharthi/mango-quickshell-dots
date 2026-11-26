@@ -5,10 +5,10 @@ CMD="${1:-}"
 shift || true
 
 case "$CMD" in
-    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor|config-update)
+    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|store|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor|config-update)
         ;;
     *)
-        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor|config-update> [args...]" >&2
+        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|store|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor|config-update> [args...]" >&2
         exit 1
         ;;
 esac
@@ -16,7 +16,7 @@ esac
 BACKEND_BIN="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/bin/aurora-backend"
 if [[ -x "$BACKEND_BIN" ]]; then
     case "$CMD" in
-        hwmon|processes|doctor|services|service-action|kill-proc|distro|config-update)
+        hwmon|processes|doctor|services|service-action|kill-proc|distro|store|config-update)
             exec "$BACKEND_BIN" "$CMD" "$@"
             ;;
         power-action|power)

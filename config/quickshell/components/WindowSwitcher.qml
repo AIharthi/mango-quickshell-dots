@@ -269,7 +269,7 @@ PanelWindow {
     }
 
     // Main Modal
-    ClippingRectangle {
+    Rectangle {
         anchors.centerIn: parent
         width: Math.min(720, Math.max(400, root.width - 64))
         height: Math.min(560, Math.max(255, 206 + Math.max(1, root.filteredClients.length) * 56))
@@ -279,8 +279,7 @@ PanelWindow {
         }
         radius: Theme.r(24)
         color: Theme.notchBg
-        contentUnderBorder: false
-        contentInsideBorder: true
+        clip: true
         border.width: Math.max(1, Theme.islandBorderWidth)
         border.color: Theme.islandBorder
 

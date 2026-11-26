@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Widgets
 import ".."
 
 PanelWindow {
@@ -309,15 +308,14 @@ PanelWindow {
     }
 
     // Main Modal
-    ClippingRectangle {
+    Rectangle {
         id: dialog
         anchors.centerIn: parent
         width: Math.min(840, Math.max(480, root.width - 56))
         height: Math.min(580, Math.max(400, root.height - 56))
         radius: Theme.r(20)
         color: Theme.notchBg
-        contentUnderBorder: false
-        contentInsideBorder: true
+        clip: true
         border.width: Math.max(1, Theme.islandBorderWidth)
         border.color: Theme.islandBorder
         Keys.onEscapePressed: root.closeRequested()
@@ -809,7 +807,7 @@ PanelWindow {
                                         anchors.fill: parent
                                         visible: cellWrap.isShot && status === Image.Ready
                                         asynchronous: true
-                                        cache: true
+                                        cache: false
                                         fillMode: Image.PreserveAspectCrop
                                         sourceSize: Qt.size(380, 200)
                                         source: cellWrap.isShot ? root.fileUrl(String(cellWrap.modelData.path || "")) : ""

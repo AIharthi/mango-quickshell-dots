@@ -68,7 +68,9 @@ RowLayout {
                     if (mouse.button === Qt.RightButton) {
                         if (item.hasMenu && win) {
                             const pos = trayBtn.QsWindow.itemPosition(trayBtn);
-                            item.display(win, Math.round(pos.x), Math.round(pos.y + trayBtn.height));
+                            const px = Math.round(pos.x);
+                            const py = Math.round(pos.y + trayBtn.height);
+                            Qt.callLater(() => item.display(win, px, py));
                         }
                     } else if (mouse.button === Qt.MiddleButton) {
                         item.secondaryActivate();

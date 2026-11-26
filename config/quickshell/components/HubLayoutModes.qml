@@ -2,8 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
-import Quickshell.Widgets
 import ".."
 
 Item {
@@ -17,27 +15,10 @@ Item {
     signal openSettingsRequested(string page)
     signal controlInteractionChanged(bool interacting)
 
-    // --- Live MangoWC Tag Stream ---
-    property string monitorName: ""
-    property string currentLayout: "T"
-    property var tagsModel: [
-        { index: 1, is_active: true,  is_urgent: false, client_count: 0 },
-        { index: 2, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 3, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 4, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 5, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 6, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 7, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 8, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 9, is_active: false, is_urgent: false, client_count: 0 }
-    ]
-    readonly property int totalClients: {
-        let sum = 0;
-        const arr = root.tagsModel || [];
-        for (let i = 0; i < arr.length; i++)
-            sum += (arr[i].client_count || 0);
-        return sum;
-    }
+    // --- Shared Live MangoWC Tag State (via MangoState) ---
+    readonly property string currentLayout: MangoState.layoutForScreen(root.screenName)
+    readonly property var tagsModel: MangoState.tagsForScreen(root.screenName)
+    readonly property int totalClients: MangoState.totalClientsForScreen(root.screenName)
 
     // --- Live Telemetry (streamed by Rust aurora-backend SystemTelemetry) ---
     readonly property real cpuPercent: SystemTelemetry.cpuPercent
@@ -48,11 +29,12 @@ Item {
     readonly property real diskPercent: SystemTelemetry.diskPercent
     readonly property string diskFreeLabel: SystemTelemetry.diskFreeLabel
 
-    // --- Live Audio State (for Connectivity Platter & Stage Volume) ---
-    property real volumeLevel: 0.5
-    property bool volumeMuted: false
-    property string defaultSinkLabel: "Audio Output"
+    // --- Shared PipeWire Audio State (via MangoState) ---
+    readonly property real volumeLevel: MangoState.volPercent / 100.0
+    readonly property bool volumeMuted: MangoState.volMuted
+    readonly property string defaultSinkLabel: MangoState.defaultSinkLabel
     property bool _dragging: false
+    property bool _seeking: false
 
     // --- Live MPRIS Helpers (for Stage & Cockpit hero players) ---
     readonly property bool hasPlayer: root.player !== null
@@ -78,7 +60,7 @@ Item {
         target: root.player
         ignoreUnknownSignals: true
         function onPositionChanged(): void {
-            if (!stageSeekMouse.pressed && root.player)
+            if (!root._seeking && root.player)
                 root.displayPosition = root.player.position;
         }
         function onPostTrackChanged(): void {
@@ -90,7 +72,7 @@ Item {
     Timer {
         interval: 1000
         repeat: true
-        running: root.active && root.isPlaying && (root.layoutMode === "stage" || root.layoutMode === "cockpit") && !stageSeekMouse.pressed
+        running: root.active && root.isPlaying && (root.layoutMode === "stage" || root.layoutMode === "cockpit") && !root._seeking
         onTriggered: {
             if (!root.player)
                 return;
@@ -103,124 +85,8 @@ Item {
         }
     }
 
-    function parseTagsJson(raw: string): void {
-        const trimmed = (raw || "").trim();
-        if (trimmed.length === 0)
-            return;
-        try {
-            const payload = JSON.parse(trimmed);
-            const list = payload.all_tags;
-            if (!list || list.length === 0)
-                return;
-            const targetMon = root.screenName.length > 0 ? root.screenName : root.monitorName;
-            let chosen = list[0];
-            for (let i = 0; i < list.length; i++) {
-                if (list[i].monitor === targetMon) {
-                    chosen = list[i];
-                    break;
-                }
-            }
-            if (chosen.monitor)
-                root.monitorName = chosen.monitor;
-            if (chosen.tags && chosen.tags.length > 0) {
-                const normalized = [];
-                let activeLayout = root.currentLayout;
-                for (let j = 0; j < Math.min(9, chosen.tags.length); j++) {
-                    const t = chosen.tags[j];
-                    if (t.is_active && t.layout)
-                        activeLayout = t.layout;
-                    normalized.push({
-                        index: t.index,
-                        is_active: !!t.is_active,
-                        is_urgent: !!t.is_urgent,
-                        client_count: t.client_count || 0
-                    });
-                }
-                root.currentLayout = activeLayout;
-                root.tagsModel = normalized;
-            }
-        } catch (err) {}
-    }
-
     function applyVolume(ratio: real): void {
-        const cap = ShellState.audioOverAmp ? 1.5 : 1.0;
-        const clamped = Math.max(0.0, Math.min(cap, ratio));
-        root.volumeLevel = clamped;
-        if (!volThrottle.running)
-            volThrottle.start();
-    }
-
-    Timer {
-        id: volThrottle
-        interval: 60
-        repeat: false
-        onTriggered: {
-            const pct = Math.round(root.volumeLevel * 100);
-            Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", pct + "%"]);
-        }
-    }
-
-    Process {
-        id: tagStream
-        command: ["mmsg", "watch", "all-tags"]
-        running: root.active
-        stdout: SplitParser {
-            onRead: line => root.parseTagsJson(line)
-        }
-    }
-
-    Process {
-        id: metaProc
-        command: [
-            "sh", "-c",
-            "echo '---VOL---'; pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null || true; echo '---MUTE---'; pactl get-sink-mute @DEFAULT_SINK@ 2>/dev/null || true; echo '---SINK---'; " +
-            "def=$(pactl get-default-sink 2>/dev/null || true); " +
-            "[ -n \"$def\" ] && pactl list sinks 2>/dev/null | awk -v d=\"$def\" '$1==\"Name:\" {m=($2==d)} m && /Description:/ {sub(/.*Description: /, \"\"); print; exit}'"
-        ]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const raw = text || "";
-                const volSplit = raw.split("---VOL---");
-                if (volSplit.length >= 2) {
-                    const mSplit = volSplit[1].split("---MUTE---");
-                    const vm = (mSplit[0] || "").match(/(\d+)%/);
-                    if (vm && vm[1] && !root._dragging)
-                        root.volumeLevel = Math.max(0.0, Math.min(1.5, parseInt(vm[1], 10) / 100.0));
-                    if (mSplit.length >= 2) {
-                        const sSplit = mSplit[1].split("---SINK---");
-                        root.volumeMuted = (sSplit[0] || "").toLowerCase().indexOf("yes") !== -1;
-                        if (sSplit.length >= 2) {
-                            const lbl = (sSplit[1] || "").trim();
-                            if (lbl.length > 0)
-                                root.defaultSinkLabel = lbl;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Timer {
-        interval: 1800
-        repeat: true
-        running: root.active
-        triggeredOnStart: true
-        onTriggered: {
-            if (!metaProc.running)
-                metaProc.running = true;
-        }
-    }
-
-    Process {
-        id: sinkCycleProc
-        command: [
-            "sh", "-c",
-            "cur=$(pactl get-default-sink 2>/dev/null); mapfile -t s < <(pactl list short sinks 2>/dev/null | awk '{print $2}'); [ ${#s[@]} -lt 2 ] && exit 0; for i in \"${!s[@]}\"; do if [ \"${s[$i]}\" = \"$cur\" ]; then next=$(( (i + 1) % ${#s[@]} )); pactl set-default-sink \"${s[$next]}\"; break; fi; done"
-        ]
-        onExited: {
-            if (!metaProc.running)
-                metaProc.running = true;
-        }
+        MangoState.setVolumeRatio(ratio);
     }
 
     // --- Reusable Inline Component: Horizontal Metric Cell (for Stage Telemetry Deck) ---
@@ -532,7 +398,7 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
                         if (mouse.button === Qt.RightButton)
-                            Quickshell.execDetached(["mmsg", "dispatch", "toggleoverview"]);
+                            Qt.callLater(() => Quickshell.execDetached(["mmsg", "dispatch", "toggleoverview"]));
                         else
                             Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleWindowSwitcher"]);
                     }
@@ -541,11 +407,20 @@ Item {
         }
     }
 
-    // ==================== LAYOUT 1: CUPERTINO (macOS Control Center) ====================
-    RowLayout {
+    Loader {
         anchors.fill: parent
-        visible: root.layoutMode === "cupertino"
-        spacing: 10
+        active: root.active
+        sourceComponent: root.layoutMode === "stage"
+            ? stageLayoutComp
+            : (root.layoutMode === "cockpit" ? cockpitLayoutComp : cupertinoLayoutComp)
+    }
+
+    // ==================== LAYOUT 1: CUPERTINO (macOS Control Center) ====================
+    Component {
+        id: cupertinoLayoutComp
+
+        RowLayout {
+            spacing: 10
 
         // Left Column: Borderless 2x2 Connectivity/Focus Platter + Snug MediaCard
         ColumnLayout {
@@ -688,9 +563,9 @@ Item {
                                     const cid = ccTile.modelData.id;
                                     if (cid === "sink") {
                                         if (mouse.button === Qt.RightButton)
-                                            root.openSettingsRequested("audio");
-                                        else if (!sinkCycleProc.running)
-                                            sinkCycleProc.running = true;
+                                            Qt.callLater(() => root.openSettingsRequested("audio"));
+                                        else
+                                            MangoState.cycleAudioSink();
                                     } else if (cid === "dnd") {
                                         ShellState.toggleDnd();
                                     } else if (cid === "awake") {
@@ -802,26 +677,27 @@ Item {
                 }
             }
         }
+        }
     }
 
     // ==================== LAYOUT 2: STAGE (Artwork Showcase + Controls & Metric Deck) ====================
-    RowLayout {
-        anchors.fill: parent
-        visible: root.layoutMode === "stage"
-        spacing: 10
+    Component {
+        id: stageLayoutComp
 
-        // Left Media Showcase Card (Full-bleed top artwork + snug bottom playback bar)
-        ClippingRectangle {
-            Layout.preferredWidth: 276
-            Layout.minimumWidth: 268
-            Layout.maximumWidth: 282
-            Layout.fillHeight: true
-            radius: Theme.r(18)
-            color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
-            border.color: Theme.cardBorder
-            contentUnderBorder: false
-            contentInsideBorder: true
+        RowLayout {
+            spacing: 10
+
+            // Left Media Showcase Card (Full-bleed top artwork + snug bottom playback bar)
+            Rectangle {
+                Layout.preferredWidth: 276
+                Layout.minimumWidth: 268
+                Layout.maximumWidth: 282
+                Layout.fillHeight: true
+                radius: Theme.r(18)
+                color: Theme.cardBg
+                border.width: Theme.cardBorderWidth
+                border.color: Theme.cardBorder
+                clip: true
 
             ColumnLayout {
                 anchors.fill: parent
@@ -846,6 +722,7 @@ Item {
                         source: root.artUrl
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
+                        cache: false
                         sourceSize: Qt.size(320, 320)
                         visible: root.artUrl.length > 0 && status === Image.Ready
                     }
@@ -989,10 +866,10 @@ Item {
                                     root.displayPosition = sec;
                                     root.player.seek(sec - (root.player.position || 0));
                                 }
-                                onPressed: m => { root.controlInteractionChanged(true); seekAt(m.x); }
+                                onPressed: m => { root._seeking = true; root.controlInteractionChanged(true); seekAt(m.x); }
                                 onPositionChanged: m => { if (pressed) seekAt(m.x); }
-                                onReleased: root.controlInteractionChanged(false)
-                                onCanceled: root.controlInteractionChanged(false)
+                                onReleased: { root._seeking = false; root.controlInteractionChanged(false); }
+                                onCanceled: { root._seeking = false; root.controlInteractionChanged(false); }
                             }
                         }
 
@@ -1291,9 +1168,9 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: mouse => {
                                     if (mouse.button === Qt.RightButton)
-                                        root.openSettingsRequested("audio");
-                                    else if (!sinkCycleProc.running)
-                                        sinkCycleProc.running = true;
+                                        Qt.callLater(() => root.openSettingsRequested("audio"));
+                                    else
+                                        MangoState.cycleAudioSink();
                                 }
                             }
                         }
@@ -1371,13 +1248,15 @@ Item {
                 }
             }
         }
+        }
     }
 
     // ==================== LAYOUT 3: COCKPIT (Telemetry Ribbon + Dual Command Deck) ====================
-    ColumnLayout {
-        anchors.fill: parent
-        visible: root.layoutMode === "cockpit"
-        spacing: 10
+    Component {
+        id: cockpitLayoutComp
+
+        ColumnLayout {
+            spacing: 10
 
         // Top Unified Media + Mission Control Spaces Ribbon (50px snug fit)
         RowLayout {
@@ -1405,13 +1284,12 @@ Item {
                     anchors.margins: 7
                     spacing: 8
 
-                    ClippingRectangle {
+                    Rectangle {
                         implicitWidth: 36
                         implicitHeight: 36
                         radius: Theme.r(10)
                         color: Theme.primaryContainer
-                        contentUnderBorder: false
-                        contentInsideBorder: true
+                        clip: true
 
                         Image {
                             id: ckArtImg
@@ -1419,6 +1297,7 @@ Item {
                             source: root.artUrl
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
+                            cache: false
                             sourceSize: Qt.size(96, 96)
                             visible: root.artUrl.length > 0 && status === Image.Ready
                         }
@@ -1493,6 +1372,7 @@ Item {
                 onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
                 onOpenSettingsRequested: page => root.openSettingsRequested(page)
             }
+        }
         }
     }
 }

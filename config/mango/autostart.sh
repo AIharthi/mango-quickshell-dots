@@ -89,9 +89,9 @@ if [[ -x "${CONFIG_BASE}/quickshell/scripts/apply-theme.sh" ]]; then
     "${CONFIG_BASE}/quickshell/scripts/apply-theme.sh" --init </dev/null >/dev/null 2>&1 &
 fi
 
-# Launch Quickshell Dynamic Island
+# Launch Quickshell Dynamic Island / Sequoia Shell
 if command -v qs >/dev/null 2>&1; then
     if ! pgrep -x qs >/dev/null 2>&1 && ! pgrep -x quickshell >/dev/null 2>&1; then
-        qs -d </dev/null >/dev/null 2>&1 &
+        QT_QUICK_CONTROLS_STYLE=Basic qs -d </dev/null >/dev/null 2>&1 &
     fi
 fi

@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Widgets
 import Quickshell.Services.Pam
 import Quickshell.Services.Mpris
 import ".."
@@ -26,6 +25,8 @@ Item {
     signal authFailedShake()
 
     readonly property var activePlayer: {
+        if (!root.locked)
+            return null;
         const players = Mpris.players.values;
         if (!players || players.length === 0)
             return null;
@@ -165,7 +166,7 @@ Item {
     Process {
         id: userFallbackProc
         command: ["id", "-un"]
-        running: root.currentUser === "user"
+        running: !(Quickshell.env("USER") || Quickshell.env("LOGNAME") || "")
         stdout: StdioCollector {
             onStreamFinished: {
                 const u = (text || "").trim();
@@ -600,10 +601,11 @@ Item {
                             anchors.rightMargin: 8
                             spacing: 10
 
-                            ClippingRectangle {
+                            Rectangle {
                                 implicitWidth: 34
                                 implicitHeight: 34
                                 radius: Theme.r(9)
+                                clip: true
                                 color: Theme.primaryContainer
 
                                 Image {
@@ -612,6 +614,7 @@ Item {
                                     source: (root.activePlayer && root.activePlayer.trackArtUrl) ? root.activePlayer.trackArtUrl : ""
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
+                                    cache: false
                                     sourceSize: Qt.size(64, 64)
                                     visible: source.toString().length > 0 && status === Image.Ready
                                 }

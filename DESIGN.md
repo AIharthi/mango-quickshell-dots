@@ -1,7 +1,7 @@
 # Aurora Shell Design System
 
 ## Design Read
-- **Product Surface**: Operate-mode Wayland desktop shell (Dynamic Island top bar, expanded Control Hub, 16-page Aurora Settings app with System Doctor, `aurora-fm` File Manager, Spotlight Launcher with unit/color/math evaluation, Alerts Center, Window Switcher, Keybind Sheet, Power Overlay, Polkit Prompt, Lock Screen, and Aurora Island SDDM Theme).
+- **Product Surface**: Operate-mode Wayland desktop shell (Dynamic Island top bar + expanded Hub, dedicated Sequoia Menu Bar + top-right Control Center Hub, Aurora App Store for Arch/AUR/Fedora/Flatpak, 19-page Aurora Settings app with System Doctor, `aurora-fm` File Manager, Spotlight Launcher with unit/color/math evaluation, Alerts Center, Window Switcher, Keybind Sheet, Power Overlay, Polkit Prompt, Lock Screen, and Aurora Island SDDM Theme).
 - **Antislop Dials**: `ENERGY 2 / RHYTHM 2 / MOTION 1`
   - **Energy 2 (Calm & Tactile)**: Restraint over ornament; quiet tonal elevation instead of heavy nested borders; clear focal hierarchy on every surface.
   - **Rhythm 2 (Structured Density)**: Grouped controls with deliberate vertical breathing room, aligned tabular telemetry, and clear primary vs secondary vs destructive separation.
@@ -21,6 +21,7 @@
 ## Monochrome-First Bar & Adaptive Hub Sizing
 - **Monochrome-First Top Bar**: Idle metrics, workspace numbers, layout badges, Focus/Keep Awake icons, and utility buttons stay calm monochrome (`Theme.fgSurface` / `Theme.fgSurfaceVariant`) on transparent or subtle neutral surfaces without idle green dots or multi-color borders. Reserve semantic accent colors strictly for active recording (`Theme.error`), critical thresholds (`>85%` CPU/RAM or low battery), and live charging states.
 - **Content-Fitted Adaptive Hub Layouts**: The expanded Hub adapts its height dynamically per `hubUiStyle` and hardware capabilities (`DeviceCaps`) instead of forcing tall fixed voids; avoid `Layout.fillHeight: true` spacer gaps inside dashboard cards.
+- **Dedicated Sequoia vs. Dynamic Island Surfaces**: Keep `barUiStyle === "menubar"` strictly separated into `SequoiaBar.qml` (stationary top bar) and `SequoiaHub.qml` (on-demand top-right Control Center popover, Notification Center, centered Spotlight, and passive top-right Toast / center OSD) so opening popups never shrinks or distorts the top menu bar. Load heavy modal windows and inactive hubs via URL `LazyLoader`s with garbage collection on unload to maintain minimal idle memory.
 
 ## Radius Scale (Scaled by `Theme.r()`)
 - **Shell / Modal**: `20px`

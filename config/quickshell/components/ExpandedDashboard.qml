@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import ".."
-import "../files"
 
 ColumnLayout {
     id: root
@@ -23,9 +22,15 @@ ColumnLayout {
     signal openFilesRequested(string path)
     signal openKeybindsRequested()
     signal openCaptureHubRequested()
+    signal openStoreRequested()
     signal closeRequested()
     signal searchFocusChanged(bool focused)
     signal controlInteractionChanged(bool interacting)
+
+    Behavior on opacity {
+        enabled: !Theme.reducedMotion
+        NumberAnimation { duration: 130; easing.type: Easing.OutCubic }
+    }
 
     spacing: 10
 
@@ -201,9 +206,41 @@ ColumnLayout {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
                         if (mouse.button === Qt.RightButton)
-                            root.openSettingsRequested("shell");
+                            Qt.callLater(() => root.openSettingsRequested("island"));
                         else
                             ShellState.cycleHubUiStyle();
+                    }
+                }
+            }
+
+            // Store Quick Button
+            Rectangle {
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: Theme.r(13)
+                color: storeArea.containsMouse ? Theme.controlFillHover : "transparent"
+                border.width: Theme.activeControlBorderWidth
+                border.color: Theme.cardBorder
+                scale: storeArea.pressed ? 0.92 : 1.0
+
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰏖"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 12
+                    color: storeArea.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                }
+
+                MouseArea {
+                    id: storeArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        root.closeRequested();
+                        root.openStoreRequested();
                     }
                 }
             }
@@ -302,7 +339,7 @@ ColumnLayout {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.openSettingsRequested("appearance")
+                    onClicked: root.openSettingsRequested("island")
                 }
             }
 
@@ -440,9 +477,14 @@ ColumnLayout {
             NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
         }
 
-        PowerMenu {
+        Loader {
             anchors.fill: parent
-            onActionTriggered: root.closeRequested()
+            active: root.powerMenuOpen
+            source: active ? "PowerMenu.qml" : ""
+            onLoaded: {
+                if (item)
+                    item.actionTriggered.connect(() => root.closeRequested());
+            }
         }
     }
 
@@ -468,7 +510,7 @@ ColumnLayout {
         onTriggered: root._fadingTab = ""
     }
 
-    // --- Tab Content Stack (lazy-loaded per active tab) ---
+    // --- Tab Content Stack (URL lazy-loaded per active tab) ---
     Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -480,71 +522,21 @@ ColumnLayout {
             active: root.activeTab === "overview" || root._fadingTab === "overview"
             visible: opacity > 0.01
             opacity: root.activeTab === "overview" ? 1.0 : 0.0
+            source: active ? "OverviewHub.qml" : ""
 
             Behavior on opacity {
+                enabled: !Theme.reducedMotion
                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
             }
 
-            sourceComponent: Item {
-                GridLayout {
-                    anchors.fill: parent
-                    visible: ShellState.hubUiStyle === "bento"
-                    columns: 2
-                    rowSpacing: 10
-                    columnSpacing: 10
-
-                    MediaCard {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: false
-                        Layout.preferredWidth: 1
-                        Layout.preferredHeight: 172
-                        Layout.minimumHeight: 162
-                        Layout.maximumHeight: 174
-                        player: root.player
-                        active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
-                        onSeekingChanged: seeking => root.controlInteractionChanged(seeking)
-                    }
-
-                    SystemMonitor {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: false
-                        Layout.preferredWidth: 1
-                        Layout.preferredHeight: 172
-                        Layout.minimumHeight: 162
-                        Layout.maximumHeight: 174
-                        active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
-                    }
-
-                    MangoTags {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.preferredWidth: 1
-                        Layout.minimumHeight: 176
-                        screenName: root.screenName
-                        active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
-                    }
-
-                    QuickControls {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.preferredWidth: 1
-                        Layout.minimumHeight: 176
-                        active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle === "bento"
-                        onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
-                        onOpenSettingsRequested: page => root.openSettingsRequested(page)
-                    }
-                }
-
-                HubLayoutModes {
-                    anchors.fill: parent
-                    visible: ShellState.hubUiStyle !== "bento"
-                    layoutMode: ShellState.hubUiStyle
-                    active: root.isOpen && root.activeTab === "overview" && ShellState.hubUiStyle !== "bento"
-                    screenName: root.screenName
-                    player: root.player
-                    onOpenSettingsRequested: page => root.openSettingsRequested(page)
-                    onControlInteractionChanged: interacting => root.controlInteractionChanged(interacting)
-                }
+            onLoaded: {
+                if (!item)
+                    return;
+                item.active = Qt.binding(() => root.isOpen && root.activeTab === "overview");
+                item.screenName = Qt.binding(() => root.screenName);
+                item.player = Qt.binding(() => root.player);
+                item.openSettingsRequested.connect(page => root.openSettingsRequested(page));
+                item.controlInteractionChanged.connect(interacting => root.controlInteractionChanged(interacting));
             }
         }
 
@@ -555,18 +547,22 @@ ColumnLayout {
             active: root.activeTab === "files" || root._fadingTab === "files"
             visible: opacity > 0.01
             opacity: root.activeTab === "files" ? 1.0 : 0.0
+            source: active ? "../files/QuickFilesTab.qml" : ""
 
             Behavior on opacity {
+                enabled: !Theme.reducedMotion
                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
             }
 
-            sourceComponent: QuickFilesTab {
-                active: root.isOpen && root.activeTab === "files"
-                onSearchFocusChanged: focused => root.searchFocusChanged(focused)
-                onOpenFullManagerRequested: path => {
+            onLoaded: {
+                if (!item)
+                    return;
+                item.active = Qt.binding(() => root.isOpen && root.activeTab === "files");
+                item.searchFocusChanged.connect(focused => root.searchFocusChanged(focused));
+                item.openFullManagerRequested.connect(path => {
                     root.closeRequested();
                     root.openFilesRequested(path);
-                }
+                });
             }
         }
 
@@ -577,14 +573,18 @@ ColumnLayout {
             active: root.activeTab === "themes" || root._fadingTab === "themes"
             visible: opacity > 0.01
             opacity: root.activeTab === "themes" ? 1.0 : 0.0
+            source: active ? "ThemeSwitcher.qml" : ""
 
             Behavior on opacity {
+                enabled: !Theme.reducedMotion
                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
             }
 
-            sourceComponent: ThemeSwitcher {
-                active: root.isOpen && root.activeTab === "themes"
-                onOpenSettingsRequested: page => root.openSettingsRequested(page)
+            onLoaded: {
+                if (!item)
+                    return;
+                item.active = Qt.binding(() => root.isOpen && root.activeTab === "themes");
+                item.openSettingsRequested.connect(page => root.openSettingsRequested(page));
             }
         }
 
@@ -595,20 +595,25 @@ ColumnLayout {
             active: root.activeTab === "launcher" || root._fadingTab === "launcher"
             visible: opacity > 0.01
             opacity: root.activeTab === "launcher" ? 1.0 : 0.0
+            source: active ? "AppLauncher.qml" : ""
 
             Behavior on opacity {
+                enabled: !Theme.reducedMotion
                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
             }
 
-            sourceComponent: AppLauncher {
-                active: root.isOpen && root.activeTab === "launcher"
-                initialMode: root.launcherMode
-                onSearchFocusChanged: focused => root.searchFocusChanged(focused)
-                onCloseRequested: root.closeRequested()
-                onOpenSettingsRequested: page => root.openSettingsRequested(page)
-                onOpenFilesRequested: path => root.openFilesRequested(path)
-                onOpenKeybindsRequested: root.openKeybindsRequested()
-                onOpenCaptureHubRequested: root.openCaptureHubRequested()
+            onLoaded: {
+                if (!item)
+                    return;
+                item.active = Qt.binding(() => root.isOpen && root.activeTab === "launcher");
+                item.initialMode = Qt.binding(() => root.launcherMode);
+                item.searchFocusChanged.connect(focused => root.searchFocusChanged(focused));
+                item.closeRequested.connect(() => root.closeRequested());
+                item.openSettingsRequested.connect(page => root.openSettingsRequested(page));
+                item.openFilesRequested.connect(path => root.openFilesRequested(path));
+                item.openKeybindsRequested.connect(() => root.openKeybindsRequested());
+                item.openCaptureHubRequested.connect(() => root.openCaptureHubRequested());
+                item.openStoreRequested.connect(() => root.openStoreRequested());
             }
         }
 
@@ -619,14 +624,18 @@ ColumnLayout {
             active: root.activeTab === "notifications" || root._fadingTab === "notifications"
             visible: opacity > 0.01
             opacity: root.activeTab === "notifications" ? 1.0 : 0.0
+            source: active ? "NotificationsTab.qml" : ""
 
             Behavior on opacity {
+                enabled: !Theme.reducedMotion
                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
             }
 
-            sourceComponent: NotificationsTab {
-                active: root.isOpen && root.activeTab === "notifications"
-                onInputFocusChanged: focused => root.searchFocusChanged(focused)
+            onLoaded: {
+                if (!item)
+                    return;
+                item.active = Qt.binding(() => root.isOpen && root.activeTab === "notifications");
+                item.inputFocusChanged.connect(focused => root.searchFocusChanged(focused));
             }
         }
     }

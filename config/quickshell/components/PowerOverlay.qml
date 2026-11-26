@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Widgets
 import ".."
 
 PanelWindow {
@@ -295,14 +294,13 @@ PanelWindow {
         }
 
         // Centered Power Dialog
-        ClippingRectangle {
+        Rectangle {
             anchors.centerIn: parent
             width: Math.min(680, Math.max(400, root.width - 64))
             implicitHeight: pwrCol.implicitHeight + 44
             radius: Theme.r(26)
             color: Theme.notchBg
-            contentUnderBorder: false
-            contentInsideBorder: true
+            clip: true
             border.width: Math.max(1, Theme.islandBorderWidth)
             border.color: Theme.islandBorder
 

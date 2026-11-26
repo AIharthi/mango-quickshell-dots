@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import ".."
 
 Rectangle {
@@ -9,25 +8,14 @@ Rectangle {
 
     property bool active: true
     property string screenName: ""
-    property string monitorName: ""
-    property string currentLayout: "T"
-    property string activeWindowTitle: ""
+    readonly property string currentLayout: MangoState.layoutForScreen(root.screenName)
+    readonly property string activeWindowTitle: MangoState.activeWindowTitle
     readonly property real cpuPercent: SystemTelemetry.cpuPercent
     readonly property real ramPercent: SystemTelemetry.memPercent
-    property int volPercent: 50
-    property bool volMuted: false
-    property string kbLayoutShort: ""
-    property var tagsModel: [
-        { index: 1, is_active: true,  is_urgent: false, client_count: 0 },
-        { index: 2, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 3, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 4, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 5, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 6, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 7, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 8, is_active: false, is_urgent: false, client_count: 0 },
-        { index: 9, is_active: false, is_urgent: false, client_count: 0 }
-    ]
+    readonly property int volPercent: MangoState.volPercent
+    readonly property bool volMuted: MangoState.volMuted
+    readonly property string kbLayoutShort: MangoState.kbLayoutShort
+    readonly property var tagsModel: MangoState.tagsForScreen(root.screenName)
 
     signal toggleDashboardRequested()
     signal toggleLauncherRequested()
@@ -38,164 +26,9 @@ Rectangle {
     color: Theme.surfaceContainerLowest
     radius: 0
 
-    function parseTagsJson(raw: string): void {
-        const trimmed = (raw || "").trim();
-        if (trimmed.length === 0)
-            return;
-        try {
-            const payload = JSON.parse(trimmed);
-            const list = payload.all_tags;
-            if (!list || list.length === 0)
-                return;
-
-            const targetMon = root.screenName.length > 0 ? root.screenName : root.monitorName;
-            let chosen = list[0];
-            for (let i = 0; i < list.length; i++) {
-                if (list[i].monitor === targetMon) {
-                    chosen = list[i];
-                    break;
-                }
-            }
-
-            if (chosen.monitor)
-                root.monitorName = chosen.monitor;
-            if (chosen.tags && chosen.tags.length > 0) {
-                const normalized = [];
-                let activeLayout = root.currentLayout;
-                for (let j = 0; j < Math.min(9, chosen.tags.length); j++) {
-                    const t = chosen.tags[j];
-                    if (t.is_active && t.layout)
-                        activeLayout = t.layout;
-                    normalized.push({
-                        index: t.index,
-                        is_active: !!t.is_active,
-                        is_urgent: !!t.is_urgent,
-                        client_count: t.client_count || 0
-                    });
-                }
-                root.currentLayout = activeLayout;
-                root.tagsModel = normalized;
-            }
-        } catch (err) {}
-    }
-
-    function parseWinJson(raw: string): void {
-        const trimmed = (raw || "").trim();
-        if (trimmed.length === 0)
-            return;
-        try {
-            const d = JSON.parse(trimmed);
-            if (d.error || !d.id || (!d.title && !d.appid)) {
-                root.activeWindowTitle = "";
-                return;
-            }
-            root.activeWindowTitle = String(d.title || d.appid || "");
-        } catch (err) {}
-    }
-
-    function parseKbJson(raw: string): void {
-        const trimmed = (raw || "").trim();
-        if (trimmed.length === 0)
-            return;
-        try {
-            const d = JSON.parse(trimmed);
-            const full = String(d.layout || "").trim();
-            if (full.length === 0) {
-                root.kbLayoutShort = "";
-                return;
-            }
-            const paren = full.match(/\(([^)]+)\)/);
-            if (paren && paren[1])
-                root.kbLayoutShort = paren[1].trim().slice(0, 3).toUpperCase();
-            else
-                root.kbLayoutShort = full.slice(0, 2).toUpperCase();
-        } catch (err) {}
-    }
-
-    function parseVolOut(raw: string): void {
-        const parts = (raw || "").split("---");
-        if (parts.length > 0) {
-            const m = parts[0].match(/(\d+)%/);
-            if (m && m[1])
-                root.volPercent = Math.max(0, Math.min(150, parseInt(m[1], 10)));
-        }
-        if (parts.length > 1)
-            root.volMuted = parts[1].toLowerCase().indexOf("yes") !== -1;
-    }
-
     SystemClock {
         id: clock
         precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
-    }
-
-    Process {
-        id: tagStream
-        command: ["mmsg", "watch", "all-tags"]
-        running: root.active
-        stdout: SplitParser {
-            onRead: line => root.parseTagsJson(line)
-        }
-        onExited: {
-            if (root.active)
-                restartTimer.restart();
-        }
-    }
-
-    Timer {
-        id: restartTimer
-        interval: 2000
-        repeat: false
-        onTriggered: {
-            if (root.active)
-                tagStream.running = true;
-        }
-    }
-
-    Process {
-        id: winStream
-        command: ["mmsg", "watch", "focusing-client"]
-        running: root.active && ShellState.barShowWindow
-        stdout: SplitParser {
-            onRead: line => root.parseWinJson(line)
-        }
-    }
-
-    Process {
-        id: kbStream
-        command: ["mmsg", "watch", "keyboardlayout"]
-        running: root.active && ShellState.barShowKbLayout
-        stdout: SplitParser {
-            onRead: line => root.parseKbJson(line)
-        }
-    }
-
-    Process {
-        id: volProc
-        command: ["sh", "-c", "pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null; echo '---'; pactl get-sink-mute @DEFAULT_SINK@ 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: root.parseVolOut(text)
-        }
-    }
-
-    Timer {
-        interval: 2500
-        repeat: true
-        running: root.active && ShellState.barShowVolume && DeviceCaps.hasAudio
-        triggeredOnStart: true
-        onTriggered: {
-            if (!volProc.running)
-                volProc.running = true;
-        }
-    }
-
-    Timer {
-        id: volRefreshTimer
-        interval: 120
-        repeat: false
-        onTriggered: {
-            if (!volProc.running)
-                volProc.running = true;
-        }
     }
 
     // Left: Flat Square MangoWC Tags + Layout Indicator + Active Window Title
@@ -452,15 +285,8 @@ Rectangle {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    Quickshell.execDetached(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"]);
-                    volRefreshTimer.restart();
-                }
-                onWheel: wheel => {
-                    const delta = wheel.angleDelta.y > 0 ? "+5%" : "-5%";
-                    Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", delta]);
-                    volRefreshTimer.restart();
-                }
+                onClicked: MangoState.toggleMute()
+                onWheel: wheel => MangoState.adjustVolumePct(wheel.angleDelta.y > 0 ? 5 : -5)
             }
         }
 

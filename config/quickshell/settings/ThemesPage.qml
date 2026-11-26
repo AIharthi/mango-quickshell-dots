@@ -1289,95 +1289,91 @@ ColumnLayout {
                 color: Theme.fgSurfaceVariant
             }
 
-            Flickable {
+            GridView {
+                id: wpGridView
                 Layout.fillWidth: true
                 visible: root.wallpapersList.length > 0
-                implicitHeight: Math.min(200, Math.max(84, wpGrid.implicitHeight))
+                implicitHeight: Math.min(200, Math.max(84, Math.ceil(root.wallpapersList.length / 3) * 82))
                 clip: true
-                contentWidth: width
-                contentHeight: wpGrid.implicitHeight
                 boundsBehavior: Flickable.StopAtBounds
+                cacheBuffer: 160
+                cellWidth: Math.max(96, Math.floor(width / 3))
+                cellHeight: 82
+                model: root.wallpapersList
 
-                GridLayout {
-                    id: wpGrid
-                    width: parent.width
-                    columns: 3
-                    columnSpacing: 8
-                    rowSpacing: 8
+                delegate: Item {
+                    id: wpSlot
+                    required property var modelData
+                    width: wpGridView.cellWidth
+                    height: wpGridView.cellHeight
 
-                    Repeater {
-                        model: root.wallpapersList
+                    Rectangle {
+                        id: wpTile
+                        readonly property bool selected: Theme.wallpaperPath === wpSlot.modelData.path
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        radius: Theme.r(10)
+                        color: Theme.subCardBg
+                        clip: true
+                        border.width: wpTile.selected ? Theme.activeControlBorderWidth : 0
+                        border.color: Theme.primary
 
-                        delegate: Rectangle {
-                            id: wpTile
-                            required property var modelData
-                            readonly property bool selected: Theme.wallpaperPath === wpTile.modelData.path
+                        Image {
+                            anchors.fill: parent
+                            source: root.fileUrl(wpSlot.modelData.path)
+                            asynchronous: true
+                            cache: false
+                            fillMode: Image.PreserveAspectCrop
+                            sourceSize.width: 220
+                            sourceSize.height: 124
+                        }
 
-                            Layout.fillWidth: true
-                            implicitHeight: 74
-                            radius: Theme.r(10)
-                            color: Theme.subCardBg
-                            clip: true
-                            border.width: wpTile.selected ? Theme.activeControlBorderWidth : 0
-                            border.color: Theme.primary
+                        Rectangle {
+                            visible: wpTile.selected
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            anchors.margins: 6
+                            width: 18
+                            height: 18
+                            radius: 9
+                            color: Theme.primary
+                            z: 2
 
-                            Image {
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰄬"
+                                font.family: Theme.iconFont
+                                font.pixelSize: Theme.fs(10)
+                                color: Theme.fgPrimary
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            height: 20
+                            color: Qt.rgba(0, 0, 0, 0.62)
+
+                            Text {
                                 anchors.fill: parent
-                                source: root.fileUrl(wpTile.modelData.path)
-                                asynchronous: true
-                                cache: true
-                                fillMode: Image.PreserveAspectCrop
-                                sourceSize.width: 240
-                                sourceSize.height: 135
+                                anchors.leftMargin: 6
+                                anchors.rightMargin: 6
+                                verticalAlignment: Text.AlignVCenter
+                                elide: Text.ElideRight
+                                text: wpSlot.modelData.name
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(9)
+                                font.weight: wpTile.selected ? Font.Bold : Font.Normal
+                                color: wpTile.selected ? Theme.primary : "#ffffff"
                             }
+                        }
 
-                            Rectangle {
-                                visible: wpTile.selected
-                                anchors.top: parent.top
-                                anchors.right: parent.right
-                                anchors.margins: 6
-                                width: 18
-                                height: 18
-                                radius: 9
-                                color: Theme.primary
-                                z: 2
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "󰄬"
-                                    font.family: Theme.iconFont
-                                    font.pixelSize: Theme.fs(10)
-                                    color: Theme.fgPrimary
-                                }
-                            }
-
-                            Rectangle {
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.bottom: parent.bottom
-                                height: 20
-                                color: Qt.rgba(0, 0, 0, 0.62)
-
-                                Text {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 6
-                                    anchors.rightMargin: 6
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
-                                    text: wpTile.modelData.name
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(9)
-                                    font.weight: wpTile.selected ? Font.Bold : Font.Normal
-                                    color: wpTile.selected ? Theme.primary : "#ffffff"
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Theme.applyWallpaperWithCurrentMode(wpTile.modelData.path)
-                            }
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Theme.applyWallpaperWithCurrentMode(wpSlot.modelData.path)
                         }
                     }
                 }

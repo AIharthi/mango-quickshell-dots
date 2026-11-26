@@ -11,10 +11,10 @@ MANGO_CONF="${CONFIG_BASE}/mango/config.conf"
 AUTOSTART_SH="${CONFIG_BASE}/mango/autostart.sh"
 
 case "$CMD" in
-    prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
+    prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-island|reset-sequoia|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
         ;;
     *)
-        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
+        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-island|reset-sequoia|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
         exit 1
         ;;
 esac
@@ -174,6 +174,23 @@ def default_prefs():
         "pillHeight": 32,
         "hubUiStyle": "cupertino",
         "barUiStyle": "apple",
+        "sequoiaBarHeight": 28,
+        "sequoiaBarFloating": False,
+        "sequoiaBarTranslucent": True,
+        "sequoiaHubStyle": "controlcenter",
+        "sequoiaMenuIcon": "aurora",
+        "sequoiaShowAppTitle": True,
+        "sequoiaShowWorkspaces": True,
+        "sequoiaShowLayout": False,
+        "sequoiaShowMedia": True,
+        "sequoiaShowSystem": False,
+        "sequoiaShowNetSpeed": False,
+        "sequoiaShowVolume": True,
+        "sequoiaShowBattery": True,
+        "sequoiaShowTray": True,
+        "sequoiaShowStore": True,
+        "sequoiaShowSpotlightIcon": True,
+        "sequoiaShowDate": True,
         "matugenSourceIndex": 0,
         "matugenPrefer": "saturation",
         "matugenLightnessDark": 0.0,
@@ -368,6 +385,14 @@ def validate_and_apply_pref(prefs, key, raw_val):
     elif key == "barUiStyle":
         v = str(prefs[key]).strip().lower()
         prefs[key] = v if v in ("apple", "split", "menubar", "classic") else "apple"
+    elif key == "sequoiaBarHeight":
+        prefs[key] = max(24, min(36, int(prefs[key])))
+    elif key == "sequoiaHubStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("controlcenter", "compact", "media") else "controlcenter"
+    elif key == "sequoiaMenuIcon":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("aurora", "apple", "arch", "fedora", "gentoo", "minimal") else "aurora"
     elif key == "matugenSourceIndex":
         prefs[key] = max(0, min(4, int(prefs[key])))
     elif key in ("matugenLightnessDark", "matugenLightnessLight"):
@@ -565,6 +590,13 @@ def cmd_reset_bar():
         "pillShowMedia", "pillSpinArt", "pillShowEqualizer",
         "osdEnabled", "osdTimeoutMs",
         "hubUiStyle", "barUiStyle",
+        "islandStyle", "islandTopMargin", "pillHeight",
+        "sequoiaBarHeight", "sequoiaBarFloating", "sequoiaBarTranslucent",
+        "sequoiaHubStyle", "sequoiaMenuIcon",
+        "sequoiaShowAppTitle", "sequoiaShowWorkspaces", "sequoiaShowLayout",
+        "sequoiaShowMedia", "sequoiaShowSystem", "sequoiaShowNetSpeed",
+        "sequoiaShowVolume", "sequoiaShowBattery", "sequoiaShowTray",
+        "sequoiaShowStore", "sequoiaShowSpotlightIcon", "sequoiaShowDate",
         "simpleBarHeight", "simpleBarPosition", "simpleBarShowLayout", "simpleBarShowDate",
         "barShowDate", "barShowWindow", "barShowWorkspaces", "barShowLayout",
         "barShowSystem", "barShowNetSpeed", "barShowVolume", "barShowKbLayout", "barShowTray",
@@ -579,6 +611,45 @@ def cmd_reset_bar():
     if shutil.which("gsettings"):
         subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "enable-animations", "true"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(["gsettings", "set", "org.gnome.desktop.a11y.interface", "high-contrast", "false"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(json.dumps(prefs))
+
+
+def cmd_reset_island():
+    defaults = default_prefs()
+    prefs = load_prefs(True)
+    island_keys = (
+        "islandHoverExpand", "islandHoverDelayMs", "islandCollapseDelayMs",
+        "pillShowMedia", "pillSpinArt", "pillShowEqualizer",
+        "osdEnabled", "osdTimeoutMs",
+        "hubUiStyle", "islandStyle", "islandTopMargin", "pillHeight",
+        "barShowDate", "barShowWindow", "barShowWorkspaces", "barShowLayout",
+        "barShowSystem", "barShowNetSpeed", "barShowVolume", "barShowKbLayout", "barShowTray",
+        "barShowQuickIcons", "barShowFiles", "barShowBattery",
+    )
+    for k in island_keys:
+        if k in defaults:
+            prefs[k] = defaults[k]
+    if prefs.get("barUiStyle") == "menubar":
+        prefs["barUiStyle"] = "apple"
+    save_prefs(prefs)
+    print(json.dumps(prefs))
+
+
+def cmd_reset_sequoia():
+    defaults = default_prefs()
+    prefs = load_prefs(True)
+    sequoia_keys = (
+        "sequoiaBarHeight", "sequoiaBarFloating", "sequoiaBarTranslucent",
+        "sequoiaHubStyle", "sequoiaMenuIcon",
+        "sequoiaShowAppTitle", "sequoiaShowWorkspaces", "sequoiaShowLayout",
+        "sequoiaShowMedia", "sequoiaShowSystem", "sequoiaShowNetSpeed",
+        "sequoiaShowVolume", "sequoiaShowBattery", "sequoiaShowTray",
+        "sequoiaShowStore", "sequoiaShowSpotlightIcon", "sequoiaShowDate",
+    )
+    for k in sequoia_keys:
+        if k in defaults:
+            prefs[k] = defaults[k]
+    save_prefs(prefs)
     print(json.dumps(prefs))
 
 
@@ -1236,6 +1307,8 @@ DISPATCH = {
     "prefs-reset": cmd_prefs_reset,
     "reset-appearance": cmd_reset_appearance,
     "reset-bar": cmd_reset_bar,
+    "reset-island": cmd_reset_island,
+    "reset-sequoia": cmd_reset_sequoia,
     "reset-files": cmd_reset_files,
     "reset-all": cmd_reset_all,
     "set-font": cmd_set_font,
