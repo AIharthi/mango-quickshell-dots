@@ -261,9 +261,12 @@ ColumnLayout {
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     spacing: 1
 
                     Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
                         text: "MSI touchpad I2C fix"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(11)
@@ -322,6 +325,7 @@ ColumnLayout {
 
                 Flow {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     spacing: 6
 
                     Repeater {

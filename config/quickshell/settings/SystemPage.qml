@@ -959,9 +959,12 @@ ColumnLayout {
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     spacing: 1
 
                     Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
                         text: "Config updater"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(11)
@@ -1013,11 +1016,17 @@ ColumnLayout {
                                 : (root.updaterState.upToDate ? Theme.success : Theme.secondary))
                     }
                 }
+            }
+
+            // Dedicated Full-Width Action Bar (prevents button clipping on laptop widths)
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
 
                 Rectangle {
                     visible: !!root.updaterState.repoFound
-                    implicitHeight: 26
-                    implicitWidth: chkUpdLbl.implicitWidth + 14
+                    Layout.fillWidth: true
+                    implicitHeight: 28
                     radius: Theme.r(8)
                     color: chkUpdMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
                     opacity: root.updaterBusy ? 0.55 : 1.0
@@ -1043,8 +1052,8 @@ ColumnLayout {
                 }
 
                 Rectangle {
-                    implicitHeight: 26
-                    implicitWidth: applyUpdLbl.implicitWidth + 14
+                    Layout.fillWidth: true
+                    implicitHeight: 28
                     radius: Theme.r(8)
                     color: applyUpdMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
                     opacity: root.updaterBusy ? 0.55 : 1.0
@@ -1054,7 +1063,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: !root.updaterState.repoFound
                             ? "Clone Repo"
-                            : (Number(root.updaterState.behindCount || 0) > 0 ? "Update & Apply" : "Sync Local")
+                            : (Number(root.updaterState.behindCount || 0) > 0 ? "Pull & Update" : "Pull & Sync")
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
@@ -1071,19 +1080,45 @@ ColumnLayout {
                             if (!root.updaterState.repoFound) {
                                 const target = (repoPathInput.text || "").trim() || "~/mango-quickshell-dots";
                                 root.runUpdater(["clone", target], "Cloning mango-quickshell-dots...");
-                            } else if (Number(root.updaterState.behindCount || 0) > 0) {
-                                root.runUpdater(root.updaterRebuildRust ? ["apply"] : ["apply", "--skip-build"], "Pulling and installing updates...");
                             } else {
-                                root.runUpdater(root.updaterRebuildRust ? ["apply", "--no-pull"] : ["apply", "--no-pull", "--skip-build"], "Syncing local repository files...");
+                                root.runUpdater(root.updaterRebuildRust ? ["apply"] : ["apply", "--skip-build"], "Fetching, pulling, and installing updates...");
                             }
                         }
                     }
                 }
 
                 Rectangle {
+                    visible: !!root.updaterState.repoFound
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: syncLocalMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    opacity: root.updaterBusy ? 0.55 : 1.0
+
+                    Text {
+                        id: syncLocalLbl
+                        anchors.centerIn: parent
+                        text: "Sync Local"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
+                    }
+
+                    MouseArea {
+                        id: syncLocalMouse
+                        anchors.fill: parent
+                        enabled: !root.updaterBusy
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: root.runUpdater(root.updaterRebuildRust ? ["apply", "--no-pull"] : ["apply", "--no-pull", "--skip-build"], "Syncing local repository files...")
+                    }
+                }
+
+                Rectangle {
                     visible: root.updaterNeedsReload
-                    implicitHeight: 26
-                    implicitWidth: relShLbl.implicitWidth + 14
+                    Layout.fillWidth: true
+                    implicitHeight: 28
                     radius: Theme.r(8)
                     color: relShMouse.containsMouse ? Qt.lighter(Theme.secondary, 1.08) : Theme.secondary
 
@@ -2029,9 +2064,12 @@ ColumnLayout {
 
                     ColumnLayout {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         spacing: 1
 
                         Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
                             text: "aurora-powerd service (" + String(root.powerState.initSystem || "unknown") + ")"
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)

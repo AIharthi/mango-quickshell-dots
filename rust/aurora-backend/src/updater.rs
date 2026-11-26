@@ -371,15 +371,11 @@ fn cmd_status() -> Result<(), String> {
     Ok(())
 }
 
-fn cmd_check() -> Result<(), String> {
+fn fetch_origin(repo: &Path) -> Result<(), String> {
     if which("git").is_none() {
         return Err("'git' is not installed".to_string());
     }
-    let meta = load_meta();
-    let repo = discover_repo(&meta)
-        .ok_or_else(|| "Repository not found; set repo path or clone first".to_string())?;
     let repo_str = repo.to_string_lossy().into_owned();
-
     let out = if which("timeout").is_some() {
         Command::new("timeout")
             .args(["15", "git", "-C", &repo_str, "fetch", "--prune", "origin"])
@@ -404,6 +400,14 @@ fn cmd_check() -> Result<(), String> {
             err_msg
         });
     }
+    Ok(())
+}
+
+fn cmd_check() -> Result<(), String> {
+    let meta = load_meta();
+    let repo = discover_repo(&meta)
+        .ok_or_else(|| "Repository not found; set repo path or clone first".to_string())?;
+    fetch_origin(&repo)?;
 
     let st = gather_status(&meta);
     println!("{}", serialize_status(&st, None));
@@ -519,6 +523,9 @@ fn cmd_apply(args: &[String]) -> Result<(), String> {
     let mut meta = load_meta();
     let repo = discover_repo(&meta)
         .ok_or_else(|| "Repository not found; set repo path or clone first".to_string())?;
+    if !no_pull {
+        fetch_origin(&repo)?;
+    }
     let pre = gather_status(&meta);
 
     if !no_pull && pre.behind_count > 0 {
