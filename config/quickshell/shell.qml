@@ -50,7 +50,21 @@ ShellRoot {
     property var sequoiaPendingNotif: null
     property int sequoiaNotifSeq: 0
 
-    readonly property var activePlayer: root.isSequoiaActive ? root._resolveActivePlayer() : null
+    // --- Split Islands Dedicated Hub State (active only when barUiStyle === "split") ---
+    readonly property bool isSplitActive: !Theme.isSimple && ShellState.barUiStyle === "split"
+    property bool splitHubOpen: false
+    property bool _splitHubLoaded: false
+    property string splitHubMode: "controls"        // "left" | "center" | "controls" | "notifications" | "launcher" | "osd" | "notification"
+    property string splitLauncherMode: "apps"
+    property string splitControlsTab: "controls"    // "controls" | "themes" | "files"
+    property bool splitPowerMenuOpen: false
+    property string splitScreenName: ""
+    property string splitOsdType: "volume"
+    property int splitOsdSeq: 0
+    property var splitPendingNotif: null
+    property int splitNotifSeq: 0
+
+    readonly property var activePlayer: (root.isSequoiaActive || root.isSplitActive) ? root._resolveActivePlayer() : null
 
     onIsSequoiaActiveChanged: {
         if (!root.isSequoiaActive) {
@@ -58,6 +72,15 @@ ShellRoot {
             root.sequoiaPowerMenuOpen = false;
             root._sequoiaHubLoaded = false;
             sequoiaUnloadTimer.stop();
+        }
+    }
+
+    onIsSplitActiveChanged: {
+        if (!root.isSplitActive) {
+            root.splitHubOpen = false;
+            root.splitPowerMenuOpen = false;
+            root._splitHubLoaded = false;
+            splitUnloadTimer.stop();
         }
     }
 
@@ -125,6 +148,7 @@ ShellRoot {
         if (keep !== "power") root.closePowerOverlay();
         if (keep !== "capture") root.closeCaptureHub();
         if (keep !== "sequoia") root.closeSequoiaHub();
+        if (keep !== "split") root.closeSplitHub();
         root.collapseAll();
     }
 
@@ -132,7 +156,7 @@ ShellRoot {
         root._closeOtherModals("settings");
         root.settingsPage = (page && page.length > 0)
             ? page
-            : (root.isSequoiaActive ? "sequoia" : "appearance");
+            : (root.isSequoiaActive ? "sequoia" : (root.isSplitActive ? "split" : "appearance"));
         settingsUnloadTimer.stop();
         root._settingsLoaded = true;
         root.settingsOpen = true;
@@ -148,7 +172,7 @@ ShellRoot {
         if (root.settingsOpen)
             root.closeSettings();
         else
-            root.openSettings(root.isSequoiaActive ? "sequoia" : "appearance");
+            root.openSettings(root.isSequoiaActive ? "sequoia" : (root.isSplitActive ? "split" : "appearance"));
     }
 
     function openStore(): void {
@@ -367,10 +391,103 @@ ShellRoot {
         root.sequoiaHubOpen = true;
     }
 
-    // --- Shared IPC Dispatchers (Sequoia Hub vs Dynamic Island) ---
+    // --- Split Islands Hub Control ---
+    function closeSplitHub(): void {
+        root.splitHubOpen = false;
+        root.splitPowerMenuOpen = false;
+        if (root._splitHubLoaded)
+            splitUnloadTimer.restart();
+    }
+
+    function _openSplitMode(mode: string, tab: string, lmode: string, screenName: string): void {
+        if (!root.isSplitActive)
+            return;
+        root._closeOtherModals("split");
+        splitUnloadTimer.stop();
+        root.splitScreenName = (screenName && screenName.length > 0) ? screenName : root.primaryScreenName();
+        if (tab && tab.length > 0)
+            root.splitControlsTab = tab;
+        if (lmode && lmode.length > 0)
+            root.splitLauncherMode = lmode;
+        root.splitPowerMenuOpen = false;
+        root.splitHubMode = mode;
+        if (mode === "notifications")
+            ShellState.clearUnread();
+        root._splitHubLoaded = true;
+        root.splitHubOpen = true;
+    }
+
+    function toggleSplitLeft(screenName: string): void {
+        if (root.splitHubOpen && root.splitHubMode === "left")
+            root.closeSplitHub();
+        else
+            root._openSplitMode("left", "", "", screenName);
+    }
+
+    function toggleSplitCenter(screenName: string): void {
+        if (root.splitHubOpen && root.splitHubMode === "center")
+            root.closeSplitHub();
+        else
+            root._openSplitMode("center", "", "", screenName);
+    }
+
+    function toggleSplitControls(tab: string, screenName: string): void {
+        const wantTab = (tab && tab.length > 0) ? tab : "controls";
+        if (root.splitHubOpen && root.splitHubMode === "controls" && root.splitControlsTab === wantTab)
+            root.closeSplitHub();
+        else
+            root._openSplitMode("controls", wantTab, "", screenName);
+    }
+
+    function toggleSplitNotifications(screenName: string): void {
+        if (root.splitHubOpen && root.splitHubMode === "notifications")
+            root.closeSplitHub();
+        else
+            root._openSplitMode("notifications", "", "", screenName);
+    }
+
+    function toggleSplitLauncher(mode: string): void {
+        const wantMode = (mode && mode.length > 0) ? mode : "apps";
+        if (root.splitHubOpen && root.splitHubMode === "launcher" && root.splitLauncherMode === wantMode)
+            root.closeSplitHub();
+        else
+            root._openSplitMode("launcher", "", wantMode, "");
+    }
+
+    function showSplitOsd(osdType: string): void {
+        if (!root.isSplitActive || !ShellState.osdEnabled)
+            return;
+        if (root.splitHubOpen && (root.splitHubMode === "left" || root.splitHubMode === "center" || root.splitHubMode === "controls" || root.splitHubMode === "notifications" || root.splitHubMode === "launcher"))
+            return;
+        splitUnloadTimer.stop();
+        root.splitHubMode = "osd";
+        root.splitOsdType = (osdType && osdType.length > 0) ? osdType : "volume";
+        root.splitOsdSeq += 1;
+        root._splitHubLoaded = true;
+        root.splitHubOpen = true;
+    }
+
+    function showSplitNotification(notif: var): void {
+        if (!root.isSplitActive || !notif)
+            return;
+        if (root.splitHubOpen && (root.splitHubMode === "left" || root.splitHubMode === "center" || root.splitHubMode === "controls" || root.splitHubMode === "notifications" || root.splitHubMode === "launcher"))
+            return;
+        splitUnloadTimer.stop();
+        root.splitHubMode = "notification";
+        root.splitPendingNotif = notif;
+        root.splitNotifSeq += 1;
+        root._splitHubLoaded = true;
+        root.splitHubOpen = true;
+    }
+
+    // --- Shared IPC Dispatchers (Sequoia Hub vs Split Hub vs Dynamic Island) ---
     function dispatchDashboard(): void {
         if (root.isSequoiaActive) {
             root.toggleSequoiaControls("controls", "");
+            return;
+        }
+        if (root.isSplitActive) {
+            root.toggleSplitControls("controls", "");
             return;
         }
         const isl = root.primaryIsland();
@@ -381,6 +498,11 @@ ShellRoot {
         if (root.isSequoiaActive) {
             const norm = (mode === "clipboard") ? "clip" : mode;
             root.toggleSequoiaLauncher(norm);
+            return;
+        }
+        if (root.isSplitActive) {
+            const norm = (mode === "clipboard") ? "clip" : mode;
+            root.toggleSplitLauncher(norm);
             return;
         }
         const isl = root.primaryIsland();
@@ -395,6 +517,10 @@ ShellRoot {
             root.toggleSequoiaNotifications("");
             return;
         }
+        if (root.isSplitActive) {
+            root.toggleSplitNotifications("");
+            return;
+        }
         const isl = root.primaryIsland();
         if (isl) isl.toggleNotifications();
     }
@@ -402,6 +528,10 @@ ShellRoot {
     function dispatchThemeTab(): void {
         if (root.isSequoiaActive) {
             root.toggleSequoiaControls("themes", "");
+            return;
+        }
+        if (root.isSplitActive) {
+            root.toggleSplitControls("themes", "");
             return;
         }
         const isl = root.primaryIsland();
@@ -413,6 +543,10 @@ ShellRoot {
             root.toggleSequoiaControls("files", "");
             return;
         }
+        if (root.isSplitActive) {
+            root.toggleSplitControls("files", "");
+            return;
+        }
         const isl = root.primaryIsland();
         if (isl) isl.toggleFilesTab();
     }
@@ -422,11 +556,16 @@ ShellRoot {
             root.showSequoiaOsd(osdType);
             return;
         }
+        if (root.isSplitActive) {
+            root.showSplitOsd(osdType);
+            return;
+        }
         root.forEachIsland(isl => isl.triggerOsd(osdType));
     }
 
     function dispatchCollapse(): void {
         root.closeSequoiaHub();
+        root.closeSplitHub();
         root.collapseAll();
     }
 
@@ -511,6 +650,16 @@ ShellRoot {
         }
     }
 
+    Timer {
+        id: splitUnloadTimer
+        interval: 120000
+        repeat: false
+        onTriggered: {
+            if (!root.splitHubOpen)
+                root._splitHubLoaded = false;
+        }
+    }
+
     // Event-driven Picture-in-Picture window watcher (zero idle CPU)
     Process {
         id: pipWatcher
@@ -549,6 +698,8 @@ ShellRoot {
             if (allowBanner) {
                 if (root.isSequoiaActive)
                     root.showSequoiaNotification(notification);
+                else if (root.isSplitActive)
+                    root.showSplitNotification(notification);
                 else
                     root.forEachIsland(isl => isl.showNotification(notification));
                 if (ShellState.notifSoundEnabled && !ShellState.dnd) {
@@ -561,7 +712,7 @@ ShellRoot {
         }
     }
 
-    // Per-monitor exclusive top shell architecture (Mode A Simple / Mode B Sequoia / Mode C Dynamic Island)
+    // Per-monitor exclusive top shell architecture (Mode A Simple / Mode B Sequoia / Mode C Split / Mode D Dynamic Island)
     Variants {
         id: screenVariants
         model: Quickshell.screens
@@ -652,10 +803,63 @@ ShellRoot {
                 }
             }
 
-            // Mode C (or Simple Mode popup layer): Morphing Dynamic Island / Split / Modular Pill
+            // Mode C: Stationary Split Islands (3 Glass Pods with click-through gaps)
+            LazyLoader {
+                id: splitBarLoader
+                active: root.isSplitActive
+
+                PanelWindow {
+                    id: splitBarWin
+                    screen: screenScope.modelData
+
+                    anchors {
+                        top: true
+                        left: true
+                        right: true
+                    }
+
+                    exclusiveZone: ShellState.splitBarHeight + ShellState.splitTopMargin + 2
+                    exclusionMode: ExclusionMode.Normal
+                    implicitHeight: ShellState.splitBarHeight + ShellState.splitTopMargin + 4
+                    color: "transparent"
+
+                    mask: Region {
+                        Region { item: splitBarItem.leftMask }
+                        Region { item: splitBarItem.centerMask }
+                        Region { item: splitBarItem.rightMask }
+                    }
+
+                    WlrLayershell.layer: WlrLayer.Top
+                    WlrLayershell.namespace: "quickshell-split-bar"
+                    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+
+                    IdleInhibitor {
+                        enabled: ShellState.keepAwake && (Quickshell.screens.length === 0 || screenScope.modelData === Quickshell.screens[0])
+                        window: splitBarWin
+                    }
+
+                    SplitBar {
+                        id: splitBarItem
+                        anchors.fill: parent
+                        screenName: screenScope.modelData ? screenScope.modelData.name : ""
+                        player: root.activePlayer
+                        openPanelMode: root.splitHubOpen ? root.splitHubMode : ""
+                        onToggleLeftRequested: root.toggleSplitLeft(screenScope.modelData ? screenScope.modelData.name : "")
+                        onToggleCenterRequested: root.toggleSplitCenter(screenScope.modelData ? screenScope.modelData.name : "")
+                        onToggleControlCenterRequested: root.toggleSplitControls("controls", screenScope.modelData ? screenScope.modelData.name : "")
+                        onToggleNotificationsRequested: root.toggleSplitNotifications(screenScope.modelData ? screenScope.modelData.name : "")
+                        onToggleSpotlightRequested: root.toggleSplitLauncher("apps")
+                        onOpenSettingsRequested: page => root.openSettings(page)
+                        onOpenFilesRequested: path => root.openFiles(path)
+                        onOpenStoreRequested: root.openStore()
+                    }
+                }
+            }
+
+            // Mode D (or Simple Mode popup layer): Morphing Dynamic Island / Modular Pill
             LazyLoader {
                 id: islandLoader
-                active: Theme.isSimple || ShellState.barUiStyle !== "menubar"
+                active: Theme.isSimple || (ShellState.barUiStyle !== "menubar" && ShellState.barUiStyle !== "split")
 
                 PanelWindow {
                     id: islandWindow
@@ -753,6 +957,54 @@ ShellRoot {
                 root.sequoiaControlsTab = tab;
             }
             onTogglePowerMenuRequested: root.sequoiaPowerMenuOpen = !root.sequoiaPowerMenuOpen
+        }
+    }
+
+    // Dedicated Split Islands Per-Pod Hub (Left Spaces, Center Media/Focus, Right Control Center/Notifications, Spotlight, OSD)
+    LazyLoader {
+        id: splitHubLoader
+        active: root._splitHubLoaded && root.isSplitActive
+
+        SplitHub {
+            isOpen: root.splitHubOpen
+            panelMode: root.splitHubMode
+            launcherMode: root.splitLauncherMode
+            controlsTab: root.splitControlsTab
+            powerMenuOpen: root.splitPowerMenuOpen
+            screenName: root.splitScreenName
+            player: root.activePlayer
+            osdType: root.splitOsdType
+            osdTriggerSeq: root.splitOsdSeq
+            pendingNotif: root.splitPendingNotif
+            notifTriggerSeq: root.splitNotifSeq
+
+            onCloseRequested: root.closeSplitHub()
+            onOpenSettingsRequested: page => {
+                root.closeSplitHub();
+                root.openSettings(page);
+            }
+            onOpenFilesRequested: path => {
+                root.closeSplitHub();
+                root.openFiles(path);
+            }
+            onOpenKeybindsRequested: {
+                root.closeSplitHub();
+                root.openKeybinds();
+            }
+            onOpenCaptureHubRequested: {
+                root.closeSplitHub();
+                root.openCaptureHub();
+            }
+            onOpenStoreRequested: {
+                root.closeSplitHub();
+                root.openStore();
+            }
+            onOpenNotificationsRequested: root.toggleSplitNotifications(root.splitScreenName)
+            onSwitchControlsTab: tab => {
+                root.splitPowerMenuOpen = false;
+                root.splitControlsTab = tab;
+            }
+            onTogglePowerMenuRequested: root.splitPowerMenuOpen = !root.splitPowerMenuOpen
         }
     }
 
@@ -879,8 +1131,12 @@ ShellRoot {
         function cycleShellMode(): void { Theme.cycleShellMode(); }
         function setHubUiStyle(style: string): void { ShellState.setHubUiStyle(style); }
         function cycleHubUiStyle(): void { ShellState.cycleHubUiStyle(); }
+        function toggleSplitLeft(): void { root.toggleSplitLeft(""); }
+        function toggleSplitCenter(): void { root.toggleSplitCenter(""); }
         function setSequoiaHubStyle(style: string): void { ShellState.setSequoiaHubStyle(style); }
         function cycleSequoiaHubStyle(): void { ShellState.cycleSequoiaHubStyle(); }
+        function setSplitHubStyle(style: string): void { ShellState.setSplitHubStyle(style); }
+        function cycleSplitHubStyle(): void { ShellState.cycleSplitHubStyle(); }
         function setBarUiStyle(style: string): void { ShellState.setBarUiStyle(style); }
         function cycleBarUiStyle(): void { ShellState.cycleBarUiStyle(); }
         function toggleSettings(): void { root.toggleSettings(); }
@@ -907,6 +1163,7 @@ ShellRoot {
         function resetBar(): void { ShellState.resetBar(); }
         function resetIsland(): void { ShellState.resetIsland(); }
         function resetSequoia(): void { ShellState.resetSequoia(); }
+        function resetSplit(): void { ShellState.resetSplit(); }
         function resetAllSettings(): void { ShellState.resetAllSettings(); }
         function togglePip(): void { ShellState.togglePip(); }
         function cyclePipCorner(): void { ShellState.cyclePipCorner(); }
@@ -943,8 +1200,12 @@ ShellRoot {
         function cycleShellMode(): void { Theme.cycleShellMode(); }
         function setHubUiStyle(style: string): void { ShellState.setHubUiStyle(style); }
         function cycleHubUiStyle(): void { ShellState.cycleHubUiStyle(); }
+        function toggleSplitLeft(): void { root.toggleSplitLeft(""); }
+        function toggleSplitCenter(): void { root.toggleSplitCenter(""); }
         function setSequoiaHubStyle(style: string): void { ShellState.setSequoiaHubStyle(style); }
         function cycleSequoiaHubStyle(): void { ShellState.cycleSequoiaHubStyle(); }
+        function setSplitHubStyle(style: string): void { ShellState.setSplitHubStyle(style); }
+        function cycleSplitHubStyle(): void { ShellState.cycleSplitHubStyle(); }
         function setBarUiStyle(style: string): void { ShellState.setBarUiStyle(style); }
         function cycleBarUiStyle(): void { ShellState.cycleBarUiStyle(); }
         function toggleSettings(): void { root.toggleSettings(); }
@@ -971,6 +1232,7 @@ ShellRoot {
         function resetBar(): void { ShellState.resetBar(); }
         function resetIsland(): void { ShellState.resetIsland(); }
         function resetSequoia(): void { ShellState.resetSequoia(); }
+        function resetSplit(): void { ShellState.resetSplit(); }
         function resetAllSettings(): void { ShellState.resetAllSettings(); }
         function togglePip(): void { ShellState.togglePip(); }
         function cyclePipCorner(): void { ShellState.cyclePipCorner(); }

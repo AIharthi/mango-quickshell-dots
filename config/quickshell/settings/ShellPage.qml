@@ -157,6 +157,33 @@ ColumnLayout {
 
                 Rectangle {
                     implicitHeight: 26
+                    implicitWidth: jSplLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: jSplMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    border.width: Theme.subBorderWidth
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: jSplLbl
+                        anchors.centerIn: parent
+                        text: "󰕰 Split Settings"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.DemiBold
+                        color: Theme.tertiary
+                    }
+
+                    MouseArea {
+                        id: jSplMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.openPageRequested("split")
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 26
                     implicitWidth: jSeqLbl.implicitWidth + 14
                     radius: Theme.r(8)
                     color: jSeqMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg

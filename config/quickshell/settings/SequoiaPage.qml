@@ -15,6 +15,7 @@ ColumnLayout {
     readonly property var menuGlyphs: [
         { id: "aurora",  label: "Aurora",  glyph: "󰀻" },
         { id: "apple",   label: "Apple",   glyph: "󰀵" },
+        { id: "cachyos", label: "CachyOS", glyph: "󰣇" },
         { id: "arch",    label: "Arch",    glyph: "󰣇" },
         { id: "fedora",  label: "Fedora",  glyph: "󰣛" },
         { id: "gentoo",  label: "Gentoo",  glyph: "󰣨" },
@@ -172,7 +173,9 @@ ColumnLayout {
                         wrapMode: Text.WordWrap
                         text: Theme.isSimple
                             ? "Simple Edge Bar mode is currently active. Activate Sequoia Bar to switch into Modern mode with the macOS top menu bar."
-                            : "Dynamic Island is currently active. Activate Sequoia Bar to display the stationary full-width top menu bar and Control Center popover."
+                            : (ShellState.barUiStyle === "split"
+                                ? "Split Islands is currently active with its 3 floating glass pods and per-pod hubs. Activate Sequoia Bar to use the unified macOS top menu bar."
+                                : "Dynamic Island is currently active. Activate Sequoia Bar to display the stationary full-width top menu bar and Control Center popover.")
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurface
@@ -238,6 +241,33 @@ ColumnLayout {
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
                     color: Theme.fgSurfaceVariant
+                }
+
+                Rectangle {
+                    implicitWidth: goSplTxt.implicitWidth + 16
+                    implicitHeight: 24
+                    radius: Theme.r(7)
+                    color: goSplMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: 1
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: goSplTxt
+                        anchors.centerIn: parent
+                        text: "󰕰 Configure Split Islands"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.DemiBold
+                        color: Theme.secondary
+                    }
+
+                    MouseArea {
+                        id: goSplMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.openPageRequested("split")
+                    }
                 }
 
                 Rectangle {
@@ -355,7 +385,7 @@ ColumnLayout {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: 6
+                columns: 7
                 columnSpacing: 6
                 rowSpacing: 6
 

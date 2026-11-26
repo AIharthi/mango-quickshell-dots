@@ -13,6 +13,12 @@ BACKUP_DIR="$HOME/.config-backup-aurora-$(date +%Y%m%d_%H%M%S)"
 INSTALL_SESSION=0
 INSTALL_SDDM=0
 INSTALL_POWERD=0
+INSTALL_DEPS=0
+CHECK_ONLY=0
+INTERACTIVE=0
+RELOAD_LIVE=0
+PROFILE_BAR=""
+PROFILE_SURFACE=""
 NO_SYSTEM=0
 SKIP_BACKUP=0
 SKIP_BUILD=0
@@ -26,22 +32,51 @@ usage() {
 Usage: ./install.sh [OPTIONS]
 
 Options:
-  --dry-run        Print planned actions without modifying files, building, or running sudo
-  --no-system      Skip root/system installation even if --with-session or --with-sddm is passed
-  --skip-build     Skip compiling rust/aurora-fm, rust/aurora-backend, and rust/aurora-powerd
-  --skip-fonts     Skip installing bundled fonts into ~/.local/share/fonts
-  --with-session   Also install /usr/local/bin/mango-session and
-                   /usr/share/wayland-sessions/mango.desktop (requires sudo/root)
-  --with-sddm      Also install matching animated SDDM theme (/usr/share/sddm/themes/aurora-island)
-                   and configure /etc/sddm.conf.d/99-aurora-shell.conf (requires sudo/root)
-  --with-powerd    Also install and start the aurora-powerd system service (requires sudo/root)
-  --no-backup      Overwrite existing updated files without creating a timestamped backup
-  -h, --help       Show this help message
+  --check            Run read-only preflight check (distro, init, Rust & tools) and exit
+  --install-deps     Install missing core/optional packages (Arch/CachyOS/Fedora; respects --dry-run/--no-system)
+  --profile <style>  Pre-configure bar profile: sequoia | split | island | simple
+  --interactive, -i  Run guided setup wizard to choose bar style, visual surface & system hooks
+  --reload           Reload live MangoWC config and restart qs -d after installing
+  --dry-run          Print planned actions without modifying files, building, or running sudo
+  --no-system        Skip root/system installation even if --with-session/--with-sddm/--install-deps is passed
+  --skip-build       Skip compiling rust/aurora-fm, rust/aurora-backend, and rust/aurora-powerd
+  --skip-fonts       Skip installing bundled fonts into ~/.local/share/fonts
+  --with-session     Also install /usr/local/bin/mango-session and
+                     /usr/share/wayland-sessions/mango.desktop (requires sudo/root)
+  --with-sddm        Also install matching animated SDDM theme (/usr/share/sddm/themes/aurora-island)
+                     and configure /etc/sddm.conf.d/99-aurora-shell.conf (requires sudo/root)
+  --with-powerd      Also install and start the aurora-powerd system service (requires sudo/root)
+  --no-backup        Overwrite existing updated files without creating a timestamped backup
+  -h, --help         Show this help message
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --check)
+            CHECK_ONLY=1
+            shift
+            ;;
+        --install-deps)
+            INSTALL_DEPS=1
+            shift
+            ;;
+        --profile)
+            if [[ $# -lt 2 ]]; then
+                echo "Missing value for --profile (sequoia|split|island|simple)" >&2
+                exit 1
+            fi
+            PROFILE_BAR="$2"
+            shift 2
+            ;;
+        --interactive|-i)
+            INTERACTIVE=1
+            shift
+            ;;
+        --reload)
+            RELOAD_LIVE=1
+            shift
+            ;;
         --dry-run)
             DRY_RUN=1
             shift
@@ -108,40 +143,206 @@ is_preserved_seed() {
     esac
 }
 
+detect_distro_family() {
+    local os_id="" os_like=""
+    if [[ -r /etc/os-release ]]; then
+        os_id="$(grep -E '^ID=' /etc/os-release 2>/dev/null | head -n1 | cut -d= -f2- | tr -d "\"'" | tr '[:upper:]' '[:lower:]')"
+        os_like="$(grep -E '^ID_LIKE=' /etc/os-release 2>/dev/null | head -n1 | cut -d= -f2- | tr -d "\"'" | tr '[:upper:]' '[:lower:]')"
+    fi
+    if [[ "$os_id" == "cachyos" ]] || grep -qs '\[cachyos' /etc/pacman.conf 2>/dev/null; then
+        echo "cachyos"
+        return 0
+    fi
+    case " $os_id $os_like " in
+        *" gentoo "*|*" funtoo "*)
+            echo "gentoo"
+            ;;
+        *" fedora "*|*" nobara "*|*" ultramarine "*|*" rhel "*|*" centos "*)
+            echo "fedora"
+            ;;
+        *" arch "*|*" endeavouros "*|*" manjaro "*|*" artix "*)
+            echo "arch"
+            ;;
+        *)
+            echo "linux"
+            ;;
+    esac
+}
+
+run_interactive_wizard() {
+    if [[ ! -t 0 || "$DRY_RUN" -eq 1 || "$CHECK_ONLY" -eq 1 ]]; then
+        return 0
+    fi
+    echo "==> Interactive Aurora Shell Setup Wizard"
+    echo "  Select Top Bar Architecture:"
+    echo "    1) Dynamic Island (capsule)"
+    echo "    2) Split Islands  (3 floating pods + per-pod hubs)"
+    echo "    3) Sequoia Bar    (macOS top menu bar + Control Center)"
+    echo "    4) Simple Bar     (flat square edge bar)"
+    local bar_choice=""
+    read -r -p "  Choice [1-4, Enter=keep current]: " bar_choice || true
+    case "$bar_choice" in
+        1) PROFILE_BAR="island" ;;
+        2) PROFILE_BAR="split" ;;
+        3) PROFILE_BAR="sequoia" ;;
+        4) PROFILE_BAR="simple" ;;
+    esac
+
+    if [[ "$PROFILE_BAR" != "simple" ]]; then
+        echo "  Select Visual Surface:"
+        echo "    1) Default (balanced opacity)"
+        echo "    2) Blur    (frosted glass + glow)"
+        echo "    3) OLED    (deep pitch black)"
+        local surf_choice=""
+        read -r -p "  Choice [1-3, Enter=keep current]: " surf_choice || true
+        case "$surf_choice" in
+            1) PROFILE_SURFACE="default" ;;
+            2) PROFILE_SURFACE="blur" ;;
+            3) PROFILE_SURFACE="oled" ;;
+        esac
+    fi
+
+    if [[ "$NO_SYSTEM" -eq 0 ]]; then
+        local ans=""
+        read -r -p "  Install Wayland session entry (/usr/share/wayland-sessions)? [y/N]: " ans || true
+        [[ "$ans" =~ ^[Yy]$ ]] && INSTALL_SESSION=1
+        read -r -p "  Install matching aurora-island SDDM login theme? [y/N]: " ans || true
+        [[ "$ans" =~ ^[Yy]$ ]] && INSTALL_SDDM=1
+        read -r -p "  Install aurora-powerd hardware power daemon? [y/N]: " ans || true
+        [[ "$ans" =~ ^[Yy]$ ]] && INSTALL_POWERD=1
+    fi
+}
+
+install_system_deps() {
+    if [[ "$INSTALL_DEPS" -eq 0 ]]; then
+        return 0
+    fi
+    if [[ "$NO_SYSTEM" -eq 1 ]]; then
+        echo "==> Skipping system package installation (--no-system)"
+        return 0
+    fi
+
+    local distro priv=()
+    distro="$(detect_distro_family)"
+    if [[ "$EUID" -ne 0 ]]; then
+        priv=(sudo)
+    fi
+
+    case "$distro" in
+        cachyos|arch)
+            echo "==> Installing Aurora dependencies for $distro (pacman)"
+            local arch_pkgs=(
+                python foot kitty curl wlr-randr grim slurp wl-clipboard
+                brightnessctl libnotify pipewire wireplumber pipewire-pulse
+                playerctl xdg-desktop-portal xdg-desktop-portal-wlr
+                xdg-desktop-portal-gtk gnome-keyring rust
+                qt6-svg qt6-imageformats qt6-5compat matugen
+            )
+            run_cmd "${priv[@]}" pacman -S --needed --noconfirm "${arch_pkgs[@]}" || true
+            local aur_helper=""
+            if command -v paru >/dev/null 2>&1; then
+                aur_helper="paru"
+            elif command -v yay >/dev/null 2>&1; then
+                aur_helper="yay"
+            fi
+            if [[ -n "$aur_helper" ]]; then
+                run_cmd "$aur_helper" -S --needed --noconfirm mangowm quickshell awww-git || true
+            else
+                echo "NOTE: Install AUR packages manually or setup paru in Aurora Store: mangowm quickshell awww-git"
+            fi
+            ;;
+        fedora)
+            local dnf_bin="dnf"
+            if command -v dnf5 >/dev/null 2>&1; then
+                dnf_bin="dnf5"
+            fi
+            echo "==> Installing Aurora dependencies for Fedora ($dnf_bin)"
+            local fed_pkgs=(
+                python3 foot kitty curl wlr-randr grim slurp wl-clipboard
+                brightnessctl libnotify pipewire wireplumber pipewire-utils
+                playerctl xdg-desktop-portal xdg-desktop-portal-wlr
+                xdg-desktop-portal-gtk gnome-keyring cargo rust
+                qt6-qtsvg qt6-qtimageformats qt6-qt5compat
+            )
+            run_cmd "${priv[@]}" "$dnf_bin" install -y "${fed_pkgs[@]}" || true
+            ;;
+        gentoo)
+            echo "==> Gentoo detected: review README.md for Portage emerge atoms."
+            ;;
+        *)
+            echo "==> Automatic dependency install is not supported for this distro ($distro)."
+            ;;
+    esac
+}
+
 check_dependencies() {
     local missing_required=()
     local missing_optional=()
+    local present_tools=()
     local cmd
 
     if ! command -v python3 >/dev/null 2>&1; then
         missing_required+=("python3")
+    else
+        present_tools+=("python3")
     fi
 
     for cmd in mango qs matugen wlr-randr grim slurp wl-copy pactl fc-cache; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
             missing_optional+=("$cmd")
+        else
+            present_tools+=("$cmd")
         fi
     done
 
     if ! command -v awww >/dev/null 2>&1 && ! command -v swww >/dev/null 2>&1; then
         missing_optional+=("awww (or swww)")
+    else
+        present_tools+=("wallpaper-daemon")
+    fi
+
+    local distro
+    distro="$(detect_distro_family)"
+    if [[ "$CHECK_ONLY" -eq 1 ]]; then
+        echo "==> Aurora Shell Setup Preflight Check"
+        echo "  Distro family : $distro"
+        if [[ -d /run/systemd/system ]]; then
+            echo "  Init system   : systemd"
+        elif command -v rc-status >/dev/null 2>&1 || [[ -d /run/openrc ]]; then
+            echo "  Init system   : OpenRC"
+        else
+            echo "  Init system   : other"
+        fi
+        if command -v cargo >/dev/null 2>&1 && command -v rustc >/dev/null 2>&1; then
+            echo "  Rust toolchain: $(rustc --version 2>/dev/null || echo present)"
+        else
+            echo "  Rust toolchain: missing (install cargo/rustc to build backends)"
+        fi
+        echo "  Found tools   : ${present_tools[*]:-none}"
+        echo "  Missing opt   : ${missing_optional[*]:-none}"
+        if [[ "${#missing_required[@]}" -gt 0 ]]; then
+            echo "  Missing req   : ${missing_required[*]}" >&2
+            return 1
+        fi
+        echo "  Preflight OK."
+        return 0
     fi
 
     if [[ "$SKIP_BUILD" -eq 0 && ( -f "$SCRIPT_DIR/rust/aurora-fm/Cargo.toml" || -f "$SCRIPT_DIR/rust/aurora-backend/Cargo.toml" || -f "$SCRIPT_DIR/rust/aurora-powerd/Cargo.toml" ) ]]; then
         if ! command -v cargo >/dev/null 2>&1 || ! command -v rustc >/dev/null 2>&1; then
             echo "NOTE: Rust toolchain ('cargo'/'rustc') not found; aurora-fm/aurora-backend/aurora-powerd build will be skipped." >&2
-            echo "      Arch: 'sudo pacman -S rust' | Fedora: 'sudo dnf install cargo rust' | Gentoo: 'sudo emerge dev-lang/rust'" >&2
+            echo "      Arch/CachyOS: 'sudo pacman -S rust' | Fedora: 'sudo dnf install cargo rust' | Gentoo: 'sudo emerge dev-lang/rust'" >&2
         fi
     fi
 
     if [[ "${#missing_optional[@]}" -gt 0 ]]; then
         echo "NOTE: Missing optional/runtime tools: ${missing_optional[*]}" >&2
-        echo "      See README.md for Arch, Fedora, and Gentoo package instructions." >&2
+        echo "      Run './install.sh --install-deps' or see README.md for package instructions." >&2
     fi
 
-    if [[ ( "$INSTALL_SESSION" -eq 1 || "$INSTALL_SDDM" -eq 1 || "$INSTALL_POWERD" -eq 1 ) && "$NO_SYSTEM" -eq 0 && "$EUID" -ne 0 ]]; then
+    if [[ ( "$INSTALL_SESSION" -eq 1 || "$INSTALL_SDDM" -eq 1 || "$INSTALL_POWERD" -eq 1 || "$INSTALL_DEPS" -eq 1 ) && "$NO_SYSTEM" -eq 0 && "$EUID" -ne 0 ]]; then
         if ! command -v sudo >/dev/null 2>&1; then
-            missing_required+=("sudo (required for --with-session/--with-sddm/--with-powerd when not root; pass --no-system to skip)")
+            missing_required+=("sudo (required for system actions when not root; pass --no-system to skip)")
         fi
     fi
 
@@ -239,21 +440,20 @@ install_configs() {
     fi
 
     local ff_variant="config-arch.jsonc"
-    if [[ -r /etc/os-release ]]; then
-        local os_tokens
-        os_tokens="$(grep -E '^(ID|ID_LIKE)=' /etc/os-release 2>/dev/null | cut -d= -f2- | tr -d "\"'" | tr '\n' ' ' | tr '[:upper:]' '[:lower:]')"
-        case " $os_tokens " in
-            *" gentoo "*|*" funtoo "*)
-                ff_variant="config-gentoo.jsonc"
-                ;;
-            *" fedora "*|*" nobara "*|*" ultramarine "*|*" rhel "*|*" centos "*)
-                ff_variant="config-fedora.jsonc"
-                ;;
-            *" arch "*|*" cachyos "*|*" endeavouros "*|*" manjaro "*|*" artix "*)
-                ff_variant="config-arch.jsonc"
-                ;;
-        esac
-    fi
+    case "$(detect_distro_family)" in
+        cachyos)
+            ff_variant="config-cachyos.jsonc"
+            ;;
+        gentoo)
+            ff_variant="config-gentoo.jsonc"
+            ;;
+        fedora)
+            ff_variant="config-fedora.jsonc"
+            ;;
+        arch|*)
+            ff_variant="config-arch.jsonc"
+            ;;
+    esac
     if [[ -e "$CONFIG_DIR/fastfetch/config.jsonc" ]]; then
         echo "  [keep] $CONFIG_DIR/fastfetch/config.jsonc"
     elif [[ -f "$SCRIPT_DIR/config/fastfetch/$ff_variant" ]]; then
@@ -376,12 +576,65 @@ init_state() {
         echo "  [dry-run] $CONFIG_DIR/quickshell/scripts/apply-mode.sh --init --no-reload"
         echo "  [dry-run] $CONFIG_DIR/quickshell/scripts/manage-settings.sh prefs-get"
         echo "  [dry-run] $CONFIG_DIR/quickshell/scripts/apply-theme.sh --init --no-wallpaper"
+        if [[ -n "$PROFILE_BAR" ]]; then
+            echo "  [dry-run] apply bar profile '$PROFILE_BAR' via manage-settings.sh / apply-mode.sh"
+        fi
+        if [[ -n "$PROFILE_SURFACE" ]]; then
+            echo "  [dry-run] apply visual surface '$PROFILE_SURFACE' via apply-mode.sh"
+        fi
         return 0
     fi
 
     "$CONFIG_DIR/quickshell/scripts/apply-mode.sh" --init --no-reload || true
     "$CONFIG_DIR/quickshell/scripts/manage-settings.sh" prefs-get >/dev/null || true
     "$CONFIG_DIR/quickshell/scripts/apply-theme.sh" --init --no-wallpaper || true
+
+    case "$PROFILE_BAR" in
+        "")
+            ;;
+        sequoia)
+            "$CONFIG_DIR/quickshell/scripts/manage-settings.sh" prefs-set barUiStyle menubar >/dev/null || true
+            ;;
+        split)
+            "$CONFIG_DIR/quickshell/scripts/manage-settings.sh" prefs-set barUiStyle split >/dev/null || true
+            ;;
+        island)
+            "$CONFIG_DIR/quickshell/scripts/manage-settings.sh" prefs-set barUiStyle apple >/dev/null || true
+            ;;
+        simple)
+            "$CONFIG_DIR/quickshell/scripts/apply-mode.sh" simple --no-reload || true
+            ;;
+        *)
+            echo "WARNING: Unknown --profile '$PROFILE_BAR' (expected sequoia|split|island|simple)" >&2
+            ;;
+    esac
+
+    if [[ -n "$PROFILE_SURFACE" && "$PROFILE_BAR" != "simple" ]]; then
+        "$CONFIG_DIR/quickshell/scripts/apply-mode.sh" "$PROFILE_SURFACE" --no-reload || true
+    fi
+}
+
+reload_live_session() {
+    if [[ "$RELOAD_LIVE" -eq 0 ]]; then
+        return 0
+    fi
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "  [dry-run] reload MangoWC (mmsg dispatch reload_config) and restart qs -d"
+        return 0
+    fi
+    if ! command -v mmsg >/dev/null 2>&1 || [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+        echo "==> Live session reload skipped (no active Wayland/MangoWC display)"
+        return 0
+    fi
+
+    echo "==> Reloading live MangoWC & Quickshell session"
+    mmsg dispatch reload_config >/dev/null 2>&1 || true
+    if command -v qs >/dev/null 2>&1; then
+        pkill -x qs >/dev/null 2>&1 || true
+        pkill -x quickshell >/dev/null 2>&1 || true
+        sleep 0.3
+        mmsg dispatch spawn,"qs -d" >/dev/null 2>&1 || true
+    fi
 }
 
 install_system_session() {
@@ -490,6 +743,13 @@ install_system_powerd() {
 }
 
 check_dependencies
+if [[ "$CHECK_ONLY" -eq 1 ]]; then
+    exit 0
+fi
+if [[ "$INTERACTIVE" -eq 1 ]]; then
+    run_interactive_wizard
+fi
+install_system_deps
 create_backups
 install_configs
 build_rust_backends
@@ -498,6 +758,7 @@ init_state
 install_system_session
 install_system_sddm
 install_system_powerd
+reload_live_session
 
 echo ""
 if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -505,8 +766,9 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
 else
     echo "Done! Welcome to Aurora Shell 2.1. Next steps:"
     echo "  1. Drop wallpapers into $HOME/Pictures/Wallpapers/ for the Theme Switcher & Matugen."
-    echo "  2. Press Super+S anytime to open Aurora Settings (16 categories + System Doctor)."
-    echo "  3. Press Super+Shift+E to open aurora-fm (Dynamic File Manager) or Super+Alt+E for Quick Files."
-    echo "  4. Per-device overrides live in $CONFIG_DIR/mango/local.conf and preferences in $CONFIG_DIR/quickshell/shell-prefs.json."
-    echo "  5. Log in to Aurora Shell (MangoWC), or press Super+R / run 'mmsg dispatch reload_config' if already running."
+    echo "  2. Press Super+S for Aurora Settings (Split Islands, Sequoia Bar, App Store, CachyOS/Fedora Debloater & Doctor)."
+    echo "  3. Press Super+Shift+B to cycle Bar Styles, Super+Alt+S for App Store, Super+Alt+D for Debloater."
+    echo "  4. Press Super+Shift+E to open aurora-fm (Dynamic File Manager) or Super+Alt+E for Quick Files."
+    echo "  5. Per-device overrides live in $CONFIG_DIR/mango/local.conf and preferences in $CONFIG_DIR/quickshell/shell-prefs.json."
+    echo "  6. Log in to Aurora Shell (MangoWC), or press Super+R / run 'mmsg dispatch reload_config' if already running."
 fi

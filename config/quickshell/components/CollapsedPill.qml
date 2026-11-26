@@ -100,13 +100,28 @@ Item {
     }
 
     // ==================== REUSABLE COMPACT SUBCOMPONENTS ====================
-    component SpacesChipStrip : Row {
-        id: scStrip
-        property var model: root.visibleTags
-        spacing: 3
+    function switchTagRelative(delta: int): void {
+        const cur = Math.max(1, Math.min(9, root.activeTagIndex || 1));
+        const next = ((cur - 1 + delta + 9) % 9) + 1;
+        Quickshell.execDetached(["mmsg", "dispatch", "view," + next + ",0"]);
+    }
 
-        Repeater {
-            model: scStrip.model
+    component SpacesChipStrip : Item {
+        id: scWrap
+        property var model: root.visibleTags
+        implicitWidth: scStrip.implicitWidth
+        implicitHeight: scStrip.implicitHeight
+
+        WheelHandler {
+            onWheel: event => root.switchTagRelative(event.angleDelta.y > 0 ? -1 : 1)
+        }
+
+        Row {
+            id: scStrip
+            spacing: 3
+
+            Repeater {
+                model: scWrap.model
 
             delegate: Rectangle {
                 id: tgPill
@@ -160,6 +175,7 @@ Item {
                     onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + tgPill.modelData.index + ",0"])
                 }
             }
+        }
         }
     }
 
@@ -282,8 +298,14 @@ Item {
             id: vpMouse
             anchors.fill: parent
             hoverEnabled: true
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
             cursorShape: Qt.PointingHandCursor
-            onClicked: MangoState.toggleMute()
+            onClicked: mouse => {
+                if (mouse.button === Qt.RightButton)
+                    Qt.callLater(() => MangoState.cycleAudioSink());
+                else
+                    MangoState.toggleMute();
+            }
             onWheel: wheel => MangoState.adjustVolumePct(wheel.angleDelta.y > 0 ? 5 : -5)
         }
     }

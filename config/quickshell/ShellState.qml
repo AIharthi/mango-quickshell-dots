@@ -114,7 +114,7 @@ Singleton {
     property bool sequoiaBarFloating: false
     property bool sequoiaBarTranslucent: true
     property string sequoiaHubStyle: "controlcenter" // "controlcenter" | "compact" | "media"
-    property string sequoiaMenuIcon: "aurora"        // "aurora" | "apple" | "arch" | "fedora" | "gentoo" | "minimal"
+    property string sequoiaMenuIcon: "aurora"        // "aurora" | "apple" | "cachyos" | "arch" | "fedora" | "gentoo" | "minimal"
     property bool sequoiaShowAppTitle: true
     property bool sequoiaShowWorkspaces: true
     property bool sequoiaShowLayout: false
@@ -127,6 +127,30 @@ Singleton {
     property bool sequoiaShowStore: true
     property bool sequoiaShowSpotlightIcon: true
     property bool sequoiaShowDate: true
+
+    // --- Split Islands (3 Stationary Sequoia Pods & Anchored Hubs) ---
+    property int splitBarHeight: 32
+    property int splitTopMargin: 6
+    property int splitSideMargin: 10
+    property string splitPodStyle: "pill"            // "pill" | "rounded" | "compact"
+    property bool splitBarTranslucent: true
+    property string splitHubStyle: "controlcenter"   // "controlcenter" | "compact" | "media"
+    property string splitMenuIcon: "aurora"          // "aurora" | "apple" | "cachyos" | "arch" | "fedora" | "gentoo" | "minimal"
+    property bool splitShowLauncherIcon: true
+    property bool splitShowWorkspaces: true
+    property bool splitShowLayout: true
+    property bool splitShowAppTitle: true
+    property bool splitShowDate: true
+    property bool splitShowMedia: true
+    property bool splitShowWeather: true
+    property bool splitShowSystem: false
+    property bool splitShowNetSpeed: false
+    property bool splitShowVolume: true
+    property bool splitShowKbLayout: true
+    property bool splitShowBattery: true
+    property bool splitShowTray: true
+    property bool splitShowStore: true
+    property bool splitShowFiles: true
 
     readonly property var availableHubStyles: [
         { id: "cupertino", label: "Cupertino", vibe: "macOS Control Center", desc: "Borderless connectivity platter, sliders, compact spaces & activity rings", icon: "󰕰" },
@@ -143,7 +167,7 @@ Singleton {
 
     readonly property var availableBarStyles: [
         { id: "apple",   label: "Dynamic Island", vibe: "iOS / macOS Capsule", desc: "Calm monochrome capsule with clock, cover art & active indicators", icon: "󰀵" },
-        { id: "split",   label: "Split Islands",  vibe: "3 Floating Glass Pods", desc: "Three floating glass pods for Spaces, Clock/Media & System Status", icon: "󰕰" },
+        { id: "split",   label: "Split Islands",  vibe: "3 Stationary Glass Pods", desc: "Left Spaces, Center Media/Clock & Right Control Center pods with per-pod hubs", icon: "󰕰" },
         { id: "menubar", label: "Sequoia Bar",    vibe: "macOS Top Menu Bar", desc: "Dedicated menu bar with right-side Control Center & Spotlight", icon: "󰘔" },
         { id: "classic", label: "Modular Pill",   vibe: "Custom Widget Bar", desc: "Customizable modular pill, top notch, or full-width desktop bar", icon: "󰕮" }
     ]
@@ -327,7 +351,7 @@ Singleton {
             }
             if (d.sequoiaMenuIcon !== undefined) {
                 const smi = String(d.sequoiaMenuIcon).toLowerCase();
-                if (smi === "aurora" || smi === "apple" || smi === "arch" || smi === "fedora" || smi === "gentoo" || smi === "minimal")
+                if (smi === "aurora" || smi === "apple" || smi === "cachyos" || smi === "arch" || smi === "fedora" || smi === "gentoo" || smi === "minimal")
                     root.sequoiaMenuIcon = smi;
             }
             if (d.sequoiaShowAppTitle !== undefined) root.sequoiaShowAppTitle = !!d.sequoiaShowAppTitle;
@@ -342,6 +366,40 @@ Singleton {
             if (d.sequoiaShowStore !== undefined) root.sequoiaShowStore = !!d.sequoiaShowStore;
             if (d.sequoiaShowSpotlightIcon !== undefined) root.sequoiaShowSpotlightIcon = !!d.sequoiaShowSpotlightIcon;
             if (d.sequoiaShowDate !== undefined) root.sequoiaShowDate = !!d.sequoiaShowDate;
+            if (d.splitBarHeight !== undefined) root.splitBarHeight = Math.max(26, Math.min(40, Number(d.splitBarHeight)));
+            if (d.splitTopMargin !== undefined) root.splitTopMargin = Math.max(2, Math.min(18, Number(d.splitTopMargin)));
+            if (d.splitSideMargin !== undefined) root.splitSideMargin = Math.max(4, Math.min(28, Number(d.splitSideMargin)));
+            if (d.splitPodStyle !== undefined) {
+                const sps = String(d.splitPodStyle).toLowerCase();
+                if (sps === "pill" || sps === "rounded" || sps === "compact")
+                    root.splitPodStyle = sps;
+            }
+            if (d.splitBarTranslucent !== undefined) root.splitBarTranslucent = !!d.splitBarTranslucent;
+            if (d.splitHubStyle !== undefined) {
+                const sphs = String(d.splitHubStyle).toLowerCase();
+                if (sphs === "controlcenter" || sphs === "compact" || sphs === "media")
+                    root.splitHubStyle = sphs;
+            }
+            if (d.splitMenuIcon !== undefined) {
+                const spmi = String(d.splitMenuIcon).toLowerCase();
+                if (spmi === "aurora" || spmi === "apple" || spmi === "cachyos" || spmi === "arch" || spmi === "fedora" || spmi === "gentoo" || spmi === "minimal")
+                    root.splitMenuIcon = spmi;
+            }
+            if (d.splitShowLauncherIcon !== undefined) root.splitShowLauncherIcon = !!d.splitShowLauncherIcon;
+            if (d.splitShowWorkspaces !== undefined) root.splitShowWorkspaces = !!d.splitShowWorkspaces;
+            if (d.splitShowLayout !== undefined) root.splitShowLayout = !!d.splitShowLayout;
+            if (d.splitShowAppTitle !== undefined) root.splitShowAppTitle = !!d.splitShowAppTitle;
+            if (d.splitShowDate !== undefined) root.splitShowDate = !!d.splitShowDate;
+            if (d.splitShowMedia !== undefined) root.splitShowMedia = !!d.splitShowMedia;
+            if (d.splitShowWeather !== undefined) root.splitShowWeather = !!d.splitShowWeather;
+            if (d.splitShowSystem !== undefined) root.splitShowSystem = !!d.splitShowSystem;
+            if (d.splitShowNetSpeed !== undefined) root.splitShowNetSpeed = !!d.splitShowNetSpeed;
+            if (d.splitShowVolume !== undefined) root.splitShowVolume = !!d.splitShowVolume;
+            if (d.splitShowKbLayout !== undefined) root.splitShowKbLayout = !!d.splitShowKbLayout;
+            if (d.splitShowBattery !== undefined) root.splitShowBattery = !!d.splitShowBattery;
+            if (d.splitShowTray !== undefined) root.splitShowTray = !!d.splitShowTray;
+            if (d.splitShowStore !== undefined) root.splitShowStore = !!d.splitShowStore;
+            if (d.splitShowFiles !== undefined) root.splitShowFiles = !!d.splitShowFiles;
             if (d.matugenSourceIndex !== undefined) root.matugenSourceIndex = Math.max(0, Math.min(4, Number(d.matugenSourceIndex)));
             if (d.matugenPrefer !== undefined && String(d.matugenPrefer).length > 0) root.matugenPrefer = String(d.matugenPrefer);
             if (d.matugenLightnessDark !== undefined) root.matugenLightnessDark = Math.max(-0.5, Math.min(0.3, Number(d.matugenLightnessDark)));
@@ -494,7 +552,7 @@ Singleton {
         }
         else if (key === "sequoiaMenuIcon") {
             const smi = String(value).toLowerCase();
-            if (smi === "aurora" || smi === "apple" || smi === "arch" || smi === "fedora" || smi === "gentoo" || smi === "minimal")
+            if (smi === "aurora" || smi === "apple" || smi === "cachyos" || smi === "arch" || smi === "fedora" || smi === "gentoo" || smi === "minimal")
                 root.sequoiaMenuIcon = smi;
         }
         else if (key === "sequoiaShowAppTitle") root.sequoiaShowAppTitle = !!value;
@@ -509,6 +567,40 @@ Singleton {
         else if (key === "sequoiaShowStore") root.sequoiaShowStore = !!value;
         else if (key === "sequoiaShowSpotlightIcon") root.sequoiaShowSpotlightIcon = !!value;
         else if (key === "sequoiaShowDate") root.sequoiaShowDate = !!value;
+        else if (key === "splitBarHeight") root.splitBarHeight = Math.max(26, Math.min(40, Number(value)));
+        else if (key === "splitTopMargin") root.splitTopMargin = Math.max(2, Math.min(18, Number(value)));
+        else if (key === "splitSideMargin") root.splitSideMargin = Math.max(4, Math.min(28, Number(value)));
+        else if (key === "splitPodStyle") {
+            const sps = String(value).toLowerCase();
+            if (sps === "pill" || sps === "rounded" || sps === "compact")
+                root.splitPodStyle = sps;
+        }
+        else if (key === "splitBarTranslucent") root.splitBarTranslucent = !!value;
+        else if (key === "splitHubStyle") {
+            const sphs = String(value).toLowerCase();
+            if (sphs === "controlcenter" || sphs === "compact" || sphs === "media")
+                root.splitHubStyle = sphs;
+        }
+        else if (key === "splitMenuIcon") {
+            const spmi = String(value).toLowerCase();
+            if (spmi === "aurora" || spmi === "apple" || spmi === "cachyos" || spmi === "arch" || spmi === "fedora" || spmi === "gentoo" || spmi === "minimal")
+                root.splitMenuIcon = spmi;
+        }
+        else if (key === "splitShowLauncherIcon") root.splitShowLauncherIcon = !!value;
+        else if (key === "splitShowWorkspaces") root.splitShowWorkspaces = !!value;
+        else if (key === "splitShowLayout") root.splitShowLayout = !!value;
+        else if (key === "splitShowAppTitle") root.splitShowAppTitle = !!value;
+        else if (key === "splitShowDate") root.splitShowDate = !!value;
+        else if (key === "splitShowMedia") root.splitShowMedia = !!value;
+        else if (key === "splitShowWeather") root.splitShowWeather = !!value;
+        else if (key === "splitShowSystem") root.splitShowSystem = !!value;
+        else if (key === "splitShowNetSpeed") root.splitShowNetSpeed = !!value;
+        else if (key === "splitShowVolume") root.splitShowVolume = !!value;
+        else if (key === "splitShowKbLayout") root.splitShowKbLayout = !!value;
+        else if (key === "splitShowBattery") root.splitShowBattery = !!value;
+        else if (key === "splitShowTray") root.splitShowTray = !!value;
+        else if (key === "splitShowStore") root.splitShowStore = !!value;
+        else if (key === "splitShowFiles") root.splitShowFiles = !!value;
         else if (key === "matugenSourceIndex") root.matugenSourceIndex = Math.max(0, Math.min(4, Number(value)));
         else if (key === "matugenPrefer") root.matugenPrefer = String(value);
         else if (key === "matugenLightnessDark") root.matugenLightnessDark = Math.max(-0.5, Math.min(0.3, Number(value)));
@@ -623,6 +715,20 @@ Singleton {
 
     function resetSequoia(): void {
         _runResetCmd("reset-sequoia");
+    }
+
+    function resetSplit(): void {
+        _runResetCmd("reset-split");
+    }
+
+    function menuGlyphFor(iconId: string): string {
+        if (iconId === "apple") return "󰀵";
+        if (iconId === "cachyos") return "󰣇";
+        if (iconId === "arch") return "󰣇";
+        if (iconId === "fedora") return "󰣛";
+        if (iconId === "gentoo") return "󰣨";
+        if (iconId === "minimal") return "󰘔";
+        return "󰀻";
     }
 
     function resetFiles(): void {
@@ -743,6 +849,95 @@ Singleton {
         const order = ["controlcenter", "compact", "media"];
         const idx = order.indexOf(root.sequoiaHubStyle);
         setSequoiaHubStyle(order[(idx + 1) % order.length]);
+    }
+
+    function setSplitHubStyle(style: string): void {
+        if (style !== "controlcenter" && style !== "compact" && style !== "media")
+            return;
+        root.splitHubStyle = style;
+        setPref("splitHubStyle", style);
+    }
+
+    function cycleSplitHubStyle(): void {
+        const order = ["controlcenter", "compact", "media"];
+        const idx = order.indexOf(root.splitHubStyle);
+        setSplitHubStyle(order[(idx + 1) % order.length]);
+    }
+
+    function applySplitPreset(preset: string): void {
+        let map = null;
+        if (preset === "minimal") {
+            map = {
+                barUiStyle: "split",
+                splitBarHeight: 30,
+                splitTopMargin: 6,
+                splitPodStyle: "pill",
+                splitBarTranslucent: true,
+                splitShowLauncherIcon: true,
+                splitShowWorkspaces: true,
+                splitShowLayout: false,
+                splitShowAppTitle: false,
+                splitShowDate: false,
+                splitShowMedia: true,
+                splitShowWeather: false,
+                splitShowSystem: false,
+                splitShowNetSpeed: false,
+                splitShowVolume: true,
+                splitShowKbLayout: false,
+                splitShowBattery: true,
+                splitShowTray: false,
+                splitShowStore: false,
+                splitShowFiles: false
+            };
+        } else if (preset === "balanced") {
+            map = {
+                barUiStyle: "split",
+                splitBarHeight: 32,
+                splitTopMargin: 6,
+                splitPodStyle: "pill",
+                splitBarTranslucent: true,
+                splitShowLauncherIcon: true,
+                splitShowWorkspaces: true,
+                splitShowLayout: true,
+                splitShowAppTitle: true,
+                splitShowDate: true,
+                splitShowMedia: true,
+                splitShowWeather: true,
+                splitShowSystem: false,
+                splitShowNetSpeed: false,
+                splitShowVolume: true,
+                splitShowKbLayout: true,
+                splitShowBattery: true,
+                splitShowTray: true,
+                splitShowStore: true,
+                splitShowFiles: true
+            };
+        } else if (preset === "creator") {
+            map = {
+                barUiStyle: "split",
+                splitBarHeight: 32,
+                splitTopMargin: 6,
+                splitPodStyle: "rounded",
+                splitBarTranslucent: true,
+                splitShowLauncherIcon: true,
+                splitShowWorkspaces: true,
+                splitShowLayout: true,
+                splitShowAppTitle: true,
+                splitShowDate: true,
+                splitShowMedia: true,
+                splitShowWeather: true,
+                splitShowSystem: true,
+                splitShowNetSpeed: true,
+                splitShowVolume: true,
+                splitShowKbLayout: true,
+                splitShowBattery: true,
+                splitShowTray: true,
+                splitShowStore: true,
+                splitShowFiles: true
+            };
+        }
+        if (map)
+            setPrefsBatch(map);
     }
 
     function applySequoiaPreset(preset: string): void {

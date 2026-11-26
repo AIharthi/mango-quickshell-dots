@@ -672,7 +672,7 @@ fn detect_flathub(system_cfg: &Path, user_cfg: &Path, allow_cli: bool) -> bool {
     false
 }
 
-fn detect_rpmfusion(repo_dir: &Path) -> bool {
+pub(crate) fn detect_rpmfusion(repo_dir: &Path) -> bool {
     let Ok(rd) = fs::read_dir(repo_dir) else {
         return false;
     };
@@ -741,7 +741,7 @@ fn collect_installed_flatpaks() -> BTreeMap<String, String> {
     map
 }
 
-fn collect_installed_native_fast(family: &str) -> BTreeMap<String, String> {
+pub(crate) fn collect_installed_native_fast(family: &str) -> BTreeMap<String, String> {
     let mut map = BTreeMap::new();
     match family {
         "arch" => {

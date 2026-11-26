@@ -906,13 +906,22 @@ ColumnLayout {
         { id: "sync-sddm",   title: "Sync SDDM Login Theme",        sub: "Push palette & wallpaper to SDDM",   icon: "󰍹", kw: "sddm login greeter sync theme" },
         { id: "refresh-wx",  title: "Refresh Weather Forecast",     sub: "Fetch latest conditions (wttr.in)",  icon: "󰖐", kw: "weather forecast temp refresh" },
         { id: "store",       title: "Open Aurora App Store",        sub: "Install & update Arch, AUR, Fedora & Flatpak apps", icon: "󰏖", kw: "store app software install pacman aur paru yay dnf rpm flatpak updates" },
+        { id: "debloat",     title: "Open CachyOS & Fedora Debloater", sub: "Remove bloatware, disable services & clean caches", icon: "󰃢", kw: "debloat cachyos fedora arch remove bloat cleanup orphans dnf5" },
+        { id: "split-set",   title: "Configure Split Islands",      sub: "Customize 3 pods, per-pod hubs & geometry", icon: "󰕰", kw: "split islands pods settings hub" },
+        { id: "seq-set",     title: "Configure Sequoia Bar",        sub: "Customize macOS menu bar & Control Center", icon: "󰘔", kw: "sequoia menubar settings control center" },
         { id: "files",       title: "Open Dynamic File Manager",    sub: "Launch Rust-backed aurora-fm",        icon: "󰉋", kw: "files manager explorer" },
-        { id: "settings",    title: "Open Aurora Settings",         sub: "16-page configuration studio",       icon: "󰒓", kw: "settings preferences config" },
+        { id: "settings",    title: "Open Aurora Settings",         sub: "21-page configuration studio",       icon: "󰒓", kw: "settings preferences config" },
         { id: "doctor",      title: "Run Aurora Doctor Health Check",sub: "Inspect compositor, portals, audio & theme health", icon: "󰋼", kw: "doctor health check diagnostics system" },
+        { id: "toggle-mute", title: "Toggle Audio Mute",            sub: "Mute or unmute default PipeWire output", icon: "󰝟", kw: "mute audio volume sound" },
+        { id: "cycle-sink",  title: "Cycle Audio Output Device",    sub: "Switch speakers / headphones sink",  icon: "󰋋", kw: "audio sink headphones speakers output" },
+        { id: "dnd-toggle",  title: "Toggle Do Not Disturb",        sub: "Silence popup notification banners", icon: "󰂛", kw: "dnd do not disturb focus notifications" },
+        { id: "awake-toggle",title: "Toggle Keep Screen Awake",     sub: "Pause automatic idle screen lock",   icon: "󰅶", kw: "keep awake caffeine idle lock" },
+        { id: "night-light", title: "Toggle Night Light Filter",    sub: "Warm screen color temperature",      icon: "󰌵", kw: "night light wlsunset redshift blue light" },
         { id: "net-speed",   title: "Toggle Network Speed in Bar",  sub: "Show or hide live ↓/↑ throughput in top bar", icon: "󰇚", kw: "network speed bandwidth bar" },
         { id: "hub-cycle",   title: "Cycle Hub Layout Style",       sub: "Switch Cupertino, Stage, Cockpit, Bento", icon: "󰕰", kw: "hub layout cycle cupertino stage cockpit bento" },
         { id: "bar-cycle",   title: "Cycle Top Bar UI Style",       sub: "Switch Island, Split, Sequoia, Modular", icon: "󰘔", kw: "bar style cycle island split menubar" },
-        { id: "reload-wm",   title: "Reload MangoWC Config",        sub: "mmsg dispatch reload_config",        icon: "󰑐", kw: "reload mango config wm" }
+        { id: "reload-wm",   title: "Reload MangoWC Config",        sub: "mmsg dispatch reload_config",        icon: "󰑐", kw: "reload mango config wm" },
+        { id: "restart-qs",  title: "Restart Aurora Shell",         sub: "Reload Quickshell cleanly in place", icon: "󰑐", kw: "restart quickshell shell reload" }
     ]
 
     readonly property var filteredCommands: {
@@ -1110,12 +1119,28 @@ ColumnLayout {
             ShellState.refreshWeather(true);
         } else if (cmdId === "store") {
             root.openStoreRequested();
+        } else if (cmdId === "debloat") {
+            root.openSettingsRequested("debloat");
+        } else if (cmdId === "split-set") {
+            root.openSettingsRequested("split");
+        } else if (cmdId === "seq-set") {
+            root.openSettingsRequested("sequoia");
         } else if (cmdId === "files") {
             root.openFilesRequested("");
         } else if (cmdId === "settings") {
             root.openSettingsRequested("appearance");
         } else if (cmdId === "doctor") {
             root.openSettingsRequested("system");
+        } else if (cmdId === "toggle-mute") {
+            MangoState.toggleMute();
+        } else if (cmdId === "cycle-sink") {
+            MangoState.cycleAudioSink();
+        } else if (cmdId === "dnd-toggle") {
+            ShellState.toggleDnd();
+        } else if (cmdId === "awake-toggle") {
+            ShellState.toggleKeepAwake();
+        } else if (cmdId === "night-light") {
+            ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp);
         } else if (cmdId === "net-speed") {
             ShellState.setPref("barShowNetSpeed", !ShellState.barShowNetSpeed);
         } else if (cmdId === "hub-cycle") {
@@ -1124,6 +1149,8 @@ ColumnLayout {
             ShellState.cycleBarUiStyle();
         } else if (cmdId === "reload-wm") {
             Quickshell.execDetached(["mmsg", "dispatch", "reload_config"]);
+        } else if (cmdId === "restart-qs") {
+            Quickshell.execDetached(["sh", "-c", "pkill -x qs || true; sleep 0.3; exec mmsg dispatch spawn,\"qs -d\""]);
         }
     }
 

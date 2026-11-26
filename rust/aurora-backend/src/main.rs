@@ -3,6 +3,7 @@
 mod calc;
 mod captures;
 mod clipboard;
+mod debloat;
 mod distro;
 mod doctor;
 mod json;
@@ -34,7 +35,7 @@ fn print_err_exit(msg: &str) -> ! {
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
     let Some(cmd) = args.first().map(String::as_str) else {
-        print_err_exit("Usage: aurora-backend <version|probe|battery|telemetry|hwmon|processes|clipboard|calc|doctor|captures|distro|store|services|service-action|kill-proc|power|snippets|pip|workspaces|config-update>");
+        print_err_exit("Usage: aurora-backend <version|probe|battery|telemetry|hwmon|processes|clipboard|calc|doctor|captures|distro|store|debloat|services|service-action|kill-proc|power|snippets|pip|workspaces|config-update>");
     };
     let rest = &args[1..];
 
@@ -73,6 +74,11 @@ fn main() {
         }
         "store" => {
             if let Err(e) = store::cmd_store(rest) {
+                print_err_exit(&e);
+            }
+        }
+        "debloat" => {
+            if let Err(e) = debloat::cmd_debloat(rest) {
                 print_err_exit(&e);
             }
         }

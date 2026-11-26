@@ -20,7 +20,6 @@ ColumnLayout {
 
     readonly property var islandFamilies: [
         { id: "apple",   label: "Dynamic Island", vibe: "Calmed Capsule",    icon: "󰀵", desc: "Compact adaptive pill with live media art and clean telemetry" },
-        { id: "split",   label: "Split Islands",  vibe: "3 Floating Pods",   icon: "󰕰", desc: "Separate left spaces, center clock/media, and right system pods" },
         { id: "classic", label: "Modular Pill",   vibe: "Custom Widget Row", icon: "󰕮", desc: "Modular widget strip calibrated by your selected module toggles" }
     ]
 
@@ -147,9 +146,9 @@ ColumnLayout {
                 }
             }
 
-            // Activation notice when Sequoia Menu Bar or Simple Mode is active
+            // Activation notice when Sequoia Menu Bar, Split Islands, or Simple Mode is active
             Rectangle {
-                visible: Theme.isSimple || ShellState.barUiStyle === "menubar"
+                visible: Theme.isSimple || ShellState.barUiStyle === "menubar" || ShellState.barUiStyle === "split"
                 Layout.fillWidth: true
                 implicitHeight: inactiveRow.implicitHeight + 16
                 radius: Theme.r(12)
@@ -175,7 +174,9 @@ ColumnLayout {
                         wrapMode: Text.WordWrap
                         text: Theme.isSimple
                             ? "Simple Edge Bar mode is currently active. Switch to Modern mode to show the Dynamic Island on screen."
-                            : "Sequoia Top Menu Bar is currently active and uses its own dedicated bar & Control Center Hub."
+                            : (ShellState.barUiStyle === "split"
+                                ? "Split Islands is currently active and uses its own 3 stationary pods & per-pod hubs."
+                                : "Sequoia Top Menu Bar is currently active and uses its own dedicated bar & Control Center Hub.")
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         color: Theme.fgSurface
@@ -206,7 +207,7 @@ ColumnLayout {
                                 const updates = {};
                                 if (Theme.isSimple)
                                     updates["shellMode"] = "default";
-                                if (ShellState.barUiStyle === "menubar")
+                                if (ShellState.barUiStyle === "menubar" || ShellState.barUiStyle === "split")
                                     updates["barUiStyle"] = "apple";
                                 ShellState.setPrefsBatch(updates);
                             }
@@ -246,6 +247,33 @@ ColumnLayout {
                 }
 
                 Rectangle {
+                    implicitWidth: goSplTxt.implicitWidth + 16
+                    implicitHeight: 24
+                    radius: Theme.r(7)
+                    color: goSplMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    border.width: 1
+                    border.color: Theme.cardBorder
+
+                    Text {
+                        id: goSplTxt
+                        anchors.centerIn: parent
+                        text: "󰕰 Configure Split Islands"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.DemiBold
+                        color: Theme.secondary
+                    }
+
+                    MouseArea {
+                        id: goSplMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.openPageRequested("split")
+                    }
+                }
+
+                Rectangle {
                     implicitWidth: goSeqTxt.implicitWidth + 16
                     implicitHeight: 24
                     radius: Theme.r(7)
@@ -273,10 +301,10 @@ ColumnLayout {
                 }
             }
 
-            // Capsule style selector (apple / split / classic)
+            // Capsule style selector (apple / classic)
             GridLayout {
                 Layout.fillWidth: true
-                columns: 3
+                columns: 2
                 columnSpacing: 8
                 rowSpacing: 8
 

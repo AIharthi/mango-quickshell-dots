@@ -44,14 +44,12 @@ Item {
         return title || artist || (root.player.identity || "Playing");
     }
 
-    readonly property string menuGlyph: {
-        const iconId = ShellState.sequoiaMenuIcon;
-        if (iconId === "apple") return "󰀵";
-        if (iconId === "arch") return "󰣇";
-        if (iconId === "fedora") return "󰣛";
-        if (iconId === "gentoo") return "󰣨";
-        if (iconId === "minimal") return "󰘔";
-        return "󰀻";
+    readonly property string menuGlyph: ShellState.menuGlyphFor(ShellState.sequoiaMenuIcon)
+
+    function switchTagRelative(delta: int): void {
+        const cur = Math.max(1, Math.min(9, root.activeTagIndex || 1));
+        const next = ((cur - 1 + delta + 9) % 9) + 1;
+        Quickshell.execDetached(["mmsg", "dispatch", "view," + next + ",0"]);
     }
 
     SystemClock {
@@ -157,62 +155,73 @@ Item {
                 color: Theme.hairlineBorder
             }
 
-            Row {
+            Item {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.sequoiaShowWorkspaces
-                spacing: 3
+                implicitWidth: seqWsRow.implicitWidth
+                implicitHeight: 20
 
-                Repeater {
-                    model: root.visibleTags
+                WheelHandler {
+                    onWheel: event => root.switchTagRelative(event.angleDelta.y > 0 ? -1 : 1)
+                }
 
-                    delegate: Rectangle {
-                        id: tgPill
-                        required property var modelData
-                        readonly property bool isActive: tgPill.modelData.is_active
-                        readonly property bool isUrgent: tgPill.modelData.is_urgent
-                        readonly property bool isOccupied: tgPill.modelData.client_count > 0
+                Row {
+                    id: seqWsRow
+                    anchors.centerIn: parent
+                    spacing: 3
 
-                        width: tgPill.isActive ? 20 : 18
-                        height: 18
-                        radius: Theme.r(6)
-                        color: {
-                            if (tgPill.isUrgent) return Theme.error;
-                            if (tgPill.isActive) return Theme.isDark ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.11);
-                            if (tgMouse.containsMouse) return Theme.controlFillHover;
-                            return "transparent";
-                        }
+                    Repeater {
+                        model: root.visibleTags
 
-                        Text {
-                            anchors.centerIn: parent
-                            anchors.verticalCenterOffset: (tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent) ? -1 : 0
-                            text: tgPill.modelData.index
-                            font.family: Theme.monoFont
-                            font.pixelSize: Theme.fs(10)
-                            font.weight: tgPill.isActive ? Font.Bold : Font.Medium
+                        delegate: Rectangle {
+                            id: tgPill
+                            required property var modelData
+                            readonly property bool isActive: tgPill.modelData.is_active
+                            readonly property bool isUrgent: tgPill.modelData.is_urgent
+                            readonly property bool isOccupied: tgPill.modelData.client_count > 0
+
+                            width: tgPill.isActive ? 20 : 18
+                            height: 18
+                            radius: Theme.r(6)
                             color: {
-                                if (tgPill.isUrgent) return Theme.fgError;
-                                if (tgPill.isActive) return Theme.fgSurface;
-                                return tgPill.isOccupied ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.55);
+                                if (tgPill.isUrgent) return Theme.error;
+                                if (tgPill.isActive) return Theme.isDark ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.11);
+                                if (tgMouse.containsMouse) return Theme.controlFillHover;
+                                return "transparent";
                             }
-                        }
 
-                        Rectangle {
-                            visible: tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 1.5
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: 3
-                            height: 3
-                            radius: 1.5
-                            color: Theme.fgSurfaceVariant
-                        }
+                            Text {
+                                anchors.centerIn: parent
+                                anchors.verticalCenterOffset: (tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent) ? -1 : 0
+                                text: tgPill.modelData.index
+                                font.family: Theme.monoFont
+                                font.pixelSize: Theme.fs(10)
+                                font.weight: tgPill.isActive ? Font.Bold : Font.Medium
+                                color: {
+                                    if (tgPill.isUrgent) return Theme.fgError;
+                                    if (tgPill.isActive) return Theme.fgSurface;
+                                    return tgPill.isOccupied ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.55);
+                                }
+                            }
 
-                        MouseArea {
-                            id: tgMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + tgPill.modelData.index + ",0"])
+                            Rectangle {
+                                visible: tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: 1.5
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: 3
+                                height: 3
+                                radius: 1.5
+                                color: Theme.fgSurfaceVariant
+                            }
+
+                            MouseArea {
+                                id: tgMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + tgPill.modelData.index + ",0"])
+                            }
                         }
                     }
                 }
@@ -318,8 +327,16 @@ Item {
                 id: centerMediaMouse
                 anchors.fill: parent
                 hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.toggleControlCenterRequested()
+                onClicked: mouse => {
+                    if (mouse.button === Qt.MiddleButton) {
+                        if (root.player && typeof root.player.togglePlaying === "function")
+                            root.player.togglePlaying();
+                    } else {
+                        root.toggleControlCenterRequested();
+                    }
+                }
             }
         }
 
@@ -510,8 +527,14 @@ Item {
                     id: seqVolMouse
                     anchors.fill: parent
                     hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: MangoState.toggleMute()
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton)
+                            Qt.callLater(() => MangoState.cycleAudioSink());
+                        else
+                            MangoState.toggleMute();
+                    }
                     onWheel: wheel => MangoState.adjustVolumePct(wheel.angleDelta.y > 0 ? 5 : -5)
                 }
             }

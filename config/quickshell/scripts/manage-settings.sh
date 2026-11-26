@@ -11,10 +11,10 @@ MANGO_CONF="${CONFIG_BASE}/mango/config.conf"
 AUTOSTART_SH="${CONFIG_BASE}/mango/autostart.sh"
 
 case "$CMD" in
-    prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-island|reset-sequoia|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
+    prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-island|reset-sequoia|reset-split|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove)
         ;;
     *)
-        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-island|reset-sequoia|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
+        echo "Usage: manage-settings.sh <prefs-get|prefs-set|prefs-set-batch|prefs-reset|reset-appearance|reset-bar|reset-island|reset-sequoia|reset-split|reset-files|reset-all|set-font|set-mono-font|list-fonts|defaults-get|defaults-set|startup-list|startup-add|startup-remove|keybinds-list|system-info|night-light|hidden-apps-get|hidden-apps-add|hidden-apps-remove> [args...]" >&2
         exit 1
         ;;
 esac
@@ -191,6 +191,28 @@ def default_prefs():
         "sequoiaShowStore": True,
         "sequoiaShowSpotlightIcon": True,
         "sequoiaShowDate": True,
+        "splitBarHeight": 32,
+        "splitTopMargin": 6,
+        "splitSideMargin": 10,
+        "splitPodStyle": "pill",
+        "splitBarTranslucent": True,
+        "splitHubStyle": "controlcenter",
+        "splitMenuIcon": "aurora",
+        "splitShowLauncherIcon": True,
+        "splitShowWorkspaces": True,
+        "splitShowLayout": True,
+        "splitShowAppTitle": True,
+        "splitShowDate": True,
+        "splitShowMedia": True,
+        "splitShowWeather": True,
+        "splitShowSystem": False,
+        "splitShowNetSpeed": False,
+        "splitShowVolume": True,
+        "splitShowKbLayout": True,
+        "splitShowBattery": True,
+        "splitShowTray": True,
+        "splitShowStore": True,
+        "splitShowFiles": True,
         "matugenSourceIndex": 0,
         "matugenPrefer": "saturation",
         "matugenLightnessDark": 0.0,
@@ -392,7 +414,22 @@ def validate_and_apply_pref(prefs, key, raw_val):
         prefs[key] = v if v in ("controlcenter", "compact", "media") else "controlcenter"
     elif key == "sequoiaMenuIcon":
         v = str(prefs[key]).strip().lower()
-        prefs[key] = v if v in ("aurora", "apple", "arch", "fedora", "gentoo", "minimal") else "aurora"
+        prefs[key] = v if v in ("aurora", "apple", "cachyos", "arch", "fedora", "gentoo", "minimal") else "aurora"
+    elif key == "splitBarHeight":
+        prefs[key] = max(26, min(40, int(prefs[key])))
+    elif key == "splitTopMargin":
+        prefs[key] = max(2, min(18, int(prefs[key])))
+    elif key == "splitSideMargin":
+        prefs[key] = max(4, min(28, int(prefs[key])))
+    elif key == "splitPodStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("pill", "rounded", "compact") else "pill"
+    elif key == "splitHubStyle":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("controlcenter", "compact", "media") else "controlcenter"
+    elif key == "splitMenuIcon":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("aurora", "apple", "cachyos", "arch", "fedora", "gentoo", "minimal") else "aurora"
     elif key == "matugenSourceIndex":
         prefs[key] = max(0, min(4, int(prefs[key])))
     elif key in ("matugenLightnessDark", "matugenLightnessLight"):
@@ -597,6 +634,12 @@ def cmd_reset_bar():
         "sequoiaShowMedia", "sequoiaShowSystem", "sequoiaShowNetSpeed",
         "sequoiaShowVolume", "sequoiaShowBattery", "sequoiaShowTray",
         "sequoiaShowStore", "sequoiaShowSpotlightIcon", "sequoiaShowDate",
+        "splitBarHeight", "splitTopMargin", "splitSideMargin", "splitPodStyle",
+        "splitBarTranslucent", "splitHubStyle", "splitMenuIcon",
+        "splitShowLauncherIcon", "splitShowWorkspaces", "splitShowLayout", "splitShowAppTitle",
+        "splitShowDate", "splitShowMedia", "splitShowWeather",
+        "splitShowSystem", "splitShowNetSpeed", "splitShowVolume", "splitShowKbLayout",
+        "splitShowBattery", "splitShowTray", "splitShowStore", "splitShowFiles",
         "simpleBarHeight", "simpleBarPosition", "simpleBarShowLayout", "simpleBarShowDate",
         "barShowDate", "barShowWindow", "barShowWorkspaces", "barShowLayout",
         "barShowSystem", "barShowNetSpeed", "barShowVolume", "barShowKbLayout", "barShowTray",
@@ -629,7 +672,7 @@ def cmd_reset_island():
     for k in island_keys:
         if k in defaults:
             prefs[k] = defaults[k]
-    if prefs.get("barUiStyle") == "menubar":
+    if prefs.get("barUiStyle") in ("menubar", "split"):
         prefs["barUiStyle"] = "apple"
     save_prefs(prefs)
     print(json.dumps(prefs))
@@ -647,6 +690,24 @@ def cmd_reset_sequoia():
         "sequoiaShowStore", "sequoiaShowSpotlightIcon", "sequoiaShowDate",
     )
     for k in sequoia_keys:
+        if k in defaults:
+            prefs[k] = defaults[k]
+    save_prefs(prefs)
+    print(json.dumps(prefs))
+
+
+def cmd_reset_split():
+    defaults = default_prefs()
+    prefs = load_prefs(True)
+    split_keys = (
+        "splitBarHeight", "splitTopMargin", "splitSideMargin", "splitPodStyle",
+        "splitBarTranslucent", "splitHubStyle", "splitMenuIcon",
+        "splitShowLauncherIcon", "splitShowWorkspaces", "splitShowLayout", "splitShowAppTitle",
+        "splitShowDate", "splitShowMedia", "splitShowWeather",
+        "splitShowSystem", "splitShowNetSpeed", "splitShowVolume", "splitShowKbLayout",
+        "splitShowBattery", "splitShowTray", "splitShowStore", "splitShowFiles",
+    )
+    for k in split_keys:
         if k in defaults:
             prefs[k] = defaults[k]
     save_prefs(prefs)
@@ -1309,6 +1370,7 @@ DISPATCH = {
     "reset-bar": cmd_reset_bar,
     "reset-island": cmd_reset_island,
     "reset-sequoia": cmd_reset_sequoia,
+    "reset-split": cmd_reset_split,
     "reset-files": cmd_reset_files,
     "reset-all": cmd_reset_all,
     "set-font": cmd_set_font,
