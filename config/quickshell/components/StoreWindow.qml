@@ -16,7 +16,7 @@ PanelWindow {
 
     Component.onCompleted: Qt.callLater(() => { root._entered = true; })
 
-    visible: root.isOpen
+    visible: true
     color: "transparent"
 
     anchors {
@@ -46,6 +46,7 @@ PanelWindow {
 
             MouseArea {
                 anchors.fill: parent
+                enabled: root.isOpen
                 onClicked: root.closeRequested()
             }
         }

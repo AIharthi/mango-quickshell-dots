@@ -554,7 +554,7 @@ Item {
             height: root.expandedHeight - 28
             active: islandContainer._expandedLoaded
             visible: active
-            source: active ? "ExpandedDashboard.qml" : ""
+            source: "ExpandedDashboard.qml"
 
             onLoaded: {
                 if (!item)

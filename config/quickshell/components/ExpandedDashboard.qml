@@ -480,7 +480,7 @@ ColumnLayout {
         Loader {
             anchors.fill: parent
             active: root.powerMenuOpen
-            source: active ? "PowerMenu.qml" : ""
+            source: "PowerMenu.qml"
             onLoaded: {
                 if (item)
                     item.actionTriggered.connect(() => root.closeRequested());
@@ -525,7 +525,7 @@ ColumnLayout {
             active: root._overviewLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "overview" ? 1.0 : 0.0
-            source: active ? "OverviewHub.qml" : ""
+            source: "OverviewHub.qml"
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion
@@ -550,7 +550,7 @@ ColumnLayout {
             active: root._filesLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "files" ? 1.0 : 0.0
-            source: active ? "../files/QuickFilesTab.qml" : ""
+            source: "../files/QuickFilesTab.qml"
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion
@@ -576,7 +576,7 @@ ColumnLayout {
             active: root._themesLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "themes" ? 1.0 : 0.0
-            source: active ? "ThemeSwitcher.qml" : ""
+            source: "ThemeSwitcher.qml"
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion
@@ -598,7 +598,7 @@ ColumnLayout {
             active: root._launcherLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "launcher" ? 1.0 : 0.0
-            source: active ? "AppLauncher.qml" : ""
+            source: "AppLauncher.qml"
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion
@@ -608,8 +608,8 @@ ColumnLayout {
             onLoaded: {
                 if (!item)
                     return;
-                item.active = Qt.binding(() => root.isOpen && root.activeTab === "launcher");
                 item.initialMode = Qt.binding(() => root.launcherMode);
+                item.active = Qt.binding(() => root.isOpen && root.activeTab === "launcher");
                 item.searchFocusChanged.connect(focused => root.searchFocusChanged(focused));
                 item.closeRequested.connect(() => root.closeRequested());
                 item.openSettingsRequested.connect(page => root.openSettingsRequested(page));
@@ -627,7 +627,7 @@ ColumnLayout {
             active: root._notifsLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "notifications" ? 1.0 : 0.0
-            source: active ? "NotificationsTab.qml" : ""
+            source: "NotificationsTab.qml"
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion

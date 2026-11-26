@@ -90,7 +90,7 @@ Item {
         anchors.fill: parent
         active: ShellState.hubUiStyle !== "bento"
         visible: active
-        source: active ? "HubLayoutModes.qml" : ""
+        source: "HubLayoutModes.qml"
         onLoaded: {
             if (!item)
                 return;

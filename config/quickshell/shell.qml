@@ -6,6 +6,8 @@ import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import Quickshell.Services.Mpris
 import "components"
+import "settings"
+import "files"
 
 ShellRoot {
     id: root
@@ -428,10 +430,10 @@ ShellRoot {
         root.collapseAll();
     }
 
-    // --- Unload Timers (keep warm across recent opens; avoid main-thread GC stalls) ---
+    // --- Unload Timers (modal windows unload cleanly after exit fade; Sequoia stays warm) ---
     Timer {
         id: settingsUnloadTimer
-        interval: 30000
+        interval: Theme.reducedMotion ? 10 : 160
         repeat: false
         onTriggered: {
             if (!root.settingsOpen)
@@ -441,7 +443,7 @@ ShellRoot {
 
     Timer {
         id: storeUnloadTimer
-        interval: 30000
+        interval: Theme.reducedMotion ? 10 : 160
         repeat: false
         onTriggered: {
             if (!root.storeOpen)
@@ -451,7 +453,7 @@ ShellRoot {
 
     Timer {
         id: filesUnloadTimer
-        interval: 30000
+        interval: Theme.reducedMotion ? 10 : 160
         repeat: false
         onTriggered: {
             if (!root.filesOpen)
@@ -461,7 +463,7 @@ ShellRoot {
 
     Timer {
         id: keybindsUnloadTimer
-        interval: 30000
+        interval: Theme.reducedMotion ? 10 : 160
         repeat: false
         onTriggered: {
             if (!root.keybindsOpen)
@@ -471,7 +473,7 @@ ShellRoot {
 
     Timer {
         id: switcherUnloadTimer
-        interval: 30000
+        interval: Theme.reducedMotion ? 10 : 160
         repeat: false
         onTriggered: {
             if (!root.windowSwitcherOpen)
@@ -481,7 +483,7 @@ ShellRoot {
 
     Timer {
         id: powerUnloadTimer
-        interval: 30000
+        interval: Theme.reducedMotion ? 10 : 160
         repeat: false
         onTriggered: {
             if (!root.powerOverlayOpen)
@@ -491,7 +493,7 @@ ShellRoot {
 
     Timer {
         id: captureHubUnloadTimer
-        interval: 30000
+        interval: Theme.reducedMotion ? 10 : 160
         repeat: false
         onTriggered: {
             if (!root.captureHubOpen)
@@ -635,41 +637,17 @@ ShellRoot {
                         window: sequoiaBarWin
                     }
 
-                    Loader {
-                        id: sequoiaBarContentLoader
+                    SequoiaBar {
                         anchors.fill: parent
-                        active: root.isSequoiaActive
-                        source: active ? Qt.resolvedUrl("components/SequoiaBar.qml") : ""
-                        onLoaded: {
-                            if (!item)
-                                return;
-                            item.screenName = Qt.binding(() => screenScope.modelData ? screenScope.modelData.name : "");
-                            item.player = Qt.binding(() => root.activePlayer);
-                            item.openPanelMode = Qt.binding(() => root.sequoiaHubOpen ? root.sequoiaHubMode : "");
-                        }
-                    }
-
-                    Connections {
-                        target: sequoiaBarContentLoader.item
-                        ignoreUnknownSignals: true
-                        function onToggleControlCenterRequested() {
-                            root.toggleSequoiaControls("controls", screenScope.modelData ? screenScope.modelData.name : "");
-                        }
-                        function onToggleNotificationsRequested() {
-                            root.toggleSequoiaNotifications(screenScope.modelData ? screenScope.modelData.name : "");
-                        }
-                        function onToggleSpotlightRequested() {
-                            root.toggleSequoiaLauncher("apps");
-                        }
-                        function onOpenSettingsRequested(page) {
-                            root.openSettings(page);
-                        }
-                        function onOpenFilesRequested(path) {
-                            root.openFiles(path);
-                        }
-                        function onOpenStoreRequested() {
-                            root.openStore();
-                        }
+                        screenName: screenScope.modelData ? screenScope.modelData.name : ""
+                        player: root.activePlayer
+                        openPanelMode: root.sequoiaHubOpen ? root.sequoiaHubMode : ""
+                        onToggleControlCenterRequested: root.toggleSequoiaControls("controls", screenScope.modelData ? screenScope.modelData.name : "")
+                        onToggleNotificationsRequested: root.toggleSequoiaNotifications(screenScope.modelData ? screenScope.modelData.name : "")
+                        onToggleSpotlightRequested: root.toggleSequoiaLauncher("apps")
+                        onOpenSettingsRequested: page => root.openSettings(page)
+                        onOpenFilesRequested: path => root.openFiles(path)
+                        onOpenStoreRequested: root.openStore()
                     }
                 }
             }
@@ -735,197 +713,132 @@ ShellRoot {
     LazyLoader {
         id: sequoiaHubLoader
         active: root._sequoiaHubLoaded && root.isSequoiaActive
-        source: active ? Qt.resolvedUrl("components/SequoiaHub.qml") : ""
 
-        onItemChanged: {
-            if (!item)
-                return;
-            item.isOpen = Qt.binding(() => root.sequoiaHubOpen);
-            item.panelMode = Qt.binding(() => root.sequoiaHubMode);
-            item.launcherMode = Qt.binding(() => root.sequoiaLauncherMode);
-            item.controlsTab = Qt.binding(() => root.sequoiaControlsTab);
-            item.powerMenuOpen = Qt.binding(() => root.sequoiaPowerMenuOpen);
-            item.screenName = Qt.binding(() => root.sequoiaScreenName);
-            item.player = Qt.binding(() => root.activePlayer);
-            item.osdType = Qt.binding(() => root.sequoiaOsdType);
-            item.osdTriggerSeq = Qt.binding(() => root.sequoiaOsdSeq);
-            item.pendingNotif = Qt.binding(() => root.sequoiaPendingNotif);
-            item.notifTriggerSeq = Qt.binding(() => root.sequoiaNotifSeq);
+        SequoiaHub {
+            isOpen: root.sequoiaHubOpen
+            panelMode: root.sequoiaHubMode
+            launcherMode: root.sequoiaLauncherMode
+            controlsTab: root.sequoiaControlsTab
+            powerMenuOpen: root.sequoiaPowerMenuOpen
+            screenName: root.sequoiaScreenName
+            player: root.activePlayer
+            osdType: root.sequoiaOsdType
+            osdTriggerSeq: root.sequoiaOsdSeq
+            pendingNotif: root.sequoiaPendingNotif
+            notifTriggerSeq: root.sequoiaNotifSeq
+
+            onCloseRequested: root.closeSequoiaHub()
+            onOpenSettingsRequested: page => {
+                root.closeSequoiaHub();
+                root.openSettings(page);
+            }
+            onOpenFilesRequested: path => {
+                root.closeSequoiaHub();
+                root.openFiles(path);
+            }
+            onOpenKeybindsRequested: {
+                root.closeSequoiaHub();
+                root.openKeybinds();
+            }
+            onOpenCaptureHubRequested: {
+                root.closeSequoiaHub();
+                root.openCaptureHub();
+            }
+            onOpenStoreRequested: {
+                root.closeSequoiaHub();
+                root.openStore();
+            }
+            onSwitchControlsTab: tab => {
+                root.sequoiaPowerMenuOpen = false;
+                root.sequoiaControlsTab = tab;
+            }
+            onTogglePowerMenuRequested: root.sequoiaPowerMenuOpen = !root.sequoiaPowerMenuOpen
         }
     }
 
-    Connections {
-        target: sequoiaHubLoader.item
-        ignoreUnknownSignals: true
-        function onCloseRequested() { root.closeSequoiaHub(); }
-        function onOpenSettingsRequested(page) {
-            root.closeSequoiaHub();
-            root.openSettings(page);
-        }
-        function onOpenFilesRequested(path) {
-            root.closeSequoiaHub();
-            root.openFiles(path);
-        }
-        function onOpenKeybindsRequested() {
-            root.closeSequoiaHub();
-            root.openKeybinds();
-        }
-        function onOpenCaptureHubRequested() {
-            root.closeSequoiaHub();
-            root.openCaptureHub();
-        }
-        function onOpenStoreRequested() {
-            root.closeSequoiaHub();
-            root.openStore();
-        }
-        function onSwitchControlsTab(tab) {
-            root.sequoiaPowerMenuOpen = false;
-            root.sequoiaControlsTab = tab;
-        }
-        function onTogglePowerMenuRequested() {
-            root.sequoiaPowerMenuOpen = !root.sequoiaPowerMenuOpen;
-        }
-    }
-
-    // URL-loaded Hardware-Aware Settings Window (compiled only when opened)
+    // Hardware-Aware Settings Window (compiled only when opened)
     LazyLoader {
         id: settingsLoader
         active: root._settingsLoaded
-        source: active ? Qt.resolvedUrl("settings/SettingsWindow.qml") : ""
 
-        onItemChanged: {
-            if (!item)
-                return;
-            item.isOpen = Qt.binding(() => root.settingsOpen);
-            item.activePage = Qt.binding(() => root.settingsPage);
+        SettingsWindow {
+            isOpen: root.settingsOpen
+            activePage: root.settingsPage
+            onPageSelected: page => { root.settingsPage = page; }
+            onCloseRequested: root.closeSettings()
+            onOpenStoreRequested: root.openStore()
         }
     }
 
-    Connections {
-        target: settingsLoader.item
-        ignoreUnknownSignals: true
-        function onPageSelected(page) { root.settingsPage = page; }
-        function onCloseRequested() { root.closeSettings(); }
-        function onOpenStoreRequested() { root.openStore(); }
-    }
-
-    // URL-loaded Native Aurora App Store Window
+    // Native Aurora App Store Window
     LazyLoader {
         id: storeLoader
         active: root._storeLoaded
-        source: active ? Qt.resolvedUrl("components/StoreWindow.qml") : ""
 
-        onItemChanged: {
-            if (!item)
-                return;
-            item.isOpen = Qt.binding(() => root.storeOpen);
+        StoreWindow {
+            isOpen: root.storeOpen
+            onCloseRequested: root.closeStore()
+            onOpenSettingsRequested: page => root.openSettings(page)
         }
     }
 
-    Connections {
-        target: storeLoader.item
-        ignoreUnknownSignals: true
-        function onCloseRequested() { root.closeStore(); }
-        function onOpenSettingsRequested(page) { root.openSettings(page); }
-    }
-
-    // URL-loaded Rust-Backed Dynamic File Manager Window
+    // Rust-Backed Dynamic File Manager Window
     LazyLoader {
         id: filesLoader
         active: root._filesLoaded
-        source: active ? Qt.resolvedUrl("files/FileManagerWindow.qml") : ""
 
-        onItemChanged: {
-            if (!item)
-                return;
-            item.isOpen = Qt.binding(() => root.filesOpen);
-            item.initialPath = Qt.binding(() => root.filesStartPath);
+        FileManagerWindow {
+            isOpen: root.filesOpen
+            initialPath: root.filesStartPath
+            onCloseRequested: root.closeFiles()
+            onOpenSettingsRequested: page => root.openSettings(page)
         }
     }
 
-    Connections {
-        target: filesLoader.item
-        ignoreUnknownSignals: true
-        function onCloseRequested() { root.closeFiles(); }
-        function onOpenSettingsRequested(page) { root.openSettings(page); }
-    }
-
-    // URL-loaded Keybind Cheat Sheet Modal
+    // Keybind Cheat Sheet Modal
     LazyLoader {
         id: keybindsLoader
         active: root._keybindsLoaded
-        source: active ? Qt.resolvedUrl("components/KeybindSheet.qml") : ""
 
-        onItemChanged: {
-            if (!item)
-                return;
-            item.isOpen = Qt.binding(() => root.keybindsOpen);
+        KeybindSheet {
+            isOpen: root.keybindsOpen
+            onCloseRequested: root.closeKeybinds()
         }
     }
 
-    Connections {
-        target: keybindsLoader.item
-        ignoreUnknownSignals: true
-        function onCloseRequested() { root.closeKeybinds(); }
-    }
-
-    // URL-loaded Window Switcher Modal
+    // Window Switcher Modal
     LazyLoader {
         id: switcherLoader
         active: root._windowSwitcherLoaded
-        source: active ? Qt.resolvedUrl("components/WindowSwitcher.qml") : ""
 
-        onItemChanged: {
-            if (!item)
-                return;
-            item.isOpen = Qt.binding(() => root.windowSwitcherOpen);
+        WindowSwitcher {
+            isOpen: root.windowSwitcherOpen
+            onCloseRequested: root.closeWindowSwitcher()
         }
     }
 
-    Connections {
-        target: switcherLoader.item
-        ignoreUnknownSignals: true
-        function onCloseRequested() { root.closeWindowSwitcher(); }
-    }
-
-    // URL-loaded Full-Screen Power & Session Overlay
+    // Full-Screen Power & Session Overlay
     LazyLoader {
         id: powerOverlayLoader
         active: root._powerOverlayLoaded
-        source: active ? Qt.resolvedUrl("components/PowerOverlay.qml") : ""
 
-        onItemChanged: {
-            if (!item)
-                return;
-            item.isOpen = Qt.binding(() => root.powerOverlayOpen);
+        PowerOverlay {
+            isOpen: root.powerOverlayOpen
+            onCloseRequested: root.closePowerOverlay()
+            onLockRequested: lockScreen.lock()
         }
     }
 
-    Connections {
-        target: powerOverlayLoader.item
-        ignoreUnknownSignals: true
-        function onCloseRequested() { root.closePowerOverlay(); }
-        function onLockRequested() { lockScreen.lock(); }
-    }
-
-    // URL-loaded Rust-Backed Capture Studio Modal
+    // Rust-Backed Capture Studio Modal
     LazyLoader {
         id: captureHubLoader
         active: root._captureHubLoaded
-        source: active ? Qt.resolvedUrl("components/CaptureHubModal.qml") : ""
 
-        onItemChanged: {
-            if (!item)
-                return;
-            item.isOpen = Qt.binding(() => root.captureHubOpen);
+        CaptureHubModal {
+            isOpen: root.captureHubOpen
+            onCloseRequested: root.closeCaptureHub()
+            onOpenFilesRequested: path => root.openFiles(path)
         }
-    }
-
-    Connections {
-        target: captureHubLoader.item
-        ignoreUnknownSignals: true
-        function onCloseRequested() { root.closeCaptureHub(); }
-        function onOpenFilesRequested(path) { root.openFiles(path); }
     }
 
     // Native Polkit Authentication Agent Modal
@@ -958,6 +871,7 @@ ShellRoot {
         function syncRecordingState(): void { ShellState.syncRecordingState(); }
         function toggleThemeTab(): void { root.dispatchThemeTab(); }
         function showOsd(osdType: string): void { root.dispatchOsd(osdType); }
+        function toggle(): void { root.dispatchDashboard(); }
         function toggleDashboard(): void { root.dispatchDashboard(); }
         function collapse(): void { root.dispatchCollapse(); }
         function setShellMode(mode: string): void { Theme.setShellMode(mode); }
@@ -1021,6 +935,7 @@ ShellRoot {
         function syncRecordingState(): void { ShellState.syncRecordingState(); }
         function toggleThemeTab(): void { root.dispatchThemeTab(); }
         function showOsd(osdType: string): void { root.dispatchOsd(osdType); }
+        function toggle(): void { root.dispatchDashboard(); }
         function toggleDashboard(): void { root.dispatchDashboard(); }
         function collapse(): void { root.dispatchCollapse(); }
         function setShellMode(mode: string): void { Theme.setShellMode(mode); }

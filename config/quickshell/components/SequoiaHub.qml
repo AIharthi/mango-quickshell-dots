@@ -432,7 +432,7 @@ PanelWindow {
                 Layout.preferredHeight: active ? 36 : 0
                 active: root.powerMenuOpen
                 visible: active
-                source: active ? "PowerMenu.qml" : ""
+                source: "PowerMenu.qml"
                 onLoaded: {
                     if (item)
                         item.actionTriggered.connect(root.closeRequested);
@@ -598,7 +598,7 @@ PanelWindow {
                     Layout.preferredHeight: showCard ? cardH : 0
                     active: root._controlsMainLoaded && ShellState.sequoiaHubStyle === "media"
                     visible: showCard
-                    source: active ? "MediaCard.qml" : ""
+                    source: "MediaCard.qml"
                     onLoaded: {
                         if (item) {
                             item.player = Qt.binding(() => root.player);
@@ -656,7 +656,7 @@ PanelWindow {
                     Layout.preferredHeight: showQc ? qcH : 0
                     active: root._controlsMainLoaded
                     visible: showQc
-                    source: active ? "QuickControls.qml" : ""
+                    source: "QuickControls.qml"
                     onLoaded: {
                         if (item) {
                             item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
@@ -682,7 +682,7 @@ PanelWindow {
                     Layout.preferredHeight: showCompactMedia ? 132 : 0
                     active: root._controlsMainLoaded && ShellState.sequoiaHubStyle !== "media"
                     visible: showCompactMedia
-                    source: active ? "MediaCard.qml" : ""
+                    source: "MediaCard.qml"
                     onLoaded: {
                         if (item) {
                             item.player = Qt.binding(() => root.player);
@@ -835,7 +835,7 @@ PanelWindow {
                 Layout.preferredHeight: showThemes ? 420 : 0
                 active: root._themesTabLoaded
                 visible: showThemes
-                source: active ? "ThemeSwitcher.qml" : ""
+                source: "ThemeSwitcher.qml"
                 onLoaded: {
                     if (item) {
                         item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "themes");
@@ -854,7 +854,7 @@ PanelWindow {
                 Layout.preferredHeight: showFiles ? 430 : 0
                 active: root._filesTabLoaded
                 visible: showFiles
-                source: active ? "../files/QuickFilesTab.qml" : ""
+                source: "../files/QuickFilesTab.qml"
                 onLoaded: {
                     if (item) {
                         item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "files");
@@ -897,7 +897,7 @@ PanelWindow {
             anchors.margins: 12
             active: root._notifsPanelLoaded
             visible: root.panelMode === "notifications"
-            source: active ? "NotificationsTab.qml" : ""
+            source: "NotificationsTab.qml"
             onLoaded: {
                 if (item)
                     item.active = Qt.binding(() => root.isOpen && root.panelMode === "notifications");
@@ -932,7 +932,7 @@ PanelWindow {
             anchors.margins: 12
             active: root._launcherPanelLoaded
             visible: root.panelMode === "launcher"
-            source: active ? "AppLauncher.qml" : ""
+            source: "AppLauncher.qml"
             onLoaded: {
                 if (item) {
                     item.initialMode = Qt.binding(() => root.launcherMode);
