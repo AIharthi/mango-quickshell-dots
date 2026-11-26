@@ -91,7 +91,12 @@ pub fn cmd_probe() {
     let has_wlr_randr = which("wlr-randr").is_some();
     let has_audio = which("pactl").is_some();
     let has_pavucontrol = which("pavucontrol").is_some();
-    let has_power_profiles = which("powerprofilesctl").is_some();
+    let has_power_profiles = cfg.join("quickshell/bin/aurora-powerd").exists()
+        || Path::new("/usr/local/bin/aurora-powerd").exists()
+        || which("aurora-powerd").is_some()
+        || Path::new("/run/aurora-powerd.sock").exists()
+        || Path::new("/sys/devices/system/cpu/cpufreq/policy0/scaling_governor").exists()
+        || which("powerprofilesctl").is_some();
     let has_xdg_mime = which("xdg-mime").is_some();
     let has_network = dir_has_any(Path::new("/sys/class/net"), |n| n != "lo");
     let has_ddcutil = which("ddcutil").is_some();

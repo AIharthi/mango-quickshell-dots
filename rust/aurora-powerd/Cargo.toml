@@ -1,0 +1,12 @@
+[package]
+name = "aurora-powerd"
+version = "2.1.0"
+edition = "2021"
+description = "Zero-dependency Rust power profile daemon and sysfs controller for Aurora Shell"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

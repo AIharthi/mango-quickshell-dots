@@ -21,7 +21,65 @@ ColumnLayout {
     property int memUsedPct: 0
     property string uptimeStr: ""
     property string timezoneStr: ""
-    property var powerProfiles: ({ hasPowerProfiles: false, active: "", available: [] })
+    property var powerState: ({
+        ok: false,
+        hasPowerProfiles: false,
+        backend: "direct",
+        daemonRunning: false,
+        daemonInstalled: false,
+        initSystem: "unknown",
+        active: "balanced",
+        available: [],
+        governor: "",
+        epp: "",
+        driver: "",
+        boostSupported: false,
+        boostEnabled: false,
+        platformProfile: "",
+        hasPlatformProfile: false,
+        gpuDpmSupported: false,
+        gpuDpmLevel: "",
+        cpuFreqMhz: 0,
+        hasBattery: false,
+        onAc: true,
+        autoSwitch: false,
+        acProfile: "balanced",
+        batteryProfile: "power-saver",
+        gpuDpmControl: true,
+        boostOnSaver: false
+    })
+    property bool powerBusy: false
+    property string powerMsg: ""
+    property string powerErr: ""
+    property bool confirmRemovePowerd: false
+
+    property var updaterState: ({
+        ok: false,
+        repoFound: false,
+        repoPath: "",
+        remoteUrl: "https://github.com/AIharthi/mango-quickshell-dots.git",
+        branch: "main",
+        localCommit: "",
+        localSubject: "",
+        localDate: "",
+        installedCommit: "",
+        installedAt: "",
+        dirty: false,
+        dirtyCount: 0,
+        behindCount: 0,
+        aheadCount: 0,
+        upToDate: false,
+        needsInstall: false,
+        hasGit: true,
+        hasCargo: true,
+        pendingCommits: []
+    })
+    property bool updaterBusy: false
+    property string updaterMsg: ""
+    property string updaterErr: ""
+    property bool updaterRebuildRust: true
+    property bool updaterNeedsReload: false
+
     property var disks: []
     property var userInfo: ({ user: "", fullName: "", uid: 1000, shell: "", home: "", groups: [], lang: "", sessionType: "", desktop: "" })
     property var backupsList: []
@@ -75,6 +133,45 @@ ColumnLayout {
             backupsListProc.running = true;
         runDoctor();
         refreshDistro(false);
+        loadUpdaterStatus();
+        loadPowerState();
+    }
+
+    function loadUpdaterStatus(): void {
+        if (!updaterProc.running)
+            updaterProc.running = true;
+    }
+
+    function runUpdater(actionArgs: var, busyMsg: string): void {
+        if (root.updaterBusy || updaterActionProc.running)
+            return;
+        root.updaterBusy = true;
+        root.updaterErr = "";
+        root.updaterMsg = busyMsg || "Working...";
+        updaterActionProc.command = [Quickshell.shellPath("scripts/manage-system.sh"), "config-update"].concat(actionArgs);
+        updaterActionProc.running = true;
+    }
+
+    function reloadQuickshell(): void {
+        Quickshell.execDetached([
+            "sh", "-c",
+            "sleep 0.25; pkill -x qs 2>/dev/null || true; sleep 0.35; qs -d </dev/null >/dev/null 2>&1 &"
+        ]);
+    }
+
+    function loadPowerState(): void {
+        if (!powerStatusProc.running)
+            powerStatusProc.running = true;
+    }
+
+    function runPowerAction(actionArgs: var, busyMsg: string): void {
+        if (root.powerBusy || powerActionProc.running)
+            return;
+        root.powerBusy = true;
+        root.powerErr = "";
+        root.powerMsg = busyMsg;
+        powerActionProc.command = [Quickshell.shellPath("scripts/manage-powerd.sh")].concat(actionArgs);
+        powerActionProc.running = true;
     }
 
     function exportBackup(): void {
@@ -96,10 +193,11 @@ ColumnLayout {
     }
 
     function setPowerProfile(prof: string): void {
-        if (powerProfProc.running)
-            return;
-        powerProfProc.command = ["powerprofilesctl", "set", prof];
-        powerProfProc.running = true;
+        root.runPowerAction(["set", prof], "Switching to " + prof + "...");
+    }
+
+    function setPowerConfig(key: string, val: string): void {
+        root.runPowerAction(["config", key, val], "");
     }
 
     Component.onCompleted: loadOverrides()
@@ -149,18 +247,133 @@ ColumnLayout {
                     }
                     if (d.uptime) root.uptimeStr = String(d.uptime);
                     if (d.timezone) root.timezoneStr = String(d.timezone);
-                    if (d.powerProfiles) root.powerProfiles = d.powerProfiles;
                     if (Array.isArray(d.disks)) root.disks = d.disks;
                 } catch (err) {}
             }
         }
     }
 
+    Timer {
+        id: powerConfirmTimer
+        interval: 4000
+        repeat: false
+        onTriggered: root.confirmRemovePowerd = false
+    }
+
     Process {
-        id: powerProfProc
-        onExited: {
-            if (!sysInfoProc.running)
-                sysInfoProc.running = true;
+        id: powerStatusProc
+        command: [Quickshell.shellPath("scripts/manage-powerd.sh"), "status"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    if (d && d.ok)
+                        root.powerState = d;
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: powerActionProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    if (d && d.ok) {
+                        root.powerState = d;
+                        root.powerErr = "";
+                        root.powerMsg = d.daemonRunning
+                            ? ("Power mode: " + String(d.active || "balanced"))
+                            : ("Applied: " + String(d.active || "balanced"));
+                        DeviceCaps.refresh();
+                    } else if (d && d.error) {
+                        root.powerErr = String(d.error);
+                        root.powerMsg = "";
+                    }
+                } catch (err) {
+                    root.powerErr = "Unable to parse power daemon response";
+                }
+            }
+        }
+        onExited: code => {
+            root.powerBusy = false;
+            if (code !== 0 && root.powerErr.length === 0)
+                root.powerErr = "Power daemon command exited with code " + code;
+        }
+    }
+
+    Process {
+        id: updaterProc
+        command: [Quickshell.shellPath("scripts/manage-system.sh"), "config-update", "status"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    if (d && d.ok) {
+                        root.updaterState = d;
+                        if (!repoPathInput.activeFocus)
+                            repoPathInput.text = String(d.repoPath || "~/mango-quickshell-dots");
+                    } else if (d && d.error) {
+                        root.updaterErr = String(d.error);
+                    }
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: updaterActionProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    if (d && d.ok) {
+                        root.updaterState = d;
+                        root.updaterErr = "";
+                        if (!repoPathInput.activeFocus)
+                            repoPathInput.text = String(d.repoPath || "~/mango-quickshell-dots");
+                        if (d.message)
+                            root.updaterMsg = String(d.message);
+                        else if (d.behindCount > 0)
+                            root.updaterMsg = d.behindCount + " update(s) ready from origin/" + String(d.branch || "main");
+                        else if (d.needsInstall)
+                            root.updaterMsg = "Local repo differs from installed snapshot";
+                        else
+                            root.updaterMsg = "Repository is up to date";
+
+                        if (d.restartShellRecommended)
+                            root.updaterNeedsReload = true;
+                        if (d.updated) {
+                            root.runDoctor();
+                            root.refreshDistro(false);
+                            root.loadPowerState();
+                        }
+                    } else if (d && d.error) {
+                        root.updaterErr = String(d.error);
+                        root.updaterMsg = "";
+                    }
+                } catch (err) {
+                    root.updaterErr = "Unable to parse config updater response";
+                }
+            }
+        }
+        onExited: code => {
+            root.updaterBusy = false;
+            if (code !== 0 && root.updaterErr.length === 0)
+                root.updaterErr = "Config updater exited with code " + code;
         }
     }
 
@@ -714,6 +927,342 @@ ColumnLayout {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // --- 0c. Aurora Config Updater ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: updCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: updCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "󰚰"
+                    font.family: Theme.iconFont
+                    font.pixelSize: Theme.fs(15)
+                    color: Theme.primary
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        text: "Config updater"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(11)
+                        font.weight: Font.Bold
+                        color: Theme.fgSurface
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: root.updaterState.repoFound
+                            ? (String(root.updaterState.branch || "main") + " · "
+                                + String(root.updaterState.localCommit || "HEAD")
+                                + (root.updaterState.dirty ? (" · " + root.updaterState.dirtyCount + " local edit(s)") : ""))
+                            : "Link or clone your mango-quickshell-dots repository"
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(9)
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: updBadgeTxt.implicitWidth + 14
+                    radius: Theme.r(11)
+                    color: !root.updaterState.repoFound
+                        ? Theme.subCardBg
+                        : (Number(root.updaterState.behindCount || 0) > 0
+                            ? Theme.withAlpha(Theme.warning, 0.20)
+                            : (root.updaterState.upToDate
+                                ? Theme.withAlpha(Theme.success, 0.18)
+                                : Theme.withAlpha(Theme.secondary, 0.18)))
+
+                    Text {
+                        id: updBadgeTxt
+                        anchors.centerIn: parent
+                        text: !root.updaterState.repoFound
+                            ? "Not linked"
+                            : (Number(root.updaterState.behindCount || 0) > 0
+                                ? (root.updaterState.behindCount + " update(s) ready")
+                                : (root.updaterState.needsInstall ? "Sync needed" : "Up to date"))
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.Bold
+                        color: !root.updaterState.repoFound
+                            ? Theme.fgSurfaceVariant
+                            : (Number(root.updaterState.behindCount || 0) > 0
+                                ? Theme.warning
+                                : (root.updaterState.upToDate ? Theme.success : Theme.secondary))
+                    }
+                }
+
+                Rectangle {
+                    visible: !!root.updaterState.repoFound
+                    implicitHeight: 26
+                    implicitWidth: chkUpdLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: chkUpdMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    opacity: root.updaterBusy ? 0.55 : 1.0
+
+                    Text {
+                        id: chkUpdLbl
+                        anchors.centerIn: parent
+                        text: root.updaterBusy ? "Working..." : "Check Updates"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
+                    }
+
+                    MouseArea {
+                        id: chkUpdMouse
+                        anchors.fill: parent
+                        enabled: !root.updaterBusy
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: root.runUpdater(["check"], "Fetching origin updates...")
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 26
+                    implicitWidth: applyUpdLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: applyUpdMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+                    opacity: root.updaterBusy ? 0.55 : 1.0
+
+                    Text {
+                        id: applyUpdLbl
+                        anchors.centerIn: parent
+                        text: !root.updaterState.repoFound
+                            ? "Clone Repo"
+                            : (Number(root.updaterState.behindCount || 0) > 0 ? "Update & Apply" : "Sync Local")
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.fgPrimary
+                    }
+
+                    MouseArea {
+                        id: applyUpdMouse
+                        anchors.fill: parent
+                        enabled: !root.updaterBusy
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: {
+                            if (!root.updaterState.repoFound) {
+                                const target = (repoPathInput.text || "").trim() || "~/mango-quickshell-dots";
+                                root.runUpdater(["clone", target], "Cloning mango-quickshell-dots...");
+                            } else if (Number(root.updaterState.behindCount || 0) > 0) {
+                                root.runUpdater(root.updaterRebuildRust ? ["apply"] : ["apply", "--skip-build"], "Pulling and installing updates...");
+                            } else {
+                                root.runUpdater(root.updaterRebuildRust ? ["apply", "--no-pull"] : ["apply", "--no-pull", "--skip-build"], "Syncing local repository files...");
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    visible: root.updaterNeedsReload
+                    implicitHeight: 26
+                    implicitWidth: relShLbl.implicitWidth + 14
+                    radius: Theme.r(8)
+                    color: relShMouse.containsMouse ? Qt.lighter(Theme.secondary, 1.08) : Theme.secondary
+
+                    Text {
+                        id: relShLbl
+                        anchors.centerIn: parent
+                        text: "Reload Shell"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.contrastInk(Theme.secondary)
+                    }
+
+                    MouseArea {
+                        id: relShMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.reloadQuickshell()
+                    }
+                }
+            }
+
+            // Repo Path Input Row
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "Repo Path"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(10)
+                    color: Theme.fgSurfaceVariant
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: Theme.subCardBg
+                    border.width: repoPathInput.activeFocus ? 1 : Theme.subBorderWidth
+                    border.color: repoPathInput.activeFocus ? Theme.primary : Theme.cardBorder
+
+                    TextInput {
+                        id: repoPathInput
+                        anchors.fill: parent
+                        anchors.leftMargin: 9
+                        anchors.rightMargin: 9
+                        verticalAlignment: TextInput.AlignVCenter
+                        text: String(root.updaterState.repoPath || "~/mango-quickshell-dots")
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.fgSurface
+                        clip: true
+                        selectByMouse: true
+                        Keys.onReturnPressed: root.runUpdater(["set-repo", text], "Linking repository...")
+                    }
+                }
+
+                Rectangle {
+                    implicitWidth: 56
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: saveRepoMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    opacity: root.updaterBusy ? 0.55 : 1.0
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Save"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
+                    }
+
+                    MouseArea {
+                        id: saveRepoMouse
+                        anchors.fill: parent
+                        enabled: !root.updaterBusy
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: root.runUpdater(["set-repo", repoPathInput.text], "Linking repository...")
+                    }
+                }
+            }
+
+            // Commit Info & Rust Rebuild Toggle
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        visible: root.updaterState.repoFound
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: "Installed: " + (String(root.updaterState.installedCommit || "").length > 0 ? String(root.updaterState.installedCommit) : "untracked")
+                            + " · Latest local: " + String(root.updaterState.localSubject || "")
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.fgSurfaceVariant
+                    }
+
+                    Text {
+                        text: "Rebuild Rust backends on update"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(11)
+                        color: Theme.fgSurface
+                    }
+                }
+
+                ToggleSwitch {
+                    checked: root.updaterRebuildRust
+                    onToggled: root.updaterRebuildRust = !root.updaterRebuildRust
+                }
+            }
+
+            // Pending Commits List
+            ColumnLayout {
+                visible: Array.isArray(root.updaterState.pendingCommits) && root.updaterState.pendingCommits.length > 0
+                Layout.fillWidth: true
+                spacing: 4
+
+                Repeater {
+                    model: root.updaterState.pendingCommits || []
+
+                    delegate: Rectangle {
+                        id: pCommitRow
+                        required property var modelData
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Theme.r(7)
+                        color: Theme.subCardBg
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 8
+
+                            Text {
+                                text: String(pCommitRow.modelData.hash || "")
+                                font.family: Theme.monoFont
+                                font.pixelSize: Theme.fs(9)
+                                font.weight: Font.Bold
+                                color: Theme.primary
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: String(pCommitRow.modelData.subject || "")
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                color: Theme.fgSurface
+                            }
+
+                            Text {
+                                text: String(pCommitRow.modelData.date || "")
+                                font.family: Theme.monoFont
+                                font.pixelSize: Theme.fs(9)
+                                color: Theme.fgSurfaceVariant
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                visible: root.updaterMsg.length > 0 || root.updaterErr.length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: root.updaterErr.length > 0 ? root.updaterErr : root.updaterMsg
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(10)
+                color: root.updaterErr.length > 0 ? Theme.error : Theme.success
             }
         }
     }
@@ -1328,60 +1877,405 @@ ColumnLayout {
                 }
             }
 
-            // Conditional Power Profile Selector (only if power-profiles-daemon is available)
+            // Power Modes & Daemon Controller
             ColumnLayout {
-                visible: !!root.powerProfiles.hasPowerProfiles
+                visible: Array.isArray(root.powerState.available) && root.powerState.available.length > 0
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: 8
 
-                Text {
-                    text: "Power profile"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Power modes & daemon"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.fgSurfaceVariant
+                    }
+
+                    Rectangle {
+                        implicitHeight: 20
+                        implicitWidth: pwrBadgeTxt.implicitWidth + 12
+                        radius: Theme.r(10)
+                        color: root.powerState.daemonRunning
+                            ? Theme.withAlpha(Theme.success, 0.18)
+                            : (root.powerState.daemonInstalled
+                                ? Theme.withAlpha(Theme.warning, 0.18)
+                                : Theme.subCardBg)
+
+                        Text {
+                            id: pwrBadgeTxt
+                            anchors.centerIn: parent
+                            text: root.powerState.daemonRunning
+                                ? "Daemon running"
+                                : (root.powerState.daemonInstalled ? "Service installed" : String(root.powerState.backend || "Direct sysfs"))
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            font.weight: Font.Bold
+                            color: root.powerState.daemonRunning
+                                ? Theme.success
+                                : (root.powerState.daemonInstalled ? Theme.warning : Theme.fgSurfaceVariant)
+                        }
+                    }
                 }
 
-                Flow {
+                // 3-Segment Power Mode Cards
+                RowLayout {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 8
 
                     Repeater {
-                        model: root.powerProfiles.available || []
+                        model: [
+                            { id: "power-saver", label: "Power Saver", icon: "󰌪" },
+                            { id: "balanced",    label: "Balanced",    icon: "󰾅" },
+                            { id: "performance", label: "Performance", icon: "󱐋" }
+                        ]
 
                         delegate: Rectangle {
-                            id: ppPill
-                            required property string modelData
-                            readonly property bool selected: root.powerProfiles.active === ppPill.modelData
+                            id: ppCard
+                            required property var modelData
+                            readonly property bool available: (root.powerState.available || []).indexOf(ppCard.modelData.id) !== -1
+                            readonly property bool selected: root.powerState.active === ppCard.modelData.id
 
-                            implicitHeight: 26
-                            implicitWidth: ppTxt.implicitWidth + 16
-                            radius: Theme.r(8)
-                            color: ppPill.selected
+                            visible: ppCard.available
+                            Layout.fillWidth: true
+                            implicitHeight: 34
+                            radius: Theme.r(9)
+                            color: ppCard.selected
                                 ? Theme.primary
                                 : (ppMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                            border.width: ppPill.selected ? Theme.activeControlBorderWidth : 0
+                            border.width: ppCard.selected ? Theme.activeControlBorderWidth : 0
                             border.color: Theme.primary
+                            opacity: root.powerBusy ? 0.65 : 1.0
 
-                            Text {
-                                id: ppTxt
+                            RowLayout {
                                 anchors.centerIn: parent
-                                text: ppPill.modelData
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(10)
-                                font.weight: ppPill.selected ? Font.Bold : Font.Medium
-                                color: ppPill.selected ? Theme.fgPrimary : Theme.fgSurface
+                                spacing: 6
+
+                                Text {
+                                    text: ppCard.modelData.icon
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: Theme.fs(13)
+                                    color: ppCard.selected ? Theme.fgPrimary : Theme.primary
+                                }
+
+                                Text {
+                                    text: ppCard.modelData.label
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fs(10)
+                                    font.weight: ppCard.selected ? Font.Bold : Font.Medium
+                                    color: ppCard.selected ? Theme.fgPrimary : Theme.fgSurface
+                                }
                             }
 
                             MouseArea {
                                 id: ppMouse
                                 anchors.fill: parent
+                                enabled: !root.powerBusy
                                 hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.setPowerProfile(ppPill.modelData)
+                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: root.setPowerProfile(ppCard.modelData.id)
                             }
                         }
                     }
+                }
+
+                // Live Telemetry Strip
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: pwrTelCol.implicitHeight + 12
+                    radius: Theme.r(9)
+                    color: Theme.subCardBg
+
+                    ColumnLayout {
+                        id: pwrTelCol
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 2
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: "Backend: " + String(root.powerState.backend || "direct")
+                                + " · Driver: " + (String(root.powerState.driver || "") || "unknown")
+                                + " · Gov: " + (String(root.powerState.governor || "") || "-")
+                                + (String(root.powerState.epp || "").length > 0 ? (" · EPP: " + root.powerState.epp) : "")
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(9)
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: "CPU: " + Number(root.powerState.cpuFreqMhz || 0) + " MHz"
+                                + (root.powerState.boostSupported ? (" · Boost: " + (root.powerState.boostEnabled ? "On" : "Off")) : "")
+                                + (root.powerState.hasPlatformProfile ? (" · ACPI: " + String(root.powerState.platformProfile || "-")) : "")
+                                + (root.powerState.gpuDpmSupported ? (" · GPU DPM: " + String(root.powerState.gpuDpmLevel || "-")) : "")
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(9)
+                            color: Theme.fgSurfaceVariant
+                        }
+                    }
+                }
+
+                // Daemon Service Management Row
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        Text {
+                            text: "aurora-powerd service (" + String(root.powerState.initSystem || "unknown") + ")"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.DemiBold
+                            color: Theme.fgSurface
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: root.powerState.daemonRunning
+                                ? "Socket active on /run/aurora-powerd.sock"
+                                : "Install service for instant switching and AC/battery automation"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            color: Theme.fgSurfaceVariant
+                        }
+                    }
+
+                    Rectangle {
+                        visible: !root.powerState.daemonRunning
+                        implicitHeight: 26
+                        implicitWidth: instPwrLbl.implicitWidth + 14
+                        radius: Theme.r(8)
+                        color: instPwrMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+                        opacity: root.powerBusy ? 0.55 : 1.0
+
+                        Text {
+                            id: instPwrLbl
+                            anchors.centerIn: parent
+                            text: root.powerState.daemonInstalled ? "Start / Reinstall Daemon" : "Install & Start Daemon"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Bold
+                            color: Theme.fgPrimary
+                        }
+
+                        MouseArea {
+                            id: instPwrMouse
+                            anchors.fill: parent
+                            enabled: !root.powerBusy
+                            hoverEnabled: true
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: root.runPowerAction(["install-service"], "Installing and starting aurora-powerd...")
+                        }
+                    }
+
+                    Rectangle {
+                        visible: !!root.powerState.daemonInstalled
+                        implicitHeight: 26
+                        implicitWidth: rmPwrLbl.implicitWidth + 14
+                        radius: Theme.r(8)
+                        color: root.confirmRemovePowerd
+                            ? Theme.error
+                            : (rmPwrMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg)
+                        opacity: root.powerBusy ? 0.55 : 1.0
+
+                        Text {
+                            id: rmPwrLbl
+                            anchors.centerIn: parent
+                            text: root.confirmRemovePowerd ? "Confirm Remove?" : "Remove Daemon"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Bold
+                            color: root.confirmRemovePowerd ? Theme.fgError : Theme.error
+                        }
+
+                        MouseArea {
+                            id: rmPwrMouse
+                            anchors.fill: parent
+                            enabled: !root.powerBusy
+                            hoverEnabled: true
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: {
+                                if (!root.confirmRemovePowerd) {
+                                    root.confirmRemovePowerd = true;
+                                    powerConfirmTimer.restart();
+                                    return;
+                                }
+                                root.confirmRemovePowerd = false;
+                                powerConfirmTimer.stop();
+                                root.runPowerAction(["uninstall-service"], "Removing aurora-powerd service...");
+                            }
+                        }
+                    }
+                }
+
+                // Daemon Tuning Controls (when daemon is running)
+                ColumnLayout {
+                    visible: !!root.powerState.daemonRunning
+                    Layout.fillWidth: true
+                    spacing: 7
+
+                    RowLayout {
+                        visible: !!root.powerState.boostSupported
+                        Layout.fillWidth: true
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Disable CPU boost in Power Saver"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(11)
+                            color: Theme.fgSurface
+                        }
+
+                        ToggleSwitch {
+                            checked: !root.powerState.boostOnSaver
+                            onToggled: root.setPowerConfig("boost_on_saver", root.powerState.boostOnSaver ? "false" : "true")
+                        }
+                    }
+
+                    RowLayout {
+                        visible: !!root.powerState.gpuDpmSupported
+                        Layout.fillWidth: true
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Control AMD GPU DPM level"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(11)
+                            color: Theme.fgSurface
+                        }
+
+                        ToggleSwitch {
+                            checked: !!root.powerState.gpuDpmControl
+                            onToggled: root.setPowerConfig("gpu_dpm", root.powerState.gpuDpmControl ? "false" : "true")
+                        }
+                    }
+
+                    RowLayout {
+                        visible: !!root.powerState.hasBattery
+                        Layout.fillWidth: true
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Auto-switch on AC / Battery (" + (root.powerState.onAc ? "On AC" : "On Battery") + ")"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(11)
+                            color: Theme.fgSurface
+                        }
+
+                        ToggleSwitch {
+                            checked: !!root.powerState.autoSwitch
+                            onToggled: root.setPowerConfig("auto_switch", root.powerState.autoSwitch ? "false" : "true")
+                        }
+                    }
+
+                    RowLayout {
+                        visible: !!root.powerState.hasBattery && !!root.powerState.autoSwitch
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Text {
+                            Layout.preferredWidth: 85
+                            text: "AC Profile"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        Repeater {
+                            model: ["power-saver", "balanced", "performance"]
+
+                            delegate: Rectangle {
+                                id: acChip
+                                required property string modelData
+                                readonly property bool selected: root.powerState.acProfile === acChip.modelData
+                                Layout.fillWidth: true
+                                implicitHeight: 24
+                                radius: Theme.r(7)
+                                color: acChip.selected ? Theme.primary : Theme.subCardBg
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: acChip.modelData
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fs(9)
+                                    font.weight: acChip.selected ? Font.Bold : Font.Normal
+                                    color: acChip.selected ? Theme.fgPrimary : Theme.fgSurface
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.setPowerConfig("ac_profile", acChip.modelData)
+                                }
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        visible: !!root.powerState.hasBattery && !!root.powerState.autoSwitch
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Text {
+                            Layout.preferredWidth: 85
+                            text: "Battery Profile"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            color: Theme.fgSurfaceVariant
+                        }
+
+                        Repeater {
+                            model: ["power-saver", "balanced", "performance"]
+
+                            delegate: Rectangle {
+                                id: batChip
+                                required property string modelData
+                                readonly property bool selected: root.powerState.batteryProfile === batChip.modelData
+                                Layout.fillWidth: true
+                                implicitHeight: 24
+                                radius: Theme.r(7)
+                                color: batChip.selected ? Theme.secondary : Theme.subCardBg
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: batChip.modelData
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fs(9)
+                                    font.weight: batChip.selected ? Font.Bold : Font.Normal
+                                    color: batChip.selected ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.setPowerConfig("battery_profile", batChip.modelData)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    visible: root.powerMsg.length > 0 || root.powerErr.length > 0
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: root.powerErr.length > 0 ? root.powerErr : root.powerMsg
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(10)
+                    color: root.powerErr.length > 0 ? Theme.error : Theme.success
                 }
             }
 

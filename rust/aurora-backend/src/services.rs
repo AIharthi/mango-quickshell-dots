@@ -152,6 +152,8 @@ fn gather_services() -> (&'static str, Vec<ServiceEntry>) {
             "bluetooth",
             "sddm",
             "power-profiles-daemon",
+            "aurora-powerd",
+            "restart-i2c",
             "upower",
             "iwd",
             "sshd",

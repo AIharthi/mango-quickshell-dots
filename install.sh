@@ -12,6 +12,7 @@ BACKUP_DIR="$HOME/.config-backup-aurora-$(date +%Y%m%d_%H%M%S)"
 
 INSTALL_SESSION=0
 INSTALL_SDDM=0
+INSTALL_POWERD=0
 NO_SYSTEM=0
 SKIP_BACKUP=0
 SKIP_BUILD=0
@@ -27,12 +28,13 @@ Usage: ./install.sh [OPTIONS]
 Options:
   --dry-run        Print planned actions without modifying files, building, or running sudo
   --no-system      Skip root/system installation even if --with-session or --with-sddm is passed
-  --skip-build     Skip compiling rust/aurora-fm and rust/aurora-backend
+  --skip-build     Skip compiling rust/aurora-fm, rust/aurora-backend, and rust/aurora-powerd
   --skip-fonts     Skip installing bundled fonts into ~/.local/share/fonts
   --with-session   Also install /usr/local/bin/mango-session and
                    /usr/share/wayland-sessions/mango.desktop (requires sudo/root)
   --with-sddm      Also install matching animated SDDM theme (/usr/share/sddm/themes/aurora-island)
                    and configure /etc/sddm.conf.d/99-aurora-shell.conf (requires sudo/root)
+  --with-powerd    Also install and start the aurora-powerd system service (requires sudo/root)
   --no-backup      Overwrite existing updated files without creating a timestamped backup
   -h, --help       Show this help message
 EOF
@@ -62,6 +64,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --with-sddm)
             INSTALL_SDDM=1
+            shift
+            ;;
+        --with-powerd)
+            INSTALL_POWERD=1
             shift
             ;;
         --no-backup)
@@ -121,9 +127,9 @@ check_dependencies() {
         missing_optional+=("awww (or swww)")
     fi
 
-    if [[ "$SKIP_BUILD" -eq 0 && ( -f "$SCRIPT_DIR/rust/aurora-fm/Cargo.toml" || -f "$SCRIPT_DIR/rust/aurora-backend/Cargo.toml" ) ]]; then
+    if [[ "$SKIP_BUILD" -eq 0 && ( -f "$SCRIPT_DIR/rust/aurora-fm/Cargo.toml" || -f "$SCRIPT_DIR/rust/aurora-backend/Cargo.toml" || -f "$SCRIPT_DIR/rust/aurora-powerd/Cargo.toml" ) ]]; then
         if ! command -v cargo >/dev/null 2>&1 || ! command -v rustc >/dev/null 2>&1; then
-            echo "NOTE: Rust toolchain ('cargo'/'rustc') not found; aurora-fm/aurora-backend build will be skipped." >&2
+            echo "NOTE: Rust toolchain ('cargo'/'rustc') not found; aurora-fm/aurora-backend/aurora-powerd build will be skipped." >&2
             echo "      Arch: 'sudo pacman -S rust' | Fedora: 'sudo dnf install cargo rust' | Gentoo: 'sudo emerge dev-lang/rust'" >&2
         fi
     fi
@@ -133,9 +139,9 @@ check_dependencies() {
         echo "      See README.md for Arch, Fedora, and Gentoo package instructions." >&2
     fi
 
-    if [[ ( "$INSTALL_SESSION" -eq 1 || "$INSTALL_SDDM" -eq 1 ) && "$NO_SYSTEM" -eq 0 && "$EUID" -ne 0 ]]; then
+    if [[ ( "$INSTALL_SESSION" -eq 1 || "$INSTALL_SDDM" -eq 1 || "$INSTALL_POWERD" -eq 1 ) && "$NO_SYSTEM" -eq 0 && "$EUID" -ne 0 ]]; then
         if ! command -v sudo >/dev/null 2>&1; then
-            missing_required+=("sudo (required for --with-session/--with-sddm when not root; pass --no-system to skip)")
+            missing_required+=("sudo (required for --with-session/--with-sddm/--with-powerd when not root; pass --no-system to skip)")
         fi
     fi
 
@@ -231,6 +237,47 @@ install_configs() {
     if [[ -f "$CONFIG_DIR/mango/local.conf" ]]; then
         echo "==> Preserved per-device overrides: $CONFIG_DIR/mango/local.conf"
     fi
+
+    if [[ "$DRY_RUN" -eq 0 ]] && [[ -d "$SCRIPT_DIR/.git" || -f "$SCRIPT_DIR/install.sh" ]]; then
+        python3 - "$SCRIPT_DIR" "$CONFIG_DIR/quickshell/repo-source.json" <<'PY' || true
+import datetime, json, os, subprocess, sys, tempfile
+
+repo_dir, out_path = os.path.abspath(sys.argv[1]), sys.argv[2]
+
+def git_out(args):
+    try:
+        return subprocess.check_output(["git", "-C", repo_dir, *args], text=True, stderr=subprocess.DEVNULL).strip()
+    except Exception:
+        return ""
+
+remote_url = git_out(["remote", "get-url", "origin"]) or "https://github.com/AIharthi/mango-quickshell-dots.git"
+branch = git_out(["rev-parse", "--abbrev-ref", "HEAD"])
+if not branch or branch == "HEAD":
+    branch = "main"
+commit = git_out(["rev-parse", "--short=7", "HEAD"])
+installed_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+payload = {
+    "repoPath": repo_dir,
+    "remoteUrl": remote_url,
+    "branch": branch,
+    "installedCommit": commit,
+    "installedAt": installed_at,
+}
+parent = os.path.dirname(out_path)
+os.makedirs(parent, exist_ok=True)
+fd, tmp = tempfile.mkstemp(dir=parent, prefix=".tmp_repo_", text=True)
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(payload, f)
+        f.write("\n")
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, out_path)
+except Exception:
+    if os.path.exists(tmp):
+        os.unlink(tmp)
+PY
+    fi
 }
 
 build_rust_backends() {
@@ -243,9 +290,9 @@ build_rust_backends() {
         return 0
     fi
 
-    echo "==> Building zero-dependency Rust backends (aurora-fm, aurora-backend)"
+    echo "==> Building zero-dependency Rust backends (aurora-fm, aurora-backend, aurora-powerd)"
     local crate
-    for crate in aurora-fm aurora-backend; do
+    for crate in aurora-fm aurora-backend aurora-powerd; do
         if [[ ! -f "$SCRIPT_DIR/rust/$crate/Cargo.toml" ]]; then
             continue
         fi
@@ -392,6 +439,29 @@ install_system_sddm() {
     fi
 }
 
+install_system_powerd() {
+    if [[ "$INSTALL_POWERD" -eq 0 ]]; then
+        return 0
+    fi
+    if [[ "$NO_SYSTEM" -eq 1 ]]; then
+        echo "==> Skipping aurora-powerd service installation (--no-system)"
+        return 0
+    fi
+    if [[ ! -x "$CONFIG_DIR/quickshell/bin/aurora-powerd" ]]; then
+        echo "WARNING: aurora-powerd binary unavailable; skipping service installation." >&2
+        return 0
+    fi
+
+    echo "==> Installing and starting aurora-powerd system service"
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "  [dry-run] $CONFIG_DIR/quickshell/scripts/manage-powerd.sh install-service"
+        return 0
+    fi
+    if [[ -x "$CONFIG_DIR/quickshell/scripts/manage-powerd.sh" ]]; then
+        "$CONFIG_DIR/quickshell/scripts/manage-powerd.sh" install-service >/dev/null || true
+    fi
+}
+
 check_dependencies
 create_backups
 install_configs
@@ -400,6 +470,7 @@ install_fonts
 init_state
 install_system_session
 install_system_sddm
+install_system_powerd
 
 echo ""
 if [[ "$DRY_RUN" -eq 1 ]]; then

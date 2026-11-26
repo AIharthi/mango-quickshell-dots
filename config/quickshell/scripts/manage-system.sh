@@ -5,10 +5,10 @@ CMD="${1:-}"
 shift || true
 
 case "$CMD" in
-    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor)
+    gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor|config-update)
         ;;
     *)
-        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor> [args...]" >&2
+        echo "Usage: manage-system.sh <gtk-get|gtk-set|terminal-get|terminal-set|network-info|network-action|power-action|power|distro|audio-cards|audio-set-profile|audio-test|privacy-get|privacy-set|clear-clipboard|clear-recent|hwmon|processes|kill-proc|services|service-action|user-info|backup-settings|list-backups|restore-settings|doctor|config-update> [args...]" >&2
         exit 1
         ;;
 esac
@@ -16,7 +16,7 @@ esac
 BACKEND_BIN="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/bin/aurora-backend"
 if [[ -x "$BACKEND_BIN" ]]; then
     case "$CMD" in
-        hwmon|processes|doctor|services|service-action|kill-proc|distro)
+        hwmon|processes|doctor|services|service-action|kill-proc|distro|config-update)
             exec "$BACKEND_BIN" "$CMD" "$@"
             ;;
         power-action|power)
@@ -928,6 +928,14 @@ def cmd_doctor():
     }))
 
 
+def cmd_config_update():
+    print(json.dumps({
+        "ok": False,
+        "error": "aurora-backend binary missing; run ./install.sh to compile Rust backends",
+    }))
+    sys.exit(1)
+
+
 DISPATCH = {
     "gtk-get": cmd_gtk_get,
     "gtk-set": cmd_gtk_set,
@@ -954,6 +962,7 @@ DISPATCH = {
     "list-backups": cmd_list_backups,
     "restore-settings": cmd_restore_settings,
     "doctor": cmd_doctor,
+    "config-update": cmd_config_update,
 }
 
 DISPATCH[cmd]()

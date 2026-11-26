@@ -39,6 +39,39 @@ ColumnLayout {
     property bool dragLock: false
     property int swipeMinThreshold: 1
 
+    property var i2cFix: ({
+        ok: false,
+        driverPresent: false,
+        devices: ["i2c_designware.0"],
+        selectedDevice: "i2c_designware.0",
+        initSystem: "unknown",
+        scriptInstalled: false,
+        serviceInstalled: false,
+        serviceEnabled: false,
+        dmiVendor: "",
+        dmiProduct: "",
+        isMsi: false
+    })
+    property bool i2cBusy: false
+    property string i2cMsg: ""
+    property string i2cErr: ""
+    property string selectedI2cDev: "i2c_designware.0"
+
+    function loadI2cFix(): void {
+        if (!i2cStatusProc.running)
+            i2cStatusProc.running = true;
+    }
+
+    function runI2cAction(args: var): void {
+        if (root.i2cBusy || i2cActionProc.running)
+            return;
+        root.i2cBusy = true;
+        root.i2cMsg = "";
+        root.i2cErr = "";
+        i2cActionProc.command = [Quickshell.shellPath("scripts/msi-touchpad-fix.sh")].concat(args);
+        i2cActionProc.running = true;
+    }
+
     function loadSettings(): void {
         if (!readProc.running)
             readProc.running = true;
@@ -77,7 +110,62 @@ ColumnLayout {
         Quickshell.execDetached([Quickshell.shellPath("scripts/apply-local-setting.sh"), "set", key, outVal]);
     }
 
-    Component.onCompleted: loadSettings()
+    Component.onCompleted: {
+        loadSettings();
+        loadI2cFix();
+    }
+
+    Process {
+        id: i2cStatusProc
+        command: [Quickshell.shellPath("scripts/msi-touchpad-fix.sh"), "status"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    if (d && d.ok) {
+                        root.i2cFix = d;
+                        if (typeof d.selectedDevice === "string" && d.selectedDevice.length > 0)
+                            root.selectedI2cDev = d.selectedDevice;
+                    }
+                } catch (err) {}
+            }
+        }
+    }
+
+    Process {
+        id: i2cActionProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text || "").trim();
+                if (raw.length === 0)
+                    return;
+                try {
+                    const d = JSON.parse(raw);
+                    if (d && d.ok) {
+                        root.i2cFix = d;
+                        if (typeof d.selectedDevice === "string" && d.selectedDevice.length > 0)
+                            root.selectedI2cDev = d.selectedDevice;
+                        root.i2cMsg = String(d.message || "Touchpad I2C fix updated");
+                        root.i2cErr = "";
+                        DeviceCaps.refresh();
+                    } else if (d && d.error) {
+                        root.i2cErr = String(d.error);
+                        root.i2cMsg = "";
+                    }
+                } catch (err) {
+                    root.i2cErr = "Unable to parse MSI touchpad fix output";
+                }
+            }
+        }
+        onExited: code => {
+            root.i2cBusy = false;
+            if (code !== 0 && root.i2cErr.length === 0)
+                root.i2cErr = "MSI touchpad fix exited with code " + code;
+        }
+    }
 
     Process {
         id: readProc
@@ -928,6 +1016,278 @@ ColumnLayout {
                 accentColor: Theme.secondary
                 onDecremented: root.setSetting("swipe_min_threshold", Math.max(1, root.swipeMinThreshold - 1))
                 onIncremented: root.setSetting("swipe_min_threshold", Math.min(10, root.swipeMinThreshold + 1))
+            }
+        }
+    }
+
+    // --- 4. MSI Laptop Touchpad I2C Recovery ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: i2cCol.implicitHeight + 24
+        radius: Theme.r(16)
+        color: Theme.cardBg
+        border.width: Theme.cardBorderWidth
+        border.color: Theme.cardBorder
+
+        ColumnLayout {
+            id: i2cCol
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Rectangle {
+                    implicitWidth: 28
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: Theme.withAlpha(Theme.secondary, 0.16)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰟸"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(14)
+                        color: Theme.secondary
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        text: "MSI touchpad I2C fix"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(11)
+                        font.weight: Font.Bold
+                        color: Theme.fgSurface
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: "Unbinds and rebinds i2c_designware at runtime or boot (systemd / OpenRC)"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        color: Theme.fgSurfaceVariant
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: i2cBadgeTxt.implicitWidth + 14
+                    radius: Theme.r(11)
+                    color: (root.i2cFix.serviceInstalled && root.i2cFix.serviceEnabled)
+                        ? Theme.withAlpha(Theme.success, 0.18)
+                        : ((root.i2cFix.scriptInstalled || root.i2cFix.serviceInstalled)
+                            ? Theme.withAlpha(Theme.warning, 0.18)
+                            : Theme.subCardBg)
+
+                    Text {
+                        id: i2cBadgeTxt
+                        anchors.centerIn: parent
+                        text: (root.i2cFix.serviceInstalled && root.i2cFix.serviceEnabled)
+                            ? "Boot fix active"
+                            : ((root.i2cFix.scriptInstalled || root.i2cFix.serviceInstalled) ? "Installed" : "Not installed")
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.Bold
+                        color: (root.i2cFix.serviceInstalled && root.i2cFix.serviceEnabled)
+                            ? Theme.success
+                            : ((root.i2cFix.scriptInstalled || root.i2cFix.serviceInstalled) ? Theme.warning : Theme.fgSurfaceVariant)
+                    }
+                }
+            }
+
+            // Device Selector Chips
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    Layout.preferredWidth: 115
+                    text: "I2C Device"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(11)
+                    color: Theme.fgSurface
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: root.i2cFix.devices || ["i2c_designware.0"]
+
+                        delegate: Rectangle {
+                            id: i2cDevChip
+                            required property string modelData
+                            readonly property bool selected: root.selectedI2cDev === i2cDevChip.modelData
+
+                            implicitHeight: 24
+                            implicitWidth: i2cDevLbl.implicitWidth + 14
+                            radius: Theme.r(7)
+                            color: i2cDevChip.selected
+                                ? Theme.primary
+                                : (i2cDevMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            border.width: i2cDevChip.selected ? Theme.activeControlBorderWidth : 0
+                            border.color: Theme.primary
+
+                            Text {
+                                id: i2cDevLbl
+                                anchors.centerIn: parent
+                                text: i2cDevChip.modelData
+                                font.family: Theme.monoFont
+                                font.pixelSize: Theme.fs(10)
+                                font.weight: i2cDevChip.selected ? Font.Bold : Font.Normal
+                                color: i2cDevChip.selected ? Theme.fgPrimary : Theme.fgSurface
+                            }
+
+                            MouseArea {
+                                id: i2cDevMouse
+                                anchors.fill: parent
+                                enabled: !root.i2cBusy
+                                hoverEnabled: true
+                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: root.selectedI2cDev = i2cDevChip.modelData
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Hardware / Driver Info Strip
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: i2cInfoCol.implicitHeight + 12
+                radius: Theme.r(9)
+                color: Theme.subCardBg
+
+                ColumnLayout {
+                    id: i2cInfoCol
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 2
+
+                    Text {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: "Driver: " + (root.i2cFix.driverPresent ? "i2c_designware present" : "not detected")
+                            + " · Init: " + String(root.i2cFix.initSystem || "unknown")
+                            + " · Touchpad: " + (DeviceCaps.hasTouchpad ? "detected" : "not detected")
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(9)
+                        color: Theme.fgSurfaceVariant
+                    }
+
+                    Text {
+                        visible: String(root.i2cFix.dmiVendor || "").length > 0 || String(root.i2cFix.dmiProduct || "").length > 0
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: "Hardware: " + [String(root.i2cFix.dmiVendor || ""), String(root.i2cFix.dmiProduct || "")].filter(s => s.length > 0).join(" · ")
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(9)
+                        color: root.i2cFix.isMsi ? Theme.secondary : Theme.fgSurfaceVariant
+                    }
+                }
+            }
+
+            // Action Buttons
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: i2cRstMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    opacity: root.i2cBusy ? 0.55 : 1.0
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.i2cBusy ? "Working..." : "Restart I2C Now"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.DemiBold
+                        color: Theme.fgSurface
+                    }
+
+                    MouseArea {
+                        id: i2cRstMouse
+                        anchors.fill: parent
+                        enabled: !root.i2cBusy
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: root.runI2cAction(["restart", root.selectedI2cDev])
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: i2cInstMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+                    opacity: root.i2cBusy ? 0.55 : 1.0
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.i2cFix.serviceInstalled ? "Reinstall Boot Fix" : "Install Boot Fix"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.fgPrimary
+                    }
+
+                    MouseArea {
+                        id: i2cInstMouse
+                        anchors.fill: parent
+                        enabled: !root.i2cBusy
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: root.runI2cAction(["install", root.selectedI2cDev])
+                    }
+                }
+
+                Rectangle {
+                    visible: !!root.i2cFix.scriptInstalled || !!root.i2cFix.serviceInstalled
+                    Layout.fillWidth: true
+                    implicitHeight: 28
+                    radius: Theme.r(8)
+                    color: i2cRmMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
+                    opacity: root.i2cBusy ? 0.55 : 1.0
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Remove Boot Fix"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.error
+                    }
+
+                    MouseArea {
+                        id: i2cRmMouse
+                        anchors.fill: parent
+                        enabled: !root.i2cBusy
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: root.runI2cAction(["uninstall"])
+                    }
+                }
+            }
+
+            Text {
+                visible: root.i2cMsg.length > 0 || root.i2cErr.length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: root.i2cErr.length > 0 ? root.i2cErr : root.i2cMsg
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(10)
+                color: root.i2cErr.length > 0 ? Theme.error : Theme.success
             }
         }
     }

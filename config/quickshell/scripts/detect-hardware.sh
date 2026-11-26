@@ -153,7 +153,14 @@ if not has_touchpad and shutil.which("mmsg"):
 has_wlr_randr = shutil.which("wlr-randr") is not None
 has_audio = shutil.which("pactl") is not None
 has_pavucontrol = shutil.which("pavucontrol") is not None
-has_power_profiles = shutil.which("powerprofilesctl") is not None
+has_power_profiles = (
+    os.path.exists(os.path.join(config_dir, "quickshell", "bin", "aurora-powerd"))
+    or os.path.exists("/usr/local/bin/aurora-powerd")
+    or shutil.which("aurora-powerd") is not None
+    or os.path.exists("/run/aurora-powerd.sock")
+    or os.path.exists("/sys/devices/system/cpu/cpufreq/policy0/scaling_governor")
+    or shutil.which("powerprofilesctl") is not None
+)
 has_xdg_mime = shutil.which("xdg-mime") is not None
 has_network = any(
     os.path.basename(p) != "lo" for p in glob.glob("/sys/class/net/*")

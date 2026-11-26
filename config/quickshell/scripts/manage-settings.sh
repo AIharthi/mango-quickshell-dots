@@ -1048,8 +1048,33 @@ def read_distro():
 
 
 def read_power_profiles():
+    cfg_base = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
+    powerd_candidates = [
+        os.path.join(cfg_base, "quickshell", "bin", "aurora-powerd"),
+        "/usr/local/bin/aurora-powerd",
+        shutil.which("aurora-powerd") or "",
+    ]
+    for cand in powerd_candidates:
+        if cand and os.path.isfile(cand) and os.access(cand, os.X_OK):
+            try:
+                raw = subprocess.check_output([cand, "status"], text=True, stderr=subprocess.DEVNULL, timeout=2.0).strip()
+                parsed = json.loads(raw)
+                if parsed.get("ok"):
+                    return {
+                        "hasPowerProfiles": bool(parsed.get("hasPowerProfiles", False)),
+                        "active": str(parsed.get("active", "balanced")),
+                        "available": parsed.get("available") or ["power-saver", "balanced", "performance"],
+                    }
+            except Exception:
+                pass
+            break
     if not shutil.which("powerprofilesctl"):
-        return {"hasPowerProfiles": False, "active": "", "available": []}
+        has_cpufreq = os.path.exists("/sys/devices/system/cpu/cpufreq/policy0/scaling_governor")
+        return {
+            "hasPowerProfiles": has_cpufreq,
+            "active": "balanced" if has_cpufreq else "",
+            "available": ["power-saver", "balanced", "performance"] if has_cpufreq else [],
+        }
     try:
         active = subprocess.check_output(["powerprofilesctl", "get"], text=True, stderr=subprocess.DEVNULL).strip()
         listed = subprocess.check_output(["powerprofilesctl", "list"], text=True, stderr=subprocess.DEVNULL)

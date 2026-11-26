@@ -12,6 +12,7 @@ mod proc_mon;
 mod services;
 mod snippets;
 mod telemetry;
+mod updater;
 mod util;
 mod workspaces;
 
@@ -32,7 +33,7 @@ fn print_err_exit(msg: &str) -> ! {
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
     let Some(cmd) = args.first().map(String::as_str) else {
-        print_err_exit("Usage: aurora-backend <version|probe|battery|telemetry|hwmon|processes|clipboard|calc|doctor|captures|distro|services|service-action|kill-proc|power|snippets|pip|workspaces>");
+        print_err_exit("Usage: aurora-backend <version|probe|battery|telemetry|hwmon|processes|clipboard|calc|doctor|captures|distro|services|service-action|kill-proc|power|snippets|pip|workspaces|config-update>");
     };
     let rest = &args[1..];
 
@@ -97,6 +98,11 @@ fn main() {
         }
         "workspaces" => {
             if let Err(e) = workspaces::cmd_workspaces(rest) {
+                print_err_exit(&e);
+            }
+        }
+        "config-update" => {
+            if let Err(e) = updater::cmd_config_update(rest) {
                 print_err_exit(&e);
             }
         }

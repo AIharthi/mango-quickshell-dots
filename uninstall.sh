@@ -9,6 +9,7 @@ FONT_DIR="$DATA_DIR/fonts"
 
 WITH_SESSION=0
 WITH_SDDM=0
+WITH_POWERD=0
 RESTORE_BACKUP=0
 BACKUP_PATH=""
 KEEP_FONTS=0
@@ -27,6 +28,7 @@ Options:
                         /usr/share/wayland-sessions/mango.desktop (requires sudo/root)
   --with-sddm           Also remove /usr/share/sddm/themes/{aurora-island,mango-island} and
                         /etc/sddm.conf.d/{99-aurora-shell,99-mango-island}.conf (requires sudo/root)
+  --with-powerd         Also stop/disable and remove aurora-powerd system service (requires sudo/root)
   --restore-backup      Restore the latest ~/.config-backup-{aurora,mango}-* backup after removal
   --backup <dir>        Restore a specific backup directory (implies --restore-backup)
   --keep-fonts          Do not remove bundled fonts from ~/.local/share/fonts
@@ -47,6 +49,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --with-sddm)
             WITH_SDDM=1
+            shift
+            ;;
+        --with-powerd)
+            WITH_POWERD=1
             shift
             ;;
         --restore-backup)
@@ -135,6 +141,9 @@ fi
 if [[ "$WITH_SDDM" -eq 1 ]]; then
     echo "  Remove SDDM:   /usr/share/sddm/themes/{aurora-island,mango-island}, /etc/sddm.conf.d/{99-aurora-shell,99-mango-island}.conf"
 fi
+if [[ "$WITH_POWERD" -eq 1 ]]; then
+    echo "  Remove powerd: aurora-powerd system service & /usr/local/bin/aurora-powerd"
+fi
 if [[ "$RESTORE_BACKUP" -eq 1 ]]; then
     echo "  Restore from:  $BACKUP_PATH"
 fi
@@ -215,6 +224,31 @@ if [[ "$WITH_SDDM" -eq 1 ]]; then
             run_cmd "${priv[@]}" rm -f "$sddm_conf"
         fi
     done
+fi
+
+if [[ "$WITH_POWERD" -eq 1 ]]; then
+    echo "==> Removing aurora-powerd system service"
+    priv=()
+    if [[ "$EUID" -ne 0 ]]; then
+        if ! command -v sudo >/dev/null 2>&1; then
+            echo "ERROR: 'sudo' is required to remove /etc and /usr/local files when not running as root." >&2
+            exit 1
+        fi
+        priv=(sudo)
+    fi
+    if [[ -d /run/systemd/system ]] && command -v systemctl >/dev/null 2>&1; then
+        run_cmd "${priv[@]}" systemctl disable --now aurora-powerd.service || true
+        run_cmd "${priv[@]}" rm -f /etc/systemd/system/aurora-powerd.service
+        run_cmd "${priv[@]}" systemctl daemon-reload || true
+    fi
+    if command -v rc-service >/dev/null 2>&1; then
+        run_cmd "${priv[@]}" rc-service aurora-powerd stop || true
+        if command -v rc-update >/dev/null 2>&1; then
+            run_cmd "${priv[@]}" rc-update del aurora-powerd default || true
+        fi
+        run_cmd "${priv[@]}" rm -f /etc/init.d/aurora-powerd
+    fi
+    run_cmd "${priv[@]}" rm -f /usr/local/bin/aurora-powerd /run/aurora-powerd.sock
 fi
 
 if [[ "$RESTORE_BACKUP" -eq 1 ]]; then

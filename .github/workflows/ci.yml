@@ -46,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate: [aurora-fm, aurora-backend]
+        crate: [aurora-fm, aurora-backend, aurora-powerd]
     defaults:
       run:
         working-directory: rust/${{ matrix.crate }}

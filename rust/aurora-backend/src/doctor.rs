@@ -56,25 +56,67 @@ fn check_mango() -> CheckItem {
 fn check_bins(qs_dir: &Path) -> CheckItem {
     let fm = qs_dir.join("bin/aurora-fm").exists();
     let be = qs_dir.join("bin/aurora-backend").exists();
-    match (fm, be) {
-        (true, true) => CheckItem {
+    let pd = qs_dir.join("bin/aurora-powerd").exists()
+        || Path::new("/usr/local/bin/aurora-powerd").exists()
+        || which("aurora-powerd").is_some();
+    match (fm, be, pd) {
+        (true, true, true) => CheckItem {
+            id: "aurora-bins",
+            label: "Aurora Rust Backends",
+            status: "ok",
+            detail: "aurora-fm, aurora-backend, and aurora-powerd installed".to_string(),
+        },
+        (true, true, false) => CheckItem {
             id: "aurora-bins",
             label: "Aurora Rust Backends",
             status: "ok",
             detail: "aurora-fm and aurora-backend installed".to_string(),
         },
-        (true, false) | (false, true) => CheckItem {
+        _ if fm || be => CheckItem {
             id: "aurora-bins",
             label: "Aurora Rust Backends",
             status: "warn",
             detail: "Partial Rust binaries installed; run ./install.sh".to_string(),
         },
-        (false, false) => CheckItem {
+        _ => CheckItem {
             id: "aurora-bins",
             label: "Aurora Rust Backends",
             status: "warn",
             detail: "Missing compiled binaries in quickshell/bin; run ./install.sh".to_string(),
         },
+    }
+}
+
+fn check_power_daemon() -> CheckItem {
+    if Path::new("/run/aurora-powerd.sock").exists() {
+        return CheckItem {
+            id: "power-daemon",
+            label: "Power Daemon",
+            status: "ok",
+            detail: "aurora-powerd daemon socket active".to_string(),
+        };
+    }
+    if which("powerprofilesctl").is_some() && run_stdout("powerprofilesctl", &["get"]).is_some() {
+        return CheckItem {
+            id: "power-daemon",
+            label: "Power Daemon",
+            status: "ok",
+            detail: "power-profiles-daemon active".to_string(),
+        };
+    }
+    if Path::new("/sys/devices/system/cpu/cpufreq/policy0/scaling_governor").exists() {
+        return CheckItem {
+            id: "power-daemon",
+            label: "Power Daemon",
+            status: "ok",
+            detail: "cpufreq ready (install daemon in Settings -> System)".to_string(),
+        };
+    }
+    CheckItem {
+        id: "power-daemon",
+        label: "Power Daemon",
+        status: "warn",
+        detail: "No cpufreq or power-profiles backend detected".to_string(),
     }
 }
 
@@ -364,6 +406,7 @@ pub fn cmd_doctor() {
     let checks = vec![
         check_mango(),
         check_bins(&qs_dir),
+        check_power_daemon(),
         check_session_env(),
         check_init_seat(),
         check_distro_pkg(),

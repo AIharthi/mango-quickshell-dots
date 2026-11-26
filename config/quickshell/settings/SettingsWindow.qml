@@ -125,6 +125,7 @@ PanelWindow {
         { label: "Ethernet, IP, DNS & Wi-Fi",  pageId: "network",       keywords: "network ethernet ip gateway dns nmcli wifi wireless ssid password" },
         { label: "Bluetooth Devices",          pageId: "bluetooth",     keywords: "bluetooth pair connect audio device" },
         { label: "Keyboard, Mouse & Touchpad", pageId: "input",         keywords: "keyboard model layout repeat sandbox mouse left handed middle click scroll touchpad" },
+        { label: "MSI Touchpad I2C Fix",       pageId: "input",         keywords: "msi touchpad fix i2c designware unbind bind restart arch cachyos boot service" },
         { label: "Foot & Kitty Settings",      pageId: "terminals",     keywords: "terminal foot kitty opacity alpha padding cursor blink scrollback" },
         { label: "DND, Critical & Sounds",     pageId: "notifications", keywords: "notification dnd do not disturb critical sound history clear test alerts calendar timer" },
         { label: "Defaults, Hidden Apps & Env",pageId: "apps",          keywords: "default browser terminal editor hidden apps launcher startup autostart exec_once env" },
@@ -133,6 +134,8 @@ PanelWindow {
         { label: "Sensors, Processes & Init",  pageId: "monitor",       keywords: "temp temperature cpu gpu process pid kill openrc systemd services" },
         { label: "User, Clock & Backup",       pageId: "system",        keywords: "user account clock 24h seconds date format keep awake disk storage backup export reset doctor health diagnostics aurora battery watts" },
         { label: "Distro & Package Center",    pageId: "system",        keywords: "distro arch pacman paru yay fedora dnf rpm gentoo portage emerge openrc systemd elogind flatpak updates packages" },
+        { label: "Aurora Config Updater",      pageId: "system",        keywords: "update updater config dotfiles git pull sync mango-quickshell-dots github reload" },
+        { label: "Power Daemon & Modes",       pageId: "system",        keywords: "power daemon mode profile saver balanced performance governor epp boost dpm aurora-powerd" },
         { label: "Capture Studio & Screenshots", pageId: "shell",       keywords: "capture studio screenshot recording gallery annotate satty swappy wf-recorder copy trash" },
         { label: "Snippets Vault & Sessions",  pageId: "shortcuts",     keywords: "snippets vault templates workspace sessions save restore window switcher" }
     ]
