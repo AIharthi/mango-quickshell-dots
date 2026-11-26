@@ -16,7 +16,7 @@ KEEP_FONTS=0
 DRY_RUN=0
 ASSUME_YES=0
 
-DIRS=(mango quickshell matugen foot kitty xdg-desktop-portal)
+DIRS=(mango quickshell matugen foot kitty fastfetch xdg-desktop-portal)
 
 usage() {
     cat <<'EOF'

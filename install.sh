@@ -19,7 +19,7 @@ SKIP_BUILD=0
 SKIP_FONTS=0
 DRY_RUN=0
 
-DIRS=(mango quickshell matugen foot kitty xdg-desktop-portal)
+DIRS=(mango quickshell matugen foot kitty fastfetch xdg-desktop-portal)
 
 usage() {
     cat <<'EOF'
@@ -236,6 +236,33 @@ install_configs() {
 
     if [[ -f "$CONFIG_DIR/mango/local.conf" ]]; then
         echo "==> Preserved per-device overrides: $CONFIG_DIR/mango/local.conf"
+    fi
+
+    local ff_variant="config-arch.jsonc"
+    if [[ -r /etc/os-release ]]; then
+        local os_tokens
+        os_tokens="$(grep -E '^(ID|ID_LIKE)=' /etc/os-release 2>/dev/null | cut -d= -f2- | tr -d "\"'" | tr '\n' ' ' | tr '[:upper:]' '[:lower:]')"
+        case " $os_tokens " in
+            *" gentoo "*|*" funtoo "*)
+                ff_variant="config-gentoo.jsonc"
+                ;;
+            *" fedora "*|*" nobara "*|*" ultramarine "*|*" rhel "*|*" centos "*)
+                ff_variant="config-fedora.jsonc"
+                ;;
+            *" arch "*|*" cachyos "*|*" endeavouros "*|*" manjaro "*|*" artix "*)
+                ff_variant="config-arch.jsonc"
+                ;;
+        esac
+    fi
+    if [[ -e "$CONFIG_DIR/fastfetch/config.jsonc" ]]; then
+        echo "  [keep] $CONFIG_DIR/fastfetch/config.jsonc"
+    elif [[ -f "$SCRIPT_DIR/config/fastfetch/$ff_variant" ]]; then
+        if [[ "$DRY_RUN" -eq 1 ]]; then
+            echo "  [dry-run] select fastfetch/$ff_variant -> $CONFIG_DIR/fastfetch/config.jsonc"
+        else
+            atomic_copy_file "$SCRIPT_DIR/config/fastfetch/$ff_variant" "$CONFIG_DIR/fastfetch/config.jsonc" || true
+            echo "==> Selected fastfetch preset: $ff_variant -> $CONFIG_DIR/fastfetch/config.jsonc"
+        fi
     fi
 
     if [[ "$DRY_RUN" -eq 0 ]] && [[ -d "$SCRIPT_DIR/.git" || -f "$SCRIPT_DIR/install.sh" ]]; then
