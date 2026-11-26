@@ -488,29 +488,32 @@ ColumnLayout {
         }
     }
 
-    property string _prevTab: activeTab
-    property string _fadingTab: ""
+    // Keep each visited tab warm until ExpandedDashboard unloads (0ms tab switch lag)
+    property bool _overviewLoaded: root.activeTab === "overview"
+    property bool _filesLoaded: root.activeTab === "files"
+    property bool _themesLoaded: root.activeTab === "themes"
+    property bool _launcherLoaded: root.activeTab === "launcher"
+    property bool _notifsLoaded: root.activeTab === "notifications"
+
+    function _syncTabLoaded(): void {
+        if (root.activeTab === "overview") root._overviewLoaded = true;
+        else if (root.activeTab === "files") root._filesLoaded = true;
+        else if (root.activeTab === "themes") root._themesLoaded = true;
+        else if (root.activeTab === "launcher") root._launcherLoaded = true;
+        else if (root.activeTab === "notifications") root._notifsLoaded = true;
+    }
+
+    Component.onCompleted: _syncTabLoaded()
 
     onActiveTabChanged: {
-        if (_prevTab !== activeTab) {
-            _fadingTab = _prevTab;
-            _prevTab = activeTab;
-            tabUnloadTimer.restart();
-            if (activeTab !== "launcher" && activeTab !== "files" && activeTab !== "notifications")
-                searchFocusChanged(false);
-        }
+        _syncTabLoaded();
+        if (activeTab !== "launcher" && activeTab !== "files" && activeTab !== "notifications")
+            searchFocusChanged(false);
         if (activeTab === "notifications")
             ShellState.clearUnread();
     }
 
-    Timer {
-        id: tabUnloadTimer
-        interval: 200
-        repeat: false
-        onTriggered: root._fadingTab = ""
-    }
-
-    // --- Tab Content Stack (URL lazy-loaded per active tab) ---
+    // --- Tab Content Stack (sticky warm URL loaders per visited tab) ---
     Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -519,7 +522,7 @@ ColumnLayout {
         Loader {
             id: overviewLoader
             anchors.fill: parent
-            active: root.activeTab === "overview" || root._fadingTab === "overview"
+            active: root._overviewLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "overview" ? 1.0 : 0.0
             source: active ? "OverviewHub.qml" : ""
@@ -544,7 +547,7 @@ ColumnLayout {
         Loader {
             id: filesTabLoader
             anchors.fill: parent
-            active: root.activeTab === "files" || root._fadingTab === "files"
+            active: root._filesLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "files" ? 1.0 : 0.0
             source: active ? "../files/QuickFilesTab.qml" : ""
@@ -570,7 +573,7 @@ ColumnLayout {
         Loader {
             id: themesLoader
             anchors.fill: parent
-            active: root.activeTab === "themes" || root._fadingTab === "themes"
+            active: root._themesLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "themes" ? 1.0 : 0.0
             source: active ? "ThemeSwitcher.qml" : ""
@@ -592,7 +595,7 @@ ColumnLayout {
         Loader {
             id: launcherLoader
             anchors.fill: parent
-            active: root.activeTab === "launcher" || root._fadingTab === "launcher"
+            active: root._launcherLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "launcher" ? 1.0 : 0.0
             source: active ? "AppLauncher.qml" : ""
@@ -621,7 +624,7 @@ ColumnLayout {
         Loader {
             id: notificationsLoader
             anchors.fill: parent
-            active: root.activeTab === "notifications" || root._fadingTab === "notifications"
+            active: root._notifsLoaded
             visible: opacity > 0.01
             opacity: root.activeTab === "notifications" ? 1.0 : 0.0
             source: active ? "NotificationsTab.qml" : ""

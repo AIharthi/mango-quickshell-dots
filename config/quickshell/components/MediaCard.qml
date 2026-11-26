@@ -1,9 +1,10 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Widgets
 import ".."
 
-Rectangle {
+ClippingRectangle {
     id: root
 
     property var player: null
@@ -72,7 +73,8 @@ Rectangle {
     color: Theme.cardBg
     border.width: Theme.cardBorderWidth
     border.color: Theme.cardBorder
-    clip: true
+    contentUnderBorder: false
+    contentInsideBorder: true
 
     // Soft faded album art atmosphere
     Image {
@@ -107,14 +109,15 @@ Rectangle {
             Layout.fillHeight: false
             spacing: 10
 
-            Rectangle {
+            ClippingRectangle {
                 implicitWidth: 52
                 implicitHeight: 52
                 radius: Theme.r(12)
                 color: Theme.primaryContainer
                 border.width: Theme.activeControlBorderWidth
                 border.color: Theme.primary
-                clip: true
+                contentUnderBorder: false
+                contentInsideBorder: true
 
                 Image {
                     id: coverImg
@@ -122,7 +125,7 @@ Rectangle {
                     source: root.artUrl
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
-                    cache: false
+                    cache: true
                     sourceSize: Qt.size(120, 120)
                     visible: root.artUrl.length > 0 && status === Image.Ready
                 }

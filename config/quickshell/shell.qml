@@ -377,7 +377,8 @@ ShellRoot {
 
     function dispatchLauncher(mode: string): void {
         if (root.isSequoiaActive) {
-            root.toggleSequoiaLauncher(mode);
+            const norm = (mode === "clipboard") ? "clip" : mode;
+            root.toggleSequoiaLauncher(norm);
             return;
         }
         const isl = root.primaryIsland();
@@ -427,107 +428,84 @@ ShellRoot {
         root.collapseAll();
     }
 
-    // --- Unload Timers + Explicit GC Sweep ---
-    Timer {
-        id: gcTimer
-        interval: 250
-        repeat: false
-        onTriggered: gc()
-    }
-
+    // --- Unload Timers (keep warm across recent opens; avoid main-thread GC stalls) ---
     Timer {
         id: settingsUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 400
+        interval: 30000
         repeat: false
         onTriggered: {
-            if (!root.settingsOpen) {
+            if (!root.settingsOpen)
                 root._settingsLoaded = false;
-                gcTimer.restart();
-            }
         }
     }
 
     Timer {
         id: storeUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 400
+        interval: 30000
         repeat: false
         onTriggered: {
-            if (!root.storeOpen) {
+            if (!root.storeOpen)
                 root._storeLoaded = false;
-                gcTimer.restart();
-            }
         }
     }
 
     Timer {
         id: filesUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 400
+        interval: 30000
         repeat: false
         onTriggered: {
-            if (!root.filesOpen) {
+            if (!root.filesOpen)
                 root._filesLoaded = false;
-                gcTimer.restart();
-            }
         }
     }
 
     Timer {
         id: keybindsUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 400
+        interval: 30000
         repeat: false
         onTriggered: {
-            if (!root.keybindsOpen) {
+            if (!root.keybindsOpen)
                 root._keybindsLoaded = false;
-                gcTimer.restart();
-            }
         }
     }
 
     Timer {
         id: switcherUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 400
+        interval: 30000
         repeat: false
         onTriggered: {
-            if (!root.windowSwitcherOpen) {
+            if (!root.windowSwitcherOpen)
                 root._windowSwitcherLoaded = false;
-                gcTimer.restart();
-            }
         }
     }
 
     Timer {
         id: powerUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 400
+        interval: 30000
         repeat: false
         onTriggered: {
-            if (!root.powerOverlayOpen) {
+            if (!root.powerOverlayOpen)
                 root._powerOverlayLoaded = false;
-                gcTimer.restart();
-            }
         }
     }
 
     Timer {
         id: captureHubUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 400
+        interval: 30000
         repeat: false
         onTriggered: {
-            if (!root.captureHubOpen) {
+            if (!root.captureHubOpen)
                 root._captureHubLoaded = false;
-                gcTimer.restart();
-            }
         }
     }
 
     Timer {
         id: sequoiaUnloadTimer
-        interval: Theme.reducedMotion ? 10 : 400
+        interval: 120000
         repeat: false
         onTriggered: {
-            if (!root.sequoiaHubOpen) {
+            if (!root.sequoiaHubOpen)
                 root._sequoiaHubLoaded = false;
-                gcTimer.restart();
-            }
         }
     }
 
@@ -645,7 +623,7 @@ ShellRoot {
 
                     exclusiveZone: ShellState.sequoiaBarHeight + (ShellState.sequoiaBarFloating ? 6 : 0)
                     exclusionMode: ExclusionMode.Normal
-                    implicitHeight: ShellState.sequoiaBarHeight + (ShellState.sequoiaBarFloating ? 8 : 2)
+                    implicitHeight: ShellState.sequoiaBarHeight + (ShellState.sequoiaBarFloating ? 8 : 0)
                     color: "transparent"
 
                     WlrLayershell.layer: WlrLayer.Top
@@ -720,10 +698,7 @@ ShellRoot {
                         )
                     )
                     exclusionMode: ExclusionMode.Normal
-                    // Dynamic Wayland surface height: tight ~54px strip when collapsed, 620px only while expanding/expanded
-                    implicitHeight: (islandItem.islandState === "collapsed" && !islandItem.surfaceExpanded)
-                        ? Math.max(48, ShellState.pillHeight + ShellState.islandTopMargin + 16)
-                        : 620
+                    implicitHeight: 620
                     color: "transparent"
 
                     mask: Region {

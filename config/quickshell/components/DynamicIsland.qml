@@ -23,30 +23,6 @@ Item {
     signal openCaptureHubRequested()
     signal openStoreRequested()
 
-    property bool surfaceExpanded: false
-
-    onIslandStateChanged: {
-        if (root.islandState !== "collapsed") {
-            surfaceCollapseTimer.stop();
-            root.surfaceExpanded = true;
-        } else if (Theme.reducedMotion) {
-            surfaceCollapseTimer.stop();
-            root.surfaceExpanded = false;
-        } else {
-            surfaceCollapseTimer.restart();
-        }
-    }
-
-    Timer {
-        id: surfaceCollapseTimer
-        interval: 220
-        repeat: false
-        onTriggered: {
-            if (root.islandState === "collapsed")
-                root.surfaceExpanded = false;
-        }
-    }
-
     readonly property bool needsKeyboardFocus:
         (islandState === "expanded" && activeTab === "launcher") || launcherSearchFocused
 
@@ -544,7 +520,7 @@ Item {
             }
         }
 
-        // 3. Expanded Interactive Dashboard Hub (lazy URL-loaded on demand, unloaded 8s after close)
+        // 3. Expanded Interactive Dashboard Hub (lazy URL-loaded on demand, kept warm 90s after close)
         property bool _expandedLoaded: false
 
         Connections {
@@ -561,7 +537,7 @@ Item {
 
         Timer {
             id: expandedUnloadTimer
-            interval: 8000
+            interval: 90000
             repeat: false
             onTriggered: {
                 if (root.islandState !== "expanded")

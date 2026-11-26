@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import ".."
 
 Item {
@@ -30,7 +31,8 @@ Item {
     readonly property string diskFreeLabel: SystemTelemetry.diskFreeLabel
 
     // --- Shared PipeWire Audio State (via MangoState) ---
-    readonly property real volumeLevel: MangoState.volPercent / 100.0
+    property real _dragRatio: 0.5
+    readonly property real volumeLevel: root._dragging ? root._dragRatio : (MangoState.volPercent / 100.0)
     readonly property bool volumeMuted: MangoState.volMuted
     readonly property string defaultSinkLabel: MangoState.defaultSinkLabel
     property bool _dragging: false
@@ -86,7 +88,10 @@ Item {
     }
 
     function applyVolume(ratio: real): void {
-        MangoState.setVolumeRatio(ratio);
+        const cap = ShellState.audioOverAmp ? 1.5 : 1.0;
+        const clamped = Math.max(0.0, Math.min(cap, ratio));
+        root._dragRatio = clamped;
+        MangoState.setVolumeRatio(clamped);
     }
 
     // --- Reusable Inline Component: Horizontal Metric Cell (for Stage Telemetry Deck) ---
@@ -409,7 +414,7 @@ Item {
 
     Loader {
         anchors.fill: parent
-        active: root.active
+        active: true
         sourceComponent: root.layoutMode === "stage"
             ? stageLayoutComp
             : (root.layoutMode === "cockpit" ? cockpitLayoutComp : cupertinoLayoutComp)
@@ -688,7 +693,7 @@ Item {
             spacing: 10
 
             // Left Media Showcase Card (Full-bleed top artwork + snug bottom playback bar)
-            Rectangle {
+            ClippingRectangle {
                 Layout.preferredWidth: 276
                 Layout.minimumWidth: 268
                 Layout.maximumWidth: 282
@@ -697,7 +702,8 @@ Item {
                 color: Theme.cardBg
                 border.width: Theme.cardBorderWidth
                 border.color: Theme.cardBorder
-                clip: true
+                contentUnderBorder: false
+                contentInsideBorder: true
 
             ColumnLayout {
                 anchors.fill: parent
@@ -722,7 +728,7 @@ Item {
                         source: root.artUrl
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        cache: false
+                        cache: true
                         sourceSize: Qt.size(320, 320)
                         visible: root.artUrl.length > 0 && status === Image.Ready
                     }
@@ -987,7 +993,12 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onPressed: m => { root._dragging = true; root.controlInteractionChanged(true); root.applyVolume(m.x / stVolCap.width); }
+                                onPressed: m => {
+                                    root._dragRatio = Math.max(0.0, Math.min(ShellState.audioOverAmp ? 1.5 : 1.0, m.x / stVolCap.width));
+                                    root._dragging = true;
+                                    root.controlInteractionChanged(true);
+                                    root.applyVolume(root._dragRatio);
+                                }
                                 onPositionChanged: m => { if (pressed) root.applyVolume(m.x / stVolCap.width); }
                                 onReleased: { root._dragging = false; root.controlInteractionChanged(false); }
                                 onCanceled: { root._dragging = false; root.controlInteractionChanged(false); }
@@ -1284,12 +1295,13 @@ Item {
                     anchors.margins: 7
                     spacing: 8
 
-                    Rectangle {
+                    ClippingRectangle {
                         implicitWidth: 36
                         implicitHeight: 36
                         radius: Theme.r(10)
                         color: Theme.primaryContainer
-                        clip: true
+                        contentUnderBorder: false
+                        contentInsideBorder: true
 
                         Image {
                             id: ckArtImg
@@ -1297,7 +1309,7 @@ Item {
                             source: root.artUrl
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
-                            cache: false
+                            cache: true
                             sourceSize: Qt.size(96, 96)
                             visible: root.artUrl.length > 0 && status === Image.Ready
                         }

@@ -31,9 +31,78 @@ PanelWindow {
     signal togglePowerMenuRequested()
 
     property bool _entered: false
+    property bool _closing: false
     readonly property bool shown: root.isOpen && root._entered
     readonly property bool isPassive: root.panelMode === "osd" || root.panelMode === "notification"
     readonly property int topBarOffset: ShellState.sequoiaBarHeight + (ShellState.sequoiaBarFloating ? 8 : 0)
+
+    // Keep visited sub-views warm while SequoiaHub is loaded (0ms panel/tab switches)
+    property bool _controlsMainLoaded: root.panelMode === "controls" && root.controlsTab === "controls"
+    property bool _themesTabLoaded: root.panelMode === "controls" && root.controlsTab === "themes"
+    property bool _filesTabLoaded: root.panelMode === "controls" && root.controlsTab === "files"
+    property bool _notifsPanelLoaded: root.panelMode === "notifications"
+    property bool _launcherPanelLoaded: root.panelMode === "launcher"
+
+    function _syncWarmPanels(): void {
+        if (root.panelMode === "controls") {
+            if (root.controlsTab === "controls") root._controlsMainLoaded = true;
+            else if (root.controlsTab === "themes") root._themesTabLoaded = true;
+            else if (root.controlsTab === "files") root._filesTabLoaded = true;
+        } else if (root.panelMode === "notifications") {
+            root._notifsPanelLoaded = true;
+        } else if (root.panelMode === "launcher") {
+            root._launcherPanelLoaded = true;
+        }
+    }
+
+    Timer {
+        id: hideWinTimer
+        interval: 160
+        repeat: false
+        onTriggered: {
+            if (!root.isOpen)
+                root._closing = false;
+        }
+    }
+
+    Timer {
+        id: osdHideTimer
+        interval: Math.max(400, ShellState.osdTimeoutMs)
+        repeat: false
+        onTriggered: {
+            if (root.isOpen && root.panelMode === "osd")
+                root.closeRequested();
+        }
+    }
+
+    Timer {
+        id: notifHideTimer
+        interval: Math.max(1500, ShellState.notifTimeoutMs)
+        repeat: false
+        onTriggered: {
+            if (root.isOpen && root.panelMode === "notification" && !toastHover.hovered)
+                root.closeRequested();
+        }
+    }
+
+    function _armPassiveTimer(): void {
+        if (root.panelMode === "osd") {
+            notifHideTimer.stop();
+            osdHideTimer.interval = Math.max(400, ShellState.osdTimeoutMs);
+            osdHideTimer.restart();
+        } else if (root.panelMode === "notification") {
+            osdHideTimer.stop();
+            const expire = (root.pendingNotif && root.pendingNotif.expireTimeout > 0)
+                ? Math.max(1500, Math.min(15000, root.pendingNotif.expireTimeout))
+                : Math.max(1500, ShellState.notifTimeoutMs);
+            notifHideTimer.interval = expire;
+            if (!toastHover.hovered)
+                notifHideTimer.restart();
+        } else {
+            osdHideTimer.stop();
+            notifHideTimer.stop();
+        }
+    }
 
     readonly property bool _needsTags: root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls"
     property bool _countedConsumer: false
@@ -49,6 +118,26 @@ PanelWindow {
     }
 
     on_NeedsTagsChanged: _syncConsumer()
+    onControlsTabChanged: _syncWarmPanels()
+    onIsOpenChanged: {
+        if (root.isOpen) {
+            hideWinTimer.stop();
+            root._closing = false;
+            _syncWarmPanels();
+            _armPassiveTimer();
+            if (!root._entered)
+                Qt.callLater(() => { root._entered = true; });
+        } else {
+            osdHideTimer.stop();
+            notifHideTimer.stop();
+            if (!Theme.reducedMotion) {
+                root._closing = true;
+                hideWinTimer.restart();
+            } else {
+                root._closing = false;
+            }
+        }
+    }
     Component.onDestruction: {
         if (root._countedConsumer) {
             root._countedConsumer = false;
@@ -60,6 +149,7 @@ PanelWindow {
         if (root.panelMode === "controls" && root.isOpen)
             return;
         osdOverlay.showOsd(kind || "volume");
+        _armPassiveTimer();
     }
 
     function refreshOsdValue(kind: string): void {
@@ -70,29 +160,43 @@ PanelWindow {
         if (!notif)
             return;
         osdOverlay.showNotification(notif);
+        _armPassiveTimer();
     }
 
     onOsdTriggerSeqChanged: {
-        if (root.panelMode === "osd" || root.isOpen)
+        if (root.panelMode === "osd" || root.isOpen) {
             osdOverlay.showOsd(root.osdType);
+            _armPassiveTimer();
+        }
     }
 
     onNotifTriggerSeqChanged: {
-        if (root.pendingNotif)
+        if (root.pendingNotif) {
             osdOverlay.showNotification(root.pendingNotif);
+            _armPassiveTimer();
+        }
     }
 
     onPanelModeChanged: {
+        _syncWarmPanels();
         if (root.panelMode === "notifications")
             ShellState.clearUnread();
+        if (!root.isPassive) {
+            osdHideTimer.stop();
+            notifHideTimer.stop();
+        }
     }
 
     Component.onCompleted: {
         _syncConsumer();
-        if (root.panelMode === "osd")
+        _syncWarmPanels();
+        if (root.panelMode === "osd") {
             osdOverlay.showOsd(root.osdType);
-        else if (root.panelMode === "notification" && root.pendingNotif)
+            _armPassiveTimer();
+        } else if (root.panelMode === "notification" && root.pendingNotif) {
             osdOverlay.showNotification(root.pendingNotif);
+            _armPassiveTimer();
+        }
         if (root.panelMode === "notifications")
             ShellState.clearUnread();
         Qt.callLater(() => { root._entered = true; });
@@ -105,6 +209,7 @@ PanelWindow {
         right: true
     }
 
+    visible: root.isOpen || root._closing
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
@@ -117,14 +222,27 @@ PanelWindow {
             ? WlrKeyboardFocus.Exclusive
             : WlrKeyboardFocus.OnDemand)
 
-    mask: Region {
-        item: root.isPassive ? toastContainer : backdropItem
+    Item {
+        id: emptyMask
+        width: 0
+        height: 0
     }
 
-    // Interactive click-outside backdrop (only hit-tested when not in passive OSD/toast mode)
+    mask: Region {
+        item: !root.isOpen ? emptyMask : (root.isPassive ? toastContainer : backdropItem)
+    }
+
+    // Interactive click-outside backdrop below SequoiaBar (click-through immediately when closed)
     Item {
         id: backdropItem
-        anchors.fill: parent
+        anchors {
+            top: parent.top
+            topMargin: root.topBarOffset
+            bottom: parent.bottom
+            left: parent.left
+            right: parent.right
+        }
+        focus: root.isOpen && !root.isPassive
 
         Keys.onEscapePressed: root.closeRequested()
 
@@ -144,7 +262,7 @@ PanelWindow {
         anchors.right: parent.right
         anchors.rightMargin: 10
         width: 392
-        height: Math.min(Math.max(260, root.height - root.topBarOffset - 24), controlsCol.implicitHeight + 24)
+        height: Math.min(Math.max(200, root.height - root.topBarOffset - 24), controlsCol.implicitHeight + 24)
         radius: Theme.r(20)
         color: Theme.notchBg
         border.width: Math.max(1, Theme.islandBorderWidth)
@@ -157,7 +275,6 @@ PanelWindow {
 
         Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
         Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
-        Behavior on height { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
         // Eat inside clicks so backdrop does not dismiss popover
         MouseArea { anchors.fill: parent }
@@ -178,7 +295,9 @@ PanelWindow {
 
         ColumnLayout {
             id: controlsCol
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
             anchors.margins: 12
             spacing: 10
 
@@ -475,14 +594,15 @@ PanelWindow {
                 Loader {
                     Layout.fillWidth: true
                     readonly property int cardH: ShellState.sequoiaHubStyle === "media" ? 168 : 134
-                    Layout.preferredHeight: active ? cardH : 0
-                    active: root.panelMode === "controls" && root.controlsTab === "controls" && ShellState.sequoiaHubStyle === "media"
-                    visible: active
+                    readonly property bool showCard: root.panelMode === "controls" && root.controlsTab === "controls" && ShellState.sequoiaHubStyle === "media"
+                    Layout.preferredHeight: showCard ? cardH : 0
+                    active: root._controlsMainLoaded && ShellState.sequoiaHubStyle === "media"
+                    visible: showCard
                     source: active ? "MediaCard.qml" : ""
                     onLoaded: {
                         if (item) {
                             item.player = Qt.binding(() => root.player);
-                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls");
+                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
                         }
                     }
                 }
@@ -532,9 +652,10 @@ PanelWindow {
                     readonly property int qcH: (ShellState.sequoiaHubStyle === "compact" ? 104 : 114)
                         + (DeviceCaps.hasBacklight ? 36 : 0)
                         + ((DeviceCaps.hasWifi || DeviceCaps.hasBluetooth) ? 42 : 0)
-                    Layout.preferredHeight: active ? qcH : 0
-                    active: root.panelMode === "controls" && root.controlsTab === "controls"
-                    visible: active
+                    readonly property bool showQc: root.panelMode === "controls" && root.controlsTab === "controls"
+                    Layout.preferredHeight: showQc ? qcH : 0
+                    active: root._controlsMainLoaded
+                    visible: showQc
                     source: active ? "QuickControls.qml" : ""
                     onLoaded: {
                         if (item) {
@@ -554,17 +675,18 @@ PanelWindow {
                 // Compact Media Strip (for Control Center & Compact Stack)
                 Loader {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: active ? 132 : 0
-                    active: root.panelMode === "controls"
+                    readonly property bool showCompactMedia: root.panelMode === "controls"
                         && root.controlsTab === "controls"
                         && ShellState.sequoiaHubStyle !== "media"
                         && (ShellState.sequoiaHubStyle === "controlcenter" || root.player !== null)
-                    visible: active
+                    Layout.preferredHeight: showCompactMedia ? 132 : 0
+                    active: root._controlsMainLoaded && ShellState.sequoiaHubStyle !== "media"
+                    visible: showCompactMedia
                     source: active ? "MediaCard.qml" : ""
                     onLoaded: {
                         if (item) {
                             item.player = Qt.binding(() => root.player);
-                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls");
+                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
                         }
                     }
                 }
@@ -706,12 +828,13 @@ PanelWindow {
                 }
             }
 
-            // Sub-Tab 2: Theme & Wallpaper Switcher (lazy URL loaded)
+            // Sub-Tab 2: Theme & Wallpaper Switcher (sticky warm loader)
             Loader {
                 Layout.fillWidth: true
-                Layout.preferredHeight: active ? 420 : 0
-                active: root.panelMode === "controls" && root.controlsTab === "themes"
-                visible: active
+                readonly property bool showThemes: root.panelMode === "controls" && root.controlsTab === "themes"
+                Layout.preferredHeight: showThemes ? 420 : 0
+                active: root._themesTabLoaded
+                visible: showThemes
                 source: active ? "ThemeSwitcher.qml" : ""
                 onLoaded: {
                     if (item) {
@@ -724,12 +847,13 @@ PanelWindow {
                 }
             }
 
-            // Sub-Tab 3: Quick Files Browser (lazy URL loaded)
+            // Sub-Tab 3: Quick Files Browser (sticky warm loader)
             Loader {
                 Layout.fillWidth: true
-                Layout.preferredHeight: active ? 430 : 0
-                active: root.panelMode === "controls" && root.controlsTab === "files"
-                visible: active
+                readonly property bool showFiles: root.panelMode === "controls" && root.controlsTab === "files"
+                Layout.preferredHeight: showFiles ? 430 : 0
+                active: root._filesTabLoaded
+                visible: showFiles
                 source: active ? "../files/QuickFilesTab.qml" : ""
                 onLoaded: {
                     if (item) {
@@ -771,7 +895,8 @@ PanelWindow {
         Loader {
             anchors.fill: parent
             anchors.margins: 12
-            active: root.panelMode === "notifications"
+            active: root._notifsPanelLoaded
+            visible: root.panelMode === "notifications"
             source: active ? "NotificationsTab.qml" : ""
             onLoaded: {
                 if (item)
@@ -805,7 +930,8 @@ PanelWindow {
         Loader {
             anchors.fill: parent
             anchors.margins: 12
-            active: root.panelMode === "launcher"
+            active: root._launcherPanelLoaded
+            visible: root.panelMode === "launcher"
             source: active ? "AppLauncher.qml" : ""
             onLoaded: {
                 if (item) {
@@ -850,6 +976,17 @@ PanelWindow {
         height: root.panelMode === "notification"
             ? Math.max(76, Math.min(156, Math.round(osdOverlay.notificationHeight) + 22))
             : 58
+
+        HoverHandler {
+            id: toastHover
+            onHoveredChanged: {
+                if (hovered) {
+                    notifHideTimer.stop();
+                } else if (root.isOpen && root.panelMode === "notification") {
+                    notifHideTimer.restart();
+                }
+            }
+        }
 
         Rectangle {
             anchors.fill: parent

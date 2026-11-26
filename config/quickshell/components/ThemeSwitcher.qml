@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Qt.labs.folderlistmodel
 import Quickshell
+import Quickshell.Widgets
 import ".."
 
 ColumnLayout {
@@ -420,12 +421,13 @@ ColumnLayout {
                         NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
                     }
 
-                    Rectangle {
+                    ClippingRectangle {
                         anchors.fill: parent
                         anchors.margins: 0
                         radius: Theme.r(12)
                         color: Theme.surfaceContainerLowest
-                        clip: true
+                        contentUnderBorder: false
+                        contentInsideBorder: true
                         border.width: wallDelegate.isCurrent ? Theme.activeControlBorderWidth : 0
                         border.color: Theme.primary
 

@@ -41,6 +41,27 @@ Item {
     property bool _brightRefreshPending: false
     property bool _micRefreshPending: false
 
+    Timer {
+        id: pwOsdSyncTimer
+        interval: 45
+        repeat: false
+        onTriggered: {
+            if (root.osdType === "mic") {
+                if (MangoState.pwSourceReady) {
+                    root.osdMuted = MangoState.micMuted;
+                    root.osdValue = root.osdMuted ? 0.0 : 1.0;
+                    root.osdSupported = true;
+                }
+            } else if (root.osdType === "volume" || root.osdType === "mute") {
+                if (MangoState.pwSinkReady) {
+                    root.osdValue = Math.max(0.0, Math.min(1.5, MangoState.volPercent / 100.0));
+                    root.osdMuted = MangoState.volMuted;
+                    root.osdSupported = true;
+                }
+            }
+        }
+    }
+
     function refreshOsdValue(kind: string): void {
         const normalized = (kind || root.osdType || "volume").toLowerCase();
         if (normalized === "brightness") {
@@ -57,14 +78,24 @@ Item {
                 root.osdSupported = false;
                 return;
             }
+            if (MangoState.pwSourceReady) {
+                root.osdMuted = MangoState.micMuted;
+                root.osdValue = root.osdMuted ? 0.0 : 1.0;
+                root.osdSupported = true;
+                pwOsdSyncTimer.restart();
+                return;
+            }
             if (micProc.running)
                 root._micRefreshPending = true;
             else
                 micProc.running = true;
         } else if (normalized === "kb") {
             root.osdSupported = true;
-            if (!kbProc.running)
+            if (MangoState.kbLayoutShort.length > 0) {
+                root.osdTextValue = MangoState.kbLayoutShort;
+            } else if (!kbProc.running) {
                 kbProc.running = true;
+            }
         } else if (normalized.indexOf("media-") === 0) {
             root.osdSupported = true;
             if (!mediaProc.running)
@@ -72,6 +103,13 @@ Item {
         } else {
             if (!DeviceCaps.hasAudio) {
                 root.osdSupported = false;
+                return;
+            }
+            if (MangoState.pwSinkReady) {
+                root.osdValue = Math.max(0.0, Math.min(1.5, MangoState.volPercent / 100.0));
+                root.osdMuted = MangoState.volMuted;
+                root.osdSupported = true;
+                pwOsdSyncTimer.restart();
                 return;
             }
             if (volumeProc.running)

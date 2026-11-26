@@ -168,13 +168,14 @@ Item {
         property int maxTitleWidth: 165
         spacing: 6
 
-        Rectangle {
+        ClippingRectangle {
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: 20
             implicitHeight: 20
-            radius: Theme.r(10)
+            radius: 10
             color: Theme.primaryContainer
-            clip: true
+            contentUnderBorder: false
+            contentInsideBorder: true
 
             rotation: 0
             RotationAnimation on rotation {
@@ -191,7 +192,7 @@ Item {
                 source: root.artUrl
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                cache: false
+                cache: true
                 sourceSize: Qt.size(40, 40)
                 visible: root.artUrl.length > 0 && status === Image.Ready
             }
@@ -442,7 +443,7 @@ Item {
         anchors.centerIn: parent
         width: (root.barUiStyle === "split" || root.barMode) ? root.width : implicitWidth
         height: root.height
-        active: root.active
+        active: true
         sourceComponent: root.barUiStyle === "split"
             ? splitBarComp
             : (root.barUiStyle === "classic" ? classicBarComp : appleBarComp)

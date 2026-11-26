@@ -17,7 +17,8 @@ Rectangle {
     signal draggingChanged(bool dragging)
     signal openSettingsRequested(string page)
 
-    readonly property real volumeLevel: Math.max(0.0, Math.min(1.0, MangoState.volPercent / 100.0))
+    property real _dragRatio: 0.5
+    readonly property real volumeLevel: root._dragging ? root._dragRatio : Math.max(0.0, Math.min(1.0, MangoState.volPercent / 100.0))
     readonly property bool volumeMuted: MangoState.volMuted
     readonly property bool micMuted: MangoState.micMuted
     property bool _dragging: false
@@ -68,7 +69,9 @@ Rectangle {
     property int _pendingBrightPct: -1
 
     function applyVolume(ratio: real): void {
-        MangoState.setVolumeRatio(Math.max(0.0, Math.min(1.0, ratio)));
+        const clamped = Math.max(0.0, Math.min(1.0, ratio));
+        root._dragRatio = clamped;
+        MangoState.setVolumeRatio(clamped);
     }
 
     function applyBrightness(ratio: real): void {
@@ -279,9 +282,10 @@ Rectangle {
                         anchors.leftMargin: 32
                         cursorShape: Qt.PointingHandCursor
                         onPressed: mouse => {
+                            root._dragRatio = Math.max(0.0, Math.min(1.0, (mouse.x + 32) / volCapsule.width));
                             root._dragging = true;
                             root.draggingChanged(true);
-                            root.applyVolume((mouse.x + 32) / volCapsule.width);
+                            root.applyVolume(root._dragRatio);
                         }
                         onPositionChanged: mouse => {
                             if (pressed)

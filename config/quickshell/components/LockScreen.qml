@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Widgets
 import Quickshell.Services.Pam
 import Quickshell.Services.Mpris
 import ".."
@@ -601,12 +602,13 @@ Item {
                             anchors.rightMargin: 8
                             spacing: 10
 
-                            Rectangle {
+                            ClippingRectangle {
                                 implicitWidth: 34
                                 implicitHeight: 34
                                 radius: Theme.r(9)
-                                clip: true
                                 color: Theme.primaryContainer
+                                contentUnderBorder: false
+                                contentInsideBorder: true
 
                                 Image {
                                     id: lockArtImg

@@ -57,15 +57,18 @@ Singleton {
         objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource].filter(o => o !== null && o !== undefined)
     }
 
-    readonly property bool _pwSinkReady: Pipewire.ready
+    readonly property bool pwSinkReady: Pipewire.ready
         && Pipewire.defaultAudioSink !== null
         && Pipewire.defaultAudioSink.ready
         && Pipewire.defaultAudioSink.audio !== null
 
-    readonly property bool _pwSourceReady: Pipewire.ready
+    readonly property bool pwSourceReady: Pipewire.ready
         && Pipewire.defaultAudioSource !== null
         && Pipewire.defaultAudioSource.ready
         && Pipewire.defaultAudioSource.audio !== null
+
+    readonly property bool _pwSinkReady: root.pwSinkReady
+    readonly property bool _pwSourceReady: root.pwSourceReady
 
     readonly property int volPercent: root._pwSinkReady
         ? Math.max(0, Math.min(150, Math.round(Number(Pipewire.defaultAudioSink.audio.volume || 0) * 100)))
@@ -137,10 +140,23 @@ Singleton {
         return out.join(" ");
     }
 
-    function setVolumeRatio(ratio: real): void {
-        const cap = ShellState.audioOverAmp ? 1.5 : 1.0;
-        const clamped = Math.max(0.0, Math.min(cap, ratio));
-        if (root._pwSinkReady) {
+    property real _pendingVolRatio: -1
+
+    Timer {
+        id: volWriteTimer
+        interval: 20
+        repeat: false
+        onTriggered: {
+            if (root._pendingVolRatio >= 0) {
+                const r = root._pendingVolRatio;
+                root._pendingVolRatio = -1;
+                root._applyVolumeNow(r);
+            }
+        }
+    }
+
+    function _applyVolumeNow(clamped: real): void {
+        if (root.pwSinkReady) {
             Pipewire.defaultAudioSink.audio.volume = clamped;
             if (clamped > 0.001 && Pipewire.defaultAudioSink.audio.muted)
                 Pipewire.defaultAudioSink.audio.muted = false;
@@ -151,6 +167,18 @@ Singleton {
         root._fallbackVolMuted = pct <= 0;
         Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", pct + "%"]);
         volFallbackRefresh.restart();
+    }
+
+    function setVolumeRatio(ratio: real): void {
+        const cap = ShellState.audioOverAmp ? 1.5 : 1.0;
+        const clamped = Math.max(0.0, Math.min(cap, ratio));
+        if (!volWriteTimer.running) {
+            root._pendingVolRatio = -1;
+            root._applyVolumeNow(clamped);
+            volWriteTimer.start();
+        } else {
+            root._pendingVolRatio = clamped;
+        }
     }
 
     function adjustVolumePct(deltaPct: int): void {
@@ -413,7 +441,7 @@ Singleton {
         id: sinkCycleFallbackProc
         command: [
             "sh", "-c",
-            "cur=$(pactl get-default-sink 2>/dev/null); mapfile -t s < <(pactl list short sinks 2>/dev/null | awk '{print $2}'); [ ${#s[@]} -lt 2 ] && exit 0; for i in \"${!s[@]}\"; do if [ \"${s[$i]}\" = \"$cur\" ]; then next=$(( (i + 1) % ${#s[@]} )); pactl set-default-sink \"${s[$next]}\"; break; fi; done"
+            "def=$(pactl get-default-sink 2>/dev/null); nxt=$(pactl list short sinks 2>/dev/null | awk -v d=\"$def\" '{a[NR]=$2; if($2==d) idx=NR} END{if(NR>0){print a[(idx%NR)+1]}}'); [ -n \"$nxt\" ] && pactl set-default-sink \"$nxt\""
         ]
         onExited: root.refreshAudioFallback()
     }

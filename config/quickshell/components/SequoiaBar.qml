@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import ".."
 
 Item {
@@ -64,7 +65,7 @@ Item {
         anchors.leftMargin: ShellState.sequoiaBarFloating ? 8 : 0
         anchors.rightMargin: ShellState.sequoiaBarFloating ? 8 : 0
         anchors.topMargin: ShellState.sequoiaBarFloating ? 4 : 0
-        anchors.bottomMargin: ShellState.sequoiaBarFloating ? 2 : 0
+        anchors.bottomMargin: ShellState.sequoiaBarFloating ? 4 : 0
         radius: ShellState.sequoiaBarFloating ? Theme.r(10) : 0
         color: ShellState.sequoiaBarTranslucent
             ? Theme.withAlpha(Theme.surfaceContainerLowest, Math.min(0.86, ShellState.shellOpacity))
@@ -124,7 +125,7 @@ Item {
 
             Text {
                 Layout.alignment: Qt.AlignVCenter
-                Layout.maximumWidth: 165
+                Layout.maximumWidth: 150
                 visible: ShellState.sequoiaShowAppTitle
                 elide: Text.ElideRight
                 text: MangoState.activeAppName
@@ -132,6 +133,20 @@ Item {
                 font.pixelSize: Theme.fs(11)
                 font.weight: Font.Bold
                 color: Theme.fgSurface
+            }
+
+            Text {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.maximumWidth: 165
+                visible: ShellState.sequoiaShowAppTitle
+                    && MangoState.activeWindowTitle.length > 0
+                    && MangoState.activeWindowTitle.toLowerCase() !== MangoState.activeAppName.toLowerCase()
+                elide: Text.ElideRight
+                text: MangoState.activeWindowTitle
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(10)
+                font.weight: Font.Medium
+                color: Theme.fgSurfaceVariant
             }
 
             Rectangle {
@@ -248,13 +263,23 @@ Item {
                 width: Math.min(implicitWidth, centerMediaPill.width - 10)
                 spacing: 6
 
-                Rectangle {
+                ClippingRectangle {
                     Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: 16
-                    implicitHeight: 16
-                    radius: Theme.r(4)
+                    implicitWidth: 18
+                    implicitHeight: 18
+                    radius: 9
                     color: Theme.primaryContainer
-                    clip: true
+                    contentUnderBorder: false
+                    contentInsideBorder: true
+
+                    rotation: 0
+                    RotationAnimation on rotation {
+                        from: 0
+                        to: 360
+                        duration: 12000
+                        loops: Animation.Infinite
+                        running: root.visible && root.isPlaying && seqMediaImg.visible && ShellState.pillSpinArt && !Theme.reducedMotion
+                    }
 
                     Image {
                         id: seqMediaImg
@@ -262,7 +287,7 @@ Item {
                         source: root.artUrl
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        cache: false
+                        cache: true
                         sourceSize: Qt.size(40, 40)
                         visible: root.artUrl.length > 0 && status === Image.Ready
                     }
