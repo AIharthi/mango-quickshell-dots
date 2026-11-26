@@ -72,7 +72,7 @@ PanelWindow {
             { id: "themes",        section: "Personalize",     label: "Themes & Colors",icon: "󰌁", source: "ThemesPage.qml",       sub: "Vibes, curated presets, Matugen extraction, and wallpapers" },
             { id: "shell",         section: "Personalize",     label: "Shell & Bar",   icon: "󰕮", source: "ShellPage.qml",         sub: "Bar style, hub layout, widgets, file manager, and screenshots" },
             { id: "windows",       section: "Desktop & Input", label: "Windows",       icon: "󰖲", source: "WindowsPage.qml",       sub: "Picture-in-Picture, tiling layouts, gaps, and window rules" },
-            { id: "input",         section: "Desktop & Input", label: "Input",         icon: "󰌌", source: "InputPage.qml",         sub: "Keyboard layouts, repeat rate, pointer speed, and touchpad" },
+            { id: "input",         section: "Desktop & Input", label: "Input & Touchpad", icon: "󰌌", source: "InputPage.qml",      sub: "Keyboard, mouse, touchpad, and MSI I2C fix" },
             { id: "shortcuts",     section: "Desktop & Input", label: "Shortcuts",     icon: "󰌌", source: "ShortcutsPage.qml",     sub: "Browse, edit, and add MangoWC keybindings" },
             { id: "notifications", section: "Desktop & Input", label: "Notifications", icon: "󰂚", source: "NotificationsPage.qml", sub: "Do Not Disturb, alert timeouts, and notification history" },
             { id: "apps",          section: "Desktop & Input", label: "Apps & Startup",icon: "󰀻", source: "AppsPage.qml",          sub: "Default applications, hidden launcher apps, and startup" }
@@ -89,7 +89,7 @@ PanelWindow {
             items.push({ id: "terminals", section: "System",   label: "Terminals", icon: "󰆍", source: "TerminalPage.qml",  sub: "Foot and Kitty opacity, padding, cursor, and scrollback" });
         items.push({ id: "privacy",       section: "System",   label: "Privacy",   icon: "󰌾", source: "PrivacyPage.qml",   sub: "Clipboard, history, camera, mic, lock, and login screen" });
         items.push({ id: "monitor",       section: "System",   label: "Monitor",   icon: "󰍛", source: "MonitorPage.qml",   sub: "Thermal sensors, running processes, and system services" });
-        items.push({ id: "system",        section: "System",   label: "System",    icon: "󰋼", source: "SystemPage.qml",    sub: "Account, clock format, storage, backup, and local config" });
+        items.push({ id: "system",        section: "System",   label: "System",    icon: "󰋼", source: "SystemPage.qml",    sub: "Doctor, config updater, power daemon, storage, and backup" });
         return items;
     }
 
