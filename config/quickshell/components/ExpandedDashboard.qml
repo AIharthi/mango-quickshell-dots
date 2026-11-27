@@ -40,15 +40,14 @@ ColumnLayout {
         precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
     }
 
-    // --- Header Bar (Clock/Date left, Segmented Tabs centered, Compact Action Icons right) ---
+    // --- Header Bar (Clock/Date left, Segmented Tabs centered, Compact M3 Action Circles right) ---
     RowLayout {
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: 34
-        Layout.minimumHeight: 34
-        Layout.maximumHeight: 34
+        Layout.preferredHeight: 38
+        Layout.minimumHeight: 38
+        Layout.maximumHeight: 38
         spacing: 8
-        clip: true
 
         // Clock & Date Chip
         RowLayout {
@@ -61,16 +60,17 @@ ColumnLayout {
                 font.family: Theme.monoFont
                 font.pixelSize: 14
                 font.weight: Font.Bold
-                color: Theme.fgSurface
+                color: Theme.m3Ink
             }
 
             Text {
-                Layout.maximumWidth: 78
+                Layout.maximumWidth: 82
                 elide: Text.ElideRight
                 text: ShellState.formatDate(headerClock.date)
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
-                color: Theme.fgSurfaceVariant
+                font.weight: Font.Medium
+                color: Theme.m3InkDim
             }
         }
 
@@ -162,21 +162,21 @@ ColumnLayout {
 
         Item { Layout.fillWidth: true }
 
-        // Right Action Cluster (calm monochrome utility buttons, 0px borders by default)
+        // Right Action Cluster (M3 Expressive tonal circular buttons)
         RowLayout {
             Layout.alignment: Qt.AlignVCenter
             Layout.fillHeight: false
-            spacing: 4
+            spacing: 5
 
             // Compact Hub Layout Switcher Circle (LMB cycles Hub layout, RMB -> Settings -> Shell)
             Rectangle {
                 id: hubSwitchPill
-                implicitHeight: 26
-                implicitWidth: 26
-                radius: Theme.r(13)
-                color: hubSwitchMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 30
+                implicitWidth: 30
+                radius: Theme.r(15)
+                color: hubSwitchMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
                 visible: root.activeTab === "overview"
                 scale: hubSwitchMouse.pressed ? 0.92 : 1.0
 
@@ -195,8 +195,8 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: hubSwitchPill.curHubObj ? hubSwitchPill.curHubObj.icon : "󰕰"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
-                    color: hubSwitchMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    font.pixelSize: 13
+                    color: hubSwitchMouse.containsMouse ? Theme.m3Primary : Theme.m3Ink
                 }
 
                 MouseArea {
@@ -216,12 +216,12 @@ ColumnLayout {
 
             // Store Quick Button
             Rectangle {
-                implicitWidth: 26
-                implicitHeight: 26
-                radius: Theme.r(13)
-                color: storeArea.containsMouse ? Theme.controlFillHover : "transparent"
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                implicitWidth: 30
+                implicitHeight: 30
+                radius: Theme.r(15)
+                color: storeArea.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
                 scale: storeArea.pressed ? 0.92 : 1.0
 
                 Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
@@ -230,8 +230,8 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰏖"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
-                    color: storeArea.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    font.pixelSize: 13
+                    color: Theme.m3Ink
                 }
 
                 MouseArea {
@@ -249,19 +249,17 @@ ColumnLayout {
             // Active-only status chips shown outside Overview tab (avoid duplicating Hub toggles)
             Rectangle {
                 visible: root.activeTab !== "overview" && ShellState.dnd
-                implicitWidth: 26
-                implicitHeight: 26
-                radius: Theme.r(13)
-                color: dndHeaderArea.containsMouse ? Theme.tileActiveBg : Theme.controlFillHover
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                implicitWidth: 30
+                implicitHeight: 30
+                radius: Theme.r(15)
+                color: dndHeaderArea.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰂛"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
-                    color: Theme.fgSurface
+                    font.pixelSize: 13
+                    color: Theme.m3OnSecondaryContainer
                 }
 
                 MouseArea {
@@ -275,19 +273,17 @@ ColumnLayout {
 
             Rectangle {
                 visible: root.activeTab !== "overview" && ShellState.keepAwake
-                implicitWidth: 26
-                implicitHeight: 26
-                radius: Theme.r(13)
-                color: awakeHeaderArea.containsMouse ? Theme.tileActiveBg : Theme.controlFillHover
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                implicitWidth: 30
+                implicitHeight: 30
+                radius: Theme.r(15)
+                color: awakeHeaderArea.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰅶"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
-                    color: Theme.fgSurface
+                    font.pixelSize: 13
+                    color: Theme.m3OnSecondaryContainer
                 }
 
                 MouseArea {
@@ -300,20 +296,20 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitWidth: 26
-                implicitHeight: 26
-                radius: Theme.r(13)
-                color: settingsArea.containsMouse ? Theme.controlFillHover : "transparent"
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                implicitWidth: 30
+                implicitHeight: 30
+                radius: Theme.r(15)
+                color: settingsArea.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
                 scale: settingsArea.pressed ? 0.92 : 1.0
 
                 Behavior on color {
-                    enabled: !Theme.isSimple
+                    enabled: !Theme.reducedMotion
                     ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
                 Behavior on scale {
-                    enabled: !Theme.isSimple
+                    enabled: !Theme.reducedMotion
                     NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
                 }
 
@@ -321,17 +317,13 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰒓"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
-                    color: settingsArea.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    font.pixelSize: 13
+                    color: Theme.m3Ink
                     rotation: settingsArea.containsMouse ? 45 : 0
 
                     Behavior on rotation {
-                        enabled: !Theme.isSimple
+                        enabled: !Theme.reducedMotion
                         NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
-                    }
-                    Behavior on color {
-                        enabled: !Theme.isSimple
-                        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                     }
                 }
 
@@ -345,22 +337,22 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitWidth: 26
-                implicitHeight: 26
-                radius: Theme.r(13)
+                implicitWidth: 30
+                implicitHeight: 30
+                radius: Theme.r(15)
                 color: root.powerMenuOpen
-                    ? Theme.error
-                    : (powerArea.containsMouse ? Theme.controlFillHover : "transparent")
-                border.width: Theme.activeControlBorderWidth
-                border.color: root.powerMenuOpen ? Theme.error : Theme.cardBorder
+                    ? Theme.m3ErrorContainer
+                    : (powerArea.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC)
+                border.width: 1
+                border.color: root.powerMenuOpen ? Theme.m3Error : Theme.m3Line
                 scale: powerArea.pressed ? 0.92 : 1.0
 
                 Behavior on color {
-                    enabled: !Theme.isSimple
+                    enabled: !Theme.reducedMotion
                     ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
                 Behavior on scale {
-                    enabled: !Theme.isSimple
+                    enabled: !Theme.reducedMotion
                     NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
                 }
 
@@ -368,10 +360,8 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰐥"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
-                    color: root.powerMenuOpen
-                        ? Theme.fgError
-                        : (powerArea.containsMouse ? Theme.error : Theme.fgSurfaceVariant)
+                    font.pixelSize: 13
+                    color: root.powerMenuOpen ? Theme.m3OnErrorContainer : Theme.m3Error
                 }
 
                 MouseArea {
@@ -384,22 +374,22 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitWidth: 26
-                implicitHeight: 26
-                radius: Theme.r(13)
+                implicitWidth: 30
+                implicitHeight: 30
+                radius: Theme.r(15)
                 color: root.pinnedOpen
-                    ? Theme.tileActiveBg
-                    : (pinArea.containsMouse ? Theme.controlFillHover : "transparent")
-                border.width: Theme.activeControlBorderWidth
-                border.color: root.pinnedOpen ? Theme.primary : Theme.cardBorder
+                    ? Theme.m3Primary
+                    : (pinArea.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC)
+                border.width: 1
+                border.color: root.pinnedOpen ? Theme.m3Primary : Theme.m3Line
                 scale: pinArea.pressed ? 0.92 : 1.0
 
                 Behavior on color {
-                    enabled: !Theme.isSimple
+                    enabled: !Theme.reducedMotion
                     ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
                 Behavior on scale {
-                    enabled: !Theme.isSimple
+                    enabled: !Theme.reducedMotion
                     NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
                 }
 
@@ -407,8 +397,8 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: root.pinnedOpen ? "󰐃" : "󰤱"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
-                    color: root.pinnedOpen || pinArea.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    font.pixelSize: 13
+                    color: root.pinnedOpen ? Theme.m3OnPrimary : Theme.m3Ink
                 }
 
                 MouseArea {
@@ -421,22 +411,22 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitWidth: 26
-                implicitHeight: 26
-                radius: Theme.r(13)
+                implicitWidth: 30
+                implicitHeight: 30
+                radius: Theme.r(15)
                 color: closeArea.containsMouse
-                    ? Theme.withAlpha(Theme.error, 0.22)
-                    : "transparent"
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                    ? Theme.m3ErrorContainer
+                    : Theme.m3SurfaceC
+                border.width: 1
+                border.color: closeArea.containsMouse ? Theme.m3Error : Theme.m3Line
                 scale: closeArea.pressed ? 0.92 : 1.0
 
                 Behavior on color {
-                    enabled: !Theme.isSimple
+                    enabled: !Theme.reducedMotion
                     ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
                 Behavior on scale {
-                    enabled: !Theme.isSimple
+                    enabled: !Theme.reducedMotion
                     NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
                 }
 
@@ -444,8 +434,8 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "󰅖"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
-                    color: closeArea.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                    font.pixelSize: 13
+                    color: closeArea.containsMouse ? Theme.m3OnErrorContainer : Theme.m3Ink
                 }
 
                 MouseArea {

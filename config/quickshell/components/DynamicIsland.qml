@@ -175,30 +175,28 @@ Item {
     readonly property int expandedWidth: {
         let w = 760;
         if (root.activeTab === "launcher")
-            w = 700;
-        else if (root.activeTab === "overview")
-            w = 740;
+            w = 780;
         return Math.min(w, Math.max(360, Math.round(root.width) - 24));
     }
 
     readonly property int expandedHeight: {
-        let h = 468;
+        let h = 510;
         if (root.activeTab === "launcher") {
-            h = 488;
+            h = 580;
         } else if (root.activeTab === "notifications") {
-            h = 492;
+            h = 536;
         } else if (root.activeTab === "files" || root.activeTab === "themes") {
-            h = 468;
+            h = 510;
         } else {
             const hubStyle = ShellState.hubUiStyle;
             if (hubStyle === "cupertino")
-                h = 358 + root._extraControlsHeight;
+                h = 424 + root._extraControlsHeight;
             else if (hubStyle === "stage")
-                h = 366 + (DeviceCaps.hasBacklight ? 38 : 0);
+                h = 432 + (DeviceCaps.hasBacklight ? 44 : 0);
             else if (hubStyle === "cockpit")
-                h = 368 + root._extraControlsHeight;
+                h = 444 + root._extraControlsHeight;
             else
-                h = 438 + root._extraControlsHeight;
+                h = 492 + root._extraControlsHeight;
         }
         return Math.min(h + (root.powerMenuOpen ? 48 : 0), Math.max(280, Math.round(root.height) - ShellState.islandTopMargin - 24));
     }

@@ -47,9 +47,9 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
                 Layout.preferredWidth: 1
-                Layout.preferredHeight: 172
-                Layout.minimumHeight: 162
-                Layout.maximumHeight: 174
+                Layout.preferredHeight: 174
+                Layout.minimumHeight: 168
+                Layout.maximumHeight: 178
                 player: root.player
                 active: root.active && ShellState.hubUiStyle === "bento"
                 onSeekingChanged: seeking => root.controlInteractionChanged(seeking)
@@ -59,9 +59,9 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
                 Layout.preferredWidth: 1
-                Layout.preferredHeight: 172
-                Layout.minimumHeight: 162
-                Layout.maximumHeight: 174
+                Layout.preferredHeight: 174
+                Layout.minimumHeight: 168
+                Layout.maximumHeight: 178
                 active: root.active && ShellState.hubUiStyle === "bento"
             }
 
@@ -69,7 +69,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1
-                Layout.minimumHeight: 176
+                Layout.minimumHeight: 224
                 screenName: root.screenName
                 active: root.active && ShellState.hubUiStyle === "bento"
             }
@@ -78,7 +78,9 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1
-                Layout.minimumHeight: 176
+                Layout.minimumHeight: 224
+                compactLayout: true
+                hideStyleFooter: true
                 active: root.active && ShellState.hubUiStyle === "bento"
                 onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
                 onOpenSettingsRequested: page => root.openSettingsRequested(page)

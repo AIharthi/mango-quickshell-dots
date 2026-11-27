@@ -387,9 +387,9 @@ PanelWindow {
                 Layout.fillWidth: true
                 implicitHeight: 48
                 radius: Theme.r(24)
-                color: searchInput.activeFocus ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
-                border.width: searchInput.activeFocus ? 2 : 1
-                border.color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
+                color: searchInput.activeFocus ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                border.width: 1
+                border.color: Theme.m3Line
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 RowLayout {
@@ -719,7 +719,7 @@ PanelWindow {
                         radius: Theme.r(20)
                         color: winRow.isSelected
                             ? Theme.m3PrimaryContainer
-                            : (rowMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                            : (rowMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
                         Behavior on color { ColorAnimation { duration: 120 } }
 
                         MouseArea {

@@ -16,6 +16,8 @@ Rectangle {
     property bool hideStyleFooter: false
     property bool showFocusAwakeRow: false
     property bool tallActionTiles: false
+    property bool compactLayout: false
+    property bool cupertinoMode: false
 
     signal draggingChanged(bool dragging)
     signal openSettingsRequested(string page)
@@ -184,8 +186,8 @@ Rectangle {
     ColumnLayout {
         id: qcCol
         anchors.fill: parent
-        anchors.margins: root.hideHeader ? 0 : 10
-        spacing: 10
+        anchors.margins: root.hideHeader ? 0 : (root.compactLayout ? 8 : 10)
+        spacing: root.compactLayout ? 6 : 10
 
         RowLayout {
             Layout.fillWidth: true
@@ -210,11 +212,12 @@ Rectangle {
             }
         }
 
-        // --- Brightness Full-Width 46px M3 Capsule Slider ---
+        // --- Brightness Full-Width M3 Capsule Slider ---
         M3CapsuleSlider {
             Layout.fillWidth: true
             Layout.fillHeight: false
             visible: DeviceCaps.hasBacklight && root.brightnessSupported
+            compact: root.compactLayout
             icon: "󰃟"
             label: "Display"
             value: root.brightnessLevel
@@ -227,15 +230,16 @@ Rectangle {
             }
         }
 
-        // --- Sound (62%) + Mic Toggle/Volume (38%) 46px M3 Capsule Row ---
+        // --- Sound (62%) + Mic Toggle/Volume (38%) M3 Capsule Row ---
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
-            spacing: 8
+            spacing: root.compactLayout ? 6 : 8
 
             M3CapsuleSlider {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 62
+                compact: root.compactLayout
                 icon: root.volumeMuted ? "󰝟" : (root.volumeLevel <= 0.45 ? "󰖀" : "󰕾")
                 label: root.volumeMuted ? "Muted" : "Sound"
                 value: root.volumeLevel
@@ -254,11 +258,11 @@ Rectangle {
                 }
             }
 
-            // Mic 46px capsule toggle
+            // Mic capsule toggle
             Rectangle {
-                Layout.preferredWidth: 112
-                implicitHeight: 46
-                radius: Theme.r(micArea.pressed ? 16 : 23)
+                Layout.preferredWidth: root.compactLayout ? 98 : 112
+                implicitHeight: root.compactLayout ? 38 : 46
+                radius: Theme.r(micArea.pressed ? Math.round(implicitHeight * 0.34) : Math.round(implicitHeight / 2))
                 color: root.micMuted ? Theme.m3SurfaceHigh : Theme.m3SecondaryContainer
                 border.width: 1
                 border.color: Theme.m3Line
@@ -302,20 +306,21 @@ Rectangle {
             }
         }
 
-        // --- 2 Wide 62px M3 Connectivity / Audio Cards with Chevron ---
+        // --- 2 Wide M3 Connectivity / Audio Cards with Chevron ---
         RowLayout {
+            id: wideRow
             Layout.fillWidth: true
             Layout.fillHeight: false
-            spacing: 8
-            visible: DeviceCaps.hasWifi || DeviceCaps.hasBluetooth || !root.hideDuplicateToggles
+            spacing: root.compactLayout ? 6 : 8
+            visible: DeviceCaps.hasWifi || DeviceCaps.hasBluetooth || (!root.hideDuplicateToggles && !root.compactLayout && !root.cupertinoMode)
 
             // Left Wide Card: Wi-Fi (or Output Sink on Desktop without Wi-Fi)
             Rectangle {
                 id: wideLeft
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                implicitHeight: 62
-                radius: Theme.r(wlMouse.pressed ? 16 : 24)
+                implicitHeight: root.compactLayout ? 52 : 62
+                radius: Theme.r(wlMouse.pressed ? 14 : (root.compactLayout ? 20 : 24))
                 readonly property bool isOn: DeviceCaps.hasWifi ? root.wifiEnabled : !root.volumeMuted
                 color: isOn ? Theme.m3Primary : (wlMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
                 border.width: 1
@@ -400,8 +405,8 @@ Rectangle {
                 id: wideRight
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                implicitHeight: 62
-                radius: Theme.r(wrMouse.pressed ? 16 : 24)
+                implicitHeight: root.compactLayout ? 52 : 62
+                radius: Theme.r(wrMouse.pressed ? 14 : (root.compactLayout ? 20 : 24))
                 readonly property bool isOn: DeviceCaps.hasBluetooth ? root.btEnabled : ShellState.nightLightEnabled
                 color: isOn ? Theme.m3Primary : (wrMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
                 border.width: 1
@@ -482,15 +487,17 @@ Rectangle {
             }
         }
 
-        // --- 4-Column Morphing M3 Tiles (radius 34 -> 22 -> 14) ---
+        // --- 4-Column Morphing M3 Tiles (radius 34 -> 22 -> 14, deduplicated per mode) ---
         GridLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
             columns: 4
-            rowSpacing: 8
-            columnSpacing: 8
+            rowSpacing: root.compactLayout ? 6 : 8
+            columnSpacing: root.compactLayout ? 6 : 8
 
             M3Tile {
+                visible: !root.cupertinoMode
+                compact: root.compactLayout
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 icon: ShellState.dnd ? "󰂛" : "󰂚"
@@ -500,15 +507,24 @@ Rectangle {
             }
 
             M3Tile {
+                readonly property bool showThemesInstead: wideRow.visible && !DeviceCaps.hasBluetooth
+                compact: root.compactLayout
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
-                icon: "󰖔"
-                label: "Night Light"
-                active: ShellState.nightLightEnabled
-                onClicked: ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp)
+                icon: showThemesInstead ? "󰏘" : "󰖔"
+                label: showThemesInstead ? "Themes" : "Night Light"
+                active: showThemesInstead ? false : ShellState.nightLightEnabled
+                onClicked: {
+                    if (showThemesInstead)
+                        root.openSettingsRequested("appearance");
+                    else
+                        ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp);
+                }
             }
 
             M3Tile {
+                visible: !root.cupertinoMode
+                compact: root.compactLayout
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 icon: "󰅶"
@@ -518,6 +534,8 @@ Rectangle {
             }
 
             M3Tile {
+                visible: !root.cupertinoMode
+                compact: root.compactLayout
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 icon: "󰊴"
@@ -527,6 +545,7 @@ Rectangle {
             }
 
             M3Tile {
+                compact: root.compactLayout
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 icon: "󰹑"
@@ -536,6 +555,7 @@ Rectangle {
             }
 
             M3Tile {
+                compact: root.compactLayout
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 icon: ShellState.recordingActive ? "󰓛" : "󰑊"
@@ -546,6 +566,7 @@ Rectangle {
             }
 
             M3Tile {
+                compact: root.compactLayout
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 icon: Theme.colorScheme === "dark" ? "󰖙" : "󰖔"
@@ -555,6 +576,8 @@ Rectangle {
             }
 
             M3Tile {
+                visible: !root.cupertinoMode
+                compact: root.compactLayout
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 icon: root.hideDuplicateToggles ? "󰌌" : "󰖯"

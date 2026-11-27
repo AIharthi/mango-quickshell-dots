@@ -880,7 +880,7 @@ ShellRoot {
                         )
                     )
                     exclusionMode: ExclusionMode.Normal
-                    implicitHeight: 620
+                    implicitHeight: 660
                     color: "transparent"
 
                     mask: Region {

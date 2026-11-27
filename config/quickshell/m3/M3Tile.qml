@@ -10,14 +10,15 @@ Rectangle {
     property string label: ""
     property string sub: ""
     property bool active: false
+    property bool compact: false
     property color accentColor: Theme.m3Primary
     property bool tileEnabled: true
 
     signal clicked()
     signal rightClicked()
 
-    implicitHeight: 68
-    radius: Theme.r(tm.pressed ? 14 : (tl.active ? 22 : 34))
+    implicitHeight: tl.compact ? 52 : 68
+    radius: Theme.isSimple ? 0 : Math.min(Math.round(height / 2), Theme.r(tm.pressed ? Math.round(height * 0.22) : (tl.active ? Math.round(height * 0.32) : Math.round(height / 2))))
     opacity: tileEnabled ? 1.0 : 0.45
     color: tl.active
         ? tl.accentColor
@@ -44,13 +45,13 @@ Rectangle {
     Column {
         anchors.centerIn: parent
         width: Math.max(20, tl.width - 12)
-        spacing: 4
+        spacing: tl.compact ? 2 : 4
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: tl.icon
             font.family: Theme.iconFont
-            font.pixelSize: Theme.fs(19)
+            font.pixelSize: Theme.fs(tl.compact ? 16 : 19)
             color: tl.inkCol
         }
 
@@ -61,7 +62,7 @@ Rectangle {
             elide: Text.ElideRight
             text: tl.label
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fs(11)
+            font.pixelSize: Theme.fs(tl.compact ? 10 : 11)
             font.weight: Font.Medium
             color: tl.inkCol
         }

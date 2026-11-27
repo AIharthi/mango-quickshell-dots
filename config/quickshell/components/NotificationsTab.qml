@@ -350,86 +350,65 @@ RowLayout {
             visible: root.bottomWidget === "timer"
             Layout.fillWidth: true
             Layout.fillHeight: !ShellState.weatherEnabled
-            implicitHeight: timerCol.implicitHeight + 20
-            radius: Theme.r(18)
-            color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
-            border.color: (ShellState.timerActive || ShellState.stopwatchActive) ? Theme.primary : Theme.cardBorder
+            implicitHeight: timerCol.implicitHeight + 22
+            radius: Theme.r(24)
+            color: Theme.m3SurfaceC
+            border.width: 1
+            border.color: (ShellState.timerActive || ShellState.stopwatchActive) ? Theme.m3Primary : Theme.m3Line
             clip: true
 
             ColumnLayout {
                 id: timerCol
                 anchors.fill: parent
-                anchors.margins: 10
-                spacing: 7
+                anchors.margins: 12
+                spacing: 8
 
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: false
-                    spacing: 4
+                    spacing: 6
 
-                    RowLayout {
-                        spacing: 12
+                    Rectangle {
+                        implicitHeight: 28
+                        implicitWidth: modeSegRow.implicitWidth + 6
+                        radius: Theme.r(14)
+                        color: Theme.m3SurfaceHigh
 
-                        Item {
-                            implicitWidth: tglTimerCol.implicitWidth
-                            implicitHeight: tglTimerCol.implicitHeight
+                        RowLayout {
+                            id: modeSegRow
+                            anchors.centerIn: parent
+                            spacing: 2
 
-                            Column {
-                                id: tglTimerCol
-                                spacing: 2
-                                Text {
-                                    text: "Timer"
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 10
-                                    font.weight: root.timerMode === "timer" ? Font.Bold : Font.Medium
-                                    color: root.timerMode === "timer" ? Theme.primary : Theme.fgSurfaceVariant
+                            Repeater {
+                                model: [
+                                    { id: "timer",     label: "Timer" },
+                                    { id: "stopwatch", label: "Stopwatch" }
+                                ]
+                                delegate: Rectangle {
+                                    id: tmSeg
+                                    required property var modelData
+                                    readonly property bool sel: root.timerMode === tmSeg.modelData.id
+                                    implicitHeight: 22
+                                    implicitWidth: tmSegLbl.implicitWidth + 14
+                                    radius: Theme.r(11)
+                                    color: tmSeg.sel ? Theme.m3SecondaryContainer : "transparent"
+
+                                    Text {
+                                        id: tmSegLbl
+                                        anchors.centerIn: parent
+                                        text: tmSeg.modelData.label
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fs(10)
+                                        font.weight: tmSeg.sel ? Font.Bold : Font.Medium
+                                        color: tmSeg.sel ? Theme.m3OnSecondaryContainer : Theme.m3InkDim
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.timerMode = tmSeg.modelData.id
+                                    }
                                 }
-                                Rectangle {
-                                    width: parent.width
-                                    height: 2
-                                    radius: 1
-                                    color: Theme.primary
-                                    visible: root.timerMode === "timer"
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.timerMode = "timer"
-                            }
-                        }
-
-                        Item {
-                            implicitWidth: tglSwCol.implicitWidth
-                            implicitHeight: tglSwCol.implicitHeight
-
-                            Column {
-                                id: tglSwCol
-                                spacing: 2
-                                Text {
-                                    text: "Stopwatch"
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 10
-                                    font.weight: root.timerMode === "stopwatch" ? Font.Bold : Font.Medium
-                                    color: root.timerMode === "stopwatch" ? Theme.primary : Theme.fgSurfaceVariant
-                                }
-                                Rectangle {
-                                    width: parent.width
-                                    height: 2
-                                    radius: 1
-                                    color: Theme.primary
-                                    visible: root.timerMode === "stopwatch"
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.timerMode = "stopwatch"
                             }
                         }
                     }
@@ -445,12 +424,12 @@ RowLayout {
                         font.pixelSize: 17
                         font.weight: Font.Bold
                         color: (root.timerMode === "timer" ? ShellState.timerActive : ShellState.stopwatchActive)
-                            ? Theme.primary
-                            : Theme.fgSurface
+                            ? Theme.m3Primary
+                            : Theme.m3Ink
                     }
                 }
 
-                // Expanded Apple Focus Hero Time (when Weather card is hidden, fills space gracefully)
+                // Expanded M3 Focus Hero Time (when Weather card is hidden, fills space gracefully)
                 Item {
                     Layout.fillHeight: !ShellState.weatherEnabled
                     visible: !ShellState.weatherEnabled
@@ -467,12 +446,12 @@ RowLayout {
                         text: root.timerMode === "timer"
                             ? ShellState.formatTimer(ShellState.timerRemainingSec)
                             : ShellState.formatTimer(ShellState.stopwatchElapsedSec)
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monoFont
                         font.pixelSize: 28
                         font.weight: Font.Bold
                         color: (root.timerMode === "timer" ? ShellState.timerActive : ShellState.stopwatchActive)
-                            ? Theme.primary
-                            : Theme.fgSurface
+                            ? Theme.m3Primary
+                            : Theme.m3Ink
                     }
 
                     Text {
@@ -481,24 +460,24 @@ RowLayout {
                             ? (ShellState.timerActive ? "Focus session running" : "Focus Timer Ready")
                             : (ShellState.stopwatchActive ? "Stopwatch running" : "Stopwatch Ready")
                         font.family: Theme.fontFamily
-                        font.pixelSize: 9
-                        color: Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.m3InkDim
                     }
                 }
 
-                // Subtle Apple Progress Bar during active Timer
+                // M3 Progress Track during Timer
                 Rectangle {
                     visible: root.timerMode === "timer" && ShellState.timerDurationSec > 0
                     Layout.fillWidth: true
-                    implicitHeight: 5
-                    radius: 2.5
-                    color: Theme.surfaceContainerHighest
+                    implicitHeight: 6
+                    radius: 3
+                    color: Theme.m3Track
 
                     Rectangle {
                         height: parent.height
                         width: parent.width * Math.max(0.0, Math.min(1.0, ShellState.timerRemainingSec / Math.max(1, ShellState.timerDurationSec)))
-                        radius: 2.5
-                        color: Theme.primary
+                        radius: 3
+                        color: Theme.m3Primary
                     }
                 }
 
@@ -512,7 +491,7 @@ RowLayout {
                     visible: root.timerMode === "timer"
                     Layout.fillWidth: true
                     Layout.fillHeight: false
-                    spacing: 4
+                    spacing: 5
 
                     Repeater {
                         model: [5, 15, 25, 45]
@@ -520,20 +499,20 @@ RowLayout {
                             id: preBtn
                             required property int modelData
                             readonly property bool isSel: ShellState.timerDurationSec === preBtn.modelData * 60
-                            implicitHeight: 24
+                            implicitHeight: 28
                             Layout.fillWidth: true
-                            radius: Theme.r(12)
+                            radius: Theme.r(14)
                             color: preBtn.isSel
-                                ? Theme.activeBg
-                                : (preMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                                ? Theme.m3SecondaryContainer
+                                : (preMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                             Text {
                                 anchors.centerIn: parent
                                 text: preBtn.modelData + "m"
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.family: Theme.monoFont
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
-                                color: preBtn.isSel ? Theme.primary : Theme.fgSurfaceVariant
+                                color: preBtn.isSel ? Theme.m3OnSecondaryContainer : Theme.m3InkDim
                             }
 
                             MouseArea {
@@ -547,21 +526,21 @@ RowLayout {
                     }
 
                     Rectangle {
-                        implicitHeight: 24
-                        implicitWidth: startLbl.implicitWidth + 14
-                        radius: Theme.r(12)
+                        implicitHeight: 28
+                        implicitWidth: startLbl.implicitWidth + 16
+                        radius: Theme.r(14)
                         color: ShellState.timerActive
-                            ? Theme.withAlpha(Theme.warning, 0.24)
-                            : Theme.primary
+                            ? Theme.m3ErrorContainer
+                            : Theme.m3Primary
 
                         Text {
                             id: startLbl
                             anchors.centerIn: parent
                             text: ShellState.timerActive ? "Pause" : "Start"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
-                            color: ShellState.timerActive ? Theme.warning : Theme.fgPrimary
+                            color: ShellState.timerActive ? Theme.m3OnErrorContainer : Theme.m3OnPrimary
                         }
 
                         MouseArea {
@@ -572,17 +551,17 @@ RowLayout {
                     }
 
                     Rectangle {
-                        implicitWidth: 24
-                        implicitHeight: 24
-                        radius: Theme.r(12)
-                        color: rstMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        radius: Theme.r(14)
+                        color: rstMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                         Text {
                             anchors.centerIn: parent
                             text: "󰑐"
                             font.family: Theme.iconFont
-                            font.pixelSize: 11
-                            color: Theme.fgSurfaceVariant
+                            font.pixelSize: 12
+                            color: Theme.m3InkDim
                         }
 
                         MouseArea {
@@ -603,23 +582,23 @@ RowLayout {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 4
+                        spacing: 5
 
                         Rectangle {
                             Layout.fillWidth: true
-                            implicitHeight: 24
-                            radius: Theme.r(12)
+                            implicitHeight: 28
+                            radius: Theme.r(14)
                             color: ShellState.stopwatchActive
-                                ? Theme.withAlpha(Theme.warning, 0.24)
-                                : Theme.primary
+                                ? Theme.m3ErrorContainer
+                                : Theme.m3Primary
 
                             Text {
                                 anchors.centerIn: parent
                                 text: ShellState.stopwatchActive ? "Pause" : "Start"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
-                                color: ShellState.stopwatchActive ? Theme.warning : Theme.fgPrimary
+                                color: ShellState.stopwatchActive ? Theme.m3OnErrorContainer : Theme.m3OnPrimary
                             }
                             MouseArea {
                                 anchors.fill: parent
@@ -630,17 +609,17 @@ RowLayout {
 
                         Rectangle {
                             Layout.fillWidth: true
-                            implicitHeight: 24
-                            radius: Theme.r(12)
-                            color: lapMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                            implicitHeight: 28
+                            radius: Theme.r(14)
+                            color: lapMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "Lap"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
-                                color: Theme.secondary
+                                color: Theme.m3OnSecondaryContainer
                             }
                             MouseArea {
                                 id: lapMouse
@@ -652,17 +631,17 @@ RowLayout {
                         }
 
                         Rectangle {
-                            implicitWidth: 24
-                            implicitHeight: 24
-                            radius: Theme.r(12)
-                            color: swRstMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                            implicitWidth: 28
+                            implicitHeight: 28
+                            radius: Theme.r(14)
+                            color: swRstMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰑐"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 11
-                                color: Theme.fgSurfaceVariant
+                                font.pixelSize: 12
+                                color: Theme.m3InkDim
                             }
                             MouseArea {
                                 id: swRstMouse
@@ -684,18 +663,18 @@ RowLayout {
                                 id: lapBadge
                                 required property string modelData
                                 required property int index
-                                implicitHeight: 17
+                                implicitHeight: 18
                                 implicitWidth: lapTxt.implicitWidth + 10
-                                radius: Theme.r(8)
-                                color: Theme.subCardBg
+                                radius: Theme.r(9)
+                                color: Theme.m3SurfaceHigh
 
                                 Text {
                                     id: lapTxt
                                     anchors.centerIn: parent
                                     text: "#" + ((ShellState.stopwatchLaps || []).length - lapBadge.index) + " " + lapBadge.modelData
-                                    font.family: Theme.fontFamily
+                                    font.family: Theme.monoFont
                                     font.pixelSize: 8
-                                    color: Theme.fgSurfaceVariant
+                                    color: Theme.m3InkDim
                                 }
                             }
                         }
@@ -709,24 +688,24 @@ RowLayout {
             visible: root.bottomWidget === "timer" && ShellState.weatherEnabled
             Layout.fillWidth: true
             Layout.fillHeight: false
-            implicitHeight: wCol.implicitHeight + 18
-            radius: Theme.r(18)
-            color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
-            border.color: Theme.cardBorder
+            implicitHeight: wCol.implicitHeight + 20
+            radius: Theme.r(24)
+            color: Theme.m3SurfaceC
+            border.width: 1
+            border.color: Theme.m3Line
             clip: true
 
             RowLayout {
                 id: wCol
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: 12
                 spacing: 8
 
                 Text {
                     text: ShellState.weatherIcon
                     font.family: Theme.iconFont
                     font.pixelSize: 22
-                    color: Theme.primary
+                    color: Theme.m3Primary
                 }
 
                 ColumnLayout {
@@ -742,7 +721,7 @@ RowLayout {
                         font.family: Theme.fontFamily
                         font.pixelSize: 11
                         font.weight: Font.Bold
-                        color: Theme.fgSurface
+                        color: Theme.m3Ink
                     }
 
                     Text {
@@ -753,22 +732,22 @@ RowLayout {
                             : "Click refresh or check Settings under Shell"
                         font.family: Theme.fontFamily
                         font.pixelSize: 9
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
                 }
 
                 Rectangle {
-                    implicitWidth: 24
-                    implicitHeight: 24
-                    radius: Theme.r(12)
-                    color: wRefMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    implicitWidth: 26
+                    implicitHeight: 26
+                    radius: Theme.r(13)
+                    color: wRefMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰑐"
                         font.family: Theme.iconFont
                         font.pixelSize: 11
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
 
                     MouseArea {
@@ -787,15 +766,15 @@ RowLayout {
             visible: root.bottomWidget === "notes"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            radius: Theme.r(18)
-            color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
-            border.color: scratchInput.activeFocus ? Theme.primary : Theme.cardBorder
+            radius: Theme.r(24)
+            color: Theme.m3SurfaceC
+            border.width: 1
+            border.color: scratchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
             clip: true
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: 12
                 spacing: 6
 
                 RowLayout {
@@ -804,9 +783,9 @@ RowLayout {
                     Text {
                         text: "Notes"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fs(11)
                         font.weight: Font.Bold
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
 
                     Item { Layout.fillWidth: true }
@@ -815,9 +794,9 @@ RowLayout {
                         visible: scratchInput.text.length > 0
                         text: "Clear"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 9
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
-                        color: clrNoteMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                        color: clrNoteMouse.containsMouse ? Theme.m3Error : Theme.m3InkDim
 
                         MouseArea {
                             id: clrNoteMouse
@@ -843,19 +822,19 @@ RowLayout {
                         visible: scratchInput.text.length === 0
                         text: "Type a quick note (auto-saved)..."
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        color: Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.m3InkDim
                     }
 
                     TextEdit {
                         id: scratchInput
                         anchors.fill: parent
                         wrapMode: TextEdit.Wrap
-                        color: Theme.fgSurface
-                        selectionColor: Theme.primary
-                        selectedTextColor: Theme.fgPrimary
+                        color: Theme.m3Ink
+                        selectionColor: Theme.m3Primary
+                        selectedTextColor: Theme.m3OnPrimary
                         font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fs(11)
                         text: ShellState.scratchpadText
 
                         onTextChanged: {

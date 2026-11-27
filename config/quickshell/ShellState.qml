@@ -86,6 +86,7 @@ Singleton {
     property string weatherCity: ""
     property string weatherIcon: "󰖐"
     property string weatherUpdated: ""
+    property var recentAppIds: []
     property bool gameModeActive: false
     property string _preGameShellMode: "default"
     property bool _preGameDnd: false
@@ -1402,6 +1403,20 @@ Singleton {
         if (!dt)
             return "";
         return Qt.formatDateTime(dt, root.dateFormat.length > 0 ? root.dateFormat : "ddd d MMM");
+    }
+
+    function recordAppLaunch(appId: string): void {
+        const clean = String(appId || "").replace(/\.desktop$/i, "").toLowerCase().trim();
+        if (clean.length === 0)
+            return;
+        const cur = Array.isArray(root.recentAppIds) ? root.recentAppIds : [];
+        const next = [clean];
+        for (let i = 0; i < cur.length && next.length < 12; i++) {
+            const existing = String(cur[i] || "").replace(/\.desktop$/i, "").toLowerCase().trim();
+            if (existing.length > 0 && existing !== clean)
+                next.push(existing);
+        }
+        root.recentAppIds = next;
     }
 
     Component.onCompleted: {

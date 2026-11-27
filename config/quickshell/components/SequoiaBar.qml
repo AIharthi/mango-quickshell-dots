@@ -169,10 +169,12 @@ Item {
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.sequoiaShowLayout
-                implicitHeight: 18
-                implicitWidth: mbLayTxt.implicitWidth + 10
-                radius: Theme.r(6)
-                color: mbLayMouse.containsMouse ? Theme.controlFillHover : Theme.withAlpha(Theme.fgSurface, 0.06)
+                implicitHeight: Math.max(18, barSurface.height - 8)
+                implicitWidth: mbLayTxt.implicitWidth + 12
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: mbLayMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 Text {
                     id: mbLayTxt
@@ -181,7 +183,7 @@ Item {
                     font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(9)
                     font.weight: Font.Bold
-                    color: mbLayMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    color: mbLayMouse.containsMouse ? Theme.m3Ink : Theme.m3InkDim
                 }
 
                 MouseArea {
@@ -194,7 +196,7 @@ Item {
             }
         }
 
-        // Center: Subtle Now-Playing Capsule (disappears automatically if overlapping side clusters)
+        // Center: Now-Playing M3 Capsule (disappears automatically if overlapping side clusters)
         Rectangle {
             id: centerMediaPill
             anchors.centerIn: parent
@@ -202,8 +204,8 @@ Item {
             visible: root.hasMedia && availWidth >= 120
             implicitHeight: Math.max(20, barSurface.height - 6)
             width: Math.min(availWidth, centerMediaRow.implicitWidth + 14)
-            radius: Theme.r(8)
-            color: centerMediaMouse.containsMouse ? Theme.controlFillHover : "transparent"
+            radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+            color: centerMediaMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
 
             RowLayout {
                 id: centerMediaRow
@@ -233,6 +235,36 @@ Item {
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Medium
                     color: root.isPlaying ? Theme.m3Ink : Theme.m3InkDim
+                }
+
+                Row {
+                    Layout.alignment: Qt.AlignVCenter
+                    spacing: 2
+                    visible: root.isPlaying && ShellState.pillShowEqualizer && !Theme.reducedMotion
+
+                    Repeater {
+                        model: [
+                            { minH: 3, maxH: 10, dur: 420 },
+                            { minH: 5, maxH: 13, dur: 310 },
+                            { minH: 3, maxH: 9,  dur: 480 }
+                        ]
+                        delegate: Rectangle {
+                            id: seqEqBar
+                            required property var modelData
+                            width: 2
+                            height: seqEqBar.modelData.minH
+                            radius: 1
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: Theme.m3Primary
+
+                            SequentialAnimation on height {
+                                running: root.visible && root.isPlaying && ShellState.pillShowEqualizer && !Theme.reducedMotion
+                                loops: Animation.Infinite
+                                NumberAnimation { to: seqEqBar.modelData.maxH; duration: seqEqBar.modelData.dur; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: seqEqBar.modelData.minH; duration: seqEqBar.modelData.dur; easing.type: Easing.InOutSine }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -404,6 +436,7 @@ Item {
             SystemTrayStrip {
                 id: trayStripSeq
                 Layout.alignment: Qt.AlignVCenter
+                hiddenPlayerHint: root.hasMedia && root.player ? ((root.player.identity || "") + " " + (root.player.desktopEntry || "")).toLowerCase() : ""
                 visible: ShellState.sequoiaShowTray && trayStripSeq.hasItems
                 compact: true
             }
@@ -412,10 +445,10 @@ Item {
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.sequoiaShowVolume && DeviceCaps.hasAudio
-                implicitHeight: 20
+                implicitHeight: Math.max(20, barSurface.height - 6)
                 implicitWidth: seqVolRow.implicitWidth + 10
-                radius: Theme.r(6)
-                color: seqVolMouse.containsMouse ? Theme.controlFillHover : "transparent"
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: seqVolMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent"
 
                 RowLayout {
                     id: seqVolRow
@@ -425,14 +458,14 @@ Item {
                         text: MangoState.volMuted ? "󰝟" : (MangoState.volPercent <= 50 ? "󰖀" : "󰕾")
                         font.family: Theme.iconFont
                         font.pixelSize: Theme.fs(12)
-                        color: MangoState.volMuted ? Theme.withAlpha(Theme.fgSurfaceVariant, 0.65) : Theme.fgSurfaceVariant
+                        color: MangoState.volMuted ? Theme.m3InkDim : Theme.m3Primary
                     }
                     Text {
                         text: MangoState.volMuted ? "Mute" : (MangoState.volPercent + "%")
                         font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.DemiBold
-                        color: MangoState.volMuted ? Theme.withAlpha(Theme.fgSurfaceVariant, 0.65) : Theme.fgSurfaceVariant
+                        color: MangoState.volMuted ? Theme.m3InkDim : Theme.m3Ink
                     }
                 }
 
@@ -456,17 +489,17 @@ Item {
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.barShowKbLayout && MangoState.kbLayoutShort.length > 0
-                implicitHeight: 18
-                implicitWidth: seqKbRow.implicitWidth + 8
-                radius: Theme.r(5)
-                color: Theme.withAlpha(Theme.fgSurface, 0.06)
+                implicitHeight: Math.max(18, barSurface.height - 8)
+                implicitWidth: seqKbRow.implicitWidth + 10
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3SurfaceC
 
                 RowLayout {
                     id: seqKbRow
                     anchors.centerIn: parent
                     spacing: 3
-                    Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
-                    Text { text: MangoState.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
+                    Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.m3InkDim }
+                    Text { text: MangoState.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.m3Ink }
                 }
             }
 
@@ -474,22 +507,22 @@ Item {
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.dnd
-                implicitWidth: 20
-                implicitHeight: 20
-                radius: Theme.r(6)
-                color: seqDndMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                Text { anchors.centerIn: parent; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
+                implicitWidth: Math.max(20, barSurface.height - 6)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: seqDndMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                Text { anchors.centerIn: parent; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.m3Primary }
                 MouseArea { id: seqDndMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleDnd() }
             }
 
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.keepAwake
-                implicitWidth: 20
-                implicitHeight: 20
-                radius: Theme.r(6)
-                color: seqAwakeMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                Text { anchors.centerIn: parent; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
+                implicitWidth: Math.max(20, barSurface.height - 6)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: seqAwakeMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                Text { anchors.centerIn: parent; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.m3Primary }
                 MouseArea { id: seqAwakeMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleKeepAwake() }
             }
 
@@ -498,19 +531,19 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.sequoiaShowBattery && DeviceCaps.hasBattery
                 spacing: 3
-                Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
-                Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.error : Theme.fgSurfaceVariant }
+                Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: DeviceCaps.batteryLow ? Theme.m3Error : (DeviceCaps.batteryCharging ? Theme.m3Primary : Theme.m3InkDim) }
+                Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.m3Error : Theme.m3Ink }
             }
 
             // Store Button
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.sequoiaShowStore
-                implicitWidth: 22
-                implicitHeight: 20
-                radius: Theme.r(6)
-                color: seqStoreMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                Text { anchors.centerIn: parent; text: "󰏖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: seqStoreMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
+                implicitWidth: Math.max(20, barSurface.height - 6)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: seqStoreMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent"
+                Text { anchors.centerIn: parent; text: "󰏖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: seqStoreMouse.containsMouse ? Theme.m3Ink : Theme.m3InkDim }
                 MouseArea { id: seqStoreMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openStoreRequested() }
             }
 
@@ -518,32 +551,32 @@ Item {
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.sequoiaShowSpotlightIcon
-                implicitWidth: 22
-                implicitHeight: 20
-                radius: Theme.r(6)
+                implicitWidth: Math.max(20, barSurface.height - 6)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
                 color: root.openPanelMode === "launcher"
-                    ? Theme.tileActiveBg
-                    : (seqSpotMouse.containsMouse ? Theme.controlFillHover : "transparent")
-                Text { anchors.centerIn: parent; text: "󰍉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
+                    ? Theme.m3SecondaryContainer
+                    : (seqSpotMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
+                Text { anchors.centerIn: parent; text: "󰍉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: root.openPanelMode === "launcher" ? Theme.m3OnSecondaryContainer : Theme.m3Ink }
                 MouseArea { id: seqSpotMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.toggleSpotlightRequested() }
             }
 
             // Control Center Button (LMB toggles Control Center, RMB opens Sequoia Settings)
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: 22
-                implicitHeight: 20
-                radius: Theme.r(6)
+                implicitWidth: Math.max(20, barSurface.height - 6)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
                 color: root.openPanelMode === "controls"
-                    ? Theme.tileActiveBg
-                    : (seqCcMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                    ? Theme.m3Primary
+                    : (seqCcMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰕰"
                     font.family: Theme.iconFont
                     font.pixelSize: Theme.fs(12)
-                    color: Theme.fgSurface
+                    color: root.openPanelMode === "controls" ? Theme.m3OnPrimary : Theme.m3Ink
                 }
 
                 MouseArea {
@@ -561,10 +594,10 @@ Item {
                 }
             }
 
-            // Date & Clock Pill / Notification Center Trigger
+            // Date & Clock Pill / Notification Center Trigger (clean neutral bar ink)
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: seqDateRow.implicitWidth + 10
+                implicitWidth: seqDateRow.implicitWidth + 12
                 implicitHeight: Math.max(20, barSurface.height - 6)
                 radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
                 color: root.openPanelMode === "notifications"
@@ -574,7 +607,7 @@ Item {
                 RowLayout {
                     id: seqDateRow
                     anchors.centerIn: parent
-                    spacing: 6
+                    spacing: 5
 
                     Text {
                         visible: ShellState.sequoiaShowDate
@@ -582,24 +615,25 @@ Item {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Medium
-                        color: Theme.m3InkDim
+                        color: root.openPanelMode === "notifications" ? Theme.m3OnSecondaryContainer : Theme.m3InkDim
                     }
 
-                    Rectangle {
-                        implicitHeight: Math.max(18, barSurface.height - 8)
-                        implicitWidth: seqClkTxt.implicitWidth + 12
-                        radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
-                        color: Theme.m3Primary
+                    Text {
+                        visible: ShellState.sequoiaShowDate
+                        text: "·"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: root.openPanelMode === "notifications" ? Theme.m3OnSecondaryContainer : Theme.m3InkDim
+                    }
 
-                        Text {
-                            id: seqClkTxt
-                            anchors.centerIn: parent
-                            text: ShellState.formatTime(clock.date)
-                            font.family: Theme.monoFont
-                            font.pixelSize: Theme.fs(10)
-                            font.weight: Font.Bold
-                            color: Theme.m3OnPrimary
-                        }
+                    Text {
+                        id: seqClkTxt
+                        text: ShellState.formatTime(clock.date)
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(11)
+                        font.weight: Font.Bold
+                        color: root.openPanelMode === "notifications" ? Theme.m3OnSecondaryContainer : Theme.m3Ink
                     }
 
                     Rectangle {

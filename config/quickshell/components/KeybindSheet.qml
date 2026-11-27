@@ -310,11 +310,11 @@ PanelWindow {
             // Search Input
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 44
-                radius: Theme.r(22)
-                color: searchInput.activeFocus ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
-                border.width: searchInput.activeFocus ? 2 : 1
-                border.color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
+                implicitHeight: 46
+                radius: Theme.r(23)
+                color: searchInput.activeFocus ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                border.width: 1
+                border.color: Theme.m3Line
                 Behavior on color { ColorAnimation { duration: 160 } }
 
                 RowLayout {

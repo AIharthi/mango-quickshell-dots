@@ -102,11 +102,11 @@ Item {
         property string detail: ""
         property real percent: 0
         property string valueText: "0%"
-        property color barColor: Theme.primary
+        property color barColor: Theme.m3Primary
 
         Layout.fillWidth: true
         Layout.preferredWidth: 1
-        spacing: 4
+        spacing: 5
 
         RowLayout {
             Layout.fillWidth: true
@@ -117,18 +117,18 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
 
             Item { Layout.fillWidth: true }
 
             Text {
                 elide: Text.ElideRight
-                Layout.maximumWidth: 72
+                Layout.maximumWidth: 76
                 text: mc.detail
                 font.family: Theme.monoFont
                 font.pixelSize: 9
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
         }
 
@@ -137,89 +137,65 @@ Item {
             font.family: Theme.monoFont
             font.pixelSize: 16
             font.weight: Font.Bold
-            color: Theme.fgSurface
+            color: Theme.m3Ink
         }
 
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 4
-            radius: 2
-            color: Theme.surfaceContainerHighest
+            implicitHeight: 5
+            radius: 2.5
+            color: Theme.m3Track
 
             Rectangle {
                 height: parent.height
-                radius: 2
+                radius: 2.5
                 width: parent.width * (Math.max(0.0, Math.min(100.0, mc.percent)) / 100.0)
                 color: mc.barColor
 
                 Behavior on width {
-                    enabled: !Theme.isSimple
+                    enabled: !Theme.reducedMotion
                     NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
                 }
             }
         }
     }
 
-    // --- Reusable Inline Component: Activity Ring Gauge ---
+    // --- Reusable Inline Component: M3 Wavy Activity Ring Gauge ---
     component ActivityRing : Item {
         id: ringItem
         property real percent: 0
-        property color ringColor: Theme.primary
+        property color ringColor: Theme.m3Primary
         property string centerLabel: "0%"
         property string titleLabel: "CPU"
         property string detailLabel: ""
 
         clip: true
-        onPercentChanged: ringCanvas.requestPaint()
-        onRingColorChanged: ringCanvas.requestPaint()
 
         ColumnLayout {
             anchors.centerIn: parent
-            spacing: 2
+            spacing: 3
 
             Item {
                 Layout.alignment: Qt.AlignHCenter
-                implicitWidth: 50
-                implicitHeight: 50
+                implicitWidth: 64
+                implicitHeight: 64
 
-                Canvas {
-                    id: ringCanvas
+                M3WavyArc {
                     anchors.fill: parent
-                    antialiasing: true
-
-                    onPaint: {
-                        const ctx = getContext("2d");
-                        ctx.clearRect(0, 0, width, height);
-                        const cx = width / 2;
-                        const cy = height / 2;
-                        const rad = Math.min(cx, cy) - 4;
-                        const trackCol = Theme.surfaceContainerHighest;
-
-                        ctx.lineCap = "round";
-                        ctx.lineWidth = 5.0;
-
-                        ctx.beginPath();
-                        ctx.arc(cx, cy, rad, 0, Math.PI * 2, false);
-                        ctx.strokeStyle = Qt.rgba(trackCol.r, trackCol.g, trackCol.b, 0.72);
-                        ctx.stroke();
-
-                        const frac = Math.max(0.02, Math.min(1.0, ringItem.percent / 100.0));
-                        const startA = -Math.PI / 2;
-                        const endA = startA + frac * Math.PI * 2;
-                        ctx.beginPath();
-                        ctx.arc(cx, cy, rad, startA, endA, false);
-                        ctx.strokeStyle = ringItem.ringColor;
-                        ctx.stroke();
-                    }
+                    value: Math.max(0.0, Math.min(1.0, ringItem.percent / 100.0))
+                    moving: root.active && root.layoutMode === "cupertino"
+                    color: ringItem.ringColor
+                    track: Theme.m3Track
+                    thick: 3.5
                 }
 
                 Text {
                     anchors.centerIn: parent
                     text: ringItem.centerLabel
                     font.family: Theme.monoFont
-                    font.pixelSize: 10
+                    font.pixelSize: 12
                     font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    color: Theme.m3Ink
                 }
             }
 
@@ -229,18 +205,18 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
-                color: Theme.fgSurface
+                color: Theme.m3Ink
             }
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.maximumWidth: Math.max(60, ringItem.width - 8)
+                Layout.maximumWidth: Math.max(64, ringItem.width - 8)
                 elide: Text.ElideRight
                 visible: ringItem.detailLabel.length > 0
                 text: ringItem.detailLabel
                 font.family: Theme.fontFamily
                 font.pixelSize: 9
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
         }
     }
@@ -252,11 +228,11 @@ Item {
         property string layoutCode: root.currentLayout
         property int winsCount: root.totalClients
 
-        implicitHeight: 44
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: 46
+        radius: Theme.r(23)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         RowLayout {
@@ -269,16 +245,14 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                implicitHeight: 28
-                radius: Theme.r(14)
-                color: Theme.subCardBg
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 30
+                radius: Theme.r(15)
+                color: Theme.m3SurfaceHigh
                 clip: true
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 2
+                    anchors.margins: 3
                     spacing: 2
 
                     Repeater {
@@ -294,12 +268,12 @@ Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.minimumWidth: 16
-                            radius: Theme.r(12)
+                            radius: Theme.isSimple ? 0 : Theme.r(spBtn.isActive ? 12 : 9)
                             color: {
-                                if (spBtn.isUrgent) return Theme.error;
-                                if (spBtn.isActive) return Theme.primary;
-                                if (spMouse.containsMouse) return Theme.tileActiveBg;
-                                if (spBtn.isOccupied) return Theme.controlFillHover;
+                                if (spBtn.isUrgent) return Theme.m3Error;
+                                if (spBtn.isActive) return Theme.m3Primary;
+                                if (spMouse.containsMouse) return Theme.m3SurfaceHighest;
+                                if (spBtn.isOccupied) return Theme.m3SecondaryContainer;
                                 return "transparent";
                             }
                             scale: spMouse.pressed ? 0.92 : 1.0
@@ -315,9 +289,9 @@ Item {
                                     font.pixelSize: 10
                                     font.weight: spBtn.isActive ? Font.Bold : Font.DemiBold
                                     color: {
-                                        if (spBtn.isUrgent) return Theme.fgError;
-                                        if (spBtn.isActive) return Theme.fgPrimary;
-                                        return spBtn.isOccupied ? Theme.fgSurface : Theme.fgSurfaceVariant;
+                                        if (spBtn.isUrgent) return Theme.m3OnErrorContainer;
+                                        if (spBtn.isActive) return Theme.m3OnPrimary;
+                                        return spBtn.isOccupied ? Theme.m3OnSecondaryContainer : Theme.m3InkDim;
                                     }
                                 }
 
@@ -326,7 +300,7 @@ Item {
                                     implicitWidth: 3
                                     implicitHeight: 3
                                     radius: 1.5
-                                    color: Theme.fgSurfaceVariant
+                                    color: Theme.m3Primary
                                 }
                             }
 
@@ -345,12 +319,10 @@ Item {
             // Layout Pill
             Rectangle {
                 Layout.fillHeight: false
-                implicitHeight: 28
-                implicitWidth: Math.max(24, layTagTxt.implicitWidth + 10)
-                radius: Theme.r(14)
-                color: layTagMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 30
+                implicitWidth: Math.max(28, layTagTxt.implicitWidth + 12)
+                radius: Theme.isSimple ? 0 : Theme.r(15)
+                color: layTagMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
 
                 Text {
                     id: layTagTxt
@@ -359,7 +331,7 @@ Item {
                     font.family: Theme.monoFont
                     font.pixelSize: 10
                     font.weight: Font.Bold
-                    color: layTagMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    color: Theme.m3OnSecondaryContainer
                 }
 
                 MouseArea {
@@ -374,25 +346,23 @@ Item {
             // Window Switcher Pill
             Rectangle {
                 Layout.fillHeight: false
-                implicitHeight: 28
-                implicitWidth: winPillRow.implicitWidth + 12
-                radius: Theme.r(14)
-                color: winPillMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 30
+                implicitWidth: winPillRow.implicitWidth + 14
+                radius: Theme.isSimple ? 0 : Theme.r(15)
+                color: winPillMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                 RowLayout {
                     id: winPillRow
                     anchors.centerIn: parent
                     spacing: 4
 
-                    Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: 12; color: winPillMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
+                    Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.m3Primary }
                     Text {
                         text: scRoot.winsCount > 0 ? String(scRoot.winsCount) : "0"
                         font.family: Theme.monoFont
                         font.pixelSize: 10
                         font.weight: Font.Bold
-                        color: Theme.fgSurface
+                        color: Theme.m3Ink
                     }
                 }
 
@@ -421,7 +391,7 @@ Item {
             : (root.layoutMode === "cockpit" ? cockpitLayoutComp : cupertinoLayoutComp)
     }
 
-    // ==================== LAYOUT 1: CUPERTINO (macOS Control Center) ====================
+    // ==================== LAYOUT 1: CUPERTINO (M3 Control Center) ====================
     Component {
         id: cupertinoLayoutComp
 
@@ -430,31 +400,31 @@ Item {
 
         // Left Column: Borderless 2x2 Connectivity/Focus Platter + Snug MediaCard
         ColumnLayout {
-            Layout.preferredWidth: 338
+            Layout.preferredWidth: 342
             Layout.minimumWidth: 326
-            Layout.maximumWidth: 344
+            Layout.maximumWidth: 350
             Layout.fillHeight: true
             spacing: 10
 
-            // 2x2 Control Center Platter (borderless elevated tiles + filled icon discs)
+            // 2x2 Control Center Platter (M3 Expressive morphing tiles + filled icon discs)
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.preferredHeight: 118
-                Layout.minimumHeight: 118
-                Layout.maximumHeight: 118
-                radius: Theme.r(18)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                Layout.preferredHeight: 124
+                Layout.minimumHeight: 124
+                Layout.maximumHeight: 124
+                radius: Theme.r(26)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
                 clip: true
 
                 GridLayout {
                     anchors.fill: parent
-                    anchors.margins: 9
+                    anchors.margins: 10
                     columns: 2
-                    rowSpacing: 7
-                    columnSpacing: 7
+                    rowSpacing: 8
+                    columnSpacing: 8
 
                     Repeater {
                         model: [
@@ -463,32 +433,28 @@ Item {
                                 icon: "󰋋",
                                 title: "Output",
                                 sub: root.defaultSinkLabel,
-                                active: !root.volumeMuted,
-                                tint: Theme.primary
+                                active: !root.volumeMuted
                             },
                             {
                                 id: "dnd",
                                 icon: ShellState.dnd ? "󰂛" : "󰂚",
                                 title: "Focus",
                                 sub: ShellState.dnd ? "Do Not Disturb" : "Notifications On",
-                                active: ShellState.dnd,
-                                tint: Theme.secondary
+                                active: ShellState.dnd
                             },
                             {
                                 id: "awake",
                                 icon: "󰅶",
                                 title: "Keep Awake",
                                 sub: ShellState.keepAwake ? "Idle Paused" : "Auto-Lock On",
-                                active: ShellState.keepAwake,
-                                tint: Theme.warning
+                                active: ShellState.keepAwake
                             },
                             {
                                 id: "game",
                                 icon: "󰊴",
                                 title: "Game Mode",
                                 sub: ShellState.gameModeActive ? "Boost Active" : "Standard",
-                                active: ShellState.gameModeActive,
-                                tint: Theme.tertiary
+                                active: ShellState.gameModeActive
                             }
                         ]
 
@@ -497,40 +463,39 @@ Item {
                             required property var modelData
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            radius: Theme.r(12)
+                            radius: Theme.isSimple ? 0 : Theme.r(ccMouse.pressed ? 14 : (ccTile.modelData.active ? 22 : 18))
                             color: ccTile.modelData.active
-                                ? Theme.tileActiveBg
-                                : (ccMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                            border.width: ccTile.modelData.active ? Theme.activeControlBorderWidth : 0
-                            border.color: ccTile.modelData.tint
+                                ? Theme.m3PrimaryContainer
+                                : (ccMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
                             clip: true
-                            scale: ccMouse.pressed ? 0.95 : 1.0
+                            scale: ccMouse.pressed ? 0.96 : 1.0
 
+                            Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 200; easing.type: Theme.m3Springy } }
                             Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
                             Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 8
+                                anchors.leftMargin: 9
+                                anchors.rightMargin: 9
                                 spacing: 8
 
                                 Rectangle {
-                                    implicitWidth: 30
-                                    implicitHeight: 30
-                                    radius: Theme.r(15)
+                                    implicitWidth: 32
+                                    implicitHeight: 32
+                                    radius: Theme.r(16)
                                     color: ccTile.modelData.active
-                                        ? ccTile.modelData.tint
-                                        : Theme.surfaceContainerHighest
+                                        ? Theme.m3Primary
+                                        : Theme.m3SurfaceC
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: ccTile.modelData.icon
                                         font.family: Theme.iconFont
-                                        font.pixelSize: 14
+                                        font.pixelSize: 15
                                         color: ccTile.modelData.active
-                                            ? Theme.contrastInk(ccTile.modelData.tint)
-                                            : Theme.fgSurfaceVariant
+                                            ? Theme.m3OnPrimary
+                                            : Theme.m3InkDim
                                     }
                                 }
 
@@ -543,9 +508,9 @@ Item {
                                         elide: Text.ElideRight
                                         text: ccTile.modelData.title
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 10
+                                        font.pixelSize: 11
                                         font.weight: ccTile.modelData.active ? Font.Bold : Font.DemiBold
-                                        color: Theme.fgSurface
+                                        color: ccTile.modelData.active ? Theme.m3OnPrimaryContainer : Theme.m3Ink
                                     }
 
                                     Text {
@@ -553,8 +518,8 @@ Item {
                                         elide: Text.ElideRight
                                         text: ccTile.modelData.sub
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 8
-                                        color: Theme.fgSurfaceVariant
+                                        font.pixelSize: 9
+                                        color: ccTile.modelData.active ? Theme.withAlpha(Theme.m3OnPrimaryContainer, 0.80) : Theme.m3InkDim
                                     }
                                 }
                             }
@@ -590,35 +555,31 @@ Item {
             MediaCard {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumHeight: 154
+                Layout.minimumHeight: 162
                 player: root.player
                 active: root.active && root.layoutMode === "cupertino"
                 onSeekingChanged: seeking => root.controlInteractionChanged(seeking)
             }
         }
 
-        // Right Column: Capsule Sliders + Action Tiles, Spaces Strip, Activity Rings
+        // Right Column: Capsule Sliders + Action Tiles, Spaces Strip, M3WavyArc Activity Rings
         ColumnLayout {
             id: cupertinoRightCol
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 10
 
-            readonly property int qcH: 118 +
-                (DeviceCaps.hasBacklight ? 38 : 0) +
-                ((DeviceCaps.hasWifi || DeviceCaps.hasBluetooth) ? 42 : 0)
-
             QuickControls {
+                id: qcCup
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.preferredHeight: cupertinoRightCol.qcH
-                Layout.minimumHeight: cupertinoRightCol.qcH
-                Layout.maximumHeight: cupertinoRightCol.qcH
+                Layout.preferredHeight: Math.max(96, qcCup.implicitHeight)
+                Layout.minimumHeight: Math.max(96, qcCup.implicitHeight)
                 active: root.active && root.layoutMode === "cupertino"
+                compactLayout: true
+                cupertinoMode: true
                 hideHeader: true
                 hideStyleFooter: true
-                hideDuplicateToggles: true
-                tallActionTiles: true
                 onDraggingChanged: dragging => root.controlInteractionChanged(dragging)
                 onOpenSettingsRequested: page => root.openSettingsRequested(page)
             }
@@ -626,32 +587,32 @@ Item {
             SpacesCapsule {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.preferredHeight: 44
-                Layout.minimumHeight: 44
-                Layout.maximumHeight: 44
+                Layout.preferredHeight: 46
+                Layout.minimumHeight: 46
+                Layout.maximumHeight: 46
             }
 
-            // Activity Rings Telemetry Platter
+            // M3 Wavy Activity Rings Telemetry Platter
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumHeight: 96
-                radius: Theme.r(18)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                Layout.minimumHeight: 118
+                radius: Theme.r(26)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
                 clip: true
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 6
-                    spacing: 4
+                    anchors.margins: 8
+                    spacing: 6
 
                     ActivityRing {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         percent: root.cpuPercent
-                        ringColor: root.cpuPercent > 85 ? Theme.error : Theme.primary
+                        ringColor: root.cpuPercent > 85 ? Theme.m3Error : Theme.m3Primary
                         centerLabel: Math.round(root.cpuPercent) + "%"
                         titleLabel: "CPU Load"
                         detailLabel: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : "CPU"
@@ -672,7 +633,7 @@ Item {
                         Layout.fillHeight: true
                         percent: DeviceCaps.hasBattery ? DeviceCaps.batteryPercent : root.diskPercent
                         ringColor: DeviceCaps.hasBattery
-                            ? (DeviceCaps.batteryLow ? Theme.error : Theme.success)
+                            ? (DeviceCaps.batteryLow ? Theme.m3Error : Theme.tertiary)
                             : Theme.tertiary
                         centerLabel: DeviceCaps.hasBattery
                             ? (DeviceCaps.batteryPercent + "%")
@@ -686,23 +647,23 @@ Item {
         }
     }
 
-    // ==================== LAYOUT 2: STAGE (Artwork Showcase + Controls & Metric Deck) ====================
+    // ==================== LAYOUT 2: STAGE (Artwork Showcase + M3 Controls & Metric Deck) ====================
     Component {
         id: stageLayoutComp
 
         RowLayout {
             spacing: 10
 
-            // Left Media Showcase Card (Full-bleed top artwork + snug bottom playback bar)
+            // Left Media Showcase Card
             ClippingRectangle {
-                Layout.preferredWidth: 276
+                Layout.preferredWidth: 278
                 Layout.minimumWidth: 268
-                Layout.maximumWidth: 282
+                Layout.maximumWidth: 286
                 Layout.fillHeight: true
-                radius: Theme.r(18)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                radius: Theme.r(26)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
                 contentUnderBorder: false
                 contentInsideBorder: true
 
@@ -781,9 +742,9 @@ Item {
                             elide: Text.ElideRight
                             text: (root.player && root.player.trackTitle) ? root.player.trackTitle : "Nothing Playing"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 13
+                            font.pixelSize: 14
                             font.weight: Font.Bold
-                            color: Theme.fgSurface
+                            color: Theme.m3Ink
                         }
 
                         Text {
@@ -800,7 +761,7 @@ Item {
                             }
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
-                            color: Theme.fgSurfaceVariant
+                            color: Theme.m3InkDim
                         }
                     }
 
@@ -830,40 +791,39 @@ Item {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { text: root.formatTime(root.displayPosition); font.family: Theme.monoFont; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                            Text { text: root.formatTime(root.displayPosition); font.family: Theme.monoFont; font.pixelSize: 9; color: Theme.m3InkDim }
                             Item { Layout.fillWidth: true }
-                            Text { text: root.formatTime(root.trackLength); font.family: Theme.monoFont; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
+                            Text { text: root.formatTime(root.trackLength); font.family: Theme.monoFont; font.pixelSize: 9; color: Theme.m3InkDim }
                         }
                     }
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 12
+                        spacing: 10
                         Item { Layout.fillWidth: true }
 
                         Rectangle {
-                            implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
-                            color: stPrevMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                            border.width: Theme.activeControlBorderWidth; border.color: Theme.cardBorder
-                            opacity: (root.hasPlayer && root.player.canGoPrevious) ? 1.0 : 0.45
-                            Text { anchors.centerIn: parent; text: "󰒮"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.fgSurface }
+                            implicitWidth: 36; implicitHeight: 36; radius: Theme.isSimple ? 0 : Theme.r(stPrevMouse.pressed ? 11 : 18)
+                            color: stPrevMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                            opacity: (root.hasPlayer && root.player.canGoPrevious) ? 1.0 : 0.42
+                            Text { anchors.centerIn: parent; text: "󰒮"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.m3Ink }
                             MouseArea { id: stPrevMouse; anchors.fill: parent; hoverEnabled: true; enabled: root.hasPlayer && root.player.canGoPrevious; cursorShape: Qt.PointingHandCursor; onClicked: root.player.previous() }
                         }
 
                         Rectangle {
-                            implicitWidth: 46; implicitHeight: 34; radius: Theme.r(17)
-                            color: stPlayMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-                            opacity: (root.hasPlayer && root.player.canTogglePlaying) ? 1.0 : 0.50
-                            Text { anchors.centerIn: parent; text: root.isPlaying ? "󰏤" : "󰐊"; font.family: Theme.iconFont; font.pixelSize: 18; color: Theme.fgPrimary }
+                            implicitWidth: 52; implicitHeight: 36; radius: Theme.isSimple ? 0 : Theme.r(stPlayMouse.pressed ? 11 : (root.isPlaying ? 14 : 18))
+                            color: Theme.m3Primary
+                            opacity: (root.hasPlayer && root.player.canTogglePlaying) ? 1.0 : 0.45
+                            Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 220; easing.type: Theme.m3Springy } }
+                            Text { anchors.centerIn: parent; text: root.isPlaying ? "󰏤" : "󰐊"; font.family: Theme.iconFont; font.pixelSize: 18; color: Theme.m3OnPrimary }
                             MouseArea { id: stPlayMouse; anchors.fill: parent; hoverEnabled: true; enabled: root.hasPlayer && root.player.canTogglePlaying; cursorShape: Qt.PointingHandCursor; onClicked: root.player.togglePlaying() }
                         }
 
                         Rectangle {
-                            implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
-                            color: stNextMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                            border.width: Theme.activeControlBorderWidth; border.color: Theme.cardBorder
-                            opacity: (root.hasPlayer && root.player.canGoNext) ? 1.0 : 0.45
-                            Text { anchors.centerIn: parent; text: "󰒭"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.fgSurface }
+                            implicitWidth: 36; implicitHeight: 36; radius: Theme.isSimple ? 0 : Theme.r(stNextMouse.pressed ? 11 : 18)
+                            color: stNextMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                            opacity: (root.hasPlayer && root.player.canGoNext) ? 1.0 : 0.42
+                            Text { anchors.centerIn: parent; text: "󰒭"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.m3Ink }
                             MouseArea { id: stNextMouse; anchors.fill: parent; hoverEnabled: true; enabled: root.hasPlayer && root.player.canGoNext; cursorShape: Qt.PointingHandCursor; onClicked: root.player.next() }
                         }
 
@@ -873,7 +833,7 @@ Item {
             }
         }
 
-        // Right Column: Spaces Strip + Controls Deck + Horizontal Metric Deck
+        // Right Column: Spaces Strip + M3 Controls Deck + Horizontal Metric Deck
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -882,76 +842,52 @@ Item {
             SpacesCapsule {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.preferredHeight: 44
-                Layout.minimumHeight: 44
-                Layout.maximumHeight: 44
+                Layout.preferredHeight: 46
+                Layout.minimumHeight: 46
+                Layout.maximumHeight: 46
             }
 
-            // Borderless Controls Deck
+            // M3 Expressive Controls Deck
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                readonly property int deckH: 148 + (DeviceCaps.hasBacklight ? 38 : 0)
+                readonly property int deckH: stageDeckCol.implicitHeight + 22
                 Layout.preferredHeight: deckH
                 Layout.minimumHeight: deckH
                 Layout.maximumHeight: deckH
-                radius: Theme.r(18)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                radius: Theme.r(26)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
                 clip: true
 
                 ColumnLayout {
+                    id: stageDeckCol
                     anchors.fill: parent
-                    anchors.margins: 10
-                    spacing: 8
+                    anchors.margins: 11
+                    spacing: 9
 
-                    // Volume Capsule + Mute Button
-                    Item {
-                        id: stVolCap
+                    // Real M3CapsuleSlider for Volume
+                    M3CapsuleSlider {
                         Layout.fillWidth: true
                         Layout.fillHeight: false
-                        implicitHeight: 32
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Theme.r(16)
-                            color: Theme.subCardBg
-                            border.width: Theme.activeControlBorderWidth
-                            border.color: Theme.cardBorder
-                            clip: true
-
-                            Rectangle {
-                                anchors.top: parent.top; anchors.bottom: parent.bottom; anchors.left: parent.left
-                                width: root.volumeLevel <= 0.001 ? 0 : Math.max(parent.height, parent.width * Math.min(1.0, root.volumeLevel))
-                                radius: Theme.r(16)
-                                color: root.volumeMuted ? Theme.surfaceContainerHighest : Theme.primary
-                            }
-
-                            RowLayout {
-                                anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12; spacing: 6
-                                Text {
-                                    text: root.volumeMuted ? "󰝟" : "󰕾"
-                                    font.family: Theme.iconFont; font.pixelSize: 15
-                                    color: root.volumeMuted ? Theme.fgSurfaceVariant : Theme.fgPrimary
-                                }
-                                Text { text: root.volumeMuted ? "Muted" : "Sound"; Layout.fillWidth: true; elide: Text.ElideRight; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: root.volumeLevel > 0.25 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface }
-                                Text { text: Math.round(root.volumeLevel * 100) + "%"; font.family: Theme.monoFont; font.pixelSize: 10; font.weight: Font.Bold; color: root.volumeLevel > 0.88 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onPressed: m => {
-                                    root._dragRatio = Math.max(0.0, Math.min(ShellState.audioOverAmp ? 1.5 : 1.0, m.x / stVolCap.width));
-                                    root._dragging = true;
-                                    root.controlInteractionChanged(true);
-                                    root.applyVolume(root._dragRatio);
-                                }
-                                onPositionChanged: m => { if (pressed) root.applyVolume(m.x / stVolCap.width); }
-                                onReleased: { root._dragging = false; root.controlInteractionChanged(false); }
-                                onCanceled: { root._dragging = false; root.controlInteractionChanged(false); }
-                            }
+                        compact: true
+                        icon: root.volumeMuted ? "󰝟" : (root.volumeLevel <= 0.45 ? "󰖀" : "󰕾")
+                        label: root.volumeMuted ? "Muted" : "Sound"
+                        value: root.volumeLevel
+                        maxValue: ShellState.audioOverAmp ? 1.5 : 1.0
+                        muted: root.volumeMuted
+                        activeColor: Theme.m3Primary
+                        onMoved: v => {
+                            root._dragRatio = v;
+                            root._dragging = true;
+                            root.applyVolume(v);
+                        }
+                        onIconClicked: MangoState.toggleMute()
+                        onRightClicked: MangoState.cycleAudioSink()
+                        onDraggingChanged: d => {
+                            root._dragging = d;
+                            root.controlInteractionChanged(d);
                         }
                     }
 
@@ -959,21 +895,19 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: false
-                        implicitHeight: 30
+                        implicitHeight: 32
                         visible: DeviceCaps.hasBacklight
-                        radius: Theme.r(15)
-                        color: stDispMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                        border.width: Theme.activeControlBorderWidth
-                        border.color: Theme.cardBorder
+                        radius: Theme.r(16)
+                        color: stDispMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 12
                             anchors.rightMargin: 12
                             spacing: 6
-                            Text { text: "󰃠"; font.family: Theme.iconFont; font.pixelSize: 13; color: Theme.fgSurfaceVariant }
-                            Text { Layout.fillWidth: true; text: "Display & Brightness"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold; color: Theme.fgSurface }
-                            Text { text: "Settings"; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.primary }
+                            Text { text: "󰃠"; font.family: Theme.iconFont; font.pixelSize: 13; color: Theme.m3Primary }
+                            Text { Layout.fillWidth: true; text: "Display & Brightness"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold; color: Theme.m3Ink }
+                            Text { text: "Settings"; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; color: Theme.m3Primary }
                         }
 
                         MouseArea {
@@ -985,81 +919,50 @@ Item {
                         }
                     }
 
-                    // 4 Borderless Quick Action Tiles
+                    // 4 Morphing M3 Tiles
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: false
-                        spacing: 6
+                        spacing: 7
 
-                        Repeater {
-                            model: [
-                                { id: "dnd",   icon: ShellState.dnd ? "󰂛" : "󰂚", label: "Focus",   active: ShellState.dnd, tint: Theme.secondary },
-                                { id: "awake", icon: "󰅶", label: "Awake",   active: ShellState.keepAwake, tint: Theme.warning },
-                                { id: "shot",  icon: "󰹑", label: "Capture", active: false, tint: Theme.primary },
-                                { id: "game",  icon: "󰊴", label: "Game",    active: ShellState.gameModeActive, tint: Theme.tertiary }
-                            ]
+                        M3Tile {
+                            compact: true
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            icon: ShellState.dnd ? "󰂛" : "󰂚"
+                            label: "Focus"
+                            active: ShellState.dnd
+                            onClicked: ShellState.toggleDnd()
+                        }
 
-                            delegate: Rectangle {
-                                id: stAct
-                                required property var modelData
-                                Layout.fillWidth: true
-                                implicitHeight: 44
-                                radius: Theme.r(12)
-                                color: stAct.modelData.active
-                                    ? Theme.tileActiveBg
-                                    : (stActMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                                border.width: stAct.modelData.active ? Theme.activeControlBorderWidth : 0
-                                border.color: stAct.modelData.tint
-                                scale: stActMouse.pressed ? 0.95 : 1.0
+                        M3Tile {
+                            compact: true
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            icon: "󰅶"
+                            label: "Awake"
+                            active: ShellState.keepAwake
+                            onClicked: ShellState.toggleKeepAwake()
+                        }
 
-                                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+                        M3Tile {
+                            compact: true
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            icon: "󰹑"
+                            label: "Capture"
+                            active: false
+                            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--area"])
+                        }
 
-                                ColumnLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 3
-
-                                    Rectangle {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        implicitWidth: 20
-                                        implicitHeight: 20
-                                        radius: Theme.r(10)
-                                        color: stAct.modelData.active ? stAct.modelData.tint : "transparent"
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: stAct.modelData.icon
-                                            font.family: Theme.iconFont
-                                            font.pixelSize: stAct.modelData.active ? 12 : 14
-                                            color: stAct.modelData.active
-                                                ? Theme.contrastInk(stAct.modelData.tint)
-                                                : (stActMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant)
-                                        }
-                                    }
-
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: stAct.modelData.label
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: 9
-                                        font.weight: stAct.modelData.active ? Font.Bold : Font.DemiBold
-                                        color: Theme.fgSurface
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: stActMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        const sid = stAct.modelData.id;
-                                        if (sid === "dnd") ShellState.toggleDnd();
-                                        else if (sid === "awake") ShellState.toggleKeepAwake();
-                                        else if (sid === "shot") Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--area"]);
-                                        else if (sid === "game") ShellState.toggleGameMode();
-                                    }
-                                }
-                            }
+                        M3Tile {
+                            compact: true
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            icon: "󰊴"
+                            label: "Game"
+                            active: ShellState.gameModeActive
+                            onClicked: ShellState.toggleGameMode()
                         }
                     }
 
@@ -1067,18 +970,16 @@ Item {
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: false
-                        spacing: 6
+                        spacing: 7
 
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
-                            implicitHeight: 28
-                            radius: Theme.r(9)
+                            implicitHeight: 32
+                            radius: Theme.r(16)
                             color: ShellState.recordingActive
-                                ? Theme.error
-                                : (stRecMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                            border.width: ShellState.recordingActive ? Theme.activeControlBorderWidth : 0
-                            border.color: Theme.error
+                                ? Theme.m3Error
+                                : (stRecMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                             Text {
                                 anchors.centerIn: parent
@@ -1086,8 +987,8 @@ Item {
                                 horizontalAlignment: Text.AlignHCenter
                                 elide: Text.ElideRight
                                 text: ShellState.recordingActive ? "󰑊 Stop REC" : "󰑊 Record"
-                                font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold
-                                color: ShellState.recordingActive ? Theme.fgError : Theme.fgSurface
+                                font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold
+                                color: ShellState.recordingActive ? Theme.m3OnError : Theme.m3Ink
                             }
 
                             MouseArea {
@@ -1099,24 +1000,23 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1.5
-                            implicitHeight: 28
-                            radius: Theme.r(9)
-                            color: stSinkMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                            border.width: Theme.activeControlBorderWidth; border.color: Theme.cardBorder
+                            implicitHeight: 32
+                            radius: Theme.r(16)
+                            color: stSinkMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 8
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
                                 spacing: 5
 
-                                Text { text: "󰋋"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.fgSurfaceVariant }
+                                Text { text: "󰋋"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.m3Primary }
                                 Text {
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
                                     text: root.defaultSinkLabel
-                                    font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.DemiBold
-                                    color: Theme.fgSurface
+                                    font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold
+                                    color: Theme.m3Ink
                                 }
                             }
 
@@ -1138,10 +1038,9 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
-                            implicitHeight: 28
-                            radius: Theme.r(9)
-                            color: stAppMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                            border.width: Theme.activeControlBorderWidth; border.color: Theme.cardBorder
+                            implicitHeight: 32
+                            radius: Theme.r(16)
+                            color: stAppMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
 
                             Text {
                                 anchors.centerIn: parent
@@ -1149,8 +1048,8 @@ Item {
                                 horizontalAlignment: Text.AlignHCenter
                                 elide: Text.ElideRight
                                 text: "Appearance"
-                                font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: Font.Bold
-                                color: Theme.primary
+                                font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold
+                                color: Theme.m3OnSecondaryContainer
                             }
 
                             MouseArea {
@@ -1162,15 +1061,15 @@ Item {
                 }
             }
 
-            // Horizontal Metric Telemetry Deck (no dead space, separated by hairlines)
+            // Horizontal Metric Telemetry Deck
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumHeight: 76
-                radius: Theme.r(18)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                Layout.minimumHeight: 80
+                radius: Theme.r(24)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
                 clip: true
 
                 RowLayout {
@@ -1183,10 +1082,10 @@ Item {
                         detail: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : "Load"
                         percent: root.cpuPercent
                         valueText: Math.round(root.cpuPercent) + "%"
-                        barColor: root.cpuPercent > 85 ? Theme.error : Theme.primary
+                        barColor: root.cpuPercent > 85 ? Theme.m3Error : Theme.m3Primary
                     }
 
-                    Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: Theme.hairlineBorder }
+                    Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: Theme.m3Line }
 
                     MetricCell {
                         label: "Memory"
@@ -1196,14 +1095,14 @@ Item {
                         barColor: root.ramPercent > 85 ? Theme.warning : Theme.secondary
                     }
 
-                    Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: Theme.hairlineBorder }
+                    Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: Theme.m3Line }
 
                     MetricCell {
                         label: DeviceCaps.hasBattery ? "Battery" : "Disk /"
                         detail: DeviceCaps.hasBattery ? (DeviceCaps.batteryEta.length > 0 ? (DeviceCaps.batteryStatus + " · " + DeviceCaps.batteryEta) : DeviceCaps.batteryStatus) : (root.diskFreeLabel.length > 0 ? (root.diskFreeLabel + " free") : "Root")
                         percent: DeviceCaps.hasBattery ? DeviceCaps.batteryPercent : root.diskPercent
                         valueText: DeviceCaps.hasBattery ? (DeviceCaps.batteryPercent + "%") : (Math.round(root.diskPercent) + "%")
-                        barColor: DeviceCaps.hasBattery ? (DeviceCaps.batteryLow ? Theme.error : Theme.success) : Theme.tertiary
+                        barColor: DeviceCaps.hasBattery ? (DeviceCaps.batteryLow ? Theme.m3Error : Theme.tertiary) : Theme.tertiary
                     }
                 }
             }
@@ -1218,30 +1117,31 @@ Item {
         ColumnLayout {
             spacing: 10
 
-        // Top Unified Media + Mission Control Spaces Ribbon (50px snug fit)
+        // Top Unified Media + Mission Control Spaces Ribbon
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
-            Layout.preferredHeight: 50
-            Layout.minimumHeight: 50
-            Layout.maximumHeight: 50
+            Layout.preferredHeight: 52
+            Layout.minimumHeight: 52
+            Layout.maximumHeight: 52
             spacing: 10
 
             // Compact Horizontal Media Capsule
             Rectangle {
-                Layout.preferredWidth: 274
+                Layout.preferredWidth: 278
                 Layout.minimumWidth: 256
-                Layout.maximumWidth: 280
+                Layout.maximumWidth: 286
                 Layout.fillHeight: true
-                radius: Theme.r(16)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                radius: Theme.r(24)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
                 clip: true
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 7
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 8
                     spacing: 8
 
                     M3ShapeImage {
@@ -1262,29 +1162,28 @@ Item {
                         Text {
                             Layout.fillWidth: true; elide: Text.ElideRight
                             text: (root.player && root.player.trackTitle) ? root.player.trackTitle : "Nothing Playing"
-                            font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.Bold; color: Theme.fgSurface
+                            font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.Bold; color: Theme.m3Ink
                         }
                         Text {
                             Layout.fillWidth: true; elide: Text.ElideRight
                             text: root.player ? (root.player.trackArtist || root.player.identity || "MPRIS") : "Open Spotify or media"
-                            font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant
+                            font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.m3InkDim
                         }
                     }
 
                     Rectangle {
-                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(14)
-                        color: ckPlayMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
+                        implicitWidth: 30; implicitHeight: 30; radius: Theme.r(15)
+                        color: Theme.m3Primary
                         opacity: (root.hasPlayer && root.player.canTogglePlaying) ? 1.0 : 0.45
-                        Text { anchors.centerIn: parent; text: root.isPlaying ? "󰏤" : "󰐊"; font.family: Theme.iconFont; font.pixelSize: 14; color: Theme.fgPrimary }
+                        Text { anchors.centerIn: parent; text: root.isPlaying ? "󰏤" : "󰐊"; font.family: Theme.iconFont; font.pixelSize: 14; color: Theme.m3OnPrimary }
                         MouseArea { id: ckPlayMouse; anchors.fill: parent; hoverEnabled: true; enabled: root.hasPlayer && root.player.canTogglePlaying; cursorShape: Qt.PointingHandCursor; onClicked: root.player.togglePlaying() }
                     }
 
                     Rectangle {
-                        implicitWidth: 26; implicitHeight: 26; radius: Theme.r(13)
-                        color: ckNextMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                        border.width: Theme.activeControlBorderWidth; border.color: Theme.cardBorder
+                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(14)
+                        color: ckNextMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
                         opacity: (root.hasPlayer && root.player.canGoNext) ? 1.0 : 0.45
-                        Text { anchors.centerIn: parent; text: "󰒭"; font.family: Theme.iconFont; font.pixelSize: 13; color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰒭"; font.family: Theme.iconFont; font.pixelSize: 13; color: Theme.m3Ink }
                         MouseArea { id: ckNextMouse; anchors.fill: parent; hoverEnabled: true; enabled: root.hasPlayer && root.player.canGoNext; cursorShape: Qt.PointingHandCursor; onClicked: root.player.next() }
                     }
                 }
@@ -1296,11 +1195,11 @@ Item {
             }
         }
 
-        // Bottom Dual Platter: Full Telemetry Monitor + Borderless Quick Controls
+        // Bottom Dual Platter: Full Telemetry Monitor + Compact M3 Quick Controls
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.minimumHeight: 220
+            Layout.minimumHeight: 230
             spacing: 10
 
             SystemMonitor {
@@ -1314,6 +1213,8 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1
+                compactLayout: true
+                hideStyleFooter: true
                 active: root.active && root.layoutMode === "cockpit"
                 showFocusAwakeRow: !DeviceCaps.hasExtraQuickControls
                 onDraggingChanged: dragging => root.controlInteractionChanged(dragging)

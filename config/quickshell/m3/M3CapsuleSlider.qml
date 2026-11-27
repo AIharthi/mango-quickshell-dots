@@ -11,6 +11,7 @@ Item {
     property real value: 0.0
     property real maxValue: 1.0
     property bool muted: false
+    property bool compact: false
     property bool sliderEnabled: true
     property bool showPercent: true
     property color activeColor: Theme.m3Primary
@@ -20,28 +21,32 @@ Item {
     signal rightClicked()
     signal draggingChanged(bool dragging)
 
-    implicitHeight: 46
+    implicitHeight: ln.compact ? 38 : 46
     opacity: sliderEnabled ? 1.0 : 0.45
 
     readonly property real norm: Math.max(0.0, Math.min(1.0, value / Math.max(0.1, maxValue)))
     readonly property int pct: Math.round(value * 100)
+    property bool _sized: false
+    readonly property real fillRatio: ln.width > 0 ? (fillRect.width / ln.width) : ln.norm
+    onWidthChanged: if (!_sized && width > 0) Qt.callLater(function() { ln._sized = true; })
 
     Rectangle {
         anchors.fill: parent
-        radius: Theme.r(23)
+        radius: Theme.r(Math.round(height / 2))
         color: Theme.m3SurfaceC
         border.width: 1
         border.color: Theme.m3Line
         clip: true
 
         Rectangle {
-            width: ln.muted ? 46 : Math.max(46, Math.round(parent.width * ln.norm))
+            id: fillRect
+            width: ln.muted ? height : Math.max(height, Math.round(parent.width * ln.norm))
             height: parent.height
-            radius: Theme.r(23)
+            radius: Theme.r(Math.round(height / 2))
             color: ln.muted ? Theme.m3SurfaceHigh : ln.activeColor
 
             Behavior on width {
-                enabled: !lm.pressed && !Theme.reducedMotion
+                enabled: ln._sized && !lm.pressed && !Theme.reducedMotion
                 NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
             }
             Behavior on color {
@@ -54,13 +59,13 @@ Item {
     MouseArea {
         id: lm
         anchors.fill: parent
-        anchors.leftMargin: 46
+        anchors.leftMargin: ln.height
         enabled: ln.sliderEnabled
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
 
         function at(x) {
-            return Math.max(0.0, Math.min(ln.maxValue, ((x + 46) / Math.max(1, ln.width)) * ln.maxValue));
+            return Math.max(0.0, Math.min(ln.maxValue, ((x + ln.height) / Math.max(1, ln.width)) * ln.maxValue));
         }
 
         onPressed: function(m) {
@@ -83,16 +88,16 @@ Item {
         }
     }
 
-    // Left 46x46 circular icon tap zone (mute / unmute / output switch)
+    // Left square circular icon tap zone (mute / unmute / output switch)
     Item {
-        width: 46
-        height: 46
+        width: ln.height
+        height: ln.height
 
         Text {
             anchors.centerIn: parent
             text: ln.icon
             font.family: Theme.iconFont
-            font.pixelSize: Theme.fs(17)
+            font.pixelSize: Theme.fs(ln.compact ? 15 : 17)
             color: ln.muted ? Theme.m3InkDim : Theme.contrastInk(ln.activeColor)
         }
 
@@ -124,7 +129,7 @@ Item {
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(11)
             font.weight: Font.Medium
-            color: ln.norm > 0.72 && !ln.muted ? Theme.contrastInk(ln.activeColor) : Theme.m3InkDim
+            color: ln.fillRatio > 0.72 && !ln.muted ? Theme.contrastInk(ln.activeColor) : Theme.m3InkDim
         }
 
         Text {
@@ -134,7 +139,7 @@ Item {
             font.family: Theme.monoFont
             font.pixelSize: Theme.fs(11)
             font.weight: Font.Bold
-            color: ln.norm > 0.85 && !ln.muted ? Theme.contrastInk(ln.activeColor) : Theme.m3Ink
+            color: ln.fillRatio > 0.85 && !ln.muted ? Theme.contrastInk(ln.activeColor) : Theme.m3Ink
         }
     }
 }

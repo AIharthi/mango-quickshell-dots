@@ -29,17 +29,29 @@ Item {
         }
     }
 
+    onVisibleChanged: {
+        if (visible && si.loaded !== "" && si.loaded === si.source)
+            cv.requestPaint();
+    }
+
     Image {
         id: probe
         visible: false
         asynchronous: true
-        cache: false
-        sourceSize.width: 32
+        cache: true
+        sourceSize: Qt.size(160, 160)
         source: si.source
         onStatusChanged: {
             if (status === Image.Ready && implicitWidth > 0) {
                 si.ratio = implicitHeight / implicitWidth;
-                cv.requestPaint();
+                if (si.source.length > 0) {
+                    if (cv.isImageLoaded(si.source)) {
+                        si.loaded = si.source;
+                        cv.requestPaint();
+                    } else {
+                        cv.loadImage(si.source);
+                    }
+                }
             }
         }
     }

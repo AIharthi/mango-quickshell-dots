@@ -20,7 +20,7 @@ ClippingRectangle {
     readonly property real trackLength: (root.player && root.player.length > 0) ? root.player.length : 0
     readonly property string artUrl: (root.player && root.player.trackArtUrl) ? root.player.trackArtUrl : ""
     readonly property bool wideArt: root.width >= 360
-    readonly property bool canSeek: root.hasPlayer && root.player.canSeek && root.player.positionSupported && root.trackLength > 0
+    readonly property bool canSeek: root.hasPlayer && !!(root.player.canSeek && root.player.positionSupported && root.trackLength > 0)
     readonly property real progressRatio: (root.trackLength > 0)
         ? Math.max(0.0, Math.min(1.0, root.displayPosition / root.trackLength))
         : 0.0
@@ -240,6 +240,8 @@ ClippingRectangle {
                 Layout.fillWidth: true
                 Layout.topMargin: 2
                 spacing: 5
+
+                Item { Layout.fillWidth: true }
 
                 Repeater {
                     model: [

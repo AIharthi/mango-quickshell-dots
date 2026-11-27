@@ -365,6 +365,8 @@ PanelWindow {
                 implicitHeight: fwRow.implicitHeight + 16
                 radius: Theme.r(20)
                 color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 RowLayout {
                     id: fwRow
@@ -377,7 +379,7 @@ PanelWindow {
                         Layout.fillWidth: true
                         spacing: 1
                         Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.activeAppName.length > 0 ? MangoState.activeAppName : "Desktop"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(12); font.weight: Font.DemiBold; color: Theme.m3Ink }
-                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.activeWindowTitle.length > 0 ? MangoState.activeWindowTitle : "No active window focused"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.m3InkDim }
+                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.activeWindowTitle.length > 0 ? MangoState.activeWindowTitle : ("Workspace " + MangoState.activeTagForScreen(root.screenName) + " ready"); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.m3InkDim }
                     }
                 }
             }
@@ -388,6 +390,8 @@ PanelWindow {
                 implicitHeight: wsGrid.implicitHeight + 18
                 radius: Theme.r(22)
                 color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 GridLayout {
                     id: wsGrid
@@ -603,20 +607,26 @@ PanelWindow {
             // Audio Output Device Switcher
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 30
-                radius: Theme.r(10)
-                color: chSinkMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 38
+                radius: Theme.r(19)
+                color: chSinkMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    spacing: 6
-                    Text { text: "󰋋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.primary }
-                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.defaultSinkLabel; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurface }
-                    Text { text: "Click to cycle"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
+                    spacing: 8
+                    Text { text: "󰋋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(14); color: Theme.m3Primary }
+                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.defaultSinkLabel; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.DemiBold; color: Theme.m3Ink }
+                    Rectangle {
+                        implicitHeight: 22
+                        implicitWidth: cycleSinkLbl.implicitWidth + 12
+                        radius: Theme.r(11)
+                        color: Theme.m3SecondaryContainer
+                        Text { id: cycleSinkLbl; anchors.centerIn: parent; text: "Cycle"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3OnSecondaryContainer }
+                    }
                 }
 
                 MouseArea {
@@ -641,33 +651,33 @@ PanelWindow {
             // Focus Timer & Stopwatch Card
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: ftCol.implicitHeight + 16
-                radius: Theme.r(14)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: ftCol.implicitHeight + 20
+                radius: Theme.r(24)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 ColumnLayout {
                     id: ftCol
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 8
+                    anchors.margins: 11
+                    spacing: 9
 
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 6
 
-                        Text { text: "󰔛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.primary }
-                        Text { text: "Focus Timer"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
+                        Text { text: "󰔛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(14); color: Theme.m3Primary }
+                        Text { text: "Focus Timer"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.DemiBold; color: Theme.m3Ink }
                         Item { Layout.fillWidth: true }
-                        Text { text: ShellState.formatTimer(ShellState.timerRemainingSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(13); font.weight: Font.Bold; color: ShellState.timerActive ? Theme.primary : Theme.fgSurface }
+                        Text { text: ShellState.formatTimer(ShellState.timerRemainingSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(13); font.weight: Font.Bold; color: ShellState.timerActive ? Theme.m3Primary : Theme.m3Ink }
 
                         Rectangle {
-                            implicitWidth: ftGoTxt.implicitWidth + 14
-                            implicitHeight: 22
-                            radius: Theme.r(7)
-                            color: Theme.primary
-                            Text { id: ftGoTxt; anchors.centerIn: parent; text: ShellState.timerActive ? "Pause" : "Start"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgPrimary }
+                            implicitWidth: ftGoTxt.implicitWidth + 16
+                            implicitHeight: 26
+                            radius: Theme.r(13)
+                            color: ShellState.timerActive ? Theme.m3SecondaryContainer : Theme.m3Primary
+                            Text { id: ftGoTxt; anchors.centerIn: parent; text: ShellState.timerActive ? "Pause" : "Start"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: ShellState.timerActive ? Theme.m3OnSecondaryContainer : Theme.m3OnPrimary }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleTimer() }
                         }
 
@@ -676,7 +686,7 @@ PanelWindow {
                             delegate: Rectangle {
                                 id: ftMinChip
                                 required property int modelData
-                                implicitWidth: 34; implicitHeight: 24; radius: Theme.r(12)
+                                implicitWidth: 34; implicitHeight: 26; radius: Theme.r(13)
                                 color: ftMinMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
                                 Text { anchors.centerIn: parent; text: ftMinChip.modelData + "m"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Medium; color: Theme.m3Ink }
                                 MouseArea { id: ftMinMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.resetTimer(ftMinChip.modelData * 60) }
@@ -684,35 +694,33 @@ PanelWindow {
                         }
                     }
 
-                    Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Theme.hairlineBorder }
+                    Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Theme.m3Line }
 
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 6
 
-                        Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.secondary }
-                        Text { text: "Stopwatch"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
+                        Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(14); color: Theme.m3Primary }
+                        Text { text: "Stopwatch"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.DemiBold; color: Theme.m3Ink }
                         Item { Layout.fillWidth: true }
-                        Text { text: ShellState.formatTimer(ShellState.stopwatchElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(12); font.weight: Font.Bold; color: ShellState.stopwatchActive ? Theme.secondary : Theme.fgSurface }
+                        Text { text: ShellState.formatTimer(ShellState.stopwatchElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(13); font.weight: Font.Bold; color: ShellState.stopwatchActive ? Theme.m3Primary : Theme.m3Ink }
 
                         Rectangle {
-                            implicitWidth: swGoTxt.implicitWidth + 14
-                            implicitHeight: 22
-                            radius: Theme.r(7)
-                            color: ShellState.stopwatchActive ? Theme.secondary : Theme.subCardBg
-                            border.width: 1; border.color: ShellState.stopwatchActive ? Theme.secondary : Theme.cardBorder
-                            Text { id: swGoTxt; anchors.centerIn: parent; text: ShellState.stopwatchActive ? "Stop" : "Run"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: ShellState.stopwatchActive ? Theme.contrastInk(Theme.secondary) : Theme.fgSurface }
+                            implicitWidth: swGoTxt.implicitWidth + 16
+                            implicitHeight: 26
+                            radius: Theme.r(13)
+                            color: ShellState.stopwatchActive ? Theme.m3Primary : Theme.m3SurfaceHigh
+                            Text { id: swGoTxt; anchors.centerIn: parent; text: ShellState.stopwatchActive ? "Stop" : "Run"; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; color: ShellState.stopwatchActive ? Theme.m3OnPrimary : Theme.m3Ink }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleStopwatch() }
                         }
 
                         Rectangle {
-                            implicitWidth: swRstTxt.implicitWidth + 12
-                            implicitHeight: 22
-                            radius: Theme.r(7)
-                            color: Theme.subCardBg
-                            border.width: 1; border.color: Theme.cardBorder
-                            Text { id: swRstTxt; anchors.centerIn: parent; text: "Reset"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.resetStopwatch() }
+                            implicitWidth: swRstTxt.implicitWidth + 14
+                            implicitHeight: 26
+                            radius: Theme.r(13)
+                            color: swRstMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                            Text { id: swRstTxt; anchors.centerIn: parent; text: "Reset"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Medium; color: Theme.m3InkDim }
+                            MouseArea { id: swRstMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.resetStopwatch() }
                         }
                     }
                 }
@@ -721,18 +729,18 @@ PanelWindow {
             // Compact Weather + Agenda Footer
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 34
-                radius: Theme.r(10)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 38
+                radius: Theme.r(19)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
                     spacing: 8
-                    Text { text: ShellState.weatherAvailable ? ShellState.weatherIcon : "󰖐"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.primary }
+                    Text { text: ShellState.weatherAvailable ? ShellState.weatherIcon : "󰖐"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(14); color: Theme.m3Primary }
                     Text {
                         Layout.fillWidth: true
                         elide: Text.ElideRight
@@ -741,13 +749,14 @@ PanelWindow {
                             : "Weather & Calendar ready in Notification Center"
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
                     Text {
                         text: ShellState.unreadCount > 0 ? (ShellState.unreadCount + " unread") : "0 unread"
                         font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(9)
-                        color: ShellState.unreadCount > 0 ? Theme.primary : Theme.fgSurfaceVariant
+                        font.weight: Font.Bold
+                        color: ShellState.unreadCount > 0 ? Theme.m3Primary : Theme.m3InkDim
                     }
                 }
             }
@@ -929,7 +938,7 @@ PanelWindow {
                         Layout.fillWidth: true
                         readonly property bool showMedia: root.panelMode === "controls"
                             && root.controlsTab === "controls"
-                            && (ShellState.splitHubStyle === "controlcenter" || ShellState.splitHubStyle === "media" || root.player !== null)
+                            && (ShellState.splitHubStyle === "controlcenter" || ShellState.splitHubStyle === "media")
                         Layout.preferredHeight: showMedia ? (item ? Math.max(158, Math.ceil(item.implicitHeight)) : 162) : 0
                         active: root._controlsMainLoaded
                         visible: showMedia
@@ -1112,9 +1121,9 @@ PanelWindow {
         visible: root.panelMode === "launcher"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: Math.max(56, root.topBarOffset + 32)
-        width: Math.min(700, Math.max(420, root.width - 48))
-        height: Math.min(500, Math.max(320, root.height - root.topBarOffset - 72))
+        anchors.topMargin: Math.max(52, root.topBarOffset + 28)
+        width: Math.min(780, Math.max(460, root.width - 48))
+        height: Math.min(580, Math.max(380, root.height - root.topBarOffset - 56))
         radius: Theme.r(34)
         color: Theme.m3PanelBg
         border.width: 1

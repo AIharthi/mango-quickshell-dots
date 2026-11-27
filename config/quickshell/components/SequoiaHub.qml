@@ -429,7 +429,7 @@ PanelWindow {
                         Layout.fillWidth: true
                         readonly property bool showMedia: root.panelMode === "controls"
                             && root.controlsTab === "controls"
-                            && (ShellState.sequoiaHubStyle === "controlcenter" || ShellState.sequoiaHubStyle === "media" || root.player !== null)
+                            && (ShellState.sequoiaHubStyle === "controlcenter" || ShellState.sequoiaHubStyle === "media")
                         Layout.preferredHeight: showMedia ? (item ? Math.max(158, Math.ceil(item.implicitHeight)) : 162) : 0
                         active: root._controlsMainLoaded
                         visible: showMedia
@@ -613,9 +613,9 @@ PanelWindow {
         visible: root.panelMode === "launcher"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: Math.max(56, root.topBarOffset + 36)
-        width: Math.min(700, Math.max(420, root.width - 48))
-        height: Math.min(500, Math.max(320, root.height - root.topBarOffset - 72))
+        anchors.topMargin: Math.max(52, root.topBarOffset + 28)
+        width: Math.min(780, Math.max(460, root.width - 48))
+        height: Math.min(580, Math.max(380, root.height - root.topBarOffset - 56))
         radius: Theme.r(34)
         color: Theme.m3PanelBg
         border.width: 1

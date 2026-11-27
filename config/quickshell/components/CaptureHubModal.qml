@@ -671,9 +671,9 @@ PanelWindow {
                     Layout.fillWidth: true
                     implicitHeight: 40
                     radius: Theme.r(20)
-                    color: searchInput.activeFocus ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
-                    border.width: searchInput.activeFocus ? 2 : 1
-                    border.color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
+                    color: searchInput.activeFocus ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                    border.width: 1
+                    border.color: Theme.m3Line
 
                     RowLayout {
                         anchors.fill: parent

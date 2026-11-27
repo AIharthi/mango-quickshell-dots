@@ -400,10 +400,16 @@ ColumnLayout {
         if (!all)
             return [];
         const items = [];
+        const seenNames = {};
         for (let i = 0; i < all.length; i++) {
             const app = all[i];
             if (root.isAppHidden(app))
                 continue;
+            const nNorm = (app.name || "").trim().toLowerCase().replace(/\s+/g, " ");
+            if (nNorm.length > 0 && seenNames[nNorm])
+                continue;
+            if (nNorm.length > 0)
+                seenNames[nNorm] = true;
             const kwText = app.keywords ? app.keywords.join(" ") : "";
             items.push({
                 entry: app,
@@ -416,6 +422,82 @@ ColumnLayout {
         items.sort((a, b) => a.nameL.localeCompare(b.nameL));
         return items;
     }
+
+    readonly property var quickLaunchApps: {
+        const list = root.visibleApps || [];
+        if (list.length === 0)
+            return [];
+        const picked = [];
+        const usedIds = {};
+
+        const addEntry = entry => {
+            if (!entry || picked.length >= 6)
+                return;
+            const key = String(entry.id || entry.name || "").replace(/\.desktop$/i, "").toLowerCase().trim();
+            if (key.length === 0 || usedIds[key])
+                return;
+            usedIds[key] = true;
+            picked.push(entry);
+        };
+
+        const seenQuickIds = {};
+        const addQuickEntry = entry => {
+            if (!entry || picked.length >= 6)
+                return;
+            const eid = String(entry.id || entry.name || "").replace(/\.desktop$/i, "").toLowerCase().trim();
+            const nkey = String(entry.name || "").toLowerCase().replace(/\s+/g, " ").trim();
+            const key = eid + "|" + nkey;
+            if (eid.length === 0 || usedIds[key] || seenQuickIds[nkey])
+                return;
+            usedIds[key] = true;
+            seenQuickIds[nkey] = true;
+            picked.push(entry);
+        };
+
+        const findByToken = tok => {
+            const clean = String(tok || "").replace(/\.desktop$/i, "").toLowerCase().trim();
+            if (clean.length === 0)
+                return null;
+            for (let i = 0; i < list.length; i++) {
+                const it = list[i];
+                const eid = String(it.entry.id || "").replace(/\.desktop$/i, "").toLowerCase();
+                if (eid === clean || it.nameL === clean)
+                    return it.entry;
+            }
+            for (let i = 0; i < list.length; i++) {
+                const it = list[i];
+                const eid = String(it.entry.id || "").replace(/\.desktop$/i, "").toLowerCase();
+                if (eid.indexOf(clean) !== -1 || it.nameL.indexOf(clean) !== -1)
+                    return it.entry;
+            }
+            return null;
+        };
+
+        const recents = Array.isArray(ShellState.recentAppIds) ? ShellState.recentAppIds : [];
+        for (let r = 0; r < recents.length && picked.length < 6; r++)
+            addQuickEntry(findByToken(recents[r]));
+
+        const priorityTokens = [
+            ShellState.defaultBrowser,
+            ShellState.defaultTerminal,
+            ShellState.defaultEditor,
+            "spotify",
+            ShellState.defaultFileManager,
+            "pcmanfm",
+            "steam",
+            "discord",
+            "firefox"
+        ];
+        for (let p = 0; p < priorityTokens.length && picked.length < 6; p++)
+            addQuickEntry(findByToken(priorityTokens[p]));
+
+        for (let k = 0; k < list.length && picked.length < 6; k++)
+            addQuickEntry(list[k].entry);
+
+        return picked;
+    }
+
+    readonly property bool inAppGrid: root.effectiveMode === "apps" && root.cleanQuery.length === 0
 
     readonly property var filteredApps: {
         if (root.effectiveMode !== "apps")
@@ -1037,7 +1119,8 @@ ColumnLayout {
         if (count === 0)
             return;
         root.selectedIndex = (root.selectedIndex + delta + count) % count;
-        if (root.effectiveMode === "apps") appList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+        if (root.inAppGrid) appGrid.positionViewAtIndex(root.selectedIndex, GridView.Contain);
+        else if (root.effectiveMode === "apps") appList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
         else if (root.effectiveMode === "clip") clipList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
         else if (root.effectiveMode === "snippets") snipList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
         else if (root.effectiveMode === "cmds") cmdsList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
@@ -1047,6 +1130,7 @@ ColumnLayout {
     function launchEntry(entry: var): void {
         if (!entry)
             return;
+        ShellState.recordAppLaunch(entry.id || entry.name || "");
         if (entry.runInTerminal && entry.command && entry.command.length > 0) {
             Quickshell.execDetached([Quickshell.shellPath("scripts/launch-app.sh"), "terminal-exec"].concat(entry.command));
         } else {
@@ -1177,20 +1261,19 @@ ColumnLayout {
     readonly property bool anyInputFocused: searchInput.activeFocus || snipTitleInput.activeFocus || snipTagInput.activeFocus || snipBodyInput.activeFocus
     onAnyInputFocusedChanged: root.searchFocusChanged(anyInputFocused)
 
-    // --- M3 Expressive Spotlight Search / Expression Capsule ---
+    // --- M3 Expressive Spotlight Search / App Drawer Header (DarkShadowShell LauncherM3) ---
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: 54
-        Layout.minimumHeight: 54
-        Layout.maximumHeight: 54
-        radius: Theme.r(27)
-        color: searchInput.activeFocus ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
-        border.width: searchInput.activeFocus ? 2 : 1
-        border.color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
+        Layout.preferredHeight: 56
+        Layout.minimumHeight: 56
+        Layout.maximumHeight: 56
+        radius: Theme.r(28)
+        color: searchInput.activeFocus ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+        border.width: 1
+        border.color: Theme.m3Line
 
         Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
-        Behavior on border.color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
 
         RowLayout {
             anchors.fill: parent
@@ -1208,8 +1291,8 @@ ColumnLayout {
                     return "󰍉";
                 }
                 font.family: Theme.iconFont
-                font.pixelSize: 20
-                color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3InkDim
+                font.pixelSize: 21
+                color: Theme.m3Primary
                 rotation: searchInput.text.length > 0 ? -12 : 0
                 Behavior on rotation { enabled: !Theme.reducedMotion; NumberAnimation { duration: 280; easing.type: Easing.OutBack } }
             }
@@ -1232,7 +1315,7 @@ ColumnLayout {
                     elide: Text.ElideRight
                     width: parent.width
                     font.family: Theme.fontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: 15
                     color: Theme.m3InkDim
                 }
 
@@ -1244,7 +1327,7 @@ ColumnLayout {
                     selectionColor: Theme.m3Primary
                     selectedTextColor: Theme.m3OnPrimary
                     font.family: Theme.fontFamily
-                    font.pixelSize: 15
+                    font.pixelSize: 16
                     clip: true
 
                     onTextChanged: {
@@ -1252,8 +1335,26 @@ ColumnLayout {
                         root.selectedIndex = 0;
                     }
 
-                    Keys.onUpPressed: root.moveSelection(-1)
-                    Keys.onDownPressed: root.moveSelection(1)
+                    Keys.onLeftPressed: event => {
+                        if (text.length === 0 && (root.inAppGrid || root.effectiveMode === "emoji")) {
+                            root.moveSelection(-1);
+                            event.accepted = true;
+                        }
+                    }
+                    Keys.onRightPressed: event => {
+                        if (text.length === 0 && (root.inAppGrid || root.effectiveMode === "emoji")) {
+                            root.moveSelection(1);
+                            event.accepted = true;
+                        }
+                    }
+                    Keys.onUpPressed: {
+                        const step = root.inAppGrid ? -appGrid.gridCols : (root.effectiveMode === "emoji" ? -emojiGrid.gridCols : -1);
+                        root.moveSelection(step);
+                    }
+                    Keys.onDownPressed: {
+                        const step = root.inAppGrid ? appGrid.gridCols : (root.effectiveMode === "emoji" ? emojiGrid.gridCols : 1);
+                        root.moveSelection(step);
+                    }
                     Keys.onTabPressed: root.moveSelection(1)
                     Keys.onBacktabPressed: root.moveSelection(-1)
                     Keys.onReturnPressed: root.activateSelected()
@@ -1269,16 +1370,16 @@ ColumnLayout {
 
             Rectangle {
                 visible: searchInput.text.length > 0
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: Theme.r(14)
-                color: clrSearchMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                implicitWidth: 30
+                implicitHeight: 30
+                radius: Theme.r(15)
+                color: clrSearchMouse.containsMouse ? Theme.m3SurfaceC : Theme.m3SurfaceHigh
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰅖"
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
+                    font.pixelSize: 13
                     color: Theme.m3InkDim
                 }
 
@@ -1293,47 +1394,30 @@ ColumnLayout {
                     }
                 }
             }
-
-            Rectangle {
-                implicitHeight: 26
-                implicitWidth: cntBadgeLbl.implicitWidth + 16
-                radius: Theme.r(13)
-                color: Theme.m3SecondaryContainer
-
-                Text {
-                    id: cntBadgeLbl
-                    anchors.centerIn: parent
-                    text: root.currentCount + (root.effectiveMode === "apps" ? " apps" : " items")
-                    font.family: Theme.monoFont
-                    font.pixelSize: 9
-                    font.weight: Font.Bold
-                    color: Theme.m3OnSecondaryContainer
-                }
-            }
         }
     }
 
-    // --- M3 Expressive Mode Filter Bar + Contextual Actions ---
+    // --- M3 Expressive Morphing Mode Chips Row ---
     RowLayout {
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: 36
-        Layout.minimumHeight: 36
-        Layout.maximumHeight: 36
-        spacing: 8
+        Layout.preferredHeight: 34
+        Layout.minimumHeight: 34
+        Layout.maximumHeight: 34
+        spacing: 6
 
-        Rectangle {
-            implicitHeight: 36
-            implicitWidth: modePillRow.implicitWidth + 8
-            radius: Theme.r(18)
-            color: Theme.m3SurfaceC
-            border.width: 1
-            border.color: Theme.m3Line
+            Flickable {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                contentWidth: modeChipRow.implicitWidth
+                contentHeight: height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
 
-            RowLayout {
-                id: modePillRow
-                anchors.centerIn: parent
-                spacing: 3
+                RowLayout {
+                    id: modeChipRow
+                    height: parent.height
+                    spacing: 6
 
                 Repeater {
                     model: [
@@ -1350,12 +1434,14 @@ ColumnLayout {
                         required property var modelData
                         readonly property bool selected: root.effectiveMode === modeBtn.modelData.id
 
-                        implicitHeight: 28
-                        implicitWidth: modeContent.implicitWidth + 14
-                        radius: Theme.r(modeBtn.selected ? 11 : 14)
+                        implicitHeight: 32
+                        implicitWidth: modeContent.implicitWidth + 20
+                        radius: Theme.r(modeBtn.selected ? 10 : 16)
                         color: modeBtn.selected
-                            ? Theme.m3Primary
+                            ? Theme.m3PrimaryContainer
                             : (modeMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
+                        border.width: modeBtn.selected ? 0 : 1
+                        border.color: Theme.m3Line
 
                         Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                         Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
@@ -1363,21 +1449,21 @@ ColumnLayout {
                         RowLayout {
                             id: modeContent
                             anchors.centerIn: parent
-                            spacing: 4
+                            spacing: 5
 
                             Text {
-                                text: modeBtn.modelData.icon
+                                text: modeBtn.selected ? "󰄬" : modeBtn.modelData.icon
                                 font.family: Theme.iconFont
-                                font.pixelSize: 11
-                                color: modeBtn.selected ? Theme.m3OnPrimary : Theme.m3InkDim
+                                font.pixelSize: 12
+                                color: modeBtn.selected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                             }
 
                             Text {
                                 text: modeBtn.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: 11
                                 font.weight: modeBtn.selected ? Font.Bold : Font.Medium
-                                color: modeBtn.selected ? Theme.m3OnPrimary : Theme.m3InkDim
+                                color: modeBtn.selected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                             }
                         }
 
@@ -1395,8 +1481,6 @@ ColumnLayout {
                 }
             }
         }
-
-        Item { Layout.fillWidth: true }
 
         // Clear unpinned clipboard entries button
         Rectangle {
@@ -1500,69 +1584,208 @@ ColumnLayout {
                 }
             }
         }
+    }
 
-        // Subtle Keycap Shortcuts Hint
-        RowLayout {
-            visible: !(root.effectiveMode === "clip" && root.clipboardItems.length > 0) && root.effectiveMode !== "snippets"
+    // --- Quick Launch Shelf (Apps Home View, DarkShadowShell LauncherM3 strip) ---
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: false
+        visible: root.inAppGrid && root.quickLaunchApps.length > 0
+        spacing: 6
+
+        Text {
+            text: "Quick Launch"
+            font.family: Theme.fontFamily
+            font.pixelSize: 11
+            font.weight: Font.DemiBold
+            color: Theme.m3Primary
+            leftPadding: 4
+        }
+
+        Row {
+            Layout.alignment: Qt.AlignHCenter
             spacing: 8
 
             Repeater {
-                model: [
-                    { k: "Nav", l: "Up/Down" },
-                    { k: "Ret", l: "Open" },
-                    { k: "Esc", l: "Close" }
-                ]
-                delegate: RowLayout {
-                    id: khItem
-                    required property var modelData
-                    spacing: 4
+                model: root.quickLaunchApps
 
-                    Rectangle {
-                        implicitHeight: 20
-                        implicitWidth: khTxt.implicitWidth + 10
-                        radius: Theme.r(7)
-                        color: Theme.m3SurfaceHigh
+                delegate: Rectangle {
+                    id: qTile
+                    required property var modelData
+                    width: Math.max(90, Math.min(114, Math.floor((root.width - 48) / Math.max(1, root.quickLaunchApps.length))))
+                    height: 86
+                    radius: Theme.r(qMouse.pressed ? 16 : 22)
+                    color: qMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent"
+
+                    Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 120 } }
+                    Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 120 } }
+
+                    Column {
+                        anchors.centerIn: parent
+                        width: parent.width - 12
+                        spacing: 6
+
+                        Item {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 44
+                            height: 44
+
+                            IconImage {
+                                id: qIcon
+                                anchors.fill: parent
+                                asynchronous: true
+                                readonly property string resolvedIcon: Quickshell.iconPath(qTile.modelData.icon, true)
+                                source: resolvedIcon
+                                visible: resolvedIcon.length > 0 && status === Image.Ready
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: Theme.r(14)
+                                visible: !qIcon.visible
+                                color: Theme.m3SecondaryContainer
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰣆"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 20
+                                    color: Theme.m3OnSecondaryContainer
+                                }
+                            }
+                        }
 
                         Text {
-                            id: khTxt
-                            anchors.centerIn: parent
-                            text: khItem.modelData.k
-                            font.family: Theme.monoFont
-                            font.pixelSize: 8
-                            font.weight: Font.Bold
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            text: qTile.modelData.name || ""
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
                             color: Theme.m3Ink
                         }
                     }
 
-                    Text {
-                        text: khItem.modelData.l
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 9
-                        color: Theme.m3InkDim
+                    MouseArea {
+                        id: qMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.launchEntry(qTile.modelData)
                     }
                 }
             }
         }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 1
+            color: Theme.m3Line
+        }
     }
 
-    // --- Results Container ---
-    Rectangle {
+    // --- Results Container (open surface, zero clashing cards around every row) ---
+    Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Theme.r(24)
-        color: Theme.m3PaneBg
-        border.width: 1
-        border.color: Theme.m3Line
         clip: true
 
-        // 1. Applications List
+        // 1A. Applications A-to-Z Icon Grid (Home Drawer when query is empty)
+        GridView {
+            id: appGrid
+            readonly property int gridCols: Math.max(4, Math.min(6, Math.floor(Math.max(400, width) / 118)))
+            visible: root.inAppGrid && root.filteredApps.length > 0
+            anchors.fill: parent
+            cellWidth: Math.floor(width / gridCols)
+            cellHeight: 88
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            model: root.filteredApps
+
+            delegate: Rectangle {
+                id: gridTile
+                required property var modelData
+                required property int index
+                readonly property bool isSelected: gridTile.index === root.selectedIndex
+
+                width: Math.max(88, appGrid.cellWidth - 4)
+                height: 84
+                radius: Theme.r(gridMouse.pressed ? 16 : 22)
+                color: gridTile.isSelected
+                    ? Theme.m3PrimaryContainer
+                    : (gridMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
+
+                Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 110 } }
+
+                Column {
+                    anchors.centerIn: parent
+                    width: parent.width - 14
+                    spacing: 6
+
+                    Item {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 44
+                        height: 44
+
+                        IconImage {
+                            id: gridIcon
+                            anchors.fill: parent
+                            asynchronous: true
+                            readonly property string resolvedIcon: Quickshell.iconPath(gridTile.modelData.icon, true)
+                            source: resolvedIcon
+                            visible: resolvedIcon.length > 0 && status === Image.Ready
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Theme.r(14)
+                            visible: !gridIcon.visible
+                            color: gridTile.isSelected ? Theme.m3Primary : Theme.m3SurfaceHigh
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰣆"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 20
+                                color: gridTile.isSelected ? Theme.m3OnPrimary : Theme.m3InkDim
+                            }
+                        }
+                    }
+
+                    Text {
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        text: gridTile.modelData.name || ""
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        font.weight: gridTile.isSelected ? Font.Bold : Font.Medium
+                        color: gridTile.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Ink
+                    }
+                }
+
+                MouseArea {
+                    id: gridMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onEntered: root.selectedIndex = gridTile.index
+                    onClicked: root.launchEntry(gridTile.modelData)
+                }
+            }
+        }
+
+        // 1B. Applications Spotlight List (when searching)
         ListView {
             id: appList
-            visible: root.effectiveMode === "apps"
+            visible: root.effectiveMode === "apps" && !root.inAppGrid
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 5
+            spacing: 4
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
             model: root.filteredApps
 
             delegate: Rectangle {
@@ -1573,11 +1796,11 @@ ColumnLayout {
                 readonly property bool isSelected: appRow.index === root.selectedIndex
 
                 width: appList.width
-                height: 54
-                radius: Theme.r(20)
+                height: 58
+                radius: Theme.r(22)
                 color: appRow.isSelected
                     ? Theme.m3PrimaryContainer
-                    : (rowMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                    : (rowMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                 Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 110 } }
 
@@ -1587,12 +1810,10 @@ ColumnLayout {
                     anchors.rightMargin: 14
                     spacing: 12
 
-                    Rectangle {
+                    Item {
                         Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: 36
-                        implicitHeight: 36
-                        radius: Theme.r(12)
-                        color: appIcon.visible ? "transparent" : (appRow.isSelected ? Theme.m3Primary : Theme.m3SurfaceHigh)
+                        implicitWidth: 38
+                        implicitHeight: 38
 
                         IconImage {
                             id: appIcon
@@ -1603,13 +1824,19 @@ ColumnLayout {
                             visible: resolvedIcon.length > 0 && status === Image.Ready
                         }
 
-                        Text {
-                            anchors.centerIn: parent
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Theme.r(12)
                             visible: !appIcon.visible
-                            text: "󰣆"
-                            font.family: Theme.iconFont
-                            font.pixelSize: 17
-                            color: appRow.isSelected ? Theme.m3OnPrimary : Theme.m3InkDim
+                            color: appRow.isSelected ? Theme.m3Primary : Theme.m3SurfaceHigh
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰣆"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 17
+                                color: appRow.isSelected ? Theme.m3OnPrimary : Theme.m3InkDim
+                            }
                         }
                     }
 
@@ -1639,16 +1866,16 @@ ColumnLayout {
                             elide: Text.ElideRight
                             maximumLineCount: 1
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
+                            font.pixelSize: 11
                             color: appRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                         }
                     }
 
                     Rectangle {
                         visible: appRow.isSelected
-                        implicitHeight: 24
+                        implicitHeight: 26
                         implicitWidth: openHintLbl.implicitWidth + 16
-                        radius: Theme.r(12)
+                        radius: Theme.r(13)
                         color: Theme.m3Primary
 
                         Text {
@@ -1656,7 +1883,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: "Open"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: 10
                             font.weight: Font.Bold
                             color: Theme.m3OnPrimary
                         }
@@ -1679,9 +1906,9 @@ ColumnLayout {
             id: clipList
             visible: root.effectiveMode === "clip"
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 5
+            spacing: 4
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
             model: root.filteredClipboard
 
             delegate: Rectangle {
@@ -1692,11 +1919,11 @@ ColumnLayout {
                 readonly property bool isSelected: clipRow.index === root.selectedIndex
 
                 width: clipList.width
-                height: 52
-                radius: Theme.r(18)
+                height: 54
+                radius: Theme.r(20)
                 color: clipRow.isSelected
                     ? Theme.m3PrimaryContainer
-                    : (clipMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                    : (clipMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                 MouseArea {
                     id: clipMouse
@@ -1792,9 +2019,9 @@ ColumnLayout {
             id: calcList
             visible: root.effectiveMode === "calc"
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 6
+            spacing: 4
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
             model: root.calcResults
 
             delegate: Rectangle {
@@ -1806,10 +2033,10 @@ ColumnLayout {
 
                 width: calcList.width
                 height: 62
-                radius: Theme.r(20)
+                radius: Theme.r(22)
                 color: calcRow.isSelected
                     ? Theme.m3PrimaryContainer
-                    : (calcMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                    : (calcMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                 RowLayout {
                     anchors.fill: parent
@@ -1895,9 +2122,9 @@ ColumnLayout {
             id: cmdsList
             visible: root.effectiveMode === "cmds"
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 5
+            spacing: 4
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
             model: root.filteredCommands
 
             delegate: Rectangle {
@@ -1908,11 +2135,11 @@ ColumnLayout {
                 readonly property bool isSelected: cmdRow.index === root.selectedIndex
 
                 width: cmdsList.width
-                height: 52
-                radius: Theme.r(18)
+                height: 54
+                radius: Theme.r(20)
                 color: cmdRow.isSelected
                     ? Theme.m3PrimaryContainer
-                    : (cmdMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                    : (cmdMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                 RowLayout {
                     anchors.fill: parent
@@ -1992,12 +2219,13 @@ ColumnLayout {
         // 5. Emoji & Nerd Font Picker
         GridView {
             id: emojiGrid
+            readonly property int gridCols: Math.max(6, Math.floor(Math.max(360, width) / 60))
             visible: root.effectiveMode === "emoji"
             anchors.fill: parent
-            anchors.margins: 10
-            cellWidth: Math.max(58, Math.floor((width) / 9))
+            cellWidth: Math.floor(width / gridCols)
             cellHeight: 56
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
             model: root.filteredEmojis
 
             delegate: Rectangle {
@@ -2008,12 +2236,10 @@ ColumnLayout {
 
                 width: emojiGrid.cellWidth - 4
                 height: emojiGrid.cellHeight - 4
-                radius: Theme.r(emojiCell.isSelected ? 11 : 16)
+                radius: Theme.r(emojiCell.isSelected ? 12 : 16)
                 color: emojiCell.isSelected
                     ? Theme.m3PrimaryContainer
-                    : (emojiMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
-                border.width: emojiCell.isSelected ? 2 : 0
-                border.color: Theme.m3Primary
+                    : (emojiMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
                 scale: emojiMouse.containsMouse ? 1.06 : 1.0
 
                 Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
@@ -2272,8 +2498,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: !root.snippetsLoading && root.snippetsError.length === 0 && root.filteredSnippets.length > 0
-                spacing: 5
+                spacing: 4
                 clip: true
+                boundsBehavior: Flickable.StopAtBounds
                 model: root.filteredSnippets
 
                 delegate: Rectangle {
@@ -2285,10 +2512,10 @@ ColumnLayout {
 
                     width: snipList.width
                     height: 54
-                    radius: Theme.r(18)
+                    radius: Theme.r(20)
                     color: snipRow.isSelected
                         ? Theme.m3PrimaryContainer
-                        : (snipMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                        : (snipMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                     MouseArea {
                         id: snipMouse
@@ -2460,6 +2687,80 @@ ColumnLayout {
                 }
                 font.family: Theme.fontFamily
                 font.pixelSize: 11
+                color: Theme.m3InkDim
+            }
+        }
+    }
+
+    // --- Clean M3 Bottom Keyboard Hints + Item Count Footer (DarkShadowShell LauncherM3) ---
+    Item {
+        Layout.fillWidth: true
+        Layout.fillHeight: false
+        Layout.preferredHeight: 34
+        Layout.minimumHeight: 34
+        Layout.maximumHeight: 34
+
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 1
+            color: Theme.m3Line
+        }
+
+        RowLayout {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.topMargin: 8
+            spacing: 12
+
+            Repeater {
+                model: [
+                    { k: "Arrows", l: "Navigate" },
+                    { k: "Enter",  l: "Open" },
+                    { k: "Esc",    l: "Close" },
+                    { k: "> = ; :", l: "Modes" }
+                ]
+                delegate: RowLayout {
+                    id: khFoot
+                    required property var modelData
+                    spacing: 4
+
+                    Rectangle {
+                        implicitHeight: 20
+                        implicitWidth: khFootTxt.implicitWidth + 10
+                        radius: Theme.r(7)
+                        color: Theme.m3SurfaceHigh
+
+                        Text {
+                            id: khFootTxt
+                            anchors.centerIn: parent
+                            text: khFoot.modelData.k
+                            font.family: Theme.monoFont
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            color: Theme.m3Ink
+                        }
+                    }
+
+                    Text {
+                        text: khFoot.modelData.l
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 10
+                        color: Theme.m3InkDim
+                    }
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Text {
+                text: root.currentCount + (root.effectiveMode === "apps" ? " apps" : " items")
+                font.family: Theme.monoFont
+                font.pixelSize: 10
+                font.weight: Font.Medium
                 color: Theme.m3InkDim
             }
         }

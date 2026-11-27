@@ -11,7 +11,7 @@ ColumnLayout {
     id: root
 
     property bool active: false
-    readonly property bool narrowLayout: root.width < 520
+    readonly property bool narrowLayout: root.width < (modeBar.implicitWidth + 245)
     signal openSettingsRequested(string page)
     spacing: 10
 
@@ -38,6 +38,7 @@ ColumnLayout {
 
             // Dynamic / Presets / Accent Mode Switch
             Rectangle {
+                id: modeBar
                 implicitHeight: 36
                 implicitWidth: modeRow.implicitWidth + 8
                 radius: Theme.r(18)

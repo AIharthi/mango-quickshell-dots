@@ -186,7 +186,9 @@ Item {
                 implicitHeight: Math.max(20, root.podHeight - 10)
                 implicitWidth: spLayTxt.implicitWidth + 14
                 radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
-                color: spLayMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                color: spLayMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 Text {
                     id: spLayTxt
@@ -274,7 +276,7 @@ Item {
             width: Math.min(implicitWidth, centerPod.width - 12)
             spacing: 7
 
-            // Date label before clock pill (DynIsland "Day, DD/MM" layout)
+            // Clean neutral date + time matching DarkShadowShell Bar / DynIsland ink
             Text {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowDate
@@ -285,23 +287,24 @@ Item {
                 color: Theme.m3InkDim
             }
 
-            // Signature DarkShadowShell primary Time Pill
-            Rectangle {
+            Text {
                 Layout.alignment: Qt.AlignVCenter
-                implicitHeight: Math.max(20, root.podHeight - 8)
-                implicitWidth: spTimeTxt.implicitWidth + 16
-                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
-                color: Theme.m3Primary
+                visible: ShellState.splitShowDate
+                text: "·"
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(11)
+                font.weight: Font.Bold
+                color: Theme.m3InkDim
+            }
 
-                Text {
-                    id: spTimeTxt
-                    anchors.centerIn: parent
-                    text: ShellState.formatTime(clock.date)
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fs(11)
-                    font.weight: Font.Bold
-                    color: Theme.m3OnPrimary
-                }
+            Text {
+                id: spTimeTxt
+                Layout.alignment: Qt.AlignVCenter
+                text: ShellState.formatTime(clock.date)
+                font.family: Theme.monoFont
+                font.pixelSize: Theme.fs(11)
+                font.weight: Font.Bold
+                color: Theme.m3Ink
             }
 
             // Optional Weather Pill
@@ -490,7 +493,7 @@ Item {
             id: rightRow
             anchors.centerIn: parent
             width: Math.min(implicitWidth, parent.width - 14)
-            spacing: 5
+            spacing: 6
 
             RowLayout {
                 Layout.alignment: Qt.AlignVCenter
@@ -511,6 +514,7 @@ Item {
             SystemTrayStrip {
                 id: trayStripSplit
                 Layout.alignment: Qt.AlignVCenter
+                hiddenPlayerHint: root.hasMedia && root.player ? ((root.player.identity || "") + " " + (root.player.desktopEntry || "")).toLowerCase() : ""
                 visible: ShellState.splitShowTray && trayStripSplit.hasItems
                 compact: true
             }

@@ -88,7 +88,7 @@ Rectangle {
         // DarkShadowShell Overview M3Blob Resource Trio (pentagon CPU, cookie RAM, circle Disk/Temp)
         RowLayout {
             Layout.fillWidth: true
-            Layout.fillHeight: false
+            Layout.fillHeight: true
             spacing: 8
 
             Repeater {
@@ -120,19 +120,20 @@ Rectangle {
                     id: metricTile
                     required property var modelData
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
                     Layout.preferredWidth: 1
-                    implicitHeight: 88
-                    radius: Theme.r(18)
+                    implicitHeight: 94
+                    radius: Theme.r(20)
                     color: Theme.m3SurfaceHigh
 
                     ColumnLayout {
                         anchors.centerIn: parent
-                        spacing: 3
+                        spacing: 4
 
                         Item {
                             Layout.alignment: Qt.AlignHCenter
-                            implicitWidth: 46
-                            implicitHeight: 46
+                            implicitWidth: 54
+                            implicitHeight: 54
 
                             M3Blob {
                                 anchors.fill: parent
@@ -144,7 +145,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: metricTile.modelData.val
                                 font.family: Theme.monoFont
-                                font.pixelSize: Theme.fs(11)
+                                font.pixelSize: Theme.fs(12)
                                 font.weight: Font.Bold
                                 color: metricTile.modelData.hot ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer
                             }
