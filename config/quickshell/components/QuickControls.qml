@@ -363,7 +363,9 @@ Rectangle {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                             text: DeviceCaps.hasWifi
-                                ? (root.wifiEnabled ? (root.wifiSsid !== "On" && root.wifiSsid !== "Off" ? "Connected" : "On") : "Off")
+                                ? (ShellState.ethShareActive && ShellState.ethShareRole === "host"
+                                    ? ("Sharing on " + (ShellState.ethShareIface || "Ethernet"))
+                                    : (root.wifiEnabled ? (root.wifiSsid !== "On" && root.wifiSsid !== "Off" ? "Connected" : "On") : "Off"))
                                 : root.defaultSinkLabel
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)

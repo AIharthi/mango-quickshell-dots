@@ -337,6 +337,26 @@ Item {
                 MouseArea { id: seqGmMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleGameMode() }
             }
 
+            // Live Ethernet Wi-Fi Share Badge
+            Rectangle {
+                Layout.alignment: Qt.AlignVCenter
+                visible: ShellState.ethShareActive
+                implicitHeight: 19
+                implicitWidth: seqEthRow.implicitWidth + 10
+                radius: Theme.r(10)
+                color: seqEthMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3PrimaryContainer
+
+                RowLayout {
+                    id: seqEthRow
+                    anchors.centerIn: parent
+                    spacing: 4
+                    Text { text: "󰈀"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.m3OnPrimaryContainer }
+                    Text { text: ShellState.ethShareRole === "host" ? "Share" : "Bridge"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3OnPrimaryContainer }
+                }
+
+                MouseArea { id: seqEthMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openSettingsRequested("network") }
+            }
+
             // Live Focus Timer / Stopwatch / File Op / Weather
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter

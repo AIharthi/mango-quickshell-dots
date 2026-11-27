@@ -21,6 +21,7 @@ Item {
     signal filesClicked()
     signal notificationsClicked()
     signal timerClicked()
+    signal networkClicked()
 
     implicitHeight: ShellState.pillHeight
     implicitWidth: {
@@ -91,6 +92,7 @@ Item {
         || ShellState.timerActive
         || ShellState.stopwatchActive
         || ShellState.gameModeActive
+        || ShellState.ethShareActive
         || (ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable)
         || ShellState.unreadCount > 0
         || barMode
@@ -240,6 +242,25 @@ Item {
             }
 
             MouseArea { id: gmPillMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleGameMode() }
+        }
+
+        Rectangle {
+            Layout.alignment: Qt.AlignVCenter
+            visible: ShellState.ethShareActive
+            implicitHeight: 19
+            implicitWidth: ethPillRowC.implicitWidth + 10
+            radius: Theme.isSimple ? 0 : 10
+            color: ethPillMouseC.containsMouse ? Theme.m3SurfaceHighest : Theme.m3PrimaryContainer
+
+            RowLayout {
+                id: ethPillRowC
+                anchors.centerIn: parent
+                spacing: 4
+                Text { text: "󰈀"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.m3OnPrimaryContainer }
+                Text { text: ShellState.ethShareRole === "host" ? "Share" : "Bridge"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3OnPrimaryContainer }
+            }
+
+            MouseArea { id: ethPillMouseC; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.networkClicked() }
         }
 
         Rectangle {
@@ -507,7 +528,7 @@ Item {
 
             LiveActivityChips {
                 Layout.alignment: Qt.AlignVCenter
-                visible: ShellState.gameModeActive || ShellState.stopwatchActive || ShellState.recordingActive
+                visible: ShellState.gameModeActive || ShellState.ethShareActive || ShellState.stopwatchActive || ShellState.recordingActive
                     || ShellState.timerActive || ShellState.unreadCount > 0 || ShellState.fmOpActive
                     || (ShellState.weatherEnabled && ShellState.barShowWeather && ShellState.weatherAvailable)
             }

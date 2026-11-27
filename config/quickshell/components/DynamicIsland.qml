@@ -491,6 +491,7 @@ Item {
             onFilesClicked: root.openFilesRequested("")
             onNotificationsClicked: root.toggleNotifications()
             onTimerClicked: root.toggleNotifications()
+            onNetworkClicked: root.openSettingsRequested("network")
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion

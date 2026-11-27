@@ -1121,6 +1121,8 @@ ShellRoot {
         function toggleNotifications(): void { root.dispatchNotifications(); }
         function toggleKeybindSheet(): void { root.toggleKeybindSheet(); }
         function syncRecordingState(): void { ShellState.syncRecordingState(); }
+        function toggleEthShare(): void { ShellState.toggleEthShare(); }
+        function openNetwork(): void { root.openSettings("network"); }
         function toggleThemeTab(): void { root.dispatchThemeTab(); }
         function showOsd(osdType: string): void { root.dispatchOsd(osdType); }
         function toggle(): void { root.dispatchDashboard(); }
@@ -1190,6 +1192,8 @@ ShellRoot {
         function toggleNotifications(): void { root.dispatchNotifications(); }
         function toggleKeybindSheet(): void { root.toggleKeybindSheet(); }
         function syncRecordingState(): void { ShellState.syncRecordingState(); }
+        function toggleEthShare(): void { ShellState.toggleEthShare(); }
+        function openNetwork(): void { root.openSettings("network"); }
         function toggleThemeTab(): void { root.dispatchThemeTab(); }
         function showOsd(osdType: string): void { root.dispatchOsd(osdType); }
         function toggle(): void { root.dispatchDashboard(); }

@@ -1001,6 +1001,8 @@ ColumnLayout {
         { id: "awake-toggle",title: "Toggle Keep Screen Awake",     sub: "Pause automatic idle screen lock",   icon: "󰅶", kw: "keep awake caffeine idle lock" },
         { id: "night-light", title: "Toggle Night Light Filter",    sub: "Warm screen color temperature",      icon: "󰌵", kw: "night light wlsunset redshift blue light" },
         { id: "net-speed",   title: "Toggle Network Speed in Bar",  sub: "Show or hide live ↓/↑ throughput in top bar", icon: "󰇚", kw: "network speed bandwidth bar" },
+        { id: "eth-share",   title: "Toggle Ethernet Wi-Fi Share",  sub: "Share laptop Wi-Fi to PC over Ethernet or connect", icon: "󰈀", kw: "ethernet share wifi bridge tether pc laptop lan internet" },
+        { id: "open-network",title: "Open Network & Ethernet Share",sub: "Configure Ethernet Wi-Fi sharing, IP, DNS & Wi-Fi", icon: "󰤨", kw: "network wifi ethernet share bridge tether dns ip settings" },
         { id: "hub-cycle",   title: "Cycle Hub Layout Style",       sub: "Switch Cupertino, Stage, Cockpit, Bento", icon: "󰕰", kw: "hub layout cycle cupertino stage cockpit bento" },
         { id: "bar-cycle",   title: "Cycle Top Bar UI Style",       sub: "Switch Island, Split, Sequoia, Modular", icon: "󰘔", kw: "bar style cycle island split menubar" },
         { id: "reload-wm",   title: "Reload MangoWC Config",        sub: "mmsg dispatch reload_config",        icon: "󰑐", kw: "reload mango config wm" },
@@ -1228,6 +1230,10 @@ ColumnLayout {
             ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp);
         } else if (cmdId === "net-speed") {
             ShellState.setPref("barShowNetSpeed", !ShellState.barShowNetSpeed);
+        } else if (cmdId === "eth-share") {
+            ShellState.toggleEthShare();
+        } else if (cmdId === "open-network") {
+            root.openSettingsRequested("network");
         } else if (cmdId === "hub-cycle") {
             ShellState.cycleHubUiStyle();
         } else if (cmdId === "bar-cycle") {

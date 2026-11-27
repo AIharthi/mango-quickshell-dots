@@ -96,6 +96,16 @@ Singleton {
     property int recordingElapsedSec: 0
     property int _recordingStartedAt: 0
 
+    // --- Ethernet Wi-Fi Share State (Laptop Host <-> PC Client) ---
+    property bool ethShareActive: false
+    property string ethShareRole: "off"          // "off" | "host" | "client"
+    property string ethShareBackend: ""          // "nmcli" | "standalone" | "static-host" | "static-client" | "dhcp-client"
+    property string ethShareIface: ""
+    property string ethShareUpstream: ""
+    property string ethSharePeerSummary: ""
+    property string ethShareRecommendedRole: "client"
+    property bool ethShareBusy: false
+
     // --- Surface, Shape, Island Layout & Advanced Theming ---
     property string surfaceStyle: "default"      // "default" | "glass" | "oled" | "flat" | "tinted"
     property real shellOpacity: 0.92
@@ -1419,9 +1429,82 @@ Singleton {
         root.recentAppIds = next;
     }
 
+    function applyEthShareJson(raw: string): void {
+        const clean = (raw || "").trim();
+        if (clean.length === 0)
+            return;
+        try {
+            const d = JSON.parse(clean);
+            if (!d || typeof d !== "object")
+                return;
+            if (d.active !== undefined)
+                root.ethShareActive = !!d.active;
+            if (d.role !== undefined)
+                root.ethShareRole = String(d.role || "off");
+            if (d.backend !== undefined)
+                root.ethShareBackend = String(d.backend || "");
+            if (d.ethIface !== undefined)
+                root.ethShareIface = String(d.ethIface || "");
+            if (d.upstreamIface !== undefined)
+                root.ethShareUpstream = String(d.upstreamIface || "");
+            if (d.peerSummary !== undefined)
+                root.ethSharePeerSummary = String(d.peerSummary || "");
+            if (d.recommendedRole !== undefined)
+                root.ethShareRecommendedRole = String(d.recommendedRole || "client");
+        } catch (err) {}
+    }
+
+    function syncEthShareState(): void {
+        if (!ethShareStatusProc.running)
+            ethShareStatusProc.running = true;
+    }
+
+    function toggleEthShare(): void {
+        if (ethShareActionProc.running)
+            return;
+        root.ethShareBusy = true;
+        if (root.ethShareActive && root.ethShareRole === "host")
+            ethShareActionProc.command = [Quickshell.shellPath("scripts/manage-eth-share.sh"), "stop-host"];
+        else if (root.ethShareActive && root.ethShareRole === "client" && root.ethShareBackend === "static-client")
+            ethShareActionProc.command = [Quickshell.shellPath("scripts/manage-eth-share.sh"), "disconnect-client"];
+        else if (root.ethShareRecommendedRole === "host")
+            ethShareActionProc.command = [Quickshell.shellPath("scripts/manage-eth-share.sh"), "start-host"];
+        else
+            ethShareActionProc.command = [Quickshell.shellPath("scripts/manage-eth-share.sh"), "connect-client"];
+        ethShareActionProc.running = true;
+    }
+
+    Timer {
+        id: ethSharePollTimer
+        interval: 8000
+        repeat: true
+        running: root.ethShareActive
+        onTriggered: root.syncEthShareState()
+    }
+
+    Process {
+        id: ethShareStatusProc
+        command: [Quickshell.shellPath("scripts/manage-eth-share.sh"), "status"]
+        stdout: StdioCollector {
+            onStreamFinished: root.applyEthShareJson(text)
+        }
+    }
+
+    Process {
+        id: ethShareActionProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.ethShareBusy = false;
+                root.applyEthShareJson(text);
+            }
+        }
+        onExited: root.ethShareBusy = false
+    }
+
     Component.onCompleted: {
         initProc.running = true;
         syncRecordingState();
+        syncEthShareState();
     }
 
     Process {

@@ -439,6 +439,23 @@ Item {
 
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
+                visible: ShellState.ethShareActive
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spEthRow.implicitWidth + 12
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: spEthMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3PrimaryContainer
+                RowLayout {
+                    id: spEthRow
+                    anchors.centerIn: parent
+                    spacing: 4
+                    Text { text: "󰈀"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.m3OnPrimaryContainer }
+                    Text { text: ShellState.ethShareRole === "host" ? "Share" : "Bridge"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3OnPrimaryContainer }
+                }
+                MouseArea { id: spEthMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openSettingsRequested("network") }
+            }
+
+            Rectangle {
+                Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.fmOpActive
                 implicitHeight: Math.max(20, root.podHeight - 10)
                 implicitWidth: spFmRow.implicitWidth + 12

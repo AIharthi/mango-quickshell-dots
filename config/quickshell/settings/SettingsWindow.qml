@@ -93,7 +93,7 @@ PanelWindow {
         if (DeviceCaps.hasWlrRandr)
             items.push({ id: "displays",  section: "Hardware", label: "Displays",  icon: "󰍹", source: "DisplayPage.qml",   sub: "Resolution, arrangement, rotation, VRR, and night light" });
         if (DeviceCaps.hasNetwork || DeviceCaps.hasWifi)
-            items.push({ id: "network",   section: "Hardware", label: "Network",   icon: "󰤨", source: "NetworkPage.qml",   sub: "Interfaces, IP/DNS profiles, and Wi-Fi connections" });
+            items.push({ id: "network",   section: "Hardware", label: "Network",   icon: "󰤨", source: "NetworkPage.qml",   sub: "Ethernet Wi-Fi share, interfaces, IP/DNS, and Wi-Fi" });
         if (DeviceCaps.hasBluetooth)
             items.push({ id: "bluetooth", section: "Hardware", label: "Bluetooth", icon: "󰂯", source: "BluetoothPage.qml", sub: "Adapter power and paired Bluetooth devices" });
         if (DeviceCaps.hasFoot || DeviceCaps.hasKitty)
@@ -140,6 +140,7 @@ PanelWindow {
         { label: "Resolution, Position & VRR", pageId: "displays",      keywords: "display monitor screen resolution hz refresh scale rotate 90 180 270 vrr left right above below" },
         { label: "Brightness & Night Light",   pageId: "displays",      keywords: "backlight ddcutil brightness night light warmth kelvin" },
         { label: "Ethernet, IP, DNS & Wi-Fi",  pageId: "network",       keywords: "network ethernet ip gateway dns nmcli wifi wireless ssid password" },
+        { label: "Ethernet Wi-Fi Share (Laptop / PC)", pageId: "network", keywords: "ethernet wifi share bridge tether laptop pc cable dhcp nat dnsmasq static internet" },
         { label: "Bluetooth Devices",          pageId: "bluetooth",     keywords: "bluetooth pair connect audio device" },
         { label: "Keyboard, Mouse & Touchpad", pageId: "input",         keywords: "keyboard model layout repeat sandbox mouse left handed middle click scroll touchpad" },
         { label: "MSI Touchpad I2C Fix",       pageId: "input",         keywords: "msi touchpad fix i2c designware unbind bind restart arch cachyos boot service" },

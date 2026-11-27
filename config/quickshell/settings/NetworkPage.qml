@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import ".."
+import "../m3"
 
 ColumnLayout {
     id: root
@@ -20,11 +21,114 @@ ColumnLayout {
     property bool hasNmcli: DeviceCaps.hasNmcli
     property var connections: []
 
+    // --- Ethernet Wi-Fi Share (Laptop Host <-> PC Client) ---
+    property var ethStatus: ({})
+    property string ethRoleTab: "client"
+    property bool ethRoleUserPicked: false
+    property string selectedUpstream: ""
+    property string selectedEth: ""
+    property string hostDnsMode: "auto"
+    property bool ethBusy: false
+    property string ethMsg: ""
+    property bool ethMsgIsError: false
+    property var linkTestResult: null
+    property bool linkTesting: false
+
+    readonly property var hostSourceList: {
+        const wifi = (root.ethStatus && Array.isArray(root.ethStatus.wifiInterfaces)) ? root.ethStatus.wifiInterfaces : [];
+        if (wifi.length > 0)
+            return wifi;
+        const eth = (root.ethStatus && Array.isArray(root.ethStatus.ethInterfaces)) ? root.ethStatus.ethInterfaces : [];
+        return eth.length >= 2 ? eth : [];
+    }
+
+    readonly property var hostEthList: {
+        const eth = (root.ethStatus && Array.isArray(root.ethStatus.ethInterfaces)) ? root.ethStatus.ethInterfaces : [];
+        return eth.filter(i => i.name !== root.selectedUpstream);
+    }
+
+    readonly property var clientEthList: (root.ethStatus && Array.isArray(root.ethStatus.ethInterfaces)) ? root.ethStatus.ethInterfaces : []
+    readonly property string activeRole: (root.ethStatus && root.ethStatus.role) ? String(root.ethStatus.role) : "off"
+    readonly property bool shareActive: !!(root.ethStatus && root.ethStatus.active)
+
+    function applyEthStatus(raw: string): void {
+        const clean = (raw || "").trim();
+        if (clean.length === 0)
+            return;
+        try {
+            const d = JSON.parse(clean);
+            if (!d || typeof d !== "object")
+                return;
+            if (d.error) {
+                root.ethMsg = String(d.error);
+                root.ethMsgIsError = true;
+            } else if (d.message) {
+                root.ethMsg = String(d.message);
+                root.ethMsgIsError = false;
+            }
+            if (Array.isArray(d.interfaces)) {
+                root.ethStatus = d;
+                ShellState.applyEthShareJson(clean);
+                if (!root.ethRoleUserPicked) {
+                    if (d.role === "host" || d.role === "client")
+                        root.ethRoleTab = String(d.role);
+                    else
+                        root.ethRoleTab = String(d.recommendedRole || "client");
+                }
+                const upDef = String(d.upstreamIface || d.sourceIface || "");
+                if (root.selectedUpstream.length === 0 && upDef.length > 0)
+                    root.selectedUpstream = upDef;
+                const ethDef = String(d.ethIface || d.targetIface || d.clientEthIface || "");
+                if (root.selectedEth.length === 0 && ethDef.length > 0)
+                    root.selectedEth = ethDef;
+                if (root.ethRoleTab === "host" && root.selectedEth === root.selectedUpstream && root.hostEthList.length > 0)
+                    root.selectedEth = root.hostEthList[0].name;
+            }
+        } catch (err) {}
+    }
+
+    function refreshEthStatus(): void {
+        if (!ethStatusProc.running)
+            ethStatusProc.running = true;
+    }
+
+    function runEthAction(argsList): void {
+        if (ethActionProc.running)
+            return;
+        root.ethBusy = true;
+        root.ethMsg = "";
+        root.ethMsgIsError = false;
+        ethActionProc.command = [Quickshell.shellPath("scripts/manage-eth-share.sh")].concat(argsList);
+        ethActionProc.running = true;
+    }
+
+    function runLinkTest(): void {
+        if (ethTestProc.running)
+            return;
+        root.linkTesting = true;
+        root.linkTestResult = null;
+        const gw = (root.ethStatus && root.ethStatus.role === "client") ? "10.42.0.1" : "";
+        ethTestProc.command = gw.length > 0
+            ? [Quickshell.shellPath("scripts/manage-eth-share.sh"), "test-link", gw]
+            : [Quickshell.shellPath("scripts/manage-eth-share.sh"), "test-link"];
+        ethTestProc.running = true;
+    }
+
+    function backendLabel(code: string): string {
+        if (code === "nmcli") return "NetworkManager";
+        if (code === "standalone") return "Standalone (nft + dnsmasq)";
+        if (code === "static-host") return "NAT Only (Static PC)";
+        if (code === "dhcp-client") return "Auto DHCP";
+        if (code === "static-client") return "Direct Static (10.42.0.2)";
+        return code || "Off";
+    }
+
     function refresh(): void {
         if (!netInfoProc.running)
             netInfoProc.running = true;
         if (DeviceCaps.hasWifi && !wifiListProc.running)
             wifiListProc.running = true;
+        refreshEthStatus();
     }
 
     function nmAction(act: string, conn: string, extraArg: string): void {
@@ -198,6 +302,703 @@ ColumnLayout {
         interval: 400
         repeat: false
         onTriggered: root.refresh()
+    }
+
+    Timer {
+        id: ethPollTimer
+        interval: 4000
+        repeat: true
+        running: root.visible && root.shareActive
+        onTriggered: root.refreshEthStatus()
+    }
+
+    Process {
+        id: ethStatusProc
+        command: [Quickshell.shellPath("scripts/manage-eth-share.sh"), "status"]
+        stdout: StdioCollector {
+            onStreamFinished: root.applyEthStatus(text)
+        }
+    }
+
+    Process {
+        id: ethActionProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.ethBusy = false;
+                root.applyEthStatus(text);
+                refreshTimer.restart();
+            }
+        }
+        onExited: root.ethBusy = false
+    }
+
+    Process {
+        id: ethTestProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.linkTesting = false;
+                try {
+                    const d = JSON.parse((text || "").trim());
+                    if (d && d.ok)
+                        root.linkTestResult = d;
+                } catch (err) {}
+            }
+        }
+        onExited: root.linkTesting = false
+    }
+
+    // --- 0. Ethernet Wi-Fi Share (Laptop Host <-> PC Client) ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: ethCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: root.shareActive ? Theme.withAlpha(Theme.m3Primary, 0.45) : Theme.m3Line
+
+        ColumnLayout {
+            id: ethCol
+            anchors.fill: parent
+            anchors.margins: 14
+            spacing: 12
+
+            // Header + Live Role & Cable Badges
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Rectangle {
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    radius: Theme.r(17)
+                    color: root.shareActive ? Theme.m3PrimaryContainer : Theme.m3SurfaceHigh
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.activeRole === "host" ? "󰤨" : "󰈀"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(16)
+                        color: root.shareActive ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        text: "Ethernet Wi-Fi Share"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(13)
+                        font.weight: Font.Bold
+                        color: Theme.m3Ink
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        text: "Share laptop Wi-Fi to a PC over Ethernet (both running Aurora Shell)"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.m3InkDim
+                    }
+                }
+
+                // Cable Link Chip
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: cableRow.implicitWidth + 14
+                    radius: Theme.r(12)
+                    color: Theme.m3SurfaceHigh
+
+                    RowLayout {
+                        id: cableRow
+                        anchors.centerIn: parent
+                        spacing: 5
+
+                        Rectangle {
+                            width: 7
+                            height: 7
+                            radius: 3.5
+                            color: (root.ethStatus && root.ethStatus.carrier) ? Theme.success : Theme.m3InkDim
+                        }
+
+                        Text {
+                            text: (root.ethStatus && root.ethStatus.carrier)
+                                ? ("Plugged" + ((root.ethStatus.linkSpeed && root.ethStatus.linkSpeed.length > 0) ? (" · " + root.ethStatus.linkSpeed) : ""))
+                                : "No cable"
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(9)
+                            font.weight: Font.DemiBold
+                            color: (root.ethStatus && root.ethStatus.carrier) ? Theme.m3Ink : Theme.m3InkDim
+                        }
+                    }
+                }
+
+                // Active State Chip
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: roleBadgeLbl.implicitWidth + 16
+                    radius: Theme.r(12)
+                    color: root.activeRole === "host"
+                        ? Theme.m3Primary
+                        : (root.activeRole === "client" ? Theme.m3SecondaryContainer : Theme.m3SurfaceHigh)
+
+                    Text {
+                        id: roleBadgeLbl
+                        anchors.centerIn: parent
+                        text: root.activeRole === "host" ? "Sharing" : (root.activeRole === "client" ? "Receiving" : "Off")
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: root.activeRole === "host"
+                            ? Theme.m3OnPrimary
+                            : (root.activeRole === "client" ? Theme.m3OnSecondaryContainer : Theme.m3InkDim)
+                    }
+                }
+            }
+
+            // Role Switcher Segmented Control
+            M3Seg {
+                compact: true
+                options: [
+                    { value: "host", label: "Share Wi-Fi (Laptop)", icon: "󰤨" },
+                    { value: "client", label: "Receive (PC)", icon: "󰈀" }
+                ]
+                current: root.ethRoleTab
+                onChosen: function(v) {
+                    root.ethRoleUserPicked = true;
+                    root.ethRoleTab = v;
+                    if (v === "host" && root.selectedEth === root.selectedUpstream && root.hostEthList.length > 0)
+                        root.selectedEth = root.hostEthList[0].name;
+                }
+            }
+
+            // ==================== HOST MODE (LAPTOP) ====================
+            ColumnLayout {
+                visible: root.ethRoleTab === "host"
+                Layout.fillWidth: true
+                spacing: 10
+
+                // Active Sharing Summary Box
+                Rectangle {
+                    visible: root.activeRole === "host"
+                    Layout.fillWidth: true
+                    implicitHeight: hostLiveCol.implicitHeight + 18
+                    radius: Theme.r(16)
+                    color: Theme.m3PrimaryContainer
+                    border.width: 1
+                    border.color: Theme.withAlpha(Theme.m3Primary, 0.35)
+
+                    ColumnLayout {
+                        id: hostLiveCol
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        spacing: 6
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: "Sharing " + (root.ethStatus.upstreamIface || "Wi-Fi") + " to " + (root.ethStatus.ethIface || "Ethernet")
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(11)
+                                font.weight: Font.Bold
+                                color: Theme.m3OnPrimaryContainer
+                            }
+
+                            Text {
+                                text: (root.ethStatus.subnet || "10.42.0.0/24") + " · " + root.backendLabel(root.ethStatus.backend || "")
+                                font.family: Theme.monoFont
+                                font.pixelSize: Theme.fs(9)
+                                font.weight: Font.DemiBold
+                                color: Theme.m3OnPrimaryContainer
+                            }
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Text {
+                                visible: !root.ethStatus.clients || root.ethStatus.clients.length === 0
+                                text: "Waiting for PC on Ethernet (gateway 10.42.0.1)..."
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                color: Theme.m3OnPrimaryContainer
+                            }
+
+                            Repeater {
+                                model: (root.ethStatus && Array.isArray(root.ethStatus.clients)) ? root.ethStatus.clients : []
+
+                                delegate: Rectangle {
+                                    id: peerChip
+                                    required property var modelData
+                                    implicitHeight: 24
+                                    implicitWidth: peerLbl.implicitWidth + 14
+                                    radius: Theme.r(12)
+                                    color: Theme.m3SurfaceC
+
+                                    Text {
+                                        id: peerLbl
+                                        anchors.centerIn: parent
+                                        text: (peerChip.modelData.hostname || "PC") + " · " + peerChip.modelData.ip + " · " + peerChip.modelData.state
+                                        font.family: Theme.monoFont
+                                        font.pixelSize: Theme.fs(9)
+                                        font.weight: Font.DemiBold
+                                        color: Theme.m3Ink
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Missing Wi-Fi Notice (Desktop without Wi-Fi)
+                Rectangle {
+                    visible: root.hostSourceList.length === 0
+                    Layout.fillWidth: true
+                    implicitHeight: noWifiTxt.implicitHeight + 16
+                    radius: Theme.r(14)
+                    color: Theme.m3SurfaceHigh
+
+                    Text {
+                        id: noWifiTxt
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        wrapMode: Text.Wrap
+                        text: "No separate Wi-Fi or secondary upstream adapter detected on this machine. Switch to 'Receive (PC)' to accept internet shared from your laptop."
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.m3InkDim
+                    }
+                }
+
+                // Source (Wi-Fi / Upstream) Selector
+                ColumnLayout {
+                    visible: root.hostSourceList.length > 0
+                    Layout.fillWidth: true
+                    spacing: 5
+
+                    Text {
+                        text: "Source Internet (Wi-Fi)"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.m3InkDim
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: root.hostSourceList
+
+                            delegate: Rectangle {
+                                id: srcChip
+                                required property var modelData
+                                readonly property bool picked: root.selectedUpstream === srcChip.modelData.name
+                                implicitHeight: 28
+                                implicitWidth: srcRow.implicitWidth + 16
+                                radius: Theme.r(14)
+                                color: picked ? Theme.m3Primary : (srcMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                                border.width: 1
+                                border.color: picked ? Theme.m3Primary : Theme.m3Line
+
+                                RowLayout {
+                                    id: srcRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    Text {
+                                        text: srcChip.modelData.kind === "wifi" ? "󰤨" : "󰈀"
+                                        font.family: Theme.iconFont
+                                        font.pixelSize: Theme.fs(12)
+                                        color: srcChip.picked ? Theme.m3OnPrimary : Theme.m3InkDim
+                                    }
+
+                                    Text {
+                                        text: srcChip.modelData.name + (srcChip.modelData.ssid ? (" · " + srcChip.modelData.ssid) : "")
+                                        font.family: Theme.monoFont
+                                        font.pixelSize: Theme.fs(10)
+                                        font.weight: srcChip.picked ? Font.Bold : Font.Medium
+                                        color: srcChip.picked ? Theme.m3OnPrimary : Theme.m3Ink
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: srcMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.selectedUpstream = srcChip.modelData.name;
+                                        if (root.selectedEth === root.selectedUpstream && root.hostEthList.length > 0)
+                                            root.selectedEth = root.hostEthList[0].name;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Target (Ethernet Port) Selector
+                ColumnLayout {
+                    visible: root.hostSourceList.length > 0
+                    Layout.fillWidth: true
+                    spacing: 5
+
+                    Text {
+                        text: "Ethernet Output Port"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.m3InkDim
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: root.hostEthList
+
+                            delegate: Rectangle {
+                                id: ethOutChip
+                                required property var modelData
+                                readonly property bool picked: root.selectedEth === ethOutChip.modelData.name
+                                implicitHeight: 28
+                                implicitWidth: ethOutRow.implicitWidth + 16
+                                radius: Theme.r(14)
+                                color: picked ? Theme.m3Primary : (ethOutMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                                border.width: 1
+                                border.color: picked ? Theme.m3Primary : Theme.m3Line
+
+                                RowLayout {
+                                    id: ethOutRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    Rectangle {
+                                        width: 7
+                                        height: 7
+                                        radius: 3.5
+                                        color: ethOutChip.modelData.carrier
+                                            ? (ethOutChip.picked ? Theme.m3OnPrimary : Theme.success)
+                                            : Theme.m3InkDim
+                                    }
+
+                                    Text {
+                                        text: ethOutChip.modelData.name + (ethOutChip.modelData.speed ? (" · " + ethOutChip.modelData.speed) : "")
+                                        font.family: Theme.monoFont
+                                        font.pixelSize: Theme.fs(10)
+                                        font.weight: ethOutChip.picked ? Font.Bold : Font.Medium
+                                        color: ethOutChip.picked ? Theme.m3OnPrimary : Theme.m3Ink
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: ethOutMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.selectedEth = ethOutChip.modelData.name
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // DHCP / NAT Mode Selector + Actions
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    M3Seg {
+                        visible: root.hostSourceList.length > 0 && root.activeRole !== "host"
+                        compact: true
+                        options: [
+                            { value: "auto", label: "Auto DHCP + DNS", icon: "󰩟" },
+                            { value: "static", label: "NAT Only (Static PC)", icon: "󰒍" }
+                        ]
+                        current: root.hostDnsMode
+                        onChosen: function(v) { root.hostDnsMode = v }
+                    }
+
+                    M3Btn {
+                        visible: root.activeRole !== "host"
+                        compact: true
+                        variant: "filled"
+                        icon: "󰤨"
+                        text: root.ethBusy ? "Starting..." : "Start Sharing Wi-Fi"
+                        buttonEnabled: !root.ethBusy && root.hostSourceList.length > 0 && root.hostEthList.length > 0
+                        onClicked: {
+                            const eth = root.selectedEth.length > 0 ? root.selectedEth : "auto";
+                            const up = root.selectedUpstream.length > 0 ? root.selectedUpstream : "auto";
+                            root.runEthAction(["start-host", eth, up, root.hostDnsMode]);
+                        }
+                    }
+
+                    M3Btn {
+                        visible: root.activeRole === "host"
+                        compact: true
+                        variant: "danger"
+                        icon: "󰓛"
+                        text: root.ethBusy ? "Stopping..." : "Stop Sharing"
+                        buttonEnabled: !root.ethBusy
+                        onClicked: root.runEthAction(["stop-host"])
+                    }
+
+                    M3Btn {
+                        compact: true
+                        variant: "tonal"
+                        icon: "󰑐"
+                        text: "Refresh"
+                        buttonEnabled: !root.ethBusy
+                        onClicked: root.refreshEthStatus()
+                    }
+                }
+            }
+
+            // ==================== CLIENT MODE (PC) ====================
+            ColumnLayout {
+                visible: root.ethRoleTab === "client"
+                Layout.fillWidth: true
+                spacing: 10
+
+                // Active / Auto-Detected Client Card
+                Rectangle {
+                    visible: root.activeRole === "client"
+                    Layout.fillWidth: true
+                    implicitHeight: cliLiveCol.implicitHeight + 18
+                    radius: Theme.r(16)
+                    color: Theme.m3SecondaryContainer
+                    border.width: 1
+                    border.color: Theme.withAlpha(Theme.m3Primary, 0.35)
+
+                    ColumnLayout {
+                        id: cliLiveCol
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        spacing: 4
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: "Receiving Wi-Fi from Laptop (10.42.0.1)"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(11)
+                                font.weight: Font.Bold
+                                color: Theme.m3OnSecondaryContainer
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: root.backendLabel(root.ethStatus.backend || "")
+                                font.family: Theme.monoFont
+                                font.pixelSize: Theme.fs(9)
+                                font.weight: Font.Bold
+                                color: Theme.m3OnSecondaryContainer
+                            }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            text: "Port: " + (root.ethStatus.clientEthIface || root.ethStatus.ethIface || "-")
+                                + "   ·   IP: " + (root.ethStatus.clientIp || "10.42.0.x")
+                                + ((root.ethStatus.linkSpeed && root.ethStatus.linkSpeed.length > 0) ? ("   ·   " + root.ethStatus.linkSpeed) : "")
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(10)
+                            color: Theme.m3OnSecondaryContainer
+                        }
+                    }
+                }
+
+                // Helpful Guide when waiting for link
+                Text {
+                    visible: root.activeRole !== "client"
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    text: "Plug an Ethernet cable from a laptop running Aurora Shell ('Share Wi-Fi'). Click Auto DHCP to request a 10.42.0.x lease, or Direct Static (10.42.0.2) if no DHCP server is running."
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(10)
+                    color: Theme.m3InkDim
+                }
+
+                // Ethernet Port Chips
+                Flow {
+                    visible: root.clientEthList.length > 0
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: root.clientEthList
+
+                        delegate: Rectangle {
+                            id: cliEthChip
+                            required property var modelData
+                            readonly property bool picked: root.selectedEth === cliEthChip.modelData.name
+                            implicitHeight: 28
+                            implicitWidth: cliEthRow.implicitWidth + 16
+                            radius: Theme.r(14)
+                            color: picked ? Theme.m3Primary : (cliEthMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                            border.width: 1
+                            border.color: picked ? Theme.m3Primary : Theme.m3Line
+
+                            RowLayout {
+                                id: cliEthRow
+                                anchors.centerIn: parent
+                                spacing: 6
+
+                                Rectangle {
+                                    width: 7
+                                    height: 7
+                                    radius: 3.5
+                                    color: cliEthChip.modelData.carrier
+                                        ? (cliEthChip.picked ? Theme.m3OnPrimary : Theme.success)
+                                        : Theme.m3InkDim
+                                }
+
+                                Text {
+                                    text: cliEthChip.modelData.name + (cliEthChip.modelData.ipv4 ? (" · " + cliEthChip.modelData.ipv4) : "")
+                                    font.family: Theme.monoFont
+                                    font.pixelSize: Theme.fs(10)
+                                    font.weight: cliEthChip.picked ? Font.Bold : Font.Medium
+                                    color: cliEthChip.picked ? Theme.m3OnPrimary : Theme.m3Ink
+                                }
+                            }
+
+                            MouseArea {
+                                id: cliEthMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.selectedEth = cliEthChip.modelData.name
+                            }
+                        }
+                    }
+                }
+
+                // Client Action Buttons
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    M3Btn {
+                        compact: true
+                        variant: "filled"
+                        icon: "󰩟"
+                        text: root.ethBusy ? "Working..." : "Connect (Auto DHCP)"
+                        buttonEnabled: !root.ethBusy && root.clientEthList.length > 0
+                        onClicked: {
+                            const eth = root.selectedEth.length > 0 ? root.selectedEth : "auto";
+                            root.runEthAction(["connect-client", eth, "auto"]);
+                        }
+                    }
+
+                    M3Btn {
+                        compact: true
+                        variant: "tonal"
+                        icon: "󰒍"
+                        text: "Direct Static (10.42.0.2)"
+                        buttonEnabled: !root.ethBusy && root.clientEthList.length > 0
+                        onClicked: {
+                            const eth = root.selectedEth.length > 0 ? root.selectedEth : "auto";
+                            root.runEthAction(["connect-client", eth, "static"]);
+                        }
+                    }
+
+                    M3Btn {
+                        visible: root.ethStatus && root.ethStatus.backend === "static-client"
+                        compact: true
+                        variant: "danger"
+                        icon: "󰅖"
+                        text: "Restore Ethernet"
+                        buttonEnabled: !root.ethBusy
+                        onClicked: {
+                            const eth = root.selectedEth.length > 0 ? root.selectedEth : "auto";
+                            root.runEthAction(["disconnect-client", eth]);
+                        }
+                    }
+
+                    M3Btn {
+                        compact: true
+                        variant: "outlined"
+                        icon: "󰖩"
+                        text: root.linkTesting ? "Testing..." : "Test Link"
+                        buttonEnabled: !root.linkTesting
+                        onClicked: root.runLinkTest()
+                    }
+                }
+
+                // Live Ping Diagnostic Readout
+                Rectangle {
+                    visible: root.linkTestResult !== null
+                    Layout.fillWidth: true
+                    implicitHeight: pingRow.implicitHeight + 14
+                    radius: Theme.r(12)
+                    color: Theme.m3SurfaceHigh
+
+                    Flow {
+                        id: pingRow
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 12
+
+                        Text {
+                            text: root.linkTestResult
+                                ? ("Gateway " + root.linkTestResult.gateway + ": " + (root.linkTestResult.gatewayOk ? (root.linkTestResult.gatewayMs + " ms") : "Unreachable"))
+                                : ""
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.DemiBold
+                            color: (root.linkTestResult && root.linkTestResult.gatewayOk) ? Theme.success : Theme.m3Error
+                        }
+
+                        Text {
+                            text: root.linkTestResult
+                                ? ("Internet (1.1.1.1): " + (root.linkTestResult.internetOk ? ("Online (" + root.linkTestResult.internetMs + " ms)") : "Offline"))
+                                : ""
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.DemiBold
+                            color: (root.linkTestResult && root.linkTestResult.internetOk) ? Theme.success : Theme.m3Error
+                        }
+                    }
+                }
+            }
+
+            // Warnings or Action Feedback Banner
+            Rectangle {
+                visible: root.ethMsg.length > 0 || (root.ethStatus && Array.isArray(root.ethStatus.warnings) && root.ethStatus.warnings.length > 0 && root.shareActive)
+                Layout.fillWidth: true
+                implicitHeight: fbTxt.implicitHeight + 14
+                radius: Theme.r(12)
+                color: root.ethMsgIsError ? Theme.m3ErrorContainer : Theme.m3SurfaceHigh
+
+                Text {
+                    id: fbTxt
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    wrapMode: Text.Wrap
+                    text: root.ethMsg.length > 0
+                        ? root.ethMsg
+                        : ((root.ethStatus && Array.isArray(root.ethStatus.warnings) && root.ethStatus.warnings.length > 0) ? root.ethStatus.warnings.join(" ") : "")
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(10)
+                    font.weight: root.ethMsgIsError ? Font.DemiBold : Font.Normal
+                    color: root.ethMsgIsError ? Theme.m3OnErrorContainer : Theme.m3Ink
+                }
+            }
+        }
     }
 
     // --- 1. Network Interfaces, IP, Gateway & DNS (Ethernet + Wi-Fi) ---
