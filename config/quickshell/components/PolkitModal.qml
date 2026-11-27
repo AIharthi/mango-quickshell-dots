@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Polkit
 import ".."
+import "../m3"
 
 Item {
     id: root
@@ -77,34 +78,38 @@ Item {
             Rectangle {
                 anchors.centerIn: parent
                 width: Math.min(460, Math.max(320, polkitWin.width - 48))
-                implicitHeight: cardCol.implicitHeight + 40
-                radius: Theme.r(24)
-                color: Theme.notchBg
-                border.width: Math.max(1, Theme.islandBorderWidth)
-                border.color: (agent.flow && agent.flow.supplementaryIsError) ? Theme.error : Theme.islandBorder
+                implicitHeight: cardCol.implicitHeight + 44
+                radius: Theme.r(30)
+                color: Theme.m3PanelBg
+                border.width: 1
+                border.color: (agent.flow && agent.flow.supplementaryIsError) ? Theme.m3Error : Theme.m3Line
 
                 ColumnLayout {
                     id: cardCol
                     anchors.fill: parent
-                    anchors.margins: 20
-                    spacing: 12
+                    anchors.margins: 22
+                    spacing: 14
 
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 12
 
-                        Rectangle {
-                            implicitWidth: 40
-                            implicitHeight: 40
-                            radius: Theme.r(12)
-                            color: Theme.withAlpha(Theme.primary, 0.18)
+                        Item {
+                            implicitWidth: 46
+                            implicitHeight: 46
+
+                            M3Blob {
+                                anchors.fill: parent
+                                kind: ShellState.m3Shape
+                                color: Theme.m3PrimaryContainer
+                            }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰒃"
                                 font.family: Theme.iconFont
-                                font.pixelSize: Theme.fs(20)
-                                color: Theme.primary
+                                font.pixelSize: Theme.fs(21)
+                                color: Theme.m3OnPrimaryContainer
                             }
                         }
 
@@ -116,9 +121,9 @@ Item {
                                 Layout.fillWidth: true
                                 text: "Authentication Required"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(14)
+                                font.pixelSize: Theme.fs(15)
                                 font.weight: Font.Bold
-                                color: Theme.fgSurface
+                                color: Theme.m3Ink
                             }
 
                             Text {
@@ -128,7 +133,7 @@ Item {
                                 elide: Text.ElideRight
                                 font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(10)
-                                color: Theme.fgSurfaceVariant
+                                color: Theme.m3InkDim
                             }
                         }
                     }
@@ -139,30 +144,30 @@ Item {
                         text: agent.flow ? (agent.flow.message || "Privileged action requires authentication.") : ""
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(12)
-                        color: Theme.fgSurface
+                        color: Theme.m3Ink
                     }
 
                     // Selected Identity Chip
                     Rectangle {
                         visible: agent.flow !== null && agent.flow.selectedIdentity !== null
                         Layout.fillWidth: true
-                        implicitHeight: 32
-                        radius: Theme.r(10)
-                        color: Theme.cardBg
-                        border.width: Theme.subBorderWidth
-                        border.color: Theme.cardBorder
+                        implicitHeight: 36
+                        radius: Theme.r(16)
+                        color: Theme.m3SurfaceC
+                        border.width: 1
+                        border.color: Theme.m3Line
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
                             spacing: 8
 
                             Text {
                                 text: "󰀄"
                                 font.family: Theme.iconFont
-                                font.pixelSize: Theme.fs(13)
-                                color: Theme.secondary
+                                font.pixelSize: Theme.fs(14)
+                                color: Theme.m3Primary
                             }
 
                             Text {
@@ -173,7 +178,7 @@ Item {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(11)
                                 font.weight: Font.DemiBold
-                                color: Theme.fgSurface
+                                color: Theme.m3Ink
                             }
                         }
                     }
@@ -182,23 +187,24 @@ Item {
                     Rectangle {
                         visible: agent.flow !== null && agent.flow.isResponseRequired
                         Layout.fillWidth: true
-                        implicitHeight: 40
-                        radius: Theme.r(12)
-                        color: Theme.cardBg
-                        border.width: 1
-                        border.color: pwdInput.activeFocus ? Theme.primary : Theme.cardBorder
+                        implicitHeight: 46
+                        radius: Theme.r(23)
+                        color: pwdInput.activeFocus ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                        border.width: pwdInput.activeFocus ? 2 : 1
+                        border.color: pwdInput.activeFocus ? Theme.m3Primary : Theme.m3Line
+                        Behavior on color { ColorAnimation { duration: 150 } }
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            spacing: 8
+                            anchors.leftMargin: 16
+                            anchors.rightMargin: 16
+                            spacing: 10
 
                             Text {
                                 text: "󰌋"
                                 font.family: Theme.iconFont
-                                font.pixelSize: Theme.fs(14)
-                                color: Theme.primary
+                                font.pixelSize: Theme.fs(15)
+                                color: pwdInput.activeFocus ? Theme.m3Primary : Theme.m3InkDim
                             }
 
                             Item {
@@ -213,7 +219,7 @@ Item {
                                         : "Password"
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(12)
-                                    color: Theme.fgSurfaceVariant
+                                    color: Theme.m3InkDim
                                 }
 
                                 TextInput {
@@ -223,9 +229,9 @@ Item {
                                     echoMode: (agent.flow && agent.flow.responseVisible)
                                         ? TextInput.Normal
                                         : TextInput.Password
-                                    color: Theme.fgSurface
-                                    selectionColor: Theme.primary
-                                    selectedTextColor: Theme.fgPrimary
+                                    color: Theme.m3Ink
+                                    selectionColor: Theme.m3Primary
+                                    selectedTextColor: Theme.m3OnPrimary
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(12)
                                     clip: true
@@ -246,66 +252,27 @@ Item {
                         text: agent.flow ? (agent.flow.supplementaryMessage || "") : ""
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(11)
-                        color: (agent.flow && agent.flow.supplementaryIsError) ? Theme.error : Theme.warning
+                        color: (agent.flow && agent.flow.supplementaryIsError) ? Theme.m3Error : Theme.warning
                     }
 
                     // Actions Row
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: 10
 
                         Item { Layout.fillWidth: true }
 
-                        Rectangle {
-                            implicitHeight: 32
-                            implicitWidth: cancelLbl.implicitWidth + 24
-                            radius: Theme.r(10)
-                            color: cancelMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                            border.width: Theme.subBorderWidth
-                            border.color: Theme.cardBorder
-
-                            Text {
-                                id: cancelLbl
-                                anchors.centerIn: parent
-                                text: "Cancel"
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(11)
-                                font.weight: Font.Medium
-                                color: Theme.fgSurface
-                            }
-
-                            MouseArea {
-                                id: cancelMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: polkitWin.cancelFlow()
-                            }
+                        M3Btn {
+                            text: "Cancel"
+                            variant: "tonal"
+                            onClicked: polkitWin.cancelFlow()
                         }
 
-                        Rectangle {
-                            implicitHeight: 32
-                            implicitWidth: authLbl.implicitWidth + 24
-                            radius: Theme.r(10)
-                            color: authMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-
-                            Text {
-                                id: authLbl
-                                anchors.centerIn: parent
-                                text: "Authenticate"
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(11)
-                                font.weight: Font.Bold
-                                color: Theme.fgPrimary
-                            }
-
-                            MouseArea {
-                                id: authMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: polkitWin.submitFlow()
-                            }
+                        M3Btn {
+                            text: "Authenticate"
+                            icon: "󰌋"
+                            primary: true
+                            onClicked: polkitWin.submitFlow()
                         }
                     }
                 }

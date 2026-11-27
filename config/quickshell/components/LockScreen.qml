@@ -8,6 +8,7 @@ import Quickshell.Widgets
 import Quickshell.Services.Pam
 import Quickshell.Services.Mpris
 import ".."
+import "../m3"
 
 Item {
     id: root
@@ -339,16 +340,38 @@ Item {
                 }
             }
 
+            readonly property real uiScale: Math.max(0.75, Math.min(1.12, lockSurf.height / 1000))
+            readonly property real cardW: Math.round(252 * uiScale)
+            readonly property real cardH: Math.round(472 * uiScale)
+            readonly property bool hasMedia: root.activePlayer !== null && (root.activePlayer.trackTitle || "").length > 0
+
+            // Build 42-cell month calendar array matching real current month
+            readonly property var monthCells: {
+                const d = lockClock.date;
+                const y = d.getFullYear();
+                const m = d.getMonth();
+                const firstDow = new Date(y, m, 1).getDay();
+                const daysInMonth = new Date(y, m + 1, 0).getDate();
+                const cells = [];
+                for (let i = 0; i < firstDow; i++)
+                    cells.push(0);
+                for (let day = 1; day <= daysInMonth; day++)
+                    cells.push(day);
+                while (cells.length % 7 !== 0)
+                    cells.push(0);
+                return cells;
+            }
+
             // Ambient Theme Scrim
             Rectangle {
                 anchors.fill: parent
                 opacity: lockSurf.cardVisible ? 1.0 : 0.0
                 color: {
                     if (Theme.isSimple || ShellState.surfaceStyle === "oled")
-                        return Theme.surfaceContainerLowest;
+                        return Theme.m3SurfaceLowest;
                     return Theme.isDark
-                        ? Qt.rgba(0.03, 0.03, 0.06, 0.72)
-                        : Qt.rgba(0.94, 0.94, 0.97, 0.68);
+                        ? Qt.rgba(0.03, 0.03, 0.05, 0.70)
+                        : Qt.rgba(0.95, 0.94, 0.96, 0.66);
                 }
 
                 Behavior on opacity {
@@ -357,172 +380,594 @@ Item {
                 }
             }
 
-            // Main Lock Card with entrance/exit choreography
-            Rectangle {
-                id: mainCard
-                anchors.centerIn: parent
-                width: Math.min(450, Math.max(310, lockSurf.width - 48))
-                implicitHeight: cardCol.implicitHeight + 52
-                radius: Theme.r(28)
-                color: Theme.notchBg
-                border.width: Math.max(1, Theme.islandBorderWidth)
-                border.color: root.errorText.length > 0 ? Theme.error : Theme.islandBorder
-                clip: true
-
+            // ================= M3 Expressive 3-Card Hero Row (DarkShadowShell LockCards) =================
+            Row {
+                id: cardsRow
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: Math.max(24, Math.round((lockSurf.height - lockSurf.cardH) / 2 - lockSurf.height * 0.045))
+                spacing: Math.round(18 * lockSurf.uiScale)
                 opacity: lockSurf.cardVisible ? 1.0 : 0.0
-                scale: Theme.reducedMotion ? 1.0 : (root._unlocking ? 1.04 : (root._revealed ? 1.0 : 0.93))
-                transform: Translate {
-                    y: Theme.reducedMotion ? 0 : (root._unlocking ? -14 : (root._revealed ? 0 : 26))
-                    Behavior on y {
-                        enabled: !Theme.reducedMotion
-                        NumberAnimation { duration: 340; easing.type: Easing.OutCubic }
-                    }
-                }
+                scale: Theme.reducedMotion ? 1.0 : (root._unlocking ? 1.04 : (root._revealed ? 1.0 : 0.94))
 
-                Behavior on opacity {
-                    enabled: !Theme.reducedMotion
-                    NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-                }
-                Behavior on scale {
-                    enabled: !Theme.reducedMotion
-                    NumberAnimation { duration: 340; easing.type: Easing.OutCubic }
-                }
-                Behavior on border.color {
-                    enabled: !Theme.reducedMotion
-                    ColorAnimation { duration: 160 }
-                }
+                Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
 
-                // Subtle glass specular top sheen
+                // --- Card 1: Month & Today Calendar ---
                 Rectangle {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    height: 52
-                    radius: parent.radius
-                    visible: Theme.showGlassSheen
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.34) }
-                        GradientStop { position: 1.0; color: "transparent" }
+                    width: lockSurf.cardW
+                    height: lockSurf.cardH
+                    radius: Theme.r(32)
+                    color: Theme.m3PanelBg
+                    border.width: 1
+                    border.color: Theme.m3Line
+                    clip: true
+
+                    Text {
+                        x: 22
+                        y: 12
+                        width: parent.width - 36
+                        text: Qt.formatDate(lockClock.date, "MMM").toUpperCase()
+                        color: Theme.m3Primary
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Math.round(74 * lockSurf.uiScale)
+                        font.weight: Font.Black
+                        fontSizeMode: Text.HorizontalFit
+                        minimumPixelSize: 36
                     }
-                }
 
-                // Ambient auth pulse bar at top of card
-                Rectangle {
-                    anchors.top: parent.top
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    height: 3
-                    radius: 1.5
-                    visible: root.authenticating
-                    width: parent.width * 0.55
-                    color: Theme.primary
-
-                    SequentialAnimation on opacity {
-                        running: root.authenticating && !Theme.reducedMotion
-                        loops: Animation.Infinite
-                        NumberAnimation { to: 0.25; duration: 420; easing.type: Easing.InOutSine }
-                        NumberAnimation { to: 1.0; duration: 420; easing.type: Easing.InOutSine }
-                    }
-                }
-
-                ColumnLayout {
-                    id: cardCol
-                    anchors.fill: parent
-                    anchors.margins: 26
-                    spacing: 13
-
-                    // Greeting + Clock + Date
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
+                    Column {
+                        x: 24
+                        y: Math.round(112 * lockSurf.uiScale)
+                        spacing: 3
 
                         Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: root.greetingText(lockClock.date)
+                            text: Qt.formatDate(lockClock.date, "dddd d")
+                            color: Theme.m3Ink
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                            font.weight: Font.Medium
-                            color: Theme.primary
-                        }
-
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: ShellState.formatTime(lockClock.date)
-                            font.family: Theme.monoFont
-                            font.pixelSize: 50
+                            font.pixelSize: Math.round(20 * lockSurf.uiScale)
                             font.weight: Font.Bold
-                            color: Theme.fgSurface
                         }
 
                         Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: ShellState.formatDate(lockClock.date)
+                            text: Qt.formatDate(lockClock.date, "MMMM yyyy")
+                            color: Theme.m3InkDim
                             font.family: Theme.fontFamily
-                            font.pixelSize: 13
+                            font.pixelSize: Math.round(11 * lockSurf.uiScale)
                             font.weight: Font.Medium
-                            color: Theme.fgSurfaceVariant
                         }
                     }
 
-                    // Status Pill Strip (User, Layout Switcher, Battery, DND)
-                    Flow {
-                        Layout.alignment: Qt.AlignHCenter
+                    Grid {
+                        id: lockCalGrid
+                        x: 16
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 20
+                        width: parent.width - 32
+                        columns: 7
+                        rowSpacing: Math.round(6 * lockSurf.uiScale)
+                        columnSpacing: 0
+                        readonly property real cellW: width / 7
+
+                        Repeater {
+                            model: ["S", "M", "T", "W", "T", "F", "S"]
+                            delegate: Text {
+                                required property string modelData
+                                width: lockCalGrid.cellW
+                                horizontalAlignment: Text.AlignHCenter
+                                text: modelData
+                                color: Theme.m3InkDim
+                                opacity: 0.72
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Math.round(10 * lockSurf.uiScale)
+                                font.weight: Font.Bold
+                            }
+                        }
+
+                        Repeater {
+                            model: lockSurf.monthCells
+                            delegate: Item {
+                                id: dayCell
+                                required property int modelData
+                                readonly property bool isToday: dayCell.modelData > 0 && dayCell.modelData === lockClock.date.getDate()
+                                width: lockCalGrid.cellW
+                                height: Math.round(28 * lockSurf.uiScale)
+
+                                M3Blob {
+                                    anchors.centerIn: parent
+                                    visible: dayCell.isToday
+                                    width: Math.round(28 * lockSurf.uiScale)
+                                    height: width
+                                    kind: "cookie"
+                                    color: Theme.m3Primary
+
+                                    RotationAnimator on rotation {
+                                        from: 0
+                                        to: 360
+                                        duration: 30000
+                                        loops: Animation.Infinite
+                                        running: dayCell.visible && lockSurf.cardVisible && !Theme.reducedMotion
+                                    }
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: dayCell.modelData > 0 ? String(dayCell.modelData) : ""
+                                    color: dayCell.isToday ? Theme.m3OnPrimary : Theme.m3Ink
+                                    opacity: dayCell.isToday ? 1.0 : 0.85
+                                    font.family: Theme.monoFont
+                                    font.pixelSize: Math.round(11 * lockSurf.uiScale)
+                                    font.weight: dayCell.isToday ? Font.Bold : Font.Medium
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // --- Card 2: Stacked Time + Expressive Wavy Seconds Ring ---
+                Rectangle {
+                    width: lockSurf.cardW
+                    height: lockSurf.cardH
+                    radius: Theme.r(32)
+                    color: Theme.m3PanelBg
+                    border.width: 1
+                    border.color: Theme.m3Line
+                    clip: true
+
+                    // Auth Activity Strip
+                    Rectangle {
+                        anchors.top: parent.top
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        height: 3
+                        radius: 1.5
+                        visible: root.authenticating
+                        width: parent.width * 0.55
+                        color: Theme.m3Primary
+
+                        SequentialAnimation on opacity {
+                            running: root.authenticating && !Theme.reducedMotion
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.25; duration: 420; easing.type: Easing.InOutSine }
+                            NumberAnimation { to: 1.0; duration: 420; easing.type: Easing.InOutSine }
+                        }
+                    }
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: 16
+                        text: root.greetingText(lockClock.date)
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
+                        font.weight: Font.Bold
+                        color: Theme.m3Primary
+                    }
+
+                    Column {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: Math.round(44 * lockSurf.uiScale)
+                        spacing: Math.round(-28 * lockSurf.uiScale)
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: Qt.formatTime(lockClock.date, "hh")
+                            color: Theme.m3Ink
+                            font.family: Theme.monoFont
+                            font.pixelSize: Math.round(116 * lockSurf.uiScale)
+                            font.weight: Font.Black
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: Qt.formatTime(lockClock.date, "mm")
+                            color: Theme.m3Primary
+                            font.family: Theme.monoFont
+                            font.pixelSize: Math.round(116 * lockSurf.uiScale)
+                            font.weight: Font.Black
+                        }
+                    }
+
+                    Item {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: Math.round(28 * lockSurf.uiScale)
+                        width: Math.round(116 * lockSurf.uiScale)
+                        height: width
+
+                        M3Blob {
+                            anchors.fill: parent
+                            kind: ShellState.m3Shape
+                            color: Theme.m3PrimaryContainer
+
+                            RotationAnimator on rotation {
+                                from: 0
+                                to: 360
+                                duration: 55000
+                                loops: Animation.Infinite
+                                running: lockSurf.cardVisible && !Theme.reducedMotion
+                            }
+                        }
+
+                        M3WavyArc {
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            value: Math.max(0.02, lockClock.date.getSeconds() / 60.0)
+                            thick: ShellState.m3WaveThick
+                            wavy: ShellState.m3WavyProgress
+                            moving: lockSurf.cardVisible && !Theme.reducedMotion
+                            color: Theme.m3Primary
+                            track: Theme.m3Track
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: Qt.formatTime(lockClock.date, "ss")
+                            color: Theme.m3OnPrimaryContainer
+                            font.family: Theme.monoFont
+                            font.pixelSize: Math.round(24 * lockSurf.uiScale)
+                            font.weight: Font.Bold
+                        }
+                    }
+                }
+
+                // --- Card 3: Music Controller OR Session Profile ---
+                Rectangle {
+                    width: lockSurf.cardW
+                    height: lockSurf.cardH
+                    radius: Theme.r(32)
+                    color: Theme.m3PanelBg
+                    border.width: 1
+                    border.color: Theme.m3Line
+                    clip: true
+
+                    // Media Card Content
+                    Item {
+                        anchors.fill: parent
+                        visible: lockSurf.hasMedia
+
+                        Text {
+                            x: 20
+                            y: 18
+                            width: parent.width - 40
+                            text: root.activePlayer ? (root.activePlayer.trackTitle || "") : ""
+                            color: Theme.m3Ink
+                            wrapMode: Text.WordWrap
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Math.round(22 * lockSurf.uiScale)
+                            font.weight: Font.Black
+                            lineHeight: 0.95
+                        }
+
+                        Rectangle {
+                            x: 20
+                            y: Math.round(parent.height * 0.23)
+                            height: 26
+                            radius: Theme.r(13)
+                            width: Math.min(parent.width - 40, artistLbl.implicitWidth + 22)
+                            color: Theme.m3Primary
+
+                            Text {
+                                id: artistLbl
+                                anchors.centerIn: parent
+                                width: Math.min(implicitWidth, parent.width - 20)
+                                elide: Text.ElideRight
+                                text: root.activePlayer ? (root.activePlayer.trackArtist || "Now Playing") : ""
+                                color: Theme.m3OnPrimary
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                            }
+                        }
+
+                        M3ShapeImage {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: Math.round(parent.height * 0.34)
+                            width: parent.width - 44
+                            height: Math.round(parent.height * 0.37)
+                            kind: ShellState.m3Shape
+                            source: (root.activePlayer && root.activePlayer.trackArtUrl) ? root.activePlayer.trackArtUrl : ""
+                            empty: Theme.m3SurfaceC
+                            fallbackGlyph: (root.activePlayer && root.activePlayer.isPlaying) ? "󰎈" : "󰏤"
+                            fallbackColor: Theme.m3Primary
+                            spinning: false
+                        }
+
+                        M3WavyLine {
+                            x: 20
+                            width: parent.width - 40
+                            height: 14
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 66
+                            value: (root.activePlayer && root.activePlayer.length > 0)
+                                ? Math.max(0.0, Math.min(1.0, root.activePlayer.position / root.activePlayer.length))
+                                : 0.0
+                            moving: root.activePlayer ? !!root.activePlayer.isPlaying : false
+                            wavy: ShellState.m3WavyProgress
+                            thick: ShellState.m3WaveThick
+                            seekable: !!(root.activePlayer && root.activePlayer.canSeek)
+                            color: Theme.m3Primary
+                            track: Theme.m3Track
+                            onMoved: v => {
+                                if (root.activePlayer && root.activePlayer.canSeek && root.activePlayer.length > 0)
+                                    root.activePlayer.position = v * root.activePlayer.length;
+                            }
+                        }
+
+                        Row {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 16
+                            spacing: 8
+
+                            Rectangle {
+                                width: 54
+                                height: 38
+                                radius: Theme.r(prevMouse.pressed ? 11 : 19)
+                                color: prevMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰒮"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 16
+                                    color: Theme.m3Ink
+                                }
+
+                                MouseArea {
+                                    id: prevMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (root.activePlayer && root.activePlayer.canGoPrevious)
+                                            root.activePlayer.previous();
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 72
+                                height: 38
+                                radius: Theme.r(mediaMouse.pressed ? 12 : 19)
+                                color: mediaMouse.containsMouse ? Qt.lighter(Theme.m3Primary, 1.08) : Theme.m3Primary
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: (root.activePlayer && root.activePlayer.isPlaying) ? "󰏤" : "󰐊"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 18
+                                    color: Theme.m3OnPrimary
+                                }
+
+                                MouseArea {
+                                    id: mediaMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (root.activePlayer && root.activePlayer.canTogglePlaying)
+                                            root.activePlayer.togglePlaying();
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 54
+                                height: 38
+                                radius: Theme.r(nextMouse.pressed ? 11 : 19)
+                                color: nextMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰒭"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 16
+                                    color: Theme.m3Ink
+                                }
+
+                                MouseArea {
+                                    id: nextMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (root.activePlayer && root.activePlayer.canGoNext)
+                                            root.activePlayer.next();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Fallback Session Profile Card (when no media playing)
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        width: parent.width - 40
+                        visible: !lockSurf.hasMedia
+                        spacing: 14
+
+                        Item {
+                            Layout.alignment: Qt.AlignHCenter
+                            width: Math.round(108 * lockSurf.uiScale)
+                            height: width
+
+                            M3Blob {
+                                anchors.fill: parent
+                                kind: ShellState.m3Shape
+                                color: Theme.m3PrimaryContainer
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: root.currentUser.length > 0 ? root.currentUser[0].toUpperCase() : "A"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Math.round(40 * lockSurf.uiScale)
+                                font.weight: Font.Black
+                                color: Theme.m3OnPrimaryContainer
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: root.currentUser
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 18
+                                font.weight: Font.Bold
+                                color: Theme.m3Ink
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: DeviceCaps.hostname.length > 0 ? DeviceCaps.hostname : "Wayland Session"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
+                                color: Theme.m3InkDim
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitHeight: 28
+                            implicitWidth: lockedLbl.implicitWidth + 24
+                            radius: Theme.r(14)
+                            color: Theme.m3SecondaryContainer
+
+                            Text {
+                                id: lockedLbl
+                                anchors.centerIn: parent
+                                text: "󰌾  Session Locked"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                font.weight: Font.Bold
+                                color: Theme.m3OnSecondaryContainer
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Floating Error Banner above Bottom Pill Dock
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: bottomDock.top
+                anchors.bottomMargin: 12
+                visible: root.errorText.length > 0 && lockSurf.cardVisible
+                height: 32
+                width: errTxt.implicitWidth + 28
+                radius: Theme.r(16)
+                color: Theme.m3ErrorContainer
+                border.width: 1
+                border.color: Theme.m3Error
+
+                Text {
+                    id: errTxt
+                    anchors.centerIn: parent
+                    text: root.errorText
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    font.weight: Font.Bold
+                    color: Theme.m3OnErrorContainer
+                }
+            }
+
+            // ================= Bottom Floating Pill Dock =================
+            Row {
+                id: bottomDock
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: Math.round(32 * lockSurf.uiScale)
+                spacing: 10
+                opacity: lockSurf.cardVisible ? 1.0 : 0.0
+                transform: Translate {
+                    y: Theme.reducedMotion ? 0 : (lockSurf.cardVisible ? 0 : 24)
+                    Behavior on y { enabled: !Theme.reducedMotion; NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
+                }
+                Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+
+                // Left Info Pill (Battery + Keyboard Layout + DND)
+                Rectangle {
+                    visible: DeviceCaps.hasBattery || root.kbLayoutShort.length > 0 || ShellState.dnd
+                    height: 54
+                    radius: Theme.r(27)
+                    width: leftDockRow.implicitWidth + 18
+                    color: Theme.m3PanelBg
+                    border.width: 1
+                    border.color: Theme.m3Line
+
+                    Row {
+                        id: leftDockRow
+                        anchors.centerIn: parent
                         spacing: 6
 
                         Rectangle {
-                            implicitHeight: 24
-                            implicitWidth: userChipRow.implicitWidth + 16
-                            radius: Theme.r(12)
-                            color: Theme.cardBg
-                            border.width: Theme.subBorderWidth
-                            border.color: Theme.cardBorder
+                            visible: DeviceCaps.hasBattery
+                            height: 38
+                            radius: Theme.r(19)
+                            width: batDockRow.implicitWidth + 20
+                            color: Theme.m3SurfaceC
 
-                            RowLayout {
-                                id: userChipRow
+                            Row {
+                                id: batDockRow
                                 anchors.centerIn: parent
-                                spacing: 5
+                                spacing: 6
+
+                                Item {
+                                    width: 20
+                                    height: 20
+                                    anchors.verticalCenter: parent.verticalCenter
+
+                                    M3WavyArc {
+                                        anchors.fill: parent
+                                        value: Math.max(0.04, DeviceCaps.batteryPercent / 100.0)
+                                        thick: 3
+                                        wavy: false
+                                        color: DeviceCaps.batteryLow ? Theme.m3Error : Theme.m3Primary
+                                        track: Theme.m3Track
+                                    }
+                                }
 
                                 Text {
-                                    text: "󰀄"
-                                    font.family: Theme.iconFont
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: DeviceCaps.batteryPercent + "%"
+                                    font.family: Theme.monoFont
                                     font.pixelSize: 12
-                                    color: Theme.primary
-                                }
-                                Text {
-                                    text: root.currentUser
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 11
-                                    font.weight: Font.DemiBold
-                                    color: Theme.fgSurface
+                                    font.weight: Font.Bold
+                                    color: Theme.m3Ink
                                 }
                             }
                         }
 
                         Rectangle {
                             visible: root.kbLayoutShort.length > 0
-                            implicitHeight: 24
-                            implicitWidth: kbChipRow.implicitWidth + 14
-                            radius: Theme.r(12)
-                            color: kbChipMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                            border.width: Theme.subBorderWidth
-                            border.color: Theme.cardBorder
+                            height: 38
+                            radius: Theme.r(19)
+                            width: kbDockRow.implicitWidth + 20
+                            color: kbChipMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
 
-                            RowLayout {
-                                id: kbChipRow
+                            Row {
+                                id: kbDockRow
                                 anchors.centerIn: parent
-                                spacing: 4
+                                spacing: 6
 
                                 Text {
+                                    anchors.verticalCenter: parent.verticalCenter
                                     text: "󰌌"
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 11
-                                    color: Theme.secondary
+                                    font.pixelSize: 13
+                                    color: Theme.m3Primary
                                 }
+
                                 Text {
+                                    anchors.verticalCenter: parent.verticalCenter
                                     text: root.kbLayoutShort
                                     font.family: Theme.monoFont
-                                    font.pixelSize: 10
+                                    font.pixelSize: 11
                                     font.weight: Font.Bold
-                                    color: Theme.fgSurface
+                                    color: Theme.m3Ink
                                 }
                             }
 
@@ -536,545 +981,307 @@ Item {
                         }
 
                         Rectangle {
-                            visible: DeviceCaps.hasBattery
-                            implicitHeight: 24
-                            implicitWidth: batChipRow.implicitWidth + 14
-                            radius: Theme.r(12)
-                            color: Theme.cardBg
-                            border.width: Theme.subBorderWidth
-                            border.color: Theme.cardBorder
-
-                            RowLayout {
-                                id: batChipRow
-                                anchors.centerIn: parent
-                                spacing: 4
-
-                                Text {
-                                    text: DeviceCaps.batteryIcon
-                                    font.family: Theme.iconFont
-                                    font.pixelSize: 12
-                                    color: DeviceCaps.batteryLow
-                                        ? Theme.error
-                                        : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant)
-                                }
-                                Text {
-                                    text: DeviceCaps.batteryPercent + "%"
-                                    font.family: Theme.monoFont
-                                    font.pixelSize: 10
-                                    font.weight: Font.Bold
-                                    color: Theme.fgSurface
-                                }
-                            }
-                        }
-
-                        Rectangle {
                             visible: ShellState.dnd
-                            implicitHeight: 24
-                            implicitWidth: 26
-                            radius: Theme.r(12)
-                            color: Theme.withAlpha(Theme.warning, 0.16)
-                            border.width: Theme.subBorderWidth
-                            border.color: Theme.withAlpha(Theme.warning, 0.45)
+                            width: 38
+                            height: 38
+                            radius: Theme.r(19)
+                            color: Theme.m3SecondaryContainer
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰂛"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 12
-                                color: Theme.warning
+                                font.pixelSize: 14
+                                color: Theme.m3OnSecondaryContainer
                             }
                         }
                     }
+                }
 
-                    // Active Media Pill with Album Art + Transport Controls
-                    Rectangle {
-                        visible: root.activePlayer !== null && (root.activePlayer.trackTitle || "").length > 0
-                        Layout.fillWidth: true
-                        implicitHeight: 50
-                        radius: Theme.r(14)
-                        color: Theme.cardBg
-                        border.width: Theme.subBorderWidth
-                        border.color: Theme.cardBorder
+                // Center Password Capsule with Failure Shake
+                Rectangle {
+                    id: pwdBox
+                    height: 54
+                    width: Math.round(360 * Math.min(1.0, lockSurf.uiScale))
+                    radius: Theme.r(27)
+                    color: root.errorText.length > 0 ? Theme.m3ErrorContainer : Theme.m3PanelBg
+                    border.width: pwdInput.activeFocus || root.errorText.length > 0 ? 2 : 1
+                    border.color: root.errorText.length > 0
+                        ? Theme.m3Error
+                        : (pwdInput.activeFocus ? Theme.m3Primary : Theme.m3Line)
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            spacing: 10
+                    Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
+                    Behavior on border.color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
 
-                            ClippingRectangle {
-                                implicitWidth: 34
-                                implicitHeight: 34
-                                radius: Theme.r(9)
-                                color: Theme.primaryContainer
-                                contentUnderBorder: false
-                                contentInsideBorder: true
-
-                                Image {
-                                    id: lockArtImg
-                                    anchors.fill: parent
-                                    source: (root.activePlayer && root.activePlayer.trackArtUrl) ? root.activePlayer.trackArtUrl : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                    cache: false
-                                    sourceSize: Qt.size(64, 64)
-                                    visible: source.toString().length > 0 && status === Image.Ready
-                                }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    visible: !lockArtImg.visible
-                                    text: (root.activePlayer && root.activePlayer.isPlaying) ? "󰎈" : "󰏤"
-                                    font.family: Theme.iconFont
-                                    font.pixelSize: 16
-                                    color: Theme.primary
-                                }
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 1
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: root.activePlayer ? (root.activePlayer.trackTitle || "") : ""
-                                    elide: Text.ElideRight
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 11
-                                    font.weight: Font.Bold
-                                    color: Theme.fgSurface
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    visible: text.length > 0
-                                    text: root.activePlayer ? (root.activePlayer.trackArtist || "") : ""
-                                    elide: Text.ElideRight
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 10
-                                    color: Theme.fgSurfaceVariant
-                                }
-                            }
-
-                            RowLayout {
-                                spacing: 4
-
-                                Rectangle {
-                                    implicitWidth: 24
-                                    implicitHeight: 24
-                                    radius: Theme.r(12)
-                                    color: prevMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "󰒮"
-                                        font.family: Theme.iconFont
-                                        font.pixelSize: 11
-                                        color: Theme.fgSurface
-                                    }
-
-                                    MouseArea {
-                                        id: prevMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            if (root.activePlayer && root.activePlayer.canGoPrevious)
-                                                root.activePlayer.previous();
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    implicitWidth: 28
-                                    implicitHeight: 28
-                                    radius: Theme.r(14)
-                                    color: mediaMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: (root.activePlayer && root.activePlayer.isPlaying) ? "󰏤" : "󰐊"
-                                        font.family: Theme.iconFont
-                                        font.pixelSize: 13
-                                        color: Theme.fgPrimary
-                                    }
-
-                                    MouseArea {
-                                        id: mediaMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            if (root.activePlayer && root.activePlayer.canTogglePlaying)
-                                                root.activePlayer.togglePlaying();
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    implicitWidth: 24
-                                    implicitHeight: 24
-                                    radius: Theme.r(12)
-                                    color: nextMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "󰒭"
-                                        font.family: Theme.iconFont
-                                        font.pixelSize: 11
-                                        color: Theme.fgSurface
-                                    }
-
-                                    MouseArea {
-                                        id: nextMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            if (root.activePlayer && root.activePlayer.canGoNext)
-                                                root.activePlayer.next();
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    transform: Translate {
+                        id: pwdShake
+                        x: 0
                     }
 
-                    // Password Input Box with horizontal failure shake
-                    Rectangle {
-                        id: pwdBox
-                        Layout.fillWidth: true
-                        implicitHeight: 44
-                        radius: Theme.r(14)
-                        color: Theme.cardBg
-                        border.width: pwdInput.activeFocus || root.errorText.length > 0 ? 1.5 : 1
-                        border.color: root.errorText.length > 0
-                            ? Theme.error
-                            : (pwdInput.activeFocus ? Theme.primary : Theme.cardBorder)
+                    SequentialAnimation {
+                        id: shakeAnim
+                        NumberAnimation { target: pwdShake; property: "x"; to: -14; duration: 45; easing.type: Easing.InOutQuad }
+                        NumberAnimation { target: pwdShake; property: "x"; to: 14;  duration: 50; easing.type: Easing.InOutQuad }
+                        NumberAnimation { target: pwdShake; property: "x"; to: -10; duration: 50; easing.type: Easing.InOutQuad }
+                        NumberAnimation { target: pwdShake; property: "x"; to: 6;   duration: 45; easing.type: Easing.InOutQuad }
+                        NumberAnimation { target: pwdShake; property: "x"; to: 0;   duration: 45; easing.type: Easing.InOutQuad }
+                    }
 
-                        Behavior on border.color {
-                            enabled: !Theme.reducedMotion
-                            ColorAnimation { duration: 150 }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 8
+                        spacing: 10
+
+                        Text {
+                            id: lockIconGlyph
+                            text: root.authenticating ? "󰦖" : "󰌾"
+                            font.family: Theme.iconFont
+                            font.pixelSize: 17
+                            color: root.errorText.length > 0
+                                ? Theme.m3OnErrorContainer
+                                : (pwdInput.activeFocus ? Theme.m3Primary : Theme.m3InkDim)
+
+                            RotationAnimation on rotation {
+                                from: 0
+                                to: 360
+                                duration: 900
+                                loops: Animation.Infinite
+                                running: root.authenticating && !Theme.reducedMotion
+                                onRunningChanged: {
+                                    if (!running)
+                                        lockIconGlyph.rotation = 0;
+                                }
+                            }
                         }
 
-                        transform: Translate {
-                            id: pwdShake
-                            x: 0
-                        }
-
-                        SequentialAnimation {
-                            id: shakeAnim
-                            NumberAnimation { target: pwdShake; property: "x"; to: -12; duration: 42; easing.type: Easing.InOutQuad }
-                            NumberAnimation { target: pwdShake; property: "x"; to: 12;  duration: 42; easing.type: Easing.InOutQuad }
-                            NumberAnimation { target: pwdShake; property: "x"; to: -9;  duration: 42; easing.type: Easing.InOutQuad }
-                            NumberAnimation { target: pwdShake; property: "x"; to: 9;   duration: 42; easing.type: Easing.InOutQuad }
-                            NumberAnimation { target: pwdShake; property: "x"; to: -4;  duration: 42; easing.type: Easing.InOutQuad }
-                            NumberAnimation { target: pwdShake; property: "x"; to: 0;   duration: 42; easing.type: Easing.InOutQuad }
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 14
-                            anchors.rightMargin: 8
-                            spacing: 8
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
 
                             Text {
-                                id: lockIconGlyph
-                                text: root.authenticating ? "󰦖" : "󰌾"
-                                font.family: Theme.iconFont
-                                font.pixelSize: 15
-                                color: root.errorText.length > 0
-                                    ? Theme.error
-                                    : (pwdInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant)
-
-                                RotationAnimation on rotation {
-                                    from: 0
-                                    to: 360
-                                    duration: 900
-                                    loops: Animation.Infinite
-                                    running: root.authenticating && !Theme.reducedMotion
-                                    onRunningChanged: {
-                                        if (!running)
-                                            lockIconGlyph.rotation = 0;
-                                    }
-                                }
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: pwdInput.text.length === 0
+                                text: root.authenticating ? "Verifying..." : "Enter password..."
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 13
+                                color: root.errorText.length > 0 ? Theme.m3OnErrorContainer : Theme.m3InkDim
                             }
 
-                            Item {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
+                            TextInput {
+                                id: pwdInput
+                                anchors.fill: parent
+                                verticalAlignment: TextInput.AlignVCenter
+                                echoMode: root.showPassword ? TextInput.Normal : TextInput.Password
+                                enabled: !root.authenticating && !root._unlocking
+                                color: root.errorText.length > 0 ? Theme.m3OnErrorContainer : Theme.m3Ink
+                                selectionColor: Theme.m3Primary
+                                selectedTextColor: Theme.m3OnPrimary
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 14
+                                clip: true
+
+                                onTextEdited: {
+                                    if (root.errorText.length > 0)
+                                        root.errorText = "";
+                                }
+                                Keys.onReturnPressed: root.submitPassword(text)
+                                Keys.onEnterPressed: root.submitPassword(text)
+                                Keys.onEscapePressed: {
+                                    text = "";
+                                    root.errorText = "";
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 34
+                            height: 34
+                            radius: Theme.r(17)
+                            color: eyeMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: root.showPassword ? "󰈉" : "󰈈"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 14
+                                color: root.showPassword ? Theme.m3Primary : Theme.m3InkDim
+                            }
+
+                            MouseArea {
+                                id: eyeMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.showPassword = !root.showPassword;
+                                    pwdInput.forceActiveFocus();
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 38
+                            height: 38
+                            radius: Theme.r(submitMouse.pressed ? 12 : 19)
+                            color: submitMouse.containsMouse ? Qt.lighter(Theme.m3Primary, 1.08) : Theme.m3Primary
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰌍"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 16
+                                color: Theme.m3OnPrimary
+                            }
+
+                            MouseArea {
+                                id: submitMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.submitPassword(pwdInput.text)
+                            }
+                        }
+                    }
+                }
+
+                // Right Power Pill (Suspend / Reboot / Poweroff)
+                Rectangle {
+                    height: 54
+                    radius: Theme.r(27)
+                    width: lockPowerRow.implicitWidth + 16
+                    color: Theme.m3PanelBg
+                    border.width: 1
+                    border.color: Theme.m3Line
+
+                    Row {
+                        id: lockPowerRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Rectangle {
+                            width: 38
+                            height: 38
+                            radius: Theme.r(19)
+                            color: suspMouse.containsMouse ? Theme.m3SecondaryContainer : Theme.m3SurfaceC
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰒲"
+                                font.family: Theme.iconFont
+                                font.pixelSize: 15
+                                color: suspMouse.containsMouse ? Theme.m3OnSecondaryContainer : Theme.m3Ink
+                            }
+
+                            MouseArea {
+                                id: suspMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Quickshell.execDetached(["loginctl", "suspend"])
+                            }
+                        }
+
+                        Rectangle {
+                            id: rebootBtn
+                            readonly property bool isPending: lockSurf.confirmPowerAction === "reboot"
+                            height: 38
+                            width: isPending ? rebConfirmTxt.implicitWidth + 24 : 38
+                            radius: Theme.r(19)
+                            color: rebootBtn.isPending
+                                ? Theme.warning
+                                : (rebMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 5
 
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    visible: pwdInput.text.length === 0
-                                    text: root.authenticating ? "Verifying..." : "Enter password to unlock"
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 12
-                                    color: Theme.fgSurfaceVariant
-                                }
-
-                                TextInput {
-                                    id: pwdInput
-                                    anchors.fill: parent
-                                    verticalAlignment: TextInput.AlignVCenter
-                                    echoMode: root.showPassword ? TextInput.Normal : TextInput.Password
-                                    enabled: !root.authenticating && !root._unlocking
-                                    color: Theme.fgSurface
-                                    selectionColor: Theme.primary
-                                    selectedTextColor: Theme.fgPrimary
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 13
-                                    clip: true
-
-                                    onTextEdited: {
-                                        if (root.errorText.length > 0)
-                                            root.errorText = "";
-                                    }
-                                    Keys.onReturnPressed: root.submitPassword(text)
-                                    Keys.onEnterPressed: root.submitPassword(text)
-                                    Keys.onEscapePressed: {
-                                        text = "";
-                                        root.errorText = "";
-                                    }
-                                }
-                            }
-
-                            // Show/Hide password toggle
-                            Rectangle {
-                                implicitWidth: 28
-                                implicitHeight: 28
-                                radius: Theme.r(9)
-                                color: eyeMouse.containsMouse ? Theme.hoverBg : "transparent"
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: root.showPassword ? "󰈉" : "󰈈"
+                                    text: "󰜉"
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 13
-                                    color: root.showPassword ? Theme.primary : Theme.fgSurfaceVariant
-                                }
-
-                                MouseArea {
-                                    id: eyeMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.showPassword = !root.showPassword;
-                                        pwdInput.forceActiveFocus();
-                                    }
-                                }
-                            }
-
-                            Rectangle {
-                                implicitWidth: 30
-                                implicitHeight: 30
-                                radius: Theme.r(10)
-                                color: submitMouse.containsMouse ? Theme.primary : Theme.subCardBg
-                                scale: submitMouse.pressed ? 0.92 : 1.0
-
-                                Behavior on scale {
-                                    enabled: !Theme.reducedMotion
-                                    NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
+                                    font.pixelSize: 15
+                                    color: rebootBtn.isPending ? Theme.m3OnPrimary : Theme.warning
                                 }
 
                                 Text {
-                                    anchors.centerIn: parent
-                                    text: "󰌍"
+                                    id: rebConfirmTxt
+                                    visible: rebootBtn.isPending
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "Reboot?"
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 10
+                                    font.weight: Font.Bold
+                                    color: Theme.m3OnPrimary
+                                }
+                            }
+
+                            MouseArea {
+                                id: rebMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (lockSurf.confirmPowerAction !== "reboot") {
+                                        lockSurf.confirmPowerAction = "reboot";
+                                        powerConfirmTimer.restart();
+                                    } else {
+                                        Quickshell.execDetached(["loginctl", "reboot"]);
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            id: powerBtn
+                            readonly property bool isPending: lockSurf.confirmPowerAction === "poweroff"
+                            height: 38
+                            width: isPending ? pwrConfirmTxt.implicitWidth + 24 : 38
+                            radius: Theme.r(19)
+                            color: powerBtn.isPending
+                                ? Theme.m3Error
+                                : (pwrMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceC)
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 5
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "󰐥"
                                     font.family: Theme.iconFont
-                                    font.pixelSize: 14
-                                    color: submitMouse.containsMouse ? Theme.fgPrimary : Theme.primary
+                                    font.pixelSize: 15
+                                    color: powerBtn.isPending ? Theme.m3OnPrimary : Theme.m3Error
                                 }
 
-                                MouseArea {
-                                    id: submitMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.submitPassword(pwdInput.text)
+                                Text {
+                                    id: pwrConfirmTxt
+                                    visible: powerBtn.isPending
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "Off?"
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 10
+                                    font.weight: Font.Bold
+                                    color: Theme.m3OnPrimary
+                                }
+                            }
+
+                            MouseArea {
+                                id: pwrMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (lockSurf.confirmPowerAction !== "poweroff") {
+                                        lockSurf.confirmPowerAction = "poweroff";
+                                        powerConfirmTimer.restart();
+                                    } else {
+                                        Quickshell.execDetached(["loginctl", "poweroff"]);
+                                    }
                                 }
                             }
                         }
                     }
-
-                    // Error / Feedback Text
-                    Text {
-                        Layout.alignment: Qt.AlignHCenter
-                        visible: root.errorText.length > 0
-                        text: root.errorText
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                        font.weight: Font.Medium
-                        color: Theme.error
-                    }
-                }
-            }
-
-            // Bottom-Right Animated Session Power Controls
-            Item {
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.margins: 24
-                implicitWidth: lockPowerRow.implicitWidth
-                implicitHeight: lockPowerRow.implicitHeight
-                opacity: lockSurf.cardVisible ? 1.0 : 0.0
-                transform: Translate {
-                    y: Theme.reducedMotion ? 0 : (lockSurf.cardVisible ? 0 : 16)
-                    Behavior on y {
-                        enabled: !Theme.reducedMotion
-                        NumberAnimation { duration: 360; easing.type: Easing.OutCubic }
-                    }
-                }
-                Behavior on opacity {
-                    enabled: !Theme.reducedMotion
-                    NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
-                }
-
-                RowLayout {
-                    id: lockPowerRow
-                    anchors.fill: parent
-                    spacing: 8
-
-                Rectangle {
-                    implicitHeight: 34
-                    implicitWidth: suspRow.implicitWidth + 20
-                    radius: Theme.r(17)
-                    color: suspMouse.containsMouse ? Theme.hoverBg : Theme.notchBg
-                    border.width: Math.max(1, Theme.cardBorderWidth)
-                    border.color: Theme.cardBorder
-                    scale: suspMouse.pressed ? 0.94 : 1.0
-
-                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-                    RowLayout {
-                        id: suspRow
-                        anchors.centerIn: parent
-                        spacing: 6
-
-                        Text {
-                            text: "󰒲"
-                            font.family: Theme.iconFont
-                            font.pixelSize: 13
-                            color: Theme.secondary
-                        }
-                        Text {
-                            text: "Suspend"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                            font.weight: Font.Medium
-                            color: Theme.fgSurface
-                        }
-                    }
-
-                    MouseArea {
-                        id: suspMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Quickshell.execDetached(["loginctl", "suspend"])
-                    }
-                }
-
-                Rectangle {
-                    id: rebootBtn
-                    readonly property bool isPending: lockSurf.confirmPowerAction === "reboot"
-                    implicitHeight: 34
-                    implicitWidth: rebRow.implicitWidth + 20
-                    radius: Theme.r(17)
-                    color: rebootBtn.isPending
-                        ? Theme.warning
-                        : (rebMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.22) : Theme.notchBg)
-                    border.width: Math.max(1, Theme.cardBorderWidth)
-                    border.color: rebootBtn.isPending ? Theme.warning : Theme.cardBorder
-                    scale: rebMouse.pressed ? 0.94 : 1.0
-
-                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-                    RowLayout {
-                        id: rebRow
-                        anchors.centerIn: parent
-                        spacing: 6
-
-                        Text {
-                            text: "󰜉"
-                            font.family: Theme.iconFont
-                            font.pixelSize: 13
-                            color: rebootBtn.isPending ? Theme.fgPrimary : Theme.warning
-                        }
-                        Text {
-                            text: rebootBtn.isPending ? "Confirm Reboot?" : "Reboot"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                            font.weight: Font.Medium
-                            color: rebootBtn.isPending ? Theme.fgPrimary : Theme.fgSurface
-                        }
-                    }
-
-                    MouseArea {
-                        id: rebMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (lockSurf.confirmPowerAction !== "reboot") {
-                                lockSurf.confirmPowerAction = "reboot";
-                                powerConfirmTimer.restart();
-                            } else {
-                                Quickshell.execDetached(["loginctl", "reboot"]);
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    id: powerBtn
-                    readonly property bool isPending: lockSurf.confirmPowerAction === "poweroff"
-                    implicitHeight: 34
-                    implicitWidth: pwrRow.implicitWidth + 20
-                    radius: Theme.r(17)
-                    color: powerBtn.isPending
-                        ? Theme.error
-                        : (pwrMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.notchBg)
-                    border.width: Math.max(1, Theme.cardBorderWidth)
-                    border.color: powerBtn.isPending ? Theme.error : Theme.cardBorder
-                    scale: pwrMouse.pressed ? 0.94 : 1.0
-
-                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-                    RowLayout {
-                        id: pwrRow
-                        anchors.centerIn: parent
-                        spacing: 6
-
-                        Text {
-                            text: "󰐥"
-                            font.family: Theme.iconFont
-                            font.pixelSize: 13
-                            color: powerBtn.isPending ? Theme.fgError : Theme.error
-                        }
-                        Text {
-                            text: powerBtn.isPending ? "Confirm Poweroff?" : "Poweroff"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                            font.weight: Font.Medium
-                            color: powerBtn.isPending ? Theme.fgError : Theme.fgSurface
-                        }
-                    }
-
-                    MouseArea {
-                        id: pwrMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (lockSurf.confirmPowerAction !== "poweroff") {
-                                lockSurf.confirmPowerAction = "poweroff";
-                                powerConfirmTimer.restart();
-                            } else {
-                                Quickshell.execDetached(["loginctl", "poweroff"]);
-                            }
-                        }
-                    }
-                }
                 }
             }
         }

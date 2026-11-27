@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import ".."
+import "../m3"
 
 ColumnLayout {
     id: root
@@ -75,21 +76,21 @@ ColumnLayout {
 
         Item { Layout.fillWidth: true }
 
-        // Apple Segmented Tab Switcher
+        // Material 3 Pill Tab Switcher
         Rectangle {
             Layout.alignment: Qt.AlignVCenter
             Layout.fillHeight: false
-            implicitHeight: 32
-            implicitWidth: tabRow.implicitWidth + 6
-            radius: Theme.r(16)
-            color: Theme.cardBg
-            border.width: Theme.activeControlBorderWidth
-            border.color: Theme.cardBorder
+            implicitHeight: 36
+            implicitWidth: tabRow.implicitWidth + 8
+            radius: Theme.r(18)
+            color: Theme.m3SurfaceC
+            border.width: 1
+            border.color: Theme.m3Line
 
             RowLayout {
                 id: tabRow
                 anchors.centerIn: parent
-                spacing: 2
+                spacing: 3
 
                 Repeater {
                     model: [
@@ -106,15 +107,15 @@ ColumnLayout {
                         readonly property bool isCurrent: root.activeTab === tabBtn.modelData.id
                         readonly property bool hasBadge: tabBtn.modelData.id === "notifications" && ShellState.unreadCount > 0
 
-                        implicitHeight: 26
-                        implicitWidth: tabContent.implicitWidth + 12
-                        radius: Theme.r(13)
+                        implicitHeight: 28
+                        implicitWidth: tabContent.implicitWidth + 14
+                        radius: Theme.r(14)
                         color: tabBtn.isCurrent
-                            ? Theme.primary
-                            : (tabArea.containsMouse ? Theme.hoverBg : "transparent")
+                            ? Theme.m3Primary
+                            : (tabArea.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                         Behavior on color {
-                            enabled: !Theme.isSimple
+                            enabled: !Theme.reducedMotion
                             ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
                         }
 
@@ -126,16 +127,16 @@ ColumnLayout {
                             Text {
                                 text: tabBtn.modelData.icon
                                 font.family: Theme.iconFont
-                                font.pixelSize: 11
-                                color: tabBtn.isCurrent ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                font.pixelSize: Theme.fs(11)
+                                color: tabBtn.isCurrent ? Theme.m3OnPrimary : Theme.m3InkDim
                             }
 
                             Text {
                                 text: tabBtn.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: tabBtn.isCurrent ? Font.Bold : Font.Medium
-                                color: tabBtn.isCurrent ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                color: tabBtn.isCurrent ? Theme.m3OnPrimary : Theme.m3Ink
                             }
 
                             Rectangle {
@@ -143,7 +144,7 @@ ColumnLayout {
                                 implicitWidth: 6
                                 implicitHeight: 6
                                 radius: 3
-                                color: tabBtn.isCurrent ? Theme.fgPrimary : Theme.error
+                                color: tabBtn.isCurrent ? Theme.m3OnPrimary : Theme.m3Error
                             }
                         }
 

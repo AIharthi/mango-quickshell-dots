@@ -23,8 +23,17 @@ Rectangle {
     signal toggleFilesRequested()
     signal toggleNotificationsRequested()
 
-    color: Theme.surfaceContainerLowest
+    color: Theme.m3Surface
     radius: 0
+
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 1
+        color: Theme.m3Line
+        z: 5
+    }
 
     SystemClock {
         id: clock

@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import ".."
+import "../m3"
 
 PanelWindow {
     id: root
@@ -929,9 +930,9 @@ PanelWindow {
 
             width: Math.min(parent.width - 36, targetW)
             height: Math.min(parent.height - 44, targetH)
-            radius: Theme.r(20)
+            radius: Theme.r(30)
             color: fstyle.windowBg
-            border.width: Theme.isSimple ? 2 : Math.max(1, Theme.islandBorderWidth)
+            border.width: 1
             border.color: fstyle.borderCol
             clip: true
 
@@ -947,20 +948,6 @@ PanelWindow {
                 NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
 
-            // Glass Specular Sheen
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: 44
-                radius: parent.radius
-                visible: !Theme.isSimple && (Theme.showGlassSheen || ShellState.fmSurfacePreset === "glass")
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(1, 1, 1, 0.30) }
-                    GradientStop { position: 1.0; color: "transparent" }
-                }
-            }
-
             // Consume clicks inside dialog so scrim doesn't close
             MouseArea {
                 anchors.fill: parent
@@ -969,47 +956,58 @@ PanelWindow {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 8
+                anchors.margins: 16
+                spacing: 10
 
                 // ==================== 1. TOP WINDOW & TABS HEADER ====================
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 38
-                    radius: ShellState.fmHeaderStyle === "pill" ? Theme.r(12) : Theme.r(8)
-                    color: fstyle.headerBg
-                    border.width: ShellState.fmHeaderStyle === "minimal" ? 0 : Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitHeight: 46
+                    radius: Theme.r(20)
+                    color: Theme.m3SurfaceC
+                    border.width: ShellState.fmHeaderStyle === "minimal" ? 0 : 1
+                    border.color: Theme.m3Line
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        spacing: 6
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 8
 
                         // App Title Badge
                         RowLayout {
-                            spacing: 6
-                            Rectangle {
-                                implicitWidth: 24
-                                implicitHeight: 24
-                                radius: Theme.r(7)
-                                color: Theme.withAlpha(fstyle.accent, 0.20)
-                                Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: fstyle.accent }
+                            spacing: 8
+                            Item {
+                                implicitWidth: 30
+                                implicitHeight: 30
+
+                                M3Blob {
+                                    anchors.fill: parent
+                                    kind: ShellState.m3Shape
+                                    color: Theme.m3PrimaryContainer
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰉋"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: Theme.fs(14)
+                                    color: Theme.m3OnPrimaryContainer
+                                }
                             }
                             Text {
                                 text: "Files"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(12)
+                                font.pixelSize: Theme.fs(13)
                                 font.weight: Font.Bold
-                                color: Theme.fgSurface
+                                color: Theme.m3Ink
                             }
                         }
 
                         // Tabs Strip
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 4
+                            spacing: 5
 
                             Repeater {
                                 model: root.tabs
@@ -1019,20 +1017,19 @@ PanelWindow {
                                     required property int index
                                     readonly property bool cur: root.activeTabIndex === tabChip.index
 
-                                    implicitHeight: 26
-                                    implicitWidth: Math.min(170, tabInner.implicitWidth + 14)
-                                    radius: Theme.r(8)
+                                    implicitHeight: 30
+                                    implicitWidth: Math.min(180, tabInner.implicitWidth + 18)
+                                    radius: Theme.r(tabChip.cur ? 11 : 15)
                                     color: tabChip.cur
-                                        ? Theme.tileActiveBg
-                                        : (tcMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                                    border.width: tabChip.cur ? Theme.activeControlBorderWidth : 0
-                                    border.color: tabChip.cur ? fstyle.accent : Theme.cardBorder
+                                        ? Theme.m3Primary
+                                        : (tcMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                                    Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150 } }
 
                                     RowLayout {
                                         id: tabInner
                                         anchors.fill: parent
-                                        anchors.leftMargin: 8
-                                        anchors.rightMargin: 6
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 8
                                         spacing: 6
 
                                         Text {
@@ -1040,19 +1037,19 @@ PanelWindow {
                                             text: String(tabChip.modelData.title || "Folder")
                                             font.family: Theme.fontFamily
                                             font.pixelSize: Theme.fs(10)
-                                            font.weight: tabChip.cur ? Font.Bold : Font.Normal
-                                            color: tabChip.cur ? fstyle.accent : Theme.fgSurface
+                                            font.weight: tabChip.cur ? Font.Bold : Font.Medium
+                                            color: tabChip.cur ? Theme.m3OnPrimary : Theme.m3Ink
                                             elide: Text.ElideRight
                                         }
 
                                         Rectangle {
                                             visible: root.tabs.length > 1
-                                            implicitWidth: 14
-                                            implicitHeight: 14
-                                            radius: Theme.r(4)
-                                            color: xTabMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.25) : "transparent"
+                                            implicitWidth: 16
+                                            implicitHeight: 16
+                                            radius: Theme.r(8)
+                                            color: xTabMouse.containsMouse ? Theme.m3ErrorContainer : "transparent"
                                             z: 2
-                                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: xTabMouse.containsMouse ? Theme.m3OnErrorContainer : (tabChip.cur ? Theme.m3OnPrimary : Theme.m3InkDim) }
                                             MouseArea {
                                                 id: xTabMouse
                                                 anchors.fill: parent
@@ -1077,11 +1074,11 @@ PanelWindow {
                             }
 
                             Rectangle {
-                                implicitWidth: 24
-                                implicitHeight: 24
-                                radius: Theme.r(7)
-                                color: newTabMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                                Text { anchors.centerIn: parent; text: "󰐕"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                radius: Theme.r(14)
+                                color: newTabMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                                Text { anchors.centerIn: parent; text: "󰐕"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.m3Ink }
                                 MouseArea {
                                     id: newTabMouse
                                     anchors.fill: parent
@@ -1099,7 +1096,7 @@ PanelWindow {
 
                         // Quick View Mode Switcher (List | Grid | Miller)
                         RowLayout {
-                            spacing: 2
+                            spacing: 4
                             Repeater {
                                 model: [
                                     { id: "list",   icon: "󰕮" },
@@ -1110,13 +1107,11 @@ PanelWindow {
                                     id: qvmBtn
                                     required property var modelData
                                     readonly property bool sel: ShellState.fmViewMode === qvmBtn.modelData.id
-                                    implicitWidth: 26
-                                    implicitHeight: 26
-                                    radius: Theme.r(7)
-                                    color: qvmBtn.sel ? fstyle.accent : (qvmMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                                    border.width: qvmBtn.sel ? Theme.activeControlBorderWidth : 0
-                                    border.color: fstyle.accent
-                                    Text { anchors.centerIn: parent; text: qvmBtn.modelData.icon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: qvmBtn.sel ? fstyle.onAccent : Theme.fgSurfaceVariant }
+                                    implicitWidth: 30
+                                    implicitHeight: 30
+                                    radius: Theme.r(qvmBtn.sel ? 10 : 15)
+                                    color: qvmBtn.sel ? Theme.m3Primary : (qvmMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                                    Text { anchors.centerIn: parent; text: qvmBtn.modelData.icon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: qvmBtn.sel ? Theme.m3OnPrimary : Theme.m3InkDim }
                                     MouseArea { id: qvmMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmViewMode", qvmBtn.modelData.id) }
                                 }
                             }
@@ -1124,36 +1119,30 @@ PanelWindow {
 
                         // Dual-Pane Toggle
                         Rectangle {
-                            implicitWidth: 26
-                            implicitHeight: 26
-                            radius: Theme.r(7)
-                            color: ShellState.fmDualPane ? fstyle.accent : (dpMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                            border.width: ShellState.fmDualPane ? Theme.activeControlBorderWidth : 0
-                            border.color: fstyle.accent
-                            Text { anchors.centerIn: parent; text: "󰤼"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: ShellState.fmDualPane ? fstyle.onAccent : Theme.fgSurfaceVariant }
+                            implicitWidth: 30
+                            implicitHeight: 30
+                            radius: Theme.r(ShellState.fmDualPane ? 10 : 15)
+                            color: ShellState.fmDualPane ? Theme.m3Primary : (dpMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                            Text { anchors.centerIn: parent; text: "󰤼"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: ShellState.fmDualPane ? Theme.m3OnPrimary : Theme.m3InkDim }
                             MouseArea { id: dpMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmDualPane", !ShellState.fmDualPane) }
                         }
 
                         // Preview Toggle
                         Rectangle {
-                            implicitWidth: 26
-                            implicitHeight: 26
-                            radius: Theme.r(7)
-                            color: ShellState.fmPreviewVisible ? fstyle.accent : (pvMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                            border.width: ShellState.fmPreviewVisible ? Theme.activeControlBorderWidth : 0
-                            border.color: fstyle.accent
-                            Text { anchors.centerIn: parent; text: "󰈙"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: ShellState.fmPreviewVisible ? fstyle.onAccent : Theme.fgSurfaceVariant }
+                            implicitWidth: 30
+                            implicitHeight: 30
+                            radius: Theme.r(ShellState.fmPreviewVisible ? 10 : 15)
+                            color: ShellState.fmPreviewVisible ? Theme.m3Primary : (pvMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                            Text { anchors.centerIn: parent; text: "󰈙"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: ShellState.fmPreviewVisible ? Theme.m3OnPrimary : Theme.m3InkDim }
                             MouseArea { id: pvMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmPreviewVisible", !ShellState.fmPreviewVisible) }
                         }
 
                         // Customize Button
                         Rectangle {
-                            implicitHeight: 26
-                            implicitWidth: custLbl.implicitWidth + 14
-                            radius: Theme.r(7)
-                            color: root.customizeOpen ? fstyle.accent : (custMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                            border.width: Theme.activeControlBorderWidth
-                            border.color: root.customizeOpen ? fstyle.accent : Theme.cardBorder
+                            implicitHeight: 30
+                            implicitWidth: custLbl.implicitWidth + 18
+                            radius: Theme.r(root.customizeOpen ? 10 : 15)
+                            color: root.customizeOpen ? Theme.m3Primary : (custMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer)
 
                             Text {
                                 id: custLbl
@@ -1162,7 +1151,7 @@ PanelWindow {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
-                                color: root.customizeOpen ? fstyle.onAccent : fstyle.accent
+                                color: root.customizeOpen ? Theme.m3OnPrimary : Theme.m3OnSecondaryContainer
                             }
                             MouseArea {
                                 id: custMouse
@@ -1175,11 +1164,11 @@ PanelWindow {
 
                         // Settings Shortcut
                         Rectangle {
-                            implicitWidth: 26
-                            implicitHeight: 26
-                            radius: Theme.r(7)
-                            color: stgMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
+                            implicitWidth: 30
+                            implicitHeight: 30
+                            radius: Theme.r(15)
+                            color: stgMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                            Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3InkDim }
                             MouseArea {
                                 id: stgMouse
                                 anchors.fill: parent
@@ -1194,11 +1183,11 @@ PanelWindow {
 
                         // Close Button
                         Rectangle {
-                            implicitWidth: 26
-                            implicitHeight: 26
-                            radius: Theme.r(7)
-                            color: clsWinMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
-                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: clsWinMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant }
+                            implicitWidth: 30
+                            implicitHeight: 30
+                            radius: Theme.r(15)
+                            color: clsWinMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceHigh
+                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: clsWinMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim }
                             MouseArea { id: clsWinMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeRequested() }
                         }
                     }
@@ -1207,46 +1196,46 @@ PanelWindow {
                 // ==================== 2. NAVIGATION, BREADCRUMBS & SEARCH BAR ====================
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 8
 
                     readonly property var ap: root.activePane()
 
                     // Back / Forward / Up / Refresh
                     Rectangle {
-                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
-                        color: bkMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
+                        implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                        color: bkMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                        border.width: 1; border.color: Theme.m3Line
                         opacity: (parent.ap && parent.ap.histIndex > 0) ? 1.0 : 0.45
-                        Text { anchors.centerIn: parent; text: "󰁍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰁍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
                         MouseArea { id: bkMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.goBack() }
                     }
 
                     Rectangle {
-                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
-                        color: fwMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
+                        implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                        color: fwMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                        border.width: 1; border.color: Theme.m3Line
                         opacity: (parent.ap && parent.ap.histIndex + 1 < parent.ap.history.length) ? 1.0 : 0.45
-                        Text { anchors.centerIn: parent; text: "󰁔"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰁔"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
                         MouseArea { id: fwMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.goForward() }
                     }
 
                     Rectangle {
-                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
-                        color: upBtnMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
+                        implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                        color: upBtnMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                        border.width: 1; border.color: Theme.m3Line
                         opacity: (parent.ap && !parent.ap.isTrashView && parent.ap.parent.length > 0) ? 1.0 : 0.45
-                        Text { anchors.centerIn: parent; text: "󰁝"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
+                        Text { anchors.centerIn: parent; text: "󰁝"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
                         MouseArea { id: upBtnMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.goUp() }
                     }
 
                     // Breadcrumbs OR Editable Path Bar
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 28
-                        radius: Theme.r(8)
-                        color: Theme.cardBg
-                        border.width: root.pathEditOpen ? 1.5 : Theme.subBorderWidth
-                        border.color: root.pathEditOpen ? fstyle.accent : Theme.cardBorder
+                        implicitHeight: 34
+                        radius: Theme.r(17)
+                        color: Theme.m3SurfaceC
+                        border.width: root.pathEditOpen ? 2 : 1
+                        border.color: root.pathEditOpen ? fstyle.accent : Theme.m3Line
                         clip: true
 
                         // Breadcrumb strip
@@ -1460,26 +1449,26 @@ PanelWindow {
 
                     // Action Icons: New Folder | New File | Sort | Hidden | Terminal
                     Rectangle {
-                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
-                        color: mkdMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: "󰉖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
+                        implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                        color: mkdMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                        border.width: 1; border.color: Theme.m3Line
+                        Text { anchors.centerIn: parent; text: "󰉖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
                         MouseArea { id: mkdMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openPrompt("mkdir", "New Folder Name", "New Folder", null) }
                     }
 
                     Rectangle {
-                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
-                        color: mkfMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: "󰈤"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
+                        implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                        color: mkfMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                        border.width: 1; border.color: Theme.m3Line
+                        Text { anchors.centerIn: parent; text: "󰈤"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
                         MouseArea { id: mkfMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openPrompt("touch", "New File Name", "notes.txt", null) }
                     }
 
                     // Sort Button
                     Rectangle {
-                        implicitHeight: 28; implicitWidth: sortLbl.implicitWidth + 14; radius: Theme.r(8)
-                        color: srtMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
+                        implicitHeight: 34; implicitWidth: sortLbl.implicitWidth + 18; radius: Theme.r(17)
+                        color: srtMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                        border.width: 1; border.color: Theme.m3Line
 
                         Text {
                             id: sortLbl
@@ -1491,8 +1480,8 @@ PanelWindow {
                             }
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
-                            font.weight: Font.Medium
-                            color: Theme.fgSurface
+                            font.weight: Font.Bold
+                            color: Theme.m3Ink
                         }
                         MouseArea {
                             id: srtMouse
@@ -1513,18 +1502,18 @@ PanelWindow {
                     }
 
                     Rectangle {
-                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
-                        color: ShellState.fmShowHidden ? fstyle.accent : (hidMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
-                        border.width: ShellState.fmShowHidden ? Theme.activeControlBorderWidth : 0; border.color: fstyle.accent
-                        Text { anchors.centerIn: parent; text: ShellState.fmShowHidden ? "󰈈" : "󰈉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: ShellState.fmShowHidden ? fstyle.onAccent : Theme.fgSurfaceVariant }
+                        implicitWidth: 34; implicitHeight: 34; radius: Theme.r(ShellState.fmShowHidden ? 11 : 17)
+                        color: ShellState.fmShowHidden ? Theme.m3Primary : (hidMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                        border.width: ShellState.fmShowHidden ? 0 : 1; border.color: Theme.m3Line
+                        Text { anchors.centerIn: parent; text: ShellState.fmShowHidden ? "󰈈" : "󰈉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: ShellState.fmShowHidden ? Theme.m3OnPrimary : Theme.m3InkDim }
                         MouseArea { id: hidMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.setPref("fmShowHidden", !ShellState.fmShowHidden) }
                     }
 
                     Rectangle {
-                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(8)
-                        color: trmMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
-                        Text { anchors.centerIn: parent; text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
+                        implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                        color: trmMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                        border.width: 1; border.color: Theme.m3Line
+                        Text { anchors.centerIn: parent; text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
                         MouseArea {
                             id: trmMouse
                             anchors.fill: parent
@@ -1545,7 +1534,7 @@ PanelWindow {
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    spacing: 8
+                    spacing: 10
 
                     // LEFT SIDEBAR
                     Rectangle {
@@ -1553,22 +1542,22 @@ PanelWindow {
                         Layout.preferredWidth: fstyle.sidebarWidth
                         Layout.fillHeight: true
                         visible: ShellState.fmSidebarVisible
-                        radius: Theme.r(12)
-                        color: fstyle.sidebarBg
-                        border.width: Theme.cardBorderWidth
-                        border.color: Theme.cardBorder
+                        radius: Theme.r(22)
+                        color: Theme.m3SurfaceC
+                        border.width: 1
+                        border.color: Theme.m3Line
                         clip: true
 
                         readonly property bool iconsOnly: ShellState.fmSidebarStyle === "icons"
 
                         ScrollView {
                             anchors.fill: parent
-                            anchors.margins: 7
+                            anchors.margins: 8
                             clip: true
                             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
                             ColumnLayout {
-                                width: Math.max(32, fstyle.sidebarWidth - 16)
+                                width: Math.max(32, fstyle.sidebarWidth - 18)
                                 spacing: 4
 
                                 Text {
@@ -1577,7 +1566,7 @@ PanelWindow {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(10)
                                     font.weight: Font.Bold
-                                    color: Theme.fgSurfaceVariant
+                                    color: Theme.m3InkDim
                                 }
 
                                 Repeater {
@@ -1590,15 +1579,15 @@ PanelWindow {
                                         readonly property bool iconMode: ShellState.fmSidebarStyle === "icons"
 
                                         Layout.fillWidth: true
-                                        implicitHeight: 28
-                                        radius: Theme.r(8)
-                                        color: cur ? Theme.withAlpha(fstyle.accent, 0.22) : (spMouse.containsMouse ? Theme.hoverBg : "transparent")
+                                        implicitHeight: 34
+                                        radius: Theme.r(17)
+                                        color: cur ? Theme.m3SecondaryContainer : (spMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                                         RowLayout {
                                             anchors.fill: parent
-                                            anchors.leftMargin: sbPlace.iconMode ? 0 : 8
-                                            anchors.rightMargin: sbPlace.iconMode ? 0 : 8
-                                            spacing: 8
+                                            anchors.leftMargin: sbPlace.iconMode ? 0 : 12
+                                            anchors.rightMargin: sbPlace.iconMode ? 0 : 10
+                                            spacing: 9
 
                                             Text {
                                                 Layout.alignment: sbPlace.iconMode ? Qt.AlignHCenter : Qt.AlignVCenter
@@ -1606,8 +1595,8 @@ PanelWindow {
                                                 horizontalAlignment: sbPlace.iconMode ? Text.AlignHCenter : Text.AlignLeft
                                                 text: String(sbPlace.modelData.icon || "󰉋")
                                                 font.family: Theme.iconFont
-                                                font.pixelSize: Theme.fs(13)
-                                                color: sbPlace.cur ? fstyle.accent : Theme.fgSurfaceVariant
+                                                font.pixelSize: Theme.fs(14)
+                                                color: sbPlace.cur ? Theme.m3OnSecondaryContainer : Theme.m3InkDim
                                             }
                                             Text {
                                                 visible: !sbPlace.iconMode
@@ -1615,8 +1604,8 @@ PanelWindow {
                                                 text: String(sbPlace.modelData.name || "")
                                                 font.family: Theme.fontFamily
                                                 font.pixelSize: Theme.fs(11)
-                                                font.weight: sbPlace.cur ? Font.Bold : Font.Normal
-                                                color: sbPlace.cur ? fstyle.accent : Theme.fgSurface
+                                                font.weight: sbPlace.cur ? Font.Bold : Font.Medium
+                                                color: sbPlace.cur ? Theme.m3OnSecondaryContainer : Theme.m3Ink
                                                 elide: Text.ElideRight
                                             }
                                         }
@@ -1638,22 +1627,22 @@ PanelWindow {
                                     readonly property bool iconMode: ShellState.fmSidebarStyle === "icons"
 
                                     Layout.fillWidth: true
-                                    implicitHeight: 28
-                                    radius: Theme.r(8)
-                                    color: cur ? Theme.withAlpha(Theme.error, 0.20) : (stMouse.containsMouse ? Theme.hoverBg : "transparent")
+                                    implicitHeight: 34
+                                    radius: Theme.r(17)
+                                    color: cur ? Theme.m3ErrorContainer : (stMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                                     RowLayout {
                                         anchors.fill: parent
-                                        anchors.leftMargin: sbTrashItem.iconMode ? 0 : 8
-                                        anchors.rightMargin: sbTrashItem.iconMode ? 0 : 8
-                                        spacing: 8
+                                        anchors.leftMargin: sbTrashItem.iconMode ? 0 : 12
+                                        anchors.rightMargin: sbTrashItem.iconMode ? 0 : 10
+                                        spacing: 9
                                         Text {
                                             Layout.fillWidth: sbTrashItem.iconMode
                                             horizontalAlignment: sbTrashItem.iconMode ? Text.AlignHCenter : Text.AlignLeft
                                             text: "󰩹"
                                             font.family: Theme.iconFont
-                                            font.pixelSize: Theme.fs(13)
-                                            color: sbTrashItem.cur ? Theme.error : Theme.fgSurfaceVariant
+                                            font.pixelSize: Theme.fs(14)
+                                            color: sbTrashItem.cur ? Theme.m3OnErrorContainer : Theme.m3InkDim
                                         }
                                         Text {
                                             visible: !sbTrashItem.iconMode
@@ -1661,7 +1650,8 @@ PanelWindow {
                                             text: "Trash"
                                             font.family: Theme.fontFamily
                                             font.pixelSize: Theme.fs(11)
-                                            color: sbTrashItem.cur ? Theme.error : Theme.fgSurface
+                                            font.weight: sbTrashItem.cur ? Font.Bold : Font.Medium
+                                            color: sbTrashItem.cur ? Theme.m3OnErrorContainer : Theme.m3Ink
                                         }
                                         Text {
                                             visible: !sbTrashItem.iconMode && Number(root.placesData.trashCount || 0) > 0
@@ -1669,7 +1659,7 @@ PanelWindow {
                                             font.family: Theme.fontFamily
                                             font.pixelSize: Theme.fs(9)
                                             font.weight: Font.Bold
-                                            color: Theme.fgSurfaceVariant
+                                            color: sbTrashItem.cur ? Theme.m3OnErrorContainer : Theme.m3InkDim
                                         }
                                     }
                                     MouseArea {
@@ -2118,11 +2108,11 @@ PanelWindow {
                 // ==================== 4. FOOTER STATUS, CLIPBOARD & PROGRESS BAR ====================
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 28
-                    radius: Theme.r(8)
-                    color: Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitHeight: 34
+                    radius: Theme.r(17)
+                    color: Theme.m3SurfaceC
+                    border.width: 1
+                    border.color: Theme.m3Line
 
                     readonly property var ap: root.activePane()
 

@@ -136,6 +136,76 @@ Singleton {
     property color info: "#89dceb"
     property color shadow: "#000000"
 
+    // --- Material 3 Expressive Tonal Derivation (DarkShadowShell system) ---
+    function m3Mix(a: color, b: color, k: real): color {
+        const qa = Qt.color(a);
+        const qb = Qt.color(b);
+        return Qt.rgba(
+            qa.r + (qb.r - qa.r) * k,
+            qa.g + (qb.g - qa.g) * k,
+            qa.b + (qb.b - qa.b) * k,
+            1.0
+        );
+    }
+
+    function m3Lum(c: color): real {
+        const q = Qt.color(c);
+        return 0.299 * q.r + 0.587 * q.g + 0.114 * q.b;
+    }
+
+    function m3Lift(c: color, target: real): color {
+        let k = 0.0;
+        while (k < 0.9 && m3Lum(m3Mix(c, "#ffffff", k)) < target)
+            k += 0.05;
+        return m3Mix(c, "#ffffff", k);
+    }
+
+    readonly property bool m3Mono: primary.hslHue < 0 || primary.hslSaturation < 0.1
+    readonly property real m3Hue: primary.hslHue < 0 ? 0.55 : primary.hslHue
+    readonly property real m3Sat: m3Mono ? 0.0 : Math.max(0.35, Math.min(0.85, primary.hslSaturation))
+
+    readonly property color m3Primary: isDark ? m3Lift(primary, 0.62) : Qt.hsla(m3Hue, m3Sat, 0.36, 1.0)
+    readonly property color m3OnPrimary: isDark ? m3Mix(primary, "#000000", 0.82) : "#ffffff"
+    readonly property color m3PrimaryContainer: isDark ? m3Mix(m3Primary, "#151718", 0.68) : Qt.hsla(m3Hue, m3Sat * 0.5, 0.86, 1.0)
+    readonly property color m3OnPrimaryContainer: isDark ? m3Mix(m3Primary, "#ffffff", 0.55) : Qt.hsla(m3Hue, m3Sat, 0.20, 1.0)
+    readonly property color m3SecondaryContainer: isDark ? m3Mix(m3Primary, "#1b1d1e", 0.80) : Qt.hsla(m3Hue, m3Sat * 0.35, 0.90, 1.0)
+    readonly property color m3OnSecondaryContainer: isDark ? m3Mix(m3Primary, "#ffffff", 0.70) : Qt.hsla(m3Hue, m3Sat, 0.22, 1.0)
+
+    readonly property color m3SurfaceLowest: isDark ? (m3Mono ? "#0c0d0e" : m3Mix("#0c0d0e", primary, 0.03)) : "#ffffff"
+    readonly property color m3Surface: isDark ? (m3Mono ? "#111213" : m3Mix("#111213", primary, 0.035)) : "#f6f6f8"
+    readonly property color m3SurfaceLow: isDark ? (m3Mono ? "#17181a" : m3Mix("#17181a", primary, 0.04)) : "#eeeff2"
+    readonly property color m3SurfaceC: isDark ? (m3Mono ? "#1f2023" : m3Mix("#1f2023", primary, 0.055)) : "#e6e8ec"
+    readonly property color m3SurfaceHigh: isDark ? (m3Mono ? "#292a2e" : m3Mix("#292a2e", primary, 0.065)) : "#dcdfe5"
+    readonly property color m3SurfaceHighest: isDark ? (m3Mono ? "#333539" : m3Mix("#333539", primary, 0.075)) : "#d1d5dd"
+    readonly property color m3Ink: isDark ? "#ECEDEE" : "#16171a"
+    readonly property color m3InkDim: isDark ? "#A9ADB2" : "#5a5e66"
+    readonly property color m3Line: isDark ? Qt.rgba(1, 1, 1, 0.06) : Qt.rgba(0, 0, 0, 0.08)
+    readonly property color m3Track: isDark ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(0, 0, 0, 0.12)
+    readonly property color m3Outline: isDark ? "#8C8F92" : "#72767d"
+    readonly property color m3InverseSurface: isDark ? "#E3E2E2" : "#1f2023"
+    readonly property color m3InverseInk: isDark ? "#111213" : "#f6f6f8"
+    readonly property color m3Error: isDark ? "#FFB4AB" : "#b3261e"
+    readonly property color m3ErrorContainer: isDark ? "#93000A" : "#f9dedc"
+    readonly property color m3OnErrorContainer: isDark ? "#FFDAD6" : "#410e0b"
+
+    readonly property color m3BarBg: isOled
+        ? withAlpha("#000000", 0.82)
+        : withAlpha(m3Surface, isSimple ? 1.0 : Math.max(0.68, Math.min(0.86, ShellState.shellOpacity * 0.80)))
+    readonly property color m3PanelBg: isOled
+        ? withAlpha("#000000", 0.94)
+        : withAlpha(m3Surface, isSimple ? 1.0 : Math.max(0.84, Math.min(0.96, ShellState.shellOpacity)))
+    readonly property color m3PaneBg: isOled
+        ? withAlpha("#08080a", 0.96)
+        : withAlpha(m3SurfaceLow, isSimple ? 1.0 : Math.max(0.86, Math.min(0.96, ShellState.shellOpacity)))
+
+    readonly property var m3Emph: [0.2, 0, 0, 1, 1, 1]
+    readonly property var m3Decel: [0.05, 0.7, 0.1, 1, 1, 1]
+    readonly property var m3Accel: [0.3, 0, 0.8, 0.15, 1, 1]
+    readonly property int m3Springy: reducedMotion ? Easing.Linear : Easing.OutBack
+    readonly property real m3RowOut: r(22)
+    readonly property real m3RowIn: r(6)
+    readonly property int m3RowGap: 3
+
     // Derived Dynamic Island / 7-Mode Visual Style tokens
     readonly property bool showGlassSheen: !isSimple && !isRetro && !isMinimal && (isBlur || ShellState.surfaceStyle === "glass" || ShellState.borderStyle === "glow")
     readonly property bool showNeonAccentBar: isNeon
@@ -145,52 +215,46 @@ Singleton {
     readonly property color notchBg: {
         const sOp = ShellState.shellOpacity;
         if (ShellState.surfaceStyle === "flat")
-            return withAlpha(surfaceContainerLowest, Math.max(0.70, sOp));
+            return withAlpha(m3SurfaceLowest, Math.max(0.70, sOp));
         if (ShellState.surfaceStyle === "oled")
             return withAlpha("#000000", Math.max(0.70, sOp));
         if (ShellState.surfaceStyle === "tinted")
-            return withAlpha(primaryContainer, Math.max(0.68, Math.min(0.98, sOp * 0.94)));
+            return withAlpha(m3PrimaryContainer, Math.max(0.68, Math.min(0.98, sOp * 0.94)));
         if (ShellState.surfaceStyle === "glass")
-            return isDark
-                ? withAlpha(surfaceContainerLowest, Math.min(0.92, Math.max(0.60, sOp * 0.84)))
-                : withAlpha(surface, Math.min(0.94, Math.max(0.65, sOp * 0.87)));
+            return withAlpha(m3Surface, Math.min(0.90, Math.max(0.60, sOp * 0.82)));
         if (isSimple)
-            return withAlpha(surfaceContainerLowest, Math.max(0.72, sOp));
+            return m3Surface;
         if (isOled)
             return withAlpha("#000000", Math.max(0.72, sOp));
         if (isNeon)
             return isDark
-                ? withAlpha(Qt.tint("#07070c", withAlpha(primaryContainer, 0.16)), Math.max(0.70, sOp))
-                : withAlpha(surface, Math.max(0.75, sOp));
+                ? withAlpha(Qt.tint("#07070c", withAlpha(m3PrimaryContainer, 0.16)), Math.max(0.70, sOp))
+                : withAlpha(m3Surface, Math.max(0.75, sOp));
         if (isRetro)
-            return withAlpha(isDark ? surfaceContainerLow : surface, Math.max(0.75, sOp));
+            return withAlpha(m3SurfaceLow, Math.max(0.75, sOp));
         if (isMinimal)
-            return withAlpha(surfaceContainerLowest, Math.max(0.72, sOp));
+            return withAlpha(m3SurfaceLowest, Math.max(0.72, sOp));
         if (isBlur)
-            return isDark
-                ? withAlpha(surfaceContainerLowest, Math.min(0.90, Math.max(0.60, sOp * 0.84)))
-                : withAlpha(surface, Math.min(0.92, Math.max(0.65, sOp * 0.86)));
-        return isDark
-            ? withAlpha(Qt.tint("#07070b", withAlpha(surfaceContainerLowest, 0.30)), Math.max(0.70, sOp))
-            : withAlpha(surface, Math.max(0.75, sOp));
+            return withAlpha(m3Surface, Math.min(0.90, Math.max(0.60, sOp * 0.82)));
+        return m3PanelBg;
     }
     readonly property color islandBg: notchBg
     readonly property color islandBorder: {
         if (ShellState.borderStyle === "none")
             return "transparent";
         if (ShellState.highContrast || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow" || isNeon)
-            return primary;
+            return m3Primary;
         if (isRetro)
-            return isDark ? withAlpha(fgSurface, 0.45) : outline;
+            return isDark ? withAlpha(m3Ink, 0.45) : m3Outline;
         if (isOled)
-            return withAlpha(primary, 0.42);
+            return withAlpha(m3Primary, 0.42);
         if (isMinimal)
             return withAlpha(outlineVariant, 0.88);
         if (isSimple)
-            return outlineVariant;
+            return m3Line;
         if (isBlur || ShellState.surfaceStyle === "glass")
-            return isDark ? withAlpha(fgSurface, 0.22) : withAlpha(outline, 0.32);
-        return isDark ? withAlpha(fgSurface, 0.13) : withAlpha(outline, 0.24);
+            return isDark ? withAlpha(m3Ink, 0.14) : withAlpha(m3Outline, 0.28);
+        return m3Line;
     }
     readonly property int islandBorderWidth: {
         if (ShellState.borderStyle === "none" || ShellState.uiBorderWidth <= 0)
@@ -202,85 +266,73 @@ Singleton {
         if (ShellState.surfaceStyle === "oled")
             return withAlpha("#0a0a0f", Math.max(0.35, Math.min(0.99, cOp + 0.36)));
         if (ShellState.surfaceStyle === "tinted")
-            return withAlpha(surfaceContainerHigh, Math.max(0.35, Math.min(0.98, cOp + 0.32)));
+            return withAlpha(m3SurfaceHigh, Math.max(0.35, Math.min(0.98, cOp + 0.32)));
         if (ShellState.surfaceStyle === "flat")
-            return withAlpha(surfaceContainerLow, Math.max(0.45, Math.min(1.0, cOp + 0.44)));
+            return withAlpha(m3SurfaceLow, Math.max(0.45, Math.min(1.0, cOp + 0.44)));
         if (ShellState.surfaceStyle === "glass")
-            return withAlpha(surfaceContainerHigh, Math.max(0.28, Math.min(0.92, cOp * 0.92)));
+            return withAlpha(m3SurfaceC, Math.max(0.35, Math.min(0.92, cOp + 0.22)));
         if (isSimple)
-            return withAlpha(surfaceContainerLow, Math.max(0.45, Math.min(1.0, cOp + 0.45)));
+            return m3SurfaceC;
         if (isOled)
             return withAlpha("#09090e", Math.max(0.45, Math.min(0.99, cOp + 0.42)));
         if (isNeon)
             return isDark
-                ? withAlpha(Qt.tint("#0c0d14", withAlpha(primaryContainer, 0.18)), Math.max(0.40, Math.min(0.98, cOp + 0.38)))
-                : withAlpha(surfaceContainerHigh, Math.max(0.45, Math.min(0.98, cOp + 0.40)));
+                ? withAlpha(Qt.tint("#0c0d14", withAlpha(m3PrimaryContainer, 0.18)), Math.max(0.40, Math.min(0.98, cOp + 0.38)))
+                : withAlpha(m3SurfaceC, Math.max(0.45, Math.min(0.98, cOp + 0.40)));
         if (isRetro)
-            return withAlpha(isDark ? surfaceContainer : surfaceDim, Math.max(0.45, Math.min(1.0, cOp + 0.45)));
+            return withAlpha(m3SurfaceC, Math.max(0.45, Math.min(1.0, cOp + 0.45)));
         if (isMinimal)
-            return isDark
-                ? withAlpha(surfaceContainer, Math.max(0.45, Math.min(0.98, cOp + 0.42)))
-                : withAlpha(surfaceContainerLow, Math.max(0.50, Math.min(0.99, cOp + 0.44)));
+            return withAlpha(m3SurfaceC, Math.max(0.45, Math.min(0.98, cOp + 0.42)));
         if (isBlur)
-            return isDark
-                ? withAlpha(surfaceContainerHigh, Math.max(0.28, Math.min(0.94, cOp * 0.92)))
-                : withAlpha(surfaceContainerHigh, Math.max(0.35, Math.min(0.95, cOp + 0.25)));
-        return isDark
-            ? withAlpha(surfaceContainer, Math.max(0.35, Math.min(0.98, cOp + 0.38)))
-            : withAlpha(surfaceContainerHigh, Math.max(0.40, Math.min(1.0, cOp + 0.36)));
+            return withAlpha(m3SurfaceC, Math.max(0.35, Math.min(0.92, cOp + 0.22)));
+        return m3SurfaceC;
     }
     readonly property color subCardBg: {
         const cOp = ShellState.cardOpacity;
         if (ShellState.surfaceStyle === "oled")
             return withAlpha("#12121a", Math.max(0.30, Math.min(0.96, cOp + 0.28)));
         if (ShellState.surfaceStyle === "tinted")
-            return withAlpha(primaryContainer, Math.max(0.25, Math.min(0.90, cOp * 0.75)));
+            return withAlpha(m3PrimaryContainer, Math.max(0.25, Math.min(0.90, cOp * 0.75)));
         if (ShellState.surfaceStyle === "flat")
-            return withAlpha(surfaceContainer, Math.max(0.40, Math.min(0.98, cOp + 0.38)));
+            return withAlpha(m3SurfaceHigh, Math.max(0.40, Math.min(0.98, cOp + 0.38)));
         if (ShellState.surfaceStyle === "glass")
-            return withAlpha(surfaceContainerHighest, Math.max(0.22, Math.min(0.88, cOp * 0.78)));
+            return withAlpha(m3SurfaceHigh, Math.max(0.28, Math.min(0.88, cOp + 0.15)));
         if (isSimple)
-            return withAlpha(surfaceContainer, Math.max(0.40, Math.min(1.0, cOp + 0.40)));
+            return m3SurfaceHigh;
         if (isOled)
             return withAlpha("#12121a", Math.max(0.38, Math.min(0.96, cOp + 0.36)));
         if (isNeon)
             return isDark
-                ? withAlpha(primaryContainer, Math.max(0.22, Math.min(0.85, cOp * 0.72)))
-                : withAlpha(surfaceContainerHigh, Math.max(0.40, Math.min(0.96, cOp + 0.35)));
+                ? withAlpha(m3PrimaryContainer, Math.max(0.22, Math.min(0.85, cOp * 0.72)))
+                : withAlpha(m3SurfaceHigh, Math.max(0.40, Math.min(0.96, cOp + 0.35)));
         if (isRetro)
-            return withAlpha(isDark ? surfaceContainerHigh : surfaceContainer, Math.max(0.42, Math.min(1.0, cOp + 0.42)));
+            return withAlpha(m3SurfaceHigh, Math.max(0.42, Math.min(1.0, cOp + 0.42)));
         if (isMinimal)
-            return isDark
-                ? withAlpha(surfaceContainerHigh, Math.max(0.35, Math.min(0.92, cOp + 0.24)))
-                : withAlpha(surfaceContainer, Math.max(0.45, Math.min(0.96, cOp + 0.36)));
+            return withAlpha(m3SurfaceHigh, Math.max(0.35, Math.min(0.92, cOp + 0.24)));
         if (isBlur)
-            return isDark
-                ? withAlpha(surfaceContainerHighest, Math.max(0.22, Math.min(0.88, cOp * 0.78)))
-                : withAlpha(surfaceContainer, Math.max(0.32, Math.min(0.92, cOp + 0.24)));
-        return isDark
-            ? withAlpha(surfaceContainerHigh, Math.max(0.32, Math.min(0.95, cOp + 0.28)))
-            : withAlpha(surfaceContainer, Math.max(0.40, Math.min(1.0, cOp + 0.42)));
+            return withAlpha(m3SurfaceHigh, Math.max(0.28, Math.min(0.88, cOp + 0.15)));
+        return m3SurfaceHigh;
     }
     readonly property color cardBorder: {
         if (ShellState.borderStyle === "none")
             return "transparent";
         if (ShellState.highContrast)
-            return outline;
+            return m3Outline;
         if (ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow")
-            return withAlpha(primary, 0.55);
+            return withAlpha(m3Primary, 0.55);
         if (isNeon)
-            return withAlpha(primary, 0.48);
+            return withAlpha(m3Primary, 0.48);
         if (isRetro)
-            return isDark ? withAlpha(fgSurface, 0.34) : outline;
+            return isDark ? withAlpha(m3Ink, 0.34) : m3Outline;
         if (isOled)
             return withAlpha(outlineVariant, 0.80);
         if (isMinimal)
             return withAlpha(outlineVariant, 0.65);
         if (isBlur)
-            return isDark ? withAlpha(fgSurface, 0.16) : withAlpha(outline, 0.25);
+            return isDark ? withAlpha(m3Ink, 0.10) : withAlpha(m3Outline, 0.22);
         if (isSimple)
-            return outlineVariant;
-        return isDark ? withAlpha(fgSurface, 0.09) : withAlpha(outline, 0.20);
+            return m3Line;
+        return m3Line;
     }
     readonly property int cardBorderWidth: {
         if (ShellState.borderStyle === "none" || ShellState.uiBorderWidth <= 0)

@@ -289,10 +289,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: outCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: outCol
@@ -535,10 +535,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: inCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: inCol
@@ -721,10 +721,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: appMixCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: appMixCol
@@ -903,10 +903,10 @@ ColumnLayout {
         visible: root.audioCards.length > 0
         Layout.fillWidth: true
         implicitHeight: cardProfCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: cardProfCol

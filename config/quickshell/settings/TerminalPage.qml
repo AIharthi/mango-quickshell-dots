@@ -52,10 +52,10 @@ ColumnLayout {
         visible: DeviceCaps.hasFoot && !!root.foot.exists
         Layout.fillWidth: true
         implicitHeight: footCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: footCol
@@ -218,10 +218,10 @@ ColumnLayout {
         visible: DeviceCaps.hasKitty && !!root.kitty.exists
         Layout.fillWidth: true
         implicitHeight: kittyCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: kittyCol

@@ -21,10 +21,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: dndCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: dndCol
@@ -313,10 +313,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: histCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: histCol

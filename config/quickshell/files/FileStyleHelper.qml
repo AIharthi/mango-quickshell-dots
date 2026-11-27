@@ -9,84 +9,80 @@ QtObject {
         const ov = (ShellState.fmAccentOverride || "").trim();
         if (ov.length === 7 && ov.charAt(0) === "#")
             return ov;
-        return Theme.primary;
+        return Theme.m3Primary;
     }
 
-    readonly property color onAccent: Theme.fgPrimary
+    readonly property color onAccent: Theme.m3OnPrimary
 
     readonly property color windowBg: {
         const op = ShellState.fmOpacity;
         const preset = ShellState.fmSurfacePreset;
         if (Theme.isSimple || preset === "solid")
-            return Theme.withAlpha(Theme.surface, Math.max(0.92, op));
+            return Theme.withAlpha(Theme.m3Surface, Math.max(0.94, op));
         if (preset === "oled")
-            return Theme.withAlpha("#050507", Math.max(0.88, op));
+            return Theme.withAlpha("#050507", Math.max(0.90, op));
         if (preset === "glass")
-            return Theme.isDark
-                ? Theme.withAlpha(Theme.surfaceContainerLowest, Math.min(0.86, op * 0.85))
-                : Theme.withAlpha(Theme.surface, Math.min(0.90, op * 0.88));
+            return Theme.withAlpha(Theme.m3PanelBg, Math.min(0.92, Math.max(0.76, op * 0.88)));
         if (preset === "tinted")
-            return Theme.withAlpha(Theme.primaryContainer, Math.min(0.96, op));
-        return Theme.withAlpha(Theme.surfaceContainerLowest, op);
+            return Theme.withAlpha(Theme.m3PrimaryContainer, Math.min(0.96, op));
+        return Theme.m3PanelBg;
     }
 
     readonly property color sidebarBg: {
         const preset = ShellState.fmSurfacePreset;
         if (Theme.isSimple)
-            return Theme.surfaceContainerLow;
+            return Theme.m3SurfaceLow;
         if (preset === "oled")
-            return Theme.withAlpha("#09090d", 0.92);
+            return Theme.withAlpha("#09090d", 0.94);
         if (preset === "tinted")
-            return Theme.withAlpha(Theme.surfaceContainer, 0.72);
-        return Theme.cardBg;
+            return Theme.withAlpha(Theme.m3SurfaceC, 0.78);
+        return "transparent";
     }
 
     readonly property color paneBg: {
         if (Theme.isSimple)
-            return Theme.surface;
+            return Theme.m3Surface;
         if (ShellState.fmSurfacePreset === "oled")
-            return Theme.withAlpha("#08080c", 0.88);
-        return Theme.withAlpha(Theme.surfaceContainer, Math.min(0.85, ShellState.cardOpacity + 0.18));
+            return Theme.withAlpha("#08080c", 0.90);
+        return Theme.m3PaneBg;
     }
 
     readonly property color headerBg: {
         const hs = ShellState.fmHeaderStyle;
         if (Theme.isSimple || hs === "underline")
-            return Theme.surfaceContainerLow;
+            return Theme.m3SurfaceLow;
         if (hs === "minimal")
             return "transparent";
-        return Theme.cardBg;
+        return Theme.m3SurfaceC;
     }
 
     readonly property color altRowBg: Theme.isDark
-        ? Qt.rgba(1, 1, 1, 0.028)
-        : Qt.rgba(0, 0, 0, 0.025)
+        ? Qt.rgba(1, 1, 1, 0.025)
+        : Qt.rgba(0, 0, 0, 0.022)
 
     readonly property color borderCol: {
         if (ShellState.highContrast || ShellState.borderStyle === "accent" || ShellState.borderStyle === "glow")
             return style.accent;
-        if (Theme.isSimple)
-            return Theme.outlineVariant;
-        return Theme.cardBorder;
+        return Theme.m3Line;
     }
 
     readonly property int rowHeight: {
         if (ShellState.fmDensity === "compact")
-            return 28;
+            return 30;
         if (ShellState.fmDensity === "spacious")
-            return 42;
-        return 34;
+            return 44;
+        return 36;
     }
 
     readonly property int iconBoxSize: {
         if (ShellState.fmDensity === "compact")
-            return 20;
+            return 22;
         if (ShellState.fmDensity === "spacious")
             return 28;
         return 24;
     }
 
-    readonly property int rowRadius: Theme.r(ShellState.fmDensity === "compact" ? 6 : 9)
+    readonly property int rowRadius: Theme.r(ShellState.fmDensity === "compact" ? 10 : 16)
 
     readonly property int sidebarWidth: {
         if (!ShellState.fmSidebarVisible)

@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import ".."
+import "../m3"
 
 Item {
     id: root
@@ -251,22 +252,26 @@ Item {
         spacing: 12
         visible: root.mode === "osd"
 
-        Rectangle {
+        Item {
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 34
-            implicitHeight: 34
-            radius: Theme.r(17)
-            color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
-                ? Theme.withAlpha(Theme.error, 0.20)
-                : Theme.withAlpha(Theme.primary, 0.20)
+            implicitWidth: 38
+            implicitHeight: 38
+
+            M3Blob {
+                anchors.fill: parent
+                kind: ShellState.m3Shape
+                color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
+                    ? Theme.m3ErrorContainer
+                    : Theme.m3PrimaryContainer
+            }
 
             Text {
                 anchors.centerIn: parent
                 font.family: Theme.iconFont
-                font.pixelSize: 16
+                font.pixelSize: Theme.fs(16)
                 color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
-                    ? Theme.error
-                    : Theme.primary
+                    ? Theme.m3OnErrorContainer
+                    : Theme.m3OnPrimaryContainer
                 text: {
                     if (root.osdType === "brightness")
                         return "󰃠";
@@ -292,7 +297,7 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            spacing: 5
+            spacing: 4
 
             RowLayout {
                 Layout.fillWidth: true
@@ -312,9 +317,9 @@ Item {
                         return root.osdMuted ? "Muted" : "Sound";
                     }
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fs(11)
                     font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    color: Theme.m3Ink
                 }
 
                 Text {
@@ -330,35 +335,23 @@ Item {
                         return root.osdSupported ? (Math.round(root.osdValue * 100) + "%") : "N/A";
                     }
                     font.family: (root.osdType === "kb" || root.osdType.indexOf("media-") === 0) ? Theme.fontFamily : Theme.monoFont
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fs(12)
                     font.weight: Font.Bold
                     color: (root.osdType !== "brightness" && root.osdType !== "kb" && root.osdType.indexOf("media-") !== 0 && root.osdMuted)
-                        ? Theme.error
-                        : Theme.primary
+                        ? Theme.m3Error
+                        : Theme.m3Primary
                 }
             }
 
-            Rectangle {
+            M3WavyLine {
                 visible: root.osdShowBar
                 Layout.fillWidth: true
-                implicitHeight: 10
-                radius: Theme.r(5)
-                color: Theme.surfaceContainerHighest
-                clip: true
-
-                Rectangle {
-                    height: parent.height
-                    radius: Theme.r(5)
-                    width: root.osdValue <= 0.001 ? 0 : Math.max(parent.height, Math.min(parent.width, parent.width * Math.min(1.0, root.osdValue)))
-                    color: (root.osdType !== "brightness" && root.osdMuted)
-                        ? Theme.error
-                        : Theme.primary
-
-                    Behavior on width {
-                        enabled: !Theme.isSimple
-                        NumberAnimation { duration: 130; easing.type: Easing.OutCubic }
-                    }
-                }
+                implicitHeight: 14
+                value: Math.max(0.0, Math.min(1.0, root.osdValue))
+                moving: false
+                handle: false
+                color: (root.osdType !== "brightness" && root.osdMuted) ? Theme.m3Error : Theme.m3Primary
+                track: Theme.m3Track
             }
         }
     }
@@ -375,31 +368,42 @@ Item {
         visible: root.mode === "notification" && root.currentNotif !== null
 
         // App Icon / Notification Thumbnail
-        ClippingRectangle {
+        Item {
             Layout.alignment: Qt.AlignTop
-            implicitWidth: 40
-            implicitHeight: 40
-            radius: Theme.r(12)
-            color: root.isUrgent ? Theme.withAlpha(Theme.error, 0.22) : Theme.primaryContainer
-            contentUnderBorder: false
-            contentInsideBorder: true
+            implicitWidth: 42
+            implicitHeight: 42
 
-            Image {
-                id: notifImg
+            M3Blob {
+                visible: !notifImg.visible
                 anchors.fill: parent
-                visible: root.currentNotif !== null
-                    && ((root.currentNotif.image && root.currentNotif.image.length > 0))
-                source: (root.currentNotif && root.currentNotif.image) ? root.currentNotif.image : ""
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                sourceSize: Qt.size(64, 64)
+                kind: ShellState.m3Shape
+                color: root.isUrgent ? Theme.m3ErrorContainer : Theme.m3PrimaryContainer
+            }
+
+            ClippingRectangle {
+                id: notifThumbClip
+                visible: notifImg.visible
+                anchors.fill: parent
+                radius: Theme.r(14)
+                color: Theme.m3SurfaceC
+
+                Image {
+                    id: notifImg
+                    anchors.fill: parent
+                    visible: root.currentNotif !== null
+                        && ((root.currentNotif.image && root.currentNotif.image.length > 0))
+                    source: (root.currentNotif && root.currentNotif.image) ? root.currentNotif.image : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    sourceSize: Qt.size(64, 64)
+                }
             }
 
             IconImage {
                 id: notifIcon
                 anchors.centerIn: parent
-                width: 24
-                height: 24
+                width: 22
+                height: 22
                 asynchronous: true
                 readonly property string resolvedIcon: (root.currentNotif && root.currentNotif.appIcon)
                     ? Quickshell.iconPath(root.currentNotif.appIcon, true)
@@ -414,7 +418,7 @@ Item {
                 text: root.isUrgent ? "󰀨" : "󰂚"
                 font.family: Theme.iconFont
                 font.pixelSize: 18
-                color: root.isUrgent ? Theme.error : Theme.fgPrimaryContainer
+                color: root.isUrgent ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer
             }
         }
 
@@ -433,30 +437,30 @@ Item {
                     font.family: Theme.fontFamily
                     font.pixelSize: 9
                     font.weight: Font.Bold
-                    color: root.isUrgent ? Theme.error : Theme.primary
+                    color: root.isUrgent ? Theme.m3Error : Theme.m3Primary
                 }
 
                 Text {
                     text: "now"
                     font.family: Theme.fontFamily
                     font.pixelSize: 9
-                    color: Theme.fgSurfaceVariant
+                    color: Theme.m3InkDim
                 }
 
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
-                    implicitWidth: 20
-                    implicitHeight: 20
-                    radius: Theme.r(10)
-                    color: closeMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    radius: Theme.r(11)
+                    color: closeMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰅖"
                         font.family: Theme.iconFont
                         font.pixelSize: 10
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
 
                     MouseArea {
@@ -477,7 +481,7 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: 12
                 font.weight: Font.Bold
-                color: Theme.fgSurface
+                color: Theme.m3Ink
             }
 
             Text {
@@ -491,7 +495,7 @@ Item {
                 maximumLineCount: 2
                 font.family: Theme.fontFamily
                 font.pixelSize: 11
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
 
             // Notification Action Buttons
@@ -508,14 +512,12 @@ Item {
                     delegate: Rectangle {
                         id: actionBtn
                         required property var modelData
-                        implicitHeight: 24
-                        implicitWidth: actionLabel.implicitWidth + 18
-                        height: 24
-                        width: actionLabel.implicitWidth + 18
-                        radius: Theme.r(12)
-                        color: actionArea.containsMouse ? Theme.activeBg : Theme.subCardBg
-                        border.width: Theme.subBorderWidth
-                        border.color: Theme.cardBorder
+                        implicitHeight: 28
+                        implicitWidth: actionLabel.implicitWidth + 20
+                        height: 28
+                        width: actionLabel.implicitWidth + 20
+                        radius: Theme.r(actionArea.pressed ? 10 : 14)
+                        color: actionArea.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
 
                         Text {
                             id: actionLabel
@@ -524,7 +526,7 @@ Item {
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
                             font.weight: Font.DemiBold
-                            color: Theme.fgSurface
+                            color: Theme.m3OnSecondaryContainer
                         }
 
                         MouseArea {

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import ".."
+import "../m3"
 
 ColumnLayout {
     id: root
@@ -174,11 +175,11 @@ ColumnLayout {
     // --- 0. Safe Recovery Row ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: appResetRow.implicitHeight + 14
-        radius: Theme.r(12)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: appResetRow.implicitHeight + 18
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         RowLayout {
             id: appResetRow
@@ -246,11 +247,11 @@ ColumnLayout {
     // --- 1. Shell & MangoWC Visual Mode ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: modeCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: modeCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: modeCol
@@ -479,14 +480,206 @@ ColumnLayout {
         }
     }
 
+    // --- 1b. M3 Expressive Shapes & Wavy Progress ---
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: m3ExpCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
+
+        ColumnLayout {
+            id: m3ExpCol
+            anchors.fill: parent
+            anchors.margins: 14
+            spacing: 12
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        text: "Expressive Shapes & Wavy Progress"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(13)
+                        font.weight: Font.Bold
+                        color: Theme.m3Ink
+                    }
+
+                    Text {
+                        text: "Material 3 Expressive badge shapes and animated wavy progress tracks across all surfaces"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.m3InkDim
+                    }
+                }
+
+                Rectangle {
+                    implicitHeight: 24
+                    implicitWidth: m3ShapeTag.implicitWidth + 14
+                    radius: Theme.r(12)
+                    color: Theme.m3PrimaryContainer
+
+                    Text {
+                        id: m3ShapeTag
+                        anchors.centerIn: parent
+                        text: ShellState.m3Shape
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.Bold
+                        color: Theme.m3OnPrimaryContainer
+                    }
+                }
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Repeater {
+                    model: ["verysunny", "cookie", "cookie7", "sun", "flower", "clover", "pentagon", "hexagon", "gem", "circle", "square", "softburst"]
+
+                    delegate: Rectangle {
+                        id: shapeTile
+                        required property string modelData
+                        readonly property bool isSel: ShellState.m3Shape === shapeTile.modelData
+
+                        width: 68
+                        height: 66
+                        radius: Theme.r(shapeTile.isSel ? 18 : 16)
+                        color: shapeTile.isSel
+                            ? Theme.m3PrimaryContainer
+                            : (shapeMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                        border.width: shapeTile.isSel ? 2 : 0
+                        border.color: Theme.m3Primary
+                        Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 130 } }
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 4
+
+                            M3Blob {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: 30
+                                height: 30
+                                kind: shapeTile.modelData
+                                color: shapeTile.isSel ? Theme.m3Primary : Theme.m3InkDim
+                            }
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: shapeTile.modelData
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(9)
+                                font.weight: shapeTile.isSel ? Font.Bold : Font.Medium
+                                color: shapeTile.isSel ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
+                            }
+                        }
+
+                        MouseArea {
+                            id: shapeMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: ShellState.setPref("m3Shape", shapeTile.modelData)
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        text: "Animated Wavy Progress Bars"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(11)
+                        font.weight: Font.DemiBold
+                        color: Theme.m3Ink
+                    }
+
+                    Text {
+                        text: "Show subtle sinusoidal motion on media seekers, timers, and progress rings"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        color: Theme.m3InkDim
+                    }
+                }
+
+                ToggleSwitch {
+                    checked: ShellState.m3WavyProgress
+                    onToggled: ShellState.setPref("m3WavyProgress", !ShellState.m3WavyProgress)
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Text {
+                        text: "Wave Stroke Thickness"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(11)
+                        font.weight: Font.DemiBold
+                        color: Theme.m3Ink
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    Text {
+                        text: Number(ShellState.m3WaveThick).toFixed(1) + " px"
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Bold
+                        color: Theme.m3Primary
+                    }
+                }
+
+                M3Slider {
+                    Layout.fillWidth: true
+                    from: 2.0
+                    to: 6.0
+                    step: 0.5
+                    unit: "px"
+                    value: ShellState.m3WaveThick
+                    onMoved: v => ShellState.setPref("m3WaveThick", v)
+                }
+
+                M3WavyLine {
+                    Layout.fillWidth: true
+                    implicitHeight: 18
+                    value: 0.65
+                    moving: ShellState.m3WavyProgress
+                    wavy: ShellState.m3WavyProgress
+                    thick: ShellState.m3WaveThick
+                    color: Theme.m3Primary
+                    track: Theme.m3Track
+                    handle: true
+                }
+            }
+        }
+    }
+
     // --- 2. Shell Surface Finish & Transparency ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: surfCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: surfCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: surfCol
@@ -827,11 +1020,11 @@ ColumnLayout {
     Rectangle {
         id: fontCard
         Layout.fillWidth: true
-        implicitHeight: fontCol.implicitHeight + 24
-        radius: Theme.r(14)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: fontCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         readonly property var displayedFonts: {
             let base = root.sansFonts;
@@ -1134,11 +1327,11 @@ ColumnLayout {
     // --- 4. Cursor Theme, Size & Auto-Hide ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: curCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: curCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: curCol
@@ -1366,11 +1559,11 @@ ColumnLayout {
     // --- 4. MangoWC Effects & Animations ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: tuneCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: tuneCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: tuneCol
@@ -1885,11 +2078,11 @@ ColumnLayout {
     // --- 5. Wallpaper Transitions (awww / swww) ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: wpCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: wpCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: wpCol
@@ -2084,11 +2277,11 @@ ColumnLayout {
     // --- 6. GTK, Icons & Font Rendering ---
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: gtkCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: gtkCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: gtkCol

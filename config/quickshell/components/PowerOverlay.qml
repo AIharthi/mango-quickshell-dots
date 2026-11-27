@@ -129,19 +129,17 @@ PanelWindow {
         }
 
         Layout.fillWidth: true
-        implicitHeight: 108
-        radius: Theme.r(18)
+        implicitHeight: 112
+        radius: Theme.r(actMouse.pressed ? 14 : (actCard.isSel ? 24 : 20))
         color: {
             if (actCard.isPending)
-                return Theme.error;
+                return Theme.m3Error;
             if (actCard.isSel || actMouse.containsMouse)
-                return Theme.tileActiveBg;
-            return actCard.actionData.danger ? Theme.withAlpha(actCard.tintCol, 0.10) : Theme.cardBg;
+                return Theme.m3SurfaceHigh;
+            return actCard.actionData.danger ? Theme.withAlpha(Theme.m3ErrorContainer, 0.45) : Theme.m3SurfaceC;
         }
-        border.width: (actCard.isPending || actCard.isSel || actMouse.containsMouse) ? Theme.activeControlBorderWidth : Theme.subBorderWidth
-        border.color: actCard.isPending
-            ? Theme.error
-            : ((actCard.isSel || actMouse.containsMouse) ? actCard.tintCol : Theme.cardBorder)
+        border.width: (actCard.isPending || actCard.isSel) ? 1 : 0
+        border.color: actCard.isPending ? Theme.m3Error : Theme.m3Primary
         scale: actMouse.pressed ? 0.95 : (actMouse.containsMouse ? 1.02 : 1.0)
 
         Behavior on scale {
@@ -293,16 +291,16 @@ PanelWindow {
             }
         }
 
-        // Centered Power Dialog
+        // Centered M3 Power Dialog
         Rectangle {
             anchors.centerIn: parent
             width: Math.min(680, Math.max(400, root.width - 64))
             implicitHeight: pwrCol.implicitHeight + 44
-            radius: Theme.r(26)
-            color: Theme.notchBg
+            radius: Theme.r(30)
+            color: Theme.m3PanelBg
             clip: true
-            border.width: Math.max(1, Theme.islandBorderWidth)
-            border.color: Theme.islandBorder
+            border.width: 1
+            border.color: Theme.m3Line
 
             opacity: root.shown ? 1.0 : 0.0
             scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.94)

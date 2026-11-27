@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import ".."
+import "../m3"
 
 PanelWindow {
     id: root
@@ -243,27 +244,27 @@ PanelWindow {
         }
     }
 
-    // ==================== 1. LEFT POD POPOVER: SPACES & QUICK HUB ====================
+    // ==================== 1. LEFT POD POPOVER: DYNISLAND SYSTEM RINGS & SPACES ====================
     Rectangle {
         visible: root.panelMode === "left"
         anchors.top: parent.top
-        anchors.topMargin: root.topBarOffset + 6
+        anchors.topMargin: root.topBarOffset + 8
         anchors.left: parent.left
         anchors.leftMargin: ShellState.splitSideMargin
-        width: Math.min(356, Math.max(280, root.width - ShellState.splitSideMargin * 2))
-        height: Math.min(Math.max(200, root.height - root.topBarOffset - 24), leftHubCol.implicitHeight + 24)
-        radius: Theme.r(20)
-        color: Theme.notchBg
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+        width: Math.min(420, Math.max(300, root.width - ShellState.splitSideMargin * 2))
+        height: Math.min(Math.max(220, root.height - root.topBarOffset - 24), leftHubCol.implicitHeight + 28)
+        radius: Theme.r(30)
+        color: Theme.m3PanelBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         opacity: root.shown ? 1.0 : 0.0
-        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
+        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.95)
         transformOrigin: Item.TopLeft
 
-        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 190; easing.type: Theme.m3Springy } }
 
         MouseArea { anchors.fill: parent }
 
@@ -272,69 +273,129 @@ PanelWindow {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.margins: 12
-            spacing: 10
+            anchors.margins: 14
+            spacing: 12
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
 
-                Text { text: "󰕰"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(15); color: Theme.primary }
-                Text { Layout.fillWidth: true; text: "Spaces & Quick Hub"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(12); font.weight: Font.Bold; color: Theme.fgSurface }
+                Rectangle {
+                    implicitWidth: 32; implicitHeight: 32; radius: Theme.r(16)
+                    color: Theme.m3PrimaryContainer
+                    Text { anchors.centerIn: parent; text: "󰕰"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(15); color: Theme.m3OnPrimaryContainer }
+                }
+
+                Text { Layout.fillWidth: true; text: "Spaces & System"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(14); font.weight: Font.DemiBold; color: Theme.m3Ink }
 
                 Rectangle {
-                    implicitHeight: 24
-                    implicitWidth: lhLayTxt.implicitWidth + 12
-                    radius: Theme.r(8)
-                    color: lhLayMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-                    Text { id: lhLayTxt; anchors.centerIn: parent; text: "Layout: " + MangoState.layoutForScreen(root.screenName); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.primary }
+                    implicitHeight: 28
+                    implicitWidth: lhLayTxt.implicitWidth + 16
+                    radius: Theme.r(14)
+                    color: lhLayMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
+                    Text { id: lhLayTxt; anchors.centerIn: parent; text: "Layout: " + MangoState.layoutForScreen(root.screenName); font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.m3OnSecondaryContainer }
                     MouseArea { id: lhLayMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"]) }
+                }
+            }
+
+            // DarkShadowShell DynIsland System 3 WavyArc Gauges
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Repeater {
+                    model: [
+                        { label: "CPU", val: Math.round(SystemTelemetry.cpuPercent), ratio: SystemTelemetry.cpuPercent / 100.0 },
+                        { label: "RAM", val: Math.round(SystemTelemetry.memPercent), ratio: SystemTelemetry.memPercent / 100.0 },
+                        { label: DeviceCaps.hasBattery ? "Battery" : "Disk", val: DeviceCaps.hasBattery ? DeviceCaps.batteryPercent : Math.round(SystemTelemetry.diskPercent), ratio: (DeviceCaps.hasBattery ? DeviceCaps.batteryPercent : SystemTelemetry.diskPercent) / 100.0 }
+                    ]
+
+                    delegate: Rectangle {
+                        id: gItem
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        implicitHeight: 112
+                        radius: Theme.r(22)
+                        color: Theme.m3SurfaceC
+
+                        Item {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: 10
+                            width: 72
+                            height: 72
+
+                            M3WavyArc {
+                                anchors.fill: parent
+                                value: gItem.modelData.ratio
+                                moving: root.isOpen && root.panelMode === "left"
+                                wavy: ShellState.m3WavyProgress && !Theme.isSimple
+                                thick: 3.5
+                                color: Theme.m3Primary
+                                track: Theme.m3Track
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: gItem.modelData.val + "%"
+                                font.family: Theme.monoFont
+                                font.pixelSize: Theme.fs(13)
+                                font.weight: Font.Bold
+                                color: Theme.m3Ink
+                            }
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 8
+                            text: gItem.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Medium
+                            color: Theme.m3InkDim
+                        }
+                    }
                 }
             }
 
             // Focused Window Readout
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: fwRow.implicitHeight + 12
-                radius: Theme.r(12)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: fwRow.implicitHeight + 16
+                radius: Theme.r(20)
+                color: Theme.m3SurfaceC
 
                 RowLayout {
                     id: fwRow
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 8
+                    anchors.margins: 10
+                    spacing: 10
 
-                    Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.primary }
+                    Text { text: "󰖯"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(15); color: Theme.m3Primary }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 1
-                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.activeAppName.length > 0 ? MangoState.activeAppName : "Desktop"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.fgSurface }
-                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.activeWindowTitle.length > 0 ? MangoState.activeWindowTitle : "No active window focused"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.activeAppName.length > 0 ? MangoState.activeAppName : "Desktop"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(12); font.weight: Font.DemiBold; color: Theme.m3Ink }
+                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.activeWindowTitle.length > 0 ? MangoState.activeWindowTitle : "No active window focused"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.m3InkDim }
                     }
                 }
             }
 
-            // Interactive 3x3 Spaces Grid
+            // Interactive 3x3 M3 Spaces Grid
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: wsGrid.implicitHeight + 16
-                radius: Theme.r(14)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: wsGrid.implicitHeight + 18
+                radius: Theme.r(22)
+                color: Theme.m3SurfaceC
 
                 GridLayout {
                     id: wsGrid
                     anchors.fill: parent
-                    anchors.margins: 8
+                    anchors.margins: 9
                     columns: 3
-                    rowSpacing: 6
-                    columnSpacing: 6
+                    rowSpacing: 7
+                    columnSpacing: 7
 
                     Repeater {
                         model: MangoState.tagsForScreen(root.screenName)
@@ -347,16 +408,16 @@ PanelWindow {
                             readonly property bool isOccupied: lgTag.modelData.client_count > 0
 
                             Layout.fillWidth: true
-                            implicitHeight: 34
-                            radius: Theme.r(9)
+                            implicitHeight: 36
+                            radius: Theme.r(lgTagMouse.pressed ? 10 : (lgTag.isActive ? 18 : 12))
                             color: {
-                                if (lgTag.isUrgent) return Theme.error;
-                                if (lgTag.isActive) return Theme.primary;
-                                if (lgTagMouse.containsMouse) return Theme.hoverBg;
-                                return Theme.subCardBg;
+                                if (lgTag.isUrgent) return Theme.m3Error;
+                                if (lgTag.isActive) return Theme.m3Primary;
+                                if (lgTag.isOccupied) return Theme.m3SecondaryContainer;
+                                return lgTagMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh;
                             }
-                            border.width: lgTag.isOccupied && !lgTag.isActive ? 1 : 0
-                            border.color: Theme.withAlpha(Theme.primary, 0.45)
+
+                            Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 220; easing.type: Theme.m3Springy } }
 
                             RowLayout {
                                 anchors.centerIn: parent
@@ -365,16 +426,16 @@ PanelWindow {
                                     text: "Space " + lgTag.modelData.index
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(10)
-                                    font.weight: lgTag.isActive ? Font.Bold : Font.DemiBold
-                                    color: lgTag.isUrgent ? Theme.fgError : (lgTag.isActive ? Theme.fgPrimary : Theme.fgSurface)
+                                    font.weight: lgTag.isActive ? Font.Bold : Font.Medium
+                                    color: lgTag.isUrgent ? Theme.m3OnErrorContainer : (lgTag.isActive ? Theme.m3OnPrimary : (lgTag.isOccupied ? Theme.m3OnSecondaryContainer : Theme.m3Ink))
                                 }
                                 Text {
                                     visible: lgTag.modelData.client_count > 0
                                     text: String(lgTag.modelData.client_count)
                                     font.family: Theme.monoFont
-                                    font.pixelSize: Theme.fs(8)
+                                    font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
-                                    color: lgTag.isActive ? Theme.fgPrimary : Theme.primary
+                                    color: lgTag.isActive ? Theme.m3OnPrimary : Theme.m3Primary
                                 }
                             }
 
@@ -390,12 +451,12 @@ PanelWindow {
                 }
             }
 
-            // Quick Actions 2x3 Grid
+            // Quick Actions 2x3 M3 Tiles
             GridLayout {
                 Layout.fillWidth: true
                 columns: 3
-                rowSpacing: 6
-                columnSpacing: 6
+                rowSpacing: 8
+                columnSpacing: 8
 
                 Repeater {
                     model: [
@@ -411,17 +472,18 @@ PanelWindow {
                         id: qaTile
                         required property var modelData
                         Layout.fillWidth: true
-                        implicitHeight: 44
-                        radius: Theme.r(11)
-                        color: qaMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                        border.width: Theme.cardBorderWidth
-                        border.color: qaMouse.containsMouse ? Theme.primary : Theme.cardBorder
+                        implicitHeight: 50
+                        radius: Theme.r(qaMouse.pressed ? 12 : 20)
+                        color: qaMouse.containsMouse ? Theme.m3SecondaryContainer : Theme.m3SurfaceC
+
+                        Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160 } }
+                        Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 140 } }
 
                         ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 2
-                            Text { Layout.alignment: Qt.AlignHCenter; text: qaTile.modelData.icon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.primary }
-                            Text { Layout.alignment: Qt.AlignHCenter; text: qaTile.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
+                            Text { Layout.alignment: Qt.AlignHCenter; text: qaTile.modelData.icon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(15); color: Theme.m3Primary }
+                            Text { Layout.alignment: Qt.AlignHCenter; text: qaTile.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Medium; color: Theme.m3Ink }
                         }
 
                         MouseArea {
@@ -447,35 +509,26 @@ PanelWindow {
             // Footer: Split Settings + Keybinds + Power
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: 8
 
-                Rectangle {
+                M3Btn {
                     Layout.fillWidth: true
-                    implicitHeight: 30
-                    radius: Theme.r(9)
-                    color: lfSetMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-                    Text { anchors.centerIn: parent; text: "󰒓 Split Settings"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurface }
-                    MouseArea { id: lfSetMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.closeRequested(); root.openSettingsRequested("split"); } }
+                    icon: "󰒓"
+                    text: "Split Settings"
+                    onClicked: { root.closeRequested(); root.openSettingsRequested("split"); }
                 }
 
-                Rectangle {
-                    implicitWidth: 32; implicitHeight: 30; radius: Theme.r(9)
-                    color: lfKeyMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-                    Text { anchors.centerIn: parent; text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
-                    MouseArea { id: lfKeyMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.closeRequested(); root.openKeybindsRequested(); } }
+                M3Btn {
+                    implicitWidth: 44
+                    icon: "󰌌"
+                    onClicked: { root.closeRequested(); root.openKeybindsRequested(); }
                 }
 
-                Rectangle {
-                    implicitWidth: 32; implicitHeight: 30; radius: Theme.r(9)
-                    color: lfPwrMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.2) : Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-                    Text { anchors.centerIn: parent; text: "󰐥"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.error }
-                    MouseArea { id: lfPwrMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.closeRequested(); Quickshell.execDetached(["qs", "ipc", "call", "island", "togglePowerOverlay"]); } }
+                M3Btn {
+                    implicitWidth: 44
+                    variant: "danger"
+                    icon: "󰐥"
+                    onClicked: { root.closeRequested(); Quickshell.execDetached(["qs", "ipc", "call", "island", "togglePowerOverlay"]); }
                 }
             }
         }
@@ -485,22 +538,22 @@ PanelWindow {
     Rectangle {
         visible: root.panelMode === "center"
         anchors.top: parent.top
-        anchors.topMargin: root.topBarOffset + 6
+        anchors.topMargin: root.topBarOffset + 8
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Math.min(436, Math.max(340, root.width - ShellState.splitSideMargin * 2))
-        height: Math.min(Math.max(220, root.height - root.topBarOffset - 24), centerHubCol.implicitHeight + 24)
-        radius: Theme.r(20)
-        color: Theme.notchBg
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+        width: Math.min(472, Math.max(360, root.width - ShellState.splitSideMargin * 2))
+        height: Math.min(Math.max(220, root.height - root.topBarOffset - 24), centerHubCol.implicitHeight + 28)
+        radius: Theme.r(30)
+        color: Theme.m3PanelBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         opacity: root.shown ? 1.0 : 0.0
-        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
+        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.95)
         transformOrigin: Item.Top
 
-        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 190; easing.type: Theme.m3Springy } }
 
         MouseArea { anchors.fill: parent }
 
@@ -509,25 +562,26 @@ PanelWindow {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.margins: 12
-            spacing: 10
+            anchors.margins: 14
+            spacing: 12
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
 
-                Text { text: "󰓇"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(14); color: Theme.primary }
-                Text { Layout.fillWidth: true; text: "Media, Focus & Agenda"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(12); font.weight: Font.Bold; color: Theme.fgSurface }
-
                 Rectangle {
-                    implicitWidth: chAlTxt.implicitWidth + 14
-                    implicitHeight: 24
-                    radius: Theme.r(8)
-                    color: chAlMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-                    Text { id: chAlTxt; anchors.centerIn: parent; text: "󰂚 Open Calendar"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.primary }
-                    MouseArea { id: chAlMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openNotificationsRequested() }
+                    implicitWidth: 32; implicitHeight: 32; radius: Theme.r(16)
+                    color: Theme.m3PrimaryContainer
+                    Text { anchors.centerIn: parent; text: "󰓇"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(14); color: Theme.m3OnPrimaryContainer }
+                }
+
+                Text { Layout.fillWidth: true; text: "Media, Focus & Agenda"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(14); font.weight: Font.DemiBold; color: Theme.m3Ink }
+
+                M3Btn {
+                    compact: true
+                    icon: "󰂚"
+                    text: "Calendar"
+                    onClicked: root.openNotificationsRequested()
                 }
             }
 
@@ -622,10 +676,9 @@ PanelWindow {
                             delegate: Rectangle {
                                 id: ftMinChip
                                 required property int modelData
-                                implicitWidth: 28; implicitHeight: 22; radius: Theme.r(7)
-                                color: ftMinMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                                border.width: Theme.subBorderWidth; border.color: Theme.cardBorder
-                                Text { anchors.centerIn: parent; text: ftMinChip.modelData + "m"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(8); color: Theme.fgSurface }
+                                implicitWidth: 34; implicitHeight: 24; radius: Theme.r(12)
+                                color: ftMinMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                                Text { anchors.centerIn: parent; text: ftMinChip.modelData + "m"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Medium; color: Theme.m3Ink }
                                 MouseArea { id: ftMinMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.resetTimer(ftMinChip.modelData * 60) }
                             }
                         }
@@ -701,33 +754,34 @@ PanelWindow {
         }
     }
 
-    // ==================== 3. TOP-RIGHT SEQUOIA CONTROL CENTER POPOVER ====================
+    // ==================== 3. DARKSHADOWSHELL CONTROL CENTER DRAWER ====================
     Rectangle {
         id: controlsCard
         visible: root.panelMode === "controls"
         anchors.top: parent.top
-        anchors.topMargin: root.topBarOffset + 6
+        anchors.topMargin: root.topBarOffset + 8
         anchors.right: parent.right
         anchors.rightMargin: ShellState.splitSideMargin
         readonly property int targetControlsWidth: root.controlsTab === "files"
             ? 680
-            : (root.controlsTab === "themes" ? 560 : 416)
-        readonly property int tabViewportH: Math.min(460, Math.max(280, root.height - root.topBarOffset - 92))
-        width: Math.min(Math.max(340, root.width - ShellState.splitSideMargin * 2), targetControlsWidth)
-        height: Math.min(Math.max(200, root.height - root.topBarOffset - 24), controlsCol.implicitHeight + 24)
-        radius: Theme.r(20)
-        color: Theme.notchBg
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+            : (root.controlsTab === "themes" ? 560 : 456)
+        readonly property int maxDrawerH: Math.max(260, root.height - root.topBarOffset - 22)
+        readonly property int tabViewportH: Math.min(500, Math.max(280, root.height - root.topBarOffset - 96))
+        width: Math.min(Math.max(360, root.width - ShellState.splitSideMargin * 2), targetControlsWidth)
+        height: Math.min(maxDrawerH, controlsCol.implicitHeight + 28)
+        radius: Theme.r(32)
+        color: Theme.m3PanelBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         opacity: root.shown ? 1.0 : 0.0
-        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
+        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.95)
         transformOrigin: Item.TopRight
 
-        Behavior on width { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on width { enabled: !Theme.reducedMotion; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 200; easing.type: Theme.m3Springy } }
 
         MouseArea { anchors.fill: parent }
 
@@ -736,60 +790,64 @@ PanelWindow {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.margins: 12
-            spacing: 10
+            anchors.margins: 14
+            spacing: 12
 
-            // Header: Segmented Tabs + Store / Settings / Power
+            // DarkShadowShell ControlCenter Header: Close button, 4 Pill Tabs, Settings & Power
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
 
                 Rectangle {
-                    implicitHeight: 30
-                    implicitWidth: ccSegRow.implicitWidth + 6
-                    radius: Theme.r(15)
-                    color: Theme.cardBg
-                    border.width: Theme.activeControlBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                    color: ccClsMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+                    Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
+                    MouseArea { id: ccClsMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeRequested() }
+                }
 
-                    RowLayout {
-                        id: ccSegRow
-                        anchors.centerIn: parent
-                        spacing: 2
+                Item { Layout.fillWidth: true }
 
-                        Repeater {
-                            model: [
-                                { id: "controls", label: "Controls" },
-                                { id: "themes",   label: "Themes" },
-                                { id: "files",    label: "Files" }
-                            ]
+                RowLayout {
+                    id: ccSegRow
+                    spacing: 4
 
-                            delegate: Rectangle {
-                                id: ccTab
-                                required property var modelData
-                                readonly property bool active: root.controlsTab === ccTab.modelData.id
-                                implicitHeight: 24
-                                implicitWidth: ccTabTxt.implicitWidth + 14
-                                radius: Theme.r(12)
-                                color: ccTab.active ? Theme.primary : (ccTabMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                    Repeater {
+                        model: [
+                            { id: "controls", label: "Controls" },
+                            { id: "overview", label: "Overview" },
+                            { id: "themes",   label: "Themes" },
+                            { id: "files",    label: "Files" }
+                        ]
 
-                                Text {
-                                    id: ccTabTxt
-                                    anchors.centerIn: parent
-                                    text: ccTab.modelData.label
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(10)
-                                    font.weight: ccTab.active ? Font.Bold : Font.Medium
-                                    color: ccTab.active ? Theme.fgPrimary : Theme.fgSurfaceVariant
-                                }
+                        delegate: Rectangle {
+                            id: ccTab
+                            required property var modelData
+                            readonly property bool active: root.controlsTab === ccTab.modelData.id
+                            implicitHeight: 34
+                            implicitWidth: ccTabTxt.implicitWidth + 18
+                            radius: Theme.r(17)
+                            color: ccTab.active
+                                ? Theme.m3Primary
+                                : (ccTabMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC)
 
-                                MouseArea {
-                                    id: ccTabMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.switchControlsTab(ccTab.modelData.id)
-                                }
+                            Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 160 } }
+
+                            Text {
+                                id: ccTabTxt
+                                anchors.centerIn: parent
+                                text: ccTab.modelData.label
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                font.weight: Font.Medium
+                                color: ccTab.active ? Theme.m3OnPrimary : Theme.m3Ink
+                            }
+
+                            MouseArea {
+                                id: ccTabMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.switchControlsTab(ccTab.modelData.id)
                             }
                         }
                     }
@@ -798,33 +856,23 @@ PanelWindow {
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
-                    implicitWidth: 28; implicitHeight: 28; radius: Theme.r(9)
-                    color: ccStMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                    border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
-                    Text { anchors.centerIn: parent; text: "󰏖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.primary }
-                    MouseArea { id: ccStMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openStoreRequested() }
-                }
-
-                Rectangle {
-                    implicitWidth: 28; implicitHeight: 28; radius: Theme.r(9)
-                    color: ccGearMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                    border.width: Theme.cardBorderWidth; border.color: Theme.cardBorder
-                    Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurface }
+                    implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                    color: ccGearMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+                    Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
                     MouseArea { id: ccGearMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openSettingsRequested("split") }
                 }
 
                 Rectangle {
-                    implicitWidth: 28; implicitHeight: 28; radius: Theme.r(9)
-                    color: root.powerMenuOpen ? Theme.withAlpha(Theme.error, 0.22) : (ccPwrMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                    border.width: Theme.cardBorderWidth; border.color: root.powerMenuOpen ? Theme.error : Theme.cardBorder
-                    Text { anchors.centerIn: parent; text: "󰐥"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: root.powerMenuOpen ? Theme.error : Theme.fgSurface }
+                    implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                    color: root.powerMenuOpen ? Theme.m3ErrorContainer : (ccPwrMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC)
+                    Text { anchors.centerIn: parent; text: "󰐥"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: root.powerMenuOpen ? Theme.m3OnErrorContainer : Theme.m3Error }
                     MouseArea { id: ccPwrMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.togglePowerMenuRequested() }
                 }
             }
 
             Loader {
                 Layout.fillWidth: true
-                Layout.preferredHeight: active ? 36 : 0
+                Layout.preferredHeight: active ? 40 : 0
                 active: root.powerMenuOpen
                 visible: active
                 source: "PowerMenu.qml"
@@ -834,12 +882,12 @@ PanelWindow {
                 }
             }
 
-            // Sub-Tab 1: Control Center / Compact Stack / Studio Platter
+            // Sub-Tab 1: Control Center (Sliders + Wide Tiles + 4-col M3 Tiles + Music Card + Spaces Strip)
             Flickable {
                 visible: root.controlsTab === "controls"
                 Layout.fillWidth: true
                 Layout.preferredHeight: visible
-                    ? Math.min(controlsInnerCol.implicitHeight, Math.max(180, root.height - root.topBarOffset - (root.powerMenuOpen ? 132 : 86)))
+                    ? Math.min(controlsInnerCol.implicitHeight, Math.max(200, controlsCard.maxDrawerH - (root.powerMenuOpen ? 124 : 76)))
                     : 0
                 contentWidth: width
                 contentHeight: controlsInnerCol.implicitHeight
@@ -850,195 +898,137 @@ PanelWindow {
                 ColumnLayout {
                     id: controlsInnerCol
                     width: parent.width
-                    spacing: 8
+                    spacing: 10
 
-                // 2x2 Connectivity & Focus Platter
-                Rectangle {
-                    visible: ShellState.splitHubStyle === "controlcenter"
-                    Layout.fillWidth: true
-                    implicitHeight: 112
-                    radius: Theme.r(16)
-                    color: Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
+                    Loader {
+                        Layout.fillWidth: true
+                        readonly property int qcH: 250
+                            + (DeviceCaps.hasBacklight ? 56 : 0)
+                            + ((DeviceCaps.hasWifi || DeviceCaps.hasBluetooth) ? 72 : 0)
+                        readonly property bool showQc: root.panelMode === "controls" && root.controlsTab === "controls"
+                        Layout.preferredHeight: showQc ? (item ? Math.max(120, Math.ceil(item.implicitHeight)) : qcH) : 0
+                        active: root._controlsMainLoaded
+                        visible: showQc
+                        source: "QuickControls.qml"
+                        onLoaded: {
+                            if (item) {
+                                item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
+                                item.hideHeader = true;
+                                item.hideStyleFooter = true;
+                                item.hideDuplicateToggles = true;
+                                item.tallActionTiles = true;
+                                item.openSettingsRequested.connect(page => {
+                                    root.closeRequested();
+                                    root.openSettingsRequested(page);
+                                });
+                            }
+                        }
+                    }
 
-                    GridLayout {
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        columns: 2
-                        rowSpacing: 6
-                        columnSpacing: 6
+                    Loader {
+                        Layout.fillWidth: true
+                        readonly property bool showMedia: root.panelMode === "controls"
+                            && root.controlsTab === "controls"
+                            && (ShellState.splitHubStyle === "controlcenter" || ShellState.splitHubStyle === "media" || root.player !== null)
+                        Layout.preferredHeight: showMedia ? (item ? Math.max(158, Math.ceil(item.implicitHeight)) : 162) : 0
+                        active: root._controlsMainLoaded
+                        visible: showMedia
+                        source: "MediaCard.qml"
+                        onLoaded: {
+                            if (item) {
+                                item.player = Qt.binding(() => root.player);
+                                item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
+                            }
+                        }
+                    }
 
-                        Repeater {
-                            model: [
-                                { id: "sink",  icon: "󰋋", title: "Output",     sub: MangoState.defaultSinkLabel, active: !MangoState.volMuted, tint: Theme.primary },
-                                { id: "dnd",   icon: ShellState.dnd ? "󰂛" : "󰂚", title: "Focus", sub: ShellState.dnd ? "DND Active" : "Alerts On", active: ShellState.dnd, tint: Theme.secondary },
-                                { id: "awake", icon: "󰅶", title: "Keep Awake", sub: ShellState.keepAwake ? "Idle Paused" : "Auto-Lock On", active: ShellState.keepAwake, tint: Theme.warning },
-                                { id: "game",  icon: "󰊴", title: "Game Mode",  sub: ShellState.gameModeActive ? "Boost Active" : "Standard", active: ShellState.gameModeActive, tint: Theme.tertiary }
-                            ]
+                    // Compact Workspaces + Store Strip
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 42
+                        radius: Theme.r(21)
+                        color: Theme.m3SurfaceC
+                        border.width: 1
+                        border.color: Theme.m3Line
 
-                            delegate: Rectangle {
-                                id: sqTile
-                                required property var modelData
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 4
+
+                            RowLayout {
                                 Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: Theme.r(11)
-                                color: sqTile.modelData.active ? Theme.tileActiveBg : (sqTileMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                                border.width: sqTile.modelData.active ? Theme.activeControlBorderWidth : 0
-                                border.color: sqTile.modelData.tint
+                                spacing: 3
 
-                                RowLayout {
-                                    anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8; spacing: 7
-                                    Rectangle {
-                                        implicitWidth: 28; implicitHeight: 28; radius: Theme.r(14)
-                                        color: sqTile.modelData.active ? sqTile.modelData.tint : Theme.surfaceContainerHighest
-                                        Text { anchors.centerIn: parent; text: sqTile.modelData.icon; font.family: Theme.iconFont; font.pixelSize: 13; color: sqTile.modelData.active ? Theme.contrastInk(sqTile.modelData.tint) : Theme.fgSurfaceVariant }
-                                    }
-                                    ColumnLayout {
-                                        Layout.fillWidth: true; spacing: 1
-                                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: sqTile.modelData.title; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: sqTile.modelData.active ? Font.Bold : Font.DemiBold; color: Theme.fgSurface }
-                                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: sqTile.modelData.sub; font.family: Theme.fontFamily; font.pixelSize: 8; color: Theme.fgSurfaceVariant }
+                                Repeater {
+                                    model: MangoState.tagsForScreen(root.screenName)
+
+                                    delegate: Rectangle {
+                                        id: spCcTag
+                                        required property var modelData
+                                        readonly property bool isActive: spCcTag.modelData.is_active
+                                        readonly property bool isUrgent: spCcTag.modelData.is_urgent
+                                        readonly property bool isOccupied: spCcTag.modelData.client_count > 0
+
+                                        Layout.fillWidth: true
+                                        implicitHeight: 26
+                                        radius: Theme.r(spCcTag.isActive ? 13 : 9)
+                                        color: {
+                                            if (spCcTag.isUrgent) return Theme.m3Error;
+                                            if (spCcTag.isActive) return Theme.m3Primary;
+                                            if (spCcTagMouse.containsMouse) return Theme.m3SurfaceHighest;
+                                            return spCcTag.isOccupied ? Theme.m3SecondaryContainer : "transparent";
+                                        }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: spCcTag.modelData.index
+                                            font.family: Theme.monoFont
+                                            font.pixelSize: Theme.fs(10)
+                                            font.weight: spCcTag.isActive ? Font.Bold : Font.Medium
+                                            color: spCcTag.isUrgent ? Theme.m3OnErrorContainer : (spCcTag.isActive ? Theme.m3OnPrimary : (spCcTag.isOccupied ? Theme.m3OnSecondaryContainer : Theme.m3InkDim))
+                                        }
+
+                                        MouseArea {
+                                            id: spCcTagMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + spCcTag.modelData.index + ",0"])
+                                        }
                                     }
                                 }
+                            }
 
-                                MouseArea {
-                                    id: sqTileMouse
-                                    anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton; cursorShape: Qt.PointingHandCursor
-                                    onClicked: mouse => {
-                                        const cid = sqTile.modelData.id;
-                                        if (cid === "sink") {
-                                            if (mouse.button === Qt.RightButton)
-                                                Qt.callLater(() => { root.closeRequested(); root.openSettingsRequested("audio"); });
-                                            else
-                                                MangoState.cycleAudioSink();
-                                        } else if (cid === "dnd") ShellState.toggleDnd();
-                                        else if (cid === "awake") ShellState.toggleKeepAwake();
-                                        else if (cid === "game") ShellState.toggleGameMode();
-                                    }
-                                }
+                            Rectangle {
+                                implicitWidth: 28; implicitHeight: 28; radius: Theme.r(14)
+                                color: spCcStoreM.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
+                                Text { anchors.centerIn: parent; text: "󰏖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.m3OnSecondaryContainer }
+                                MouseArea { id: spCcStoreM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openStoreRequested() }
                             }
                         }
                     }
                 }
+            }
 
-                // Compact Stack Toggles
-                RowLayout {
-                    visible: ShellState.splitHubStyle === "compact"
-                    Layout.fillWidth: true
-                    spacing: 6
+            // Sub-Tab 2: DarkShadowShell Overview (Hero Clock + Calendar + 3 M3Blob Gauges)
+            Flickable {
+                visible: root.controlsTab === "overview"
+                Layout.fillWidth: true
+                Layout.preferredHeight: visible
+                    ? Math.min(overviewTab.implicitHeight, Math.max(200, controlsCard.maxDrawerH - (root.powerMenuOpen ? 124 : 76)))
+                    : 0
+                contentWidth: width
+                contentHeight: overviewTab.implicitHeight
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
 
-                    Repeater {
-                        model: [
-                            { id: "dnd",   icon: ShellState.dnd ? "󰂛" : "󰂚", label: "Focus", active: ShellState.dnd, tint: Theme.secondary },
-                            { id: "awake", icon: "󰅶", label: "Awake", active: ShellState.keepAwake, tint: Theme.warning },
-                            { id: "shot",  icon: "󰹑", label: "Capture", active: false, tint: Theme.primary },
-                            { id: "game",  icon: "󰊴", label: "Game", active: ShellState.gameModeActive, tint: Theme.tertiary }
-                        ]
-
-                        delegate: Rectangle {
-                            id: cmpAct
-                            required property var modelData
-                            Layout.fillWidth: true; implicitHeight: 42; radius: Theme.r(11)
-                            color: cmpAct.modelData.active ? Theme.tileActiveBg : (cmpActMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
-                            border.width: cmpAct.modelData.active ? Theme.activeControlBorderWidth : Theme.cardBorderWidth
-                            border.color: cmpAct.modelData.active ? cmpAct.modelData.tint : Theme.cardBorder
-                            ColumnLayout {
-                                anchors.centerIn: parent; spacing: 2
-                                Text { Layout.alignment: Qt.AlignHCenter; text: cmpAct.modelData.icon; font.family: Theme.iconFont; font.pixelSize: 13; color: cmpAct.modelData.active ? cmpAct.modelData.tint : Theme.fgSurfaceVariant }
-                                Text { Layout.alignment: Qt.AlignHCenter; text: cmpAct.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: cmpAct.modelData.active ? Font.Bold : Font.Medium; color: Theme.fgSurface }
-                            }
-                            MouseArea {
-                                id: cmpActMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    const id = cmpAct.modelData.id;
-                                    if (id === "dnd") ShellState.toggleDnd();
-                                    else if (id === "awake") ShellState.toggleKeepAwake();
-                                    else if (id === "shot") Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--area"]);
-                                    else if (id === "game") ShellState.toggleGameMode();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Studio Platter MediaCard
-                Loader {
-                    Layout.fillWidth: true
-                    readonly property bool showStudio: root.panelMode === "controls" && root.controlsTab === "controls" && ShellState.splitHubStyle === "media"
-                    Layout.preferredHeight: showStudio ? (item ? Math.max(166, Math.ceil(item.implicitHeight)) : 168) : 0
-                    active: root._controlsMainLoaded && ShellState.splitHubStyle === "media"
-                    visible: showStudio
-                    source: "MediaCard.qml"
-                    onLoaded: {
-                        if (item) {
-                            item.player = Qt.binding(() => root.player);
-                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
-                        }
-                    }
-                }
-
-                Loader {
-                    Layout.fillWidth: true
-                    readonly property int qcH: (ShellState.splitHubStyle === "compact" ? 104 : 114)
-                        + (DeviceCaps.hasBacklight ? 38 : 0)
-                        + ((DeviceCaps.hasWifi || DeviceCaps.hasBluetooth) ? 42 : 0)
-                    readonly property bool showQc: root.panelMode === "controls" && root.controlsTab === "controls"
-                    Layout.preferredHeight: showQc ? (item ? Math.max(92, Math.ceil(item.implicitHeight)) : qcH) : 0
-                    active: root._controlsMainLoaded
-                    visible: showQc
-                    source: "QuickControls.qml"
-                    onLoaded: {
-                        if (item) {
-                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
-                            item.hideHeader = true;
-                            item.hideStyleFooter = true;
-                            item.hideDuplicateToggles = true;
-                            item.tallActionTiles = false;
-                            item.openSettingsRequested.connect(page => {
-                                root.closeRequested();
-                                root.openSettingsRequested(page);
-                            });
-                        }
-                    }
-                }
-
-                Loader {
-                    Layout.fillWidth: true
-                    readonly property bool showCompactMedia: root.panelMode === "controls"
-                        && root.controlsTab === "controls"
-                        && ShellState.splitHubStyle !== "media"
-                        && (ShellState.splitHubStyle === "controlcenter" || root.player !== null)
-                    Layout.preferredHeight: showCompactMedia ? (item ? Math.max(158, Math.ceil(item.implicitHeight)) : 160) : 0
-                    active: root._controlsMainLoaded && ShellState.splitHubStyle !== "media"
-                    visible: showCompactMedia
-                    source: "MediaCard.qml"
-                    onLoaded: {
-                        if (item) {
-                            item.player = Qt.binding(() => root.player);
-                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
-                        }
-                    }
-                }
-
-                // Telemetry Strip
-                Rectangle {
-                    visible: ShellState.splitHubStyle !== "compact"
-                    Layout.fillWidth: true
-                    implicitHeight: 30
-                    radius: Theme.r(10)
-                    color: Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-
-                    RowLayout {
-                        anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10; spacing: 10
-                        Text { text: "CPU " + Math.round(SystemTelemetry.cpuPercent) + "%" + (SystemTelemetry.cpuTempC > 0 ? (" · " + SystemTelemetry.cpuTempC + "°C") : ""); font.family: Theme.monoFont; font.pixelSize: 9; font.weight: Font.DemiBold; color: SystemTelemetry.cpuPercent > 85 ? Theme.error : Theme.fgSurfaceVariant }
-                        Item { Layout.fillWidth: true }
-                        Text { text: "RAM " + SystemTelemetry.memUsedGb.toFixed(1) + "/" + SystemTelemetry.memTotalGb.toFixed(0) + "G"; font.family: Theme.monoFont; font.pixelSize: 9; font.weight: Font.DemiBold; color: SystemTelemetry.memPercent > 85 ? Theme.warning : Theme.fgSurfaceVariant }
-                        Item { Layout.fillWidth: true }
-                        Text { text: DeviceCaps.hasBattery ? ("BAT " + DeviceCaps.batteryPercent + "%") : ("DISK " + Math.round(SystemTelemetry.diskPercent) + "%"); font.family: Theme.monoFont; font.pixelSize: 9; font.weight: Font.DemiBold; color: DeviceCaps.hasBattery && DeviceCaps.batteryLow ? Theme.error : Theme.fgSurfaceVariant }
-                    }
-                }
+                M3OverviewTab {
+                    id: overviewTab
+                    width: parent.width
+                    active: root.isOpen && root.panelMode === "controls" && root.controlsTab === "overview"
                 }
             }
 
@@ -1084,29 +1074,29 @@ PanelWindow {
     Rectangle {
         visible: root.panelMode === "notifications"
         anchors.top: parent.top
-        anchors.topMargin: root.topBarOffset + 6
+        anchors.topMargin: root.topBarOffset + 8
         anchors.right: parent.right
         anchors.rightMargin: ShellState.splitSideMargin
         width: Math.min(720, Math.max(360, root.width - ShellState.splitSideMargin * 2))
-        height: Math.min(504, Math.max(320, root.height - root.topBarOffset - 24))
-        radius: Theme.r(20)
-        color: Theme.notchBg
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+        height: Math.min(548, Math.max(320, root.height - root.topBarOffset - 24))
+        radius: Theme.r(32)
+        color: Theme.m3PanelBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         opacity: root.shown ? 1.0 : 0.0
-        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
+        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.95)
         transformOrigin: Item.TopRight
 
-        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 190; easing.type: Theme.m3Springy } }
 
         MouseArea { anchors.fill: parent }
 
         Loader {
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             active: root._notifsPanelLoaded
             visible: root.panelMode === "notifications"
             source: "NotificationsTab.qml"
@@ -1117,31 +1107,31 @@ PanelWindow {
         }
     }
 
-    // ==================== 5. CENTERED FLOATING SPOTLIGHT LAUNCHER ====================
+    // ==================== 5. CENTERED FLOATING M3 LAUNCHER ====================
     Rectangle {
         visible: root.panelMode === "launcher"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: Math.max(56, root.topBarOffset + 32)
-        width: Math.min(680, Math.max(420, root.width - 48))
-        height: Math.min(476, Math.max(320, root.height - root.topBarOffset - 72))
-        radius: Theme.r(22)
-        color: Theme.notchBg
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+        width: Math.min(700, Math.max(420, root.width - 48))
+        height: Math.min(500, Math.max(320, root.height - root.topBarOffset - 72))
+        radius: Theme.r(34)
+        color: Theme.m3PanelBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         opacity: root.shown ? 1.0 : 0.0
-        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
+        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.95)
 
-        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 190; easing.type: Theme.m3Springy } }
 
         MouseArea { anchors.fill: parent }
 
         Loader {
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             active: root._launcherPanelLoaded
             visible: root.panelMode === "launcher"
             source: "AppLauncher.qml"
@@ -1184,10 +1174,10 @@ PanelWindow {
         anchors.right: root.panelMode === "notification" ? parent.right : undefined
         anchors.rightMargin: root.panelMode === "notification" ? ShellState.splitSideMargin : 0
         anchors.horizontalCenter: root.panelMode === "osd" ? parent.horizontalCenter : undefined
-        width: root.panelMode === "notification" ? 384 : 310
+        width: root.panelMode === "notification" ? 420 : 320
         height: root.panelMode === "notification"
-            ? Math.max(76, Math.min(156, Math.round(osdOverlay.notificationHeight) + 22))
-            : 58
+            ? Math.max(82, Math.min(164, Math.round(osdOverlay.notificationHeight) + 24))
+            : 60
 
         HoverHandler {
             id: toastHover
@@ -1201,10 +1191,10 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            radius: Theme.r(18)
-            color: Theme.notchBg
-            border.width: Math.max(1, Theme.islandBorderWidth)
-            border.color: (root.panelMode === "notification" && osdOverlay.isUrgent) ? Theme.error : Theme.islandBorder
+            radius: Theme.r(28)
+            color: Theme.m3PanelBg
+            border.width: 1
+            border.color: (root.panelMode === "notification" && osdOverlay.isUrgent) ? Theme.m3Error : Theme.m3Line
             clip: true
 
             opacity: root.shown ? 1.0 : 0.0

@@ -67,10 +67,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: hdrCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: hdrCol
@@ -254,10 +254,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: geoCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: geoCol
@@ -388,10 +388,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: ccCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: ccCol
@@ -486,10 +486,10 @@ ColumnLayout {
             required property var modelData
             Layout.fillWidth: true
             implicitHeight: podModCol.implicitHeight + 24
-            radius: Theme.r(16)
-            color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
-            border.color: Theme.cardBorder
+            radius: Theme.r(22)
+            color: Theme.m3SurfaceC
+            border.width: 1
+            border.color: Theme.m3Line
 
             ColumnLayout {
                 id: podModCol

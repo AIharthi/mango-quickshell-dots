@@ -28,10 +28,10 @@ Rectangle {
     signal checksumRequested(string path)
     signal dirSizeRequested(string path)
 
-    radius: Theme.r(12)
+    radius: Theme.r(24)
     color: root.fileStyle.paneBg
-    border.width: Theme.cardBorderWidth
-    border.color: Theme.cardBorder
+    border.width: 1
+    border.color: Theme.m3Line
     clip: true
 
     readonly property var d: root.previewData || ({})

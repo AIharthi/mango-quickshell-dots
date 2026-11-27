@@ -498,10 +498,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: docCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: docCol
@@ -644,10 +644,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: distCol.implicitHeight + 24
-        radius: Theme.r(14)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: distCol
@@ -935,10 +935,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: updCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: updCol
@@ -1306,10 +1306,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: hostCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: hostCol
@@ -1478,10 +1478,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: clockCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: clockCol
@@ -1613,10 +1613,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: diskCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: diskCol
@@ -1734,10 +1734,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: capCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: capCol
@@ -1855,10 +1855,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: pwrCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: pwrCol
@@ -2327,10 +2327,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: 46
-        radius: Theme.r(14)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         RowLayout {
             anchors.fill: parent
@@ -2467,10 +2467,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: acctCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: acctCol

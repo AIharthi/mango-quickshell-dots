@@ -2,7 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import ".."
+import "../m3"
 
+// Material 3 Expressive System Monitor card (DarkShadowShell Blob resource trio + live sparkline).
 Rectangle {
     id: root
 
@@ -14,6 +16,7 @@ Rectangle {
     readonly property real ramUsedGb: SystemTelemetry.memUsedGb
     readonly property real ramTotalGb: SystemTelemetry.memTotalGb
     readonly property int cpuTempC: SystemTelemetry.cpuTempC
+    readonly property real diskPercent: SystemTelemetry.diskPercent
     readonly property string uptimeLabel: SystemTelemetry.uptimeLabel
     readonly property string loadAvgLabel: SystemTelemetry.loadLabel
     readonly property string diskUsedLabel: SystemTelemetry.diskLabel
@@ -31,16 +34,16 @@ Rectangle {
         }
     }
 
-    radius: Theme.r(18)
-    color: Theme.cardBg
-    border.width: Theme.cardBorderWidth
-    border.color: Theme.cardBorder
+    radius: Theme.r(26)
+    color: Theme.m3SurfaceC
+    border.width: 1
+    border.color: Theme.m3Line
     clip: true
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 11
-        spacing: DeviceCaps.hasBattery ? 5 : 7
+        anchors.margins: 12
+        spacing: 8
 
         RowLayout {
             Layout.fillWidth: true
@@ -48,295 +51,158 @@ Rectangle {
             spacing: 6
 
             Text {
-                text: "System Monitor"
+                text: "System"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(11)
                 font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
 
             Item { Layout.fillWidth: true }
 
             Text {
                 visible: SystemTelemetry.netDown.length > 0
-                text: "↓" + SystemTelemetry.netDown + " ↑" + SystemTelemetry.netUp
+                text: "↓ " + SystemTelemetry.netDown + "  ↑ " + SystemTelemetry.netUp
                 font.family: Theme.monoFont
-                font.pixelSize: 9
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(9)
+                color: Theme.m3InkDim
             }
 
             Rectangle {
-                implicitHeight: 16
-                implicitWidth: upTxt.implicitWidth + 10
-                radius: Theme.r(8)
-                color: Theme.subCardBg
+                implicitHeight: 18
+                implicitWidth: upTxt.implicitWidth + 12
+                radius: Theme.r(9)
+                color: Theme.m3SurfaceHigh
 
                 Text {
                     id: upTxt
                     anchors.centerIn: parent
                     text: "up " + root.uptimeLabel
                     font.family: Theme.monoFont
-                    font.pixelSize: 9
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(9)
+                    color: Theme.m3InkDim
                 }
             }
         }
 
-        // --- CPU Usage + Live Rolling Sparkline ---
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 4
-
-            RowLayout {
-                Layout.fillWidth: true
-
-                Text {
-                    text: "CPU Load"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    font.weight: Font.DemiBold
-                    color: Theme.fgSurface
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Text {
-                    text: Math.round(root.cpuPercent) + "%"
-                    font.family: Theme.monoFont
-                    font.pixelSize: 11
-                    font.weight: Font.Bold
-                    color: root.cpuPercent > 85 ? Theme.error : Theme.primary
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 6
-                radius: Theme.r(3)
-                color: Theme.surfaceContainerHighest
-
-                Rectangle {
-                    height: parent.height
-                    radius: Theme.r(3)
-                    width: parent.width * (Math.max(0, Math.min(100, root.cpuPercent)) / 100.0)
-                    color: root.cpuPercent > 85 ? Theme.error : Theme.primary
-
-                    Behavior on width {
-                        enabled: !Theme.isSimple
-                        NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
-                    }
-                }
-            }
-
-            Canvas {
-                id: cpuSpark
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumHeight: DeviceCaps.hasBattery ? 16 : 22
-                Layout.preferredHeight: DeviceCaps.hasBattery ? 24 : 34
-                Layout.maximumHeight: 54
-                antialiasing: true
-
-                readonly property color strokeCol: root.cpuPercent > 85 ? Theme.error : Theme.primary
-                onStrokeColChanged: requestPaint()
-
-                onPaint: {
-                    const ctx = getContext("2d");
-                    ctx.clearRect(0, 0, width, height);
-                    const pts = root.cpuHistory || [];
-                    if (pts.length < 2 || width <= 4 || height <= 4)
-                        return;
-
-                    const padY = 2;
-                    const usableH = height - padY * 2;
-                    const stepX = width / Math.max(1, pts.length - 1);
-
-                    ctx.beginPath();
-                    for (let i = 0; i < pts.length; i++) {
-                        const x = i * stepX;
-                        const y = height - padY - (Math.max(0, Math.min(100, pts[i])) / 100.0) * usableH;
-                        if (i === 0)
-                            ctx.moveTo(x, y);
-                        else
-                            ctx.lineTo(x, y);
-                    }
-                    ctx.strokeStyle = strokeCol;
-                    ctx.lineWidth = 1.6;
-                    ctx.stroke();
-
-                    ctx.lineTo(width, height);
-                    ctx.lineTo(0, height);
-                    ctx.closePath();
-                    const grad = ctx.createLinearGradient(0, 0, 0, height);
-                    grad.addColorStop(0, Qt.rgba(strokeCol.r, strokeCol.g, strokeCol.b, 0.30));
-                    grad.addColorStop(1, Qt.rgba(strokeCol.r, strokeCol.g, strokeCol.b, 0.02));
-                    ctx.fillStyle = grad;
-                    ctx.fill();
-                }
-            }
-        }
-
-        // --- Memory Usage ---
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 5
-
-            RowLayout {
-                Layout.fillWidth: true
-
-                Text {
-                    text: "Memory"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: Theme.fgSurface
-                }
-
-                Item { Layout.fillWidth: true }
-
-                    Text {
-                        text: root.ramUsedGb.toFixed(1) + " / " + root.ramTotalGb.toFixed(1) + " GB  (" + Math.round(root.ramPercent) + "%)"
-                        font.family: Theme.monoFont
-                        font.pixelSize: 11
-                        font.weight: Font.Bold
-                        color: root.ramPercent > 85 ? Theme.warning : Theme.secondary
-                    }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 8
-                radius: Theme.r(4)
-                color: Theme.surfaceContainerHighest
-
-                Rectangle {
-                    height: parent.height
-                    radius: Theme.r(4)
-                    width: parent.width * (Math.max(0, Math.min(100, root.ramPercent)) / 100.0)
-                    color: root.ramPercent > 85 ? Theme.warning : Theme.secondary
-
-                    Behavior on width {
-                        enabled: !Theme.isSimple
-                        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-                    }
-                }
-            }
-        }
-
-        // --- Hardware-Aware Battery (Laptops only) ---
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 4
-            visible: DeviceCaps.hasBattery
-
-            RowLayout {
-                Layout.fillWidth: true
-
-                Text {
-                    text: DeviceCaps.batteryIcon + "  Battery"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    font.weight: Font.DemiBold
-                    color: Theme.fgSurface
-                }
-
-                Item { Layout.fillWidth: true }
-
-                    Text {
-                        text: DeviceCaps.batteryPercent + "% · " + (DeviceCaps.batteryEta.length > 0 ? (DeviceCaps.batteryStatus + " · " + DeviceCaps.batteryEta) : DeviceCaps.batteryStatus)
-                        font.family: Theme.monoFont
-                        font.pixelSize: 10
-                        font.weight: Font.Bold
-                        color: DeviceCaps.batteryLow
-                            ? Theme.error
-                            : (DeviceCaps.batteryCharging ? Theme.success : Theme.tertiary)
-                    }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 6
-                radius: Theme.r(3)
-                color: Theme.surfaceContainerHighest
-
-                Rectangle {
-                    height: parent.height
-                    radius: Theme.r(3)
-                    width: parent.width * (Math.max(0, Math.min(100, DeviceCaps.batteryPercent)) / 100.0)
-                    color: DeviceCaps.batteryLow
-                        ? Theme.error
-                        : (DeviceCaps.batteryCharging ? Theme.success : Theme.tertiary)
-
-                    Behavior on width {
-                        enabled: !Theme.isSimple
-                        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-                    }
-                }
-            }
-        }
-
-        // --- Telemetry Chip Strip (Temp, Load Avg, Root Disk) ---
+        // DarkShadowShell Overview M3Blob Resource Trio (pentagon CPU, cookie RAM, circle Disk/Temp)
         RowLayout {
             Layout.fillWidth: true
-            spacing: 6
+            Layout.fillHeight: false
+            spacing: 8
 
             Repeater {
                 model: [
                     {
-                        icon: "󰔏",
-                        lbl: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : "--°C",
-                        col: root.cpuTempC >= 80 ? Theme.error : Theme.fgSurfaceVariant
+                        shape: "pentagon",
+                        label: "CPU",
+                        val: Math.round(root.cpuPercent) + "%",
+                        sub: root.cpuTempC > 0 ? (root.cpuTempC + "°C") : ("Load " + root.loadAvgLabel),
+                        hot: root.cpuPercent > 85
                     },
                     {
-                        icon: "󰓅",
-                        lbl: "Load " + root.loadAvgLabel,
-                        col: Theme.fgSurfaceVariant
+                        shape: "cookie",
+                        label: "RAM",
+                        val: Math.round(root.ramPercent) + "%",
+                        sub: root.ramUsedGb.toFixed(1) + "/" + root.ramTotalGb.toFixed(0) + "G",
+                        hot: root.ramPercent > 85
                     },
                     {
-                        icon: "󰋊",
-                        lbl: "Root " + root.diskUsedLabel,
-                        col: Theme.fgSurfaceVariant
+                        shape: DeviceCaps.hasBattery ? "flower" : "circle",
+                        label: DeviceCaps.hasBattery ? "Battery" : "Disk",
+                        val: DeviceCaps.hasBattery ? (DeviceCaps.batteryPercent + "%") : (Math.round(root.diskPercent) + "%"),
+                        sub: DeviceCaps.hasBattery ? DeviceCaps.batteryStatus : root.diskUsedLabel,
+                        hot: DeviceCaps.hasBattery ? DeviceCaps.batteryLow : (root.diskPercent > 90)
                     }
                 ]
 
                 delegate: Rectangle {
-                    id: metaChip
+                    id: metricTile
                     required property var modelData
                     Layout.fillWidth: true
-                    implicitHeight: 22
-                    radius: Theme.r(8)
-                    color: Theme.subCardBg
-                    border.width: Theme.activeControlBorderWidth
-                    border.color: Theme.cardBorder
+                    Layout.preferredWidth: 1
+                    implicitHeight: 88
+                    radius: Theme.r(18)
+                    color: Theme.m3SurfaceHigh
 
-                    RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 6
-                            anchors.rightMargin: 6
-                            spacing: 4
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 3
 
-                            Item { Layout.fillWidth: true }
+                        Item {
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: 46
+                            implicitHeight: 46
 
-                            Text {
-                                text: metaChip.modelData.icon
-                                font.family: Theme.iconFont
-                                font.pixelSize: 11
-                                color: metaChip.modelData.col
+                            M3Blob {
+                                anchors.fill: parent
+                                kind: metricTile.modelData.shape
+                                color: metricTile.modelData.hot ? Theme.m3ErrorContainer : Theme.m3PrimaryContainer
                             }
 
                             Text {
-                                Layout.maximumWidth: Math.max(24, metaChip.width - 28)
-                                elide: Text.ElideRight
-                                text: metaChip.modelData.lbl
+                                anchors.centerIn: parent
+                                text: metricTile.modelData.val
                                 font.family: Theme.monoFont
-                            font.pixelSize: 9
-                            font.weight: Font.DemiBold
-                            color: Theme.fgSurface
+                                font.pixelSize: Theme.fs(11)
+                                font.weight: Font.Bold
+                                color: metricTile.modelData.hot ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer
+                            }
                         }
 
-                        Item { Layout.fillWidth: true }
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: metricTile.modelData.label + " · " + metricTile.modelData.sub
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(9)
+                            color: Theme.m3InkDim
+                        }
                     }
                 }
+            }
+        }
+
+        // Live CPU Sparkline
+        Canvas {
+            id: cpuSpark
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: 20
+            Layout.preferredHeight: 30
+            Layout.maximumHeight: 44
+            renderStrategy: Canvas.Cooperative
+
+            readonly property color strokeCol: root.cpuPercent > 85 ? Theme.m3Error : Theme.m3Primary
+            onStrokeColChanged: requestPaint()
+
+            onPaint: {
+                const ctx = getContext("2d");
+                ctx.clearRect(0, 0, width, height);
+                const pts = root.cpuHistory || [];
+                if (pts.length < 2 || width <= 4 || height <= 4)
+                    return;
+                const padY = 2;
+                const usableH = height - padY * 2;
+                const stepX = width / Math.max(1, pts.length - 1);
+
+                ctx.beginPath();
+                for (let i = 0; i < pts.length; i++) {
+                    const x = i * stepX;
+                    const y = height - padY - (Math.max(0, Math.min(100, pts[i])) / 100.0) * usableH;
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = strokeCol;
+                ctx.lineWidth = 2.0;
+                ctx.stroke();
+
+                ctx.lineTo(width, height);
+                ctx.lineTo(0, height);
+                ctx.closePath();
+                const grad = ctx.createLinearGradient(0, 0, 0, height);
+                grad.addColorStop(0, Qt.rgba(strokeCol.r, strokeCol.g, strokeCol.b, 0.28));
+                grad.addColorStop(1, Qt.rgba(strokeCol.r, strokeCol.g, strokeCol.b, 0.02));
+                ctx.fillStyle = grad;
+                ctx.fill();
             }
         }
     }

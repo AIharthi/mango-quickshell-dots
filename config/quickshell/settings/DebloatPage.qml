@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import ".."
+import "../m3"
 
 ColumnLayout {
     id: root
@@ -371,36 +372,38 @@ ColumnLayout {
     // ==================== HEADER & DISTRO SWITCHER ====================
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: hdrCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: hdrCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: hdrCol
             anchors.fill: parent
-            anchors.margins: 12
-            spacing: 10
+            anchors.margins: 14
+            spacing: 12
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: 12
 
-                Rectangle {
-                    implicitWidth: 38
-                    implicitHeight: 38
-                    radius: Theme.r(11)
-                    color: Theme.withAlpha(Theme.primary, 0.16)
-                    border.width: 1
-                    border.color: Theme.withAlpha(Theme.primary, 0.35)
+                Item {
+                    implicitWidth: 44
+                    implicitHeight: 44
+
+                    M3Blob {
+                        anchors.fill: parent
+                        kind: ShellState.m3Shape
+                        color: Theme.m3PrimaryContainer
+                    }
 
                     Text {
                         anchors.centerIn: parent
                         text: root.scanData.profile === "fedora" ? "󰣛" : "󰣇"
                         font.family: Theme.iconFont
-                        font.pixelSize: Theme.fs(20)
-                        color: Theme.primary
+                        font.pixelSize: Theme.fs(21)
+                        color: Theme.m3OnPrimaryContainer
                     }
                 }
 
@@ -410,23 +413,23 @@ ColumnLayout {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: 8
 
                         Text {
                             text: "CachyOS & Fedora System Debloater"
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(13)
+                            font.pixelSize: Theme.fs(14)
                             font.weight: Font.Bold
-                            color: Theme.fgSurface
+                            color: Theme.m3Ink
                         }
 
                         Rectangle {
-                            implicitWidth: hostBadgeTxt.implicitWidth + 12
-                            implicitHeight: 20
-                            radius: Theme.r(6)
+                            implicitWidth: hostBadgeTxt.implicitWidth + 14
+                            implicitHeight: 22
+                            radius: Theme.r(11)
                             color: root.scanData.matchesHost
-                                ? Theme.withAlpha(Theme.success, 0.16)
-                                : Theme.withAlpha(Theme.warning, 0.16)
+                                ? Theme.m3PrimaryContainer
+                                : Theme.m3SecondaryContainer
 
                             Text {
                                 id: hostBadgeTxt
@@ -437,7 +440,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(8)
                                 font.weight: Font.Bold
-                                color: root.scanData.matchesHost ? Theme.success : Theme.warning
+                                color: root.scanData.matchesHost ? Theme.m3OnPrimaryContainer : Theme.m3OnSecondaryContainer
                             }
                         }
                     }
@@ -448,7 +451,7 @@ ColumnLayout {
                         text: "Safely audit and remove preinstalled bloatware, slow boot services, orphan dependencies, and heavy caches. Essential kernels, bootloaders, and Aurora Shell components are strictly protected."
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
                 }
             }
@@ -468,21 +471,20 @@ ColumnLayout {
                         id: profChip
                         required property var modelData
                         readonly property bool selected: String(root.scanData.profile || "cachyos") === modelData.id
-                        implicitWidth: profRow.implicitWidth + 18
-                        implicitHeight: 30
-                        radius: Theme.r(9)
+                        implicitWidth: profRow.implicitWidth + 20
+                        implicitHeight: 34
+                        radius: Theme.r(profChip.selected ? 12 : 17)
                         color: profChip.selected
-                            ? Theme.primary
-                            : (profMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                        border.width: 1
-                        border.color: profChip.selected ? Theme.primary : Theme.cardBorder
+                            ? Theme.m3Primary
+                            : (profMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                        Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150 } }
 
                         RowLayout {
                             id: profRow
                             anchors.centerIn: parent
                             spacing: 6
-                            Text { text: profChip.modelData.icon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: profChip.selected ? Theme.fgPrimary : Theme.primary }
-                            Text { text: profChip.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: profChip.selected ? Font.Bold : Font.DemiBold; color: profChip.selected ? Theme.fgPrimary : Theme.fgSurface }
+                            Text { text: profChip.modelData.icon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: profChip.selected ? Theme.m3OnPrimary : Theme.m3Primary }
+                            Text { text: profChip.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: profChip.selected ? Font.Bold : Font.DemiBold; color: profChip.selected ? Theme.m3OnPrimary : Theme.m3Ink }
                         }
 
                         MouseArea {
@@ -497,42 +499,20 @@ ColumnLayout {
 
                 Item { Layout.fillWidth: true }
 
-                Rectangle {
-                    implicitWidth: snapRow.implicitWidth + 16
-                    implicitHeight: 30
-                    radius: Theme.r(9)
-                    color: snapMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: 1
-                    border.color: Theme.cardBorder
-
-                    RowLayout {
-                        id: snapRow
-                        anchors.centerIn: parent
-                        spacing: 5
-                        Text { text: "󰆓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.secondary }
-                        Text { text: "Snapshot Packages"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurface }
-                    }
-
-                    MouseArea { id: snapMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.takeSnapshot() }
+                M3Btn {
+                    text: "Snapshot Packages"
+                    icon: "󰆓"
+                    variant: "tonal"
+                    compact: true
+                    onClicked: root.takeSnapshot()
                 }
 
-                Rectangle {
-                    implicitWidth: refRow.implicitWidth + 16
-                    implicitHeight: 30
-                    radius: Theme.r(9)
-                    color: refMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: 1
-                    border.color: Theme.cardBorder
-
-                    RowLayout {
-                        id: refRow
-                        anchors.centerIn: parent
-                        spacing: 5
-                        Text { text: "󰑐"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.primary }
-                        Text { text: root.loading ? "Scanning..." : "Refresh"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.fgSurface }
-                    }
-
-                    MouseArea { id: refMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.refreshAll() }
+                M3Btn {
+                    text: root.loading ? "Scanning..." : "Refresh"
+                    icon: "󰑐"
+                    primary: true
+                    compact: true
+                    onClicked: root.refreshAll()
                 }
             }
 
@@ -545,31 +525,29 @@ ColumnLayout {
 
                 Repeater {
                     model: [
-                        { label: "Installed Bloat", val: String(root.scanData.installedBloatCount || 0), sub: (root.scanData.safeInstalledCount || 0) + " safe to remove", tint: (root.scanData.installedBloatCount || 0) > 0 ? Theme.warning : Theme.success },
-                        { label: "Enabled Services", val: String(root.scanData.enabledServiceCount || 0), sub: "optional units", tint: (root.scanData.enabledServiceCount || 0) > 0 ? Theme.secondary : Theme.success },
-                        { label: "Orphan Packages", val: String(root.scanData.orphanCount || 0), sub: String(root.scanData.packageManager || "pkg"), tint: (root.scanData.orphanCount || 0) > 0 ? Theme.warning : Theme.fgSurface },
-                        { label: "Reclaimable Cache", val: String(root.scanData.pkgCacheHuman || "0 B"), sub: "User cache: " + String(root.scanData.userCacheHuman || "0 B"), tint: Theme.primary }
+                        { label: "Installed Bloat", val: String(root.scanData.installedBloatCount || 0), sub: (root.scanData.safeInstalledCount || 0) + " safe to remove", tint: (root.scanData.installedBloatCount || 0) > 0 ? Theme.warning : Theme.m3Primary },
+                        { label: "Enabled Services", val: String(root.scanData.enabledServiceCount || 0), sub: "optional units", tint: (root.scanData.enabledServiceCount || 0) > 0 ? Theme.m3Primary : Theme.m3Ink },
+                        { label: "Orphan Packages", val: String(root.scanData.orphanCount || 0), sub: String(root.scanData.packageManager || "pkg"), tint: (root.scanData.orphanCount || 0) > 0 ? Theme.warning : Theme.m3Ink },
+                        { label: "Reclaimable Cache", val: String(root.scanData.pkgCacheHuman || "0 B"), sub: "User cache: " + String(root.scanData.userCacheHuman || "0 B"), tint: Theme.m3Primary }
                     ]
 
                     delegate: Rectangle {
                         id: metricCard
                         required property var modelData
                         Layout.fillWidth: true
-                        implicitHeight: mCol.implicitHeight + 14
-                        radius: Theme.r(10)
-                        color: Theme.subCardBg
-                        border.width: Theme.subBorderWidth
-                        border.color: Theme.cardBorder
+                        implicitHeight: mCol.implicitHeight + 16
+                        radius: Theme.r(18)
+                        color: Theme.m3SurfaceHigh
 
                         ColumnLayout {
                             id: mCol
                             anchors.fill: parent
-                            anchors.margins: 8
+                            anchors.margins: 10
                             spacing: 2
 
-                            Text { text: metricCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurfaceVariant }
-                            Text { text: metricCard.modelData.val; font.family: Theme.monoFont; font.pixelSize: Theme.fs(13); font.weight: Font.Bold; color: metricCard.modelData.tint }
-                            Text { Layout.fillWidth: true; elide: Text.ElideRight; text: metricCard.modelData.sub; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); color: Theme.fgSurfaceVariant }
+                            Text { text: metricCard.modelData.label; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3InkDim }
+                            Text { text: metricCard.modelData.val; font.family: Theme.monoFont; font.pixelSize: Theme.fs(14); font.weight: Font.Bold; color: metricCard.modelData.tint }
+                            Text { Layout.fillWidth: true; elide: Text.ElideRight; text: metricCard.modelData.sub; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); color: Theme.m3InkDim }
                         }
                     }
                 }
@@ -581,24 +559,22 @@ ColumnLayout {
     Rectangle {
         visible: root.statusMsg.length > 0
         Layout.fillWidth: true
-        implicitHeight: stRow.implicitHeight + 14
-        radius: Theme.r(12)
-        color: Theme.withAlpha(root.statusIsError ? Theme.error : Theme.success, 0.14)
-        border.width: 1
-        border.color: Theme.withAlpha(root.statusIsError ? Theme.error : Theme.success, 0.45)
+        implicitHeight: stRow.implicitHeight + 16
+        radius: Theme.r(18)
+        color: root.statusIsError ? Theme.m3ErrorContainer : Theme.m3PrimaryContainer
 
         RowLayout {
             id: stRow
             anchors.fill: parent
-            anchors.margins: 8
+            anchors.margins: 10
             spacing: 8
 
-            Text { text: root.statusIsError ? "󰀨" : "󰄬"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(14); color: root.statusIsError ? Theme.error : Theme.success }
-            Text { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: root.statusMsg; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Medium; color: Theme.fgSurface }
+            Text { text: root.statusIsError ? "󰀨" : "󰄬"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(14); color: root.statusIsError ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer }
+            Text { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: root.statusMsg; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Medium; color: root.statusIsError ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer }
             Rectangle {
-                implicitWidth: 22; implicitHeight: 22; radius: Theme.r(6)
-                color: stCloseMouse.containsMouse ? Theme.hoverBg : "transparent"
-                Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
+                implicitWidth: 24; implicitHeight: 24; radius: Theme.r(12)
+                color: stCloseMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent"
+                Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: root.statusIsError ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer }
                 MouseArea { id: stCloseMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.statusMsg = "" }
             }
         }
@@ -608,23 +584,23 @@ ColumnLayout {
     Rectangle {
         visible: root.pendingPlan !== null
         Layout.fillWidth: true
-        implicitHeight: planCol.implicitHeight + 22
-        radius: Theme.r(14)
-        color: Theme.withAlpha(Theme.primary, 0.10)
+        implicitHeight: planCol.implicitHeight + 24
+        radius: Theme.r(22)
+        color: Theme.m3PrimaryContainer
         border.width: 1
-        border.color: Theme.withAlpha(Theme.primary, 0.45)
+        border.color: Theme.m3Primary
 
         ColumnLayout {
             id: planCol
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             spacing: 8
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
-                Text { text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(15); color: Theme.primary }
-                Text { Layout.fillWidth: true; text: root.pendingPlan ? String(root.pendingPlan.title || "Command Plan") : ""; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(12); font.weight: Font.Bold; color: Theme.fgSurface }
+                Text { text: "󰆍"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(15); color: Theme.m3OnPrimaryContainer }
+                Text { Layout.fillWidth: true; text: root.pendingPlan ? String(root.pendingPlan.title || "Command Plan") : ""; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(12); font.weight: Font.Bold; color: Theme.m3OnPrimaryContainer }
             }
 
             Text {
@@ -633,26 +609,24 @@ ColumnLayout {
                 text: root.pendingPlan ? String(root.pendingPlan.warning || "") : ""
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3OnPrimaryContainer
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: cmdTxt.implicitHeight + 14
-                radius: Theme.r(9)
-                color: Theme.surfaceContainerLowest
-                border.width: 1
-                border.color: Theme.cardBorder
+                implicitHeight: cmdTxt.implicitHeight + 16
+                radius: Theme.r(14)
+                color: Theme.m3SurfaceLowest
 
                 Text {
                     id: cmdTxt
                     anchors.fill: parent
-                    anchors.margins: 8
+                    anchors.margins: 10
                     wrapMode: Text.WrapAnywhere
                     text: root.pendingPlan ? String(root.pendingPlan.command || "") : ""
                     font.family: Theme.monoFont
                     font.pixelSize: Theme.fs(9)
-                    color: Theme.primary
+                    color: Theme.m3Primary
                 }
             }
 
@@ -662,88 +636,91 @@ ColumnLayout {
 
                 Item { Layout.fillWidth: true }
 
-                Rectangle {
-                    implicitWidth: cancelPlanTxt.implicitWidth + 18
-                    implicitHeight: 28
-                    radius: Theme.r(8)
-                    color: cancelPlanMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: 1
-                    border.color: Theme.cardBorder
-                    Text { id: cancelPlanTxt; anchors.centerIn: parent; text: "Cancel"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurface }
-                    MouseArea { id: cancelPlanMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.pendingPlan = null }
+                M3Btn {
+                    text: "Cancel"
+                    variant: "tonal"
+                    compact: true
+                    onClicked: root.pendingPlan = null
                 }
 
-                Rectangle {
-                    implicitWidth: runPlanTxt.implicitWidth + 20
-                    implicitHeight: 28
-                    radius: Theme.r(8)
-                    color: runPlanMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-                    Text { id: runPlanTxt; anchors.centerIn: parent; text: "Run in Terminal"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgPrimary }
-                    MouseArea { id: runPlanMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.executePendingPlan() }
+                M3Btn {
+                    text: "Run in Terminal"
+                    primary: true
+                    compact: true
+                    onClicked: root.executePendingPlan()
                 }
             }
         }
     }
 
     // ==================== SEGMENTED SUB-TABS ====================
-    RowLayout {
+    Rectangle {
         Layout.fillWidth: true
-        spacing: 6
+        implicitHeight: 42
+        radius: Theme.r(21)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
-        Repeater {
-            model: [
-                { id: "packages", label: "Packages",       badge: (root.scanData.packages || []).length },
-                { id: "services", label: "Services",       badge: (root.scanData.services || []).length },
-                { id: "tweaks",   label: "Tweaks & Clean", badge: (root.scanData.tweaks || []).length + 1 },
-                { id: "history",  label: "History & Restore", badge: root.historyEntries.length }
-            ]
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: 4
+            spacing: 4
 
-            delegate: Rectangle {
-                id: subTabBtn
-                required property var modelData
-                readonly property bool selected: root.activeTab === modelData.id
-                Layout.fillWidth: true
-                implicitHeight: 32
-                radius: Theme.r(10)
-                color: subTabBtn.selected
-                    ? Theme.withAlpha(Theme.primary, 0.16)
-                    : (subTabMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
-                border.width: subTabBtn.selected ? 2 : Theme.cardBorderWidth
-                border.color: subTabBtn.selected ? Theme.primary : Theme.cardBorder
+            Repeater {
+                model: [
+                    { id: "packages", label: "Packages",       badge: (root.scanData.packages || []).length },
+                    { id: "services", label: "Services",       badge: (root.scanData.services || []).length },
+                    { id: "tweaks",   label: "Tweaks & Clean", badge: (root.scanData.tweaks || []).length + 1 },
+                    { id: "history",  label: "History & Restore", badge: root.historyEntries.length }
+                ]
 
-                RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 5
-                    Text {
-                        text: subTabBtn.modelData.label
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(10)
-                        font.weight: subTabBtn.selected ? Font.Bold : Font.DemiBold
-                        color: subTabBtn.selected ? Theme.primary : Theme.fgSurface
-                    }
-                    Rectangle {
-                        implicitWidth: subBadgeTxt.implicitWidth + 8
-                        implicitHeight: 16
-                        radius: Theme.r(5)
-                        color: subTabBtn.selected ? Theme.withAlpha(Theme.primary, 0.25) : Theme.subCardBg
+                delegate: Rectangle {
+                    id: subTabBtn
+                    required property var modelData
+                    readonly property bool selected: root.activeTab === modelData.id
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    radius: Theme.r(subTabBtn.selected ? 12 : 17)
+                    color: subTabBtn.selected
+                        ? Theme.m3Primary
+                        : (subTabMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
+                    Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150 } }
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
                         Text {
-                            id: subBadgeTxt
-                            anchors.centerIn: parent
-                            text: String(subTabBtn.modelData.badge)
-                            font.family: Theme.monoFont
-                            font.pixelSize: Theme.fs(8)
-                            font.weight: Font.Bold
-                            color: subTabBtn.selected ? Theme.primary : Theme.fgSurfaceVariant
+                            text: subTabBtn.modelData.label
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: subTabBtn.selected ? Font.Bold : Font.Medium
+                            color: subTabBtn.selected ? Theme.m3OnPrimary : Theme.m3Ink
+                        }
+                        Rectangle {
+                            implicitWidth: subBadgeTxt.implicitWidth + 10
+                            implicitHeight: 18
+                            radius: Theme.r(9)
+                            color: subTabBtn.selected ? Theme.m3OnPrimary : Theme.m3SurfaceHigh
+                            Text {
+                                id: subBadgeTxt
+                                anchors.centerIn: parent
+                                text: String(subTabBtn.modelData.badge)
+                                font.family: Theme.monoFont
+                                font.pixelSize: Theme.fs(8)
+                                font.weight: Font.Bold
+                                color: subTabBtn.selected ? Theme.m3Primary : Theme.m3InkDim
+                            }
                         }
                     }
-                }
 
-                MouseArea {
-                    id: subTabMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.activeTab = subTabBtn.modelData.id
+                    MouseArea {
+                        id: subTabMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.activeTab = subTabBtn.modelData.id
+                    }
                 }
             }
         }
@@ -753,16 +730,16 @@ ColumnLayout {
     Rectangle {
         visible: root.activeTab === "packages"
         Layout.fillWidth: true
-        implicitHeight: pkgTabCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: pkgTabCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: pkgTabCol
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             spacing: 10
 
             // Filter + Presets Bar
@@ -772,27 +749,28 @@ ColumnLayout {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 32
-                    radius: Theme.r(9)
-                    color: Theme.subCardBg
-                    border.width: searchInput.activeFocus ? 1 : Theme.subBorderWidth
-                    border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
+                    implicitHeight: 38
+                    radius: Theme.r(19)
+                    color: searchInput.activeFocus ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                    border.width: searchInput.activeFocus ? 2 : 0
+                    border.color: Theme.m3Primary
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        spacing: 6
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 12
+                        spacing: 8
 
-                        Text { text: "󰍉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.fgSurfaceVariant }
+                        Text { text: "󰍉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3InkDim }
 
                         TextInput {
                             id: searchInput
                             Layout.fillWidth: true
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(11)
-                            color: Theme.fgSurface
-                            selectionColor: Theme.primary
+                            color: Theme.m3Ink
+                            selectionColor: Theme.m3Primary
+                            selectedTextColor: Theme.m3OnPrimary
                             onTextChanged: root.query = text
 
                             Text {
@@ -801,28 +779,26 @@ ColumnLayout {
                                 text: "Filter bloatware by package, app name, or category..."
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
-                                color: Theme.fgSurfaceVariant
+                                color: Theme.m3InkDim
                             }
                         }
 
                         Rectangle {
                             visible: searchInput.text.length > 0
-                            implicitWidth: 18; implicitHeight: 18; radius: 9
-                            color: clrSearchMouse.containsMouse ? Theme.hoverBg : "transparent"
-                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                            implicitWidth: 20; implicitHeight: 20; radius: 10
+                            color: clrSearchMouse.containsMouse ? Theme.m3SurfaceC : "transparent"
+                            Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.m3InkDim }
                             MouseArea { id: clrSearchMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: searchInput.text = "" }
                         }
                     }
                 }
 
                 Rectangle {
-                    implicitWidth: instOnlyTxt.implicitWidth + 16
-                    implicitHeight: 32
-                    radius: Theme.r(9)
-                    color: root.installedOnly ? Theme.withAlpha(Theme.primary, 0.16) : Theme.subCardBg
-                    border.width: 1
-                    border.color: root.installedOnly ? Theme.primary : Theme.cardBorder
-                    Text { id: instOnlyTxt; anchors.centerIn: parent; text: "Installed Only"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: root.installedOnly ? Theme.primary : Theme.fgSurface }
+                    implicitWidth: instOnlyTxt.implicitWidth + 18
+                    implicitHeight: 36
+                    radius: Theme.r(root.installedOnly ? 12 : 18)
+                    color: root.installedOnly ? Theme.m3Primary : Theme.m3SurfaceHigh
+                    Text { id: instOnlyTxt; anchors.centerIn: parent; text: (root.installedOnly ? "󰄬 " : "") + "Installed Only"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: root.installedOnly ? Theme.m3OnPrimary : Theme.m3Ink }
                     MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.installedOnly = !root.installedOnly }
                 }
             }
@@ -839,13 +815,11 @@ ColumnLayout {
                         id: catChip
                         required property string modelData
                         readonly property bool selected: root.selectedCategory === modelData
-                        implicitWidth: catTxt.implicitWidth + 14
-                        implicitHeight: 24
-                        radius: Theme.r(7)
-                        color: catChip.selected ? Theme.primary : Theme.subCardBg
-                        border.width: 1
-                        border.color: catChip.selected ? Theme.primary : Theme.cardBorder
-                        Text { id: catTxt; anchors.centerIn: parent; text: catChip.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: catChip.selected ? Font.Bold : Font.Medium; color: catChip.selected ? Theme.fgPrimary : Theme.fgSurface }
+                        implicitWidth: catTxt.implicitWidth + 16
+                        implicitHeight: 28
+                        radius: Theme.r(catChip.selected ? 10 : 14)
+                        color: catChip.selected ? Theme.m3Primary : Theme.m3SurfaceHigh
+                        Text { id: catTxt; anchors.centerIn: parent; text: (catChip.selected ? "󰄬 " : "") + catChip.modelData; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: catChip.selected ? Font.Bold : Font.Medium; color: catChip.selected ? Theme.m3OnPrimary : Theme.m3Ink }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectedCategory = catChip.modelData }
                     }
                 }
@@ -853,36 +827,30 @@ ColumnLayout {
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
-                    implicitWidth: selSafeTxt.implicitWidth + 14
-                    implicitHeight: 24
-                    radius: Theme.r(7)
-                    color: selSafeMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: 1
-                    border.color: Theme.withAlpha(Theme.success, 0.45)
-                    Text { id: selSafeTxt; anchors.centerIn: parent; text: "Select Safe Installed"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.success }
+                    implicitWidth: selSafeTxt.implicitWidth + 16
+                    implicitHeight: 28
+                    radius: Theme.r(14)
+                    color: selSafeMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
+                    Text { id: selSafeTxt; anchors.centerIn: parent; text: "Select Safe Installed"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3OnSecondaryContainer }
                     MouseArea { id: selSafeMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectPreset(true) }
                 }
 
                 Rectangle {
-                    implicitWidth: selAllTxt.implicitWidth + 14
-                    implicitHeight: 24
-                    radius: Theme.r(7)
-                    color: selAllMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: 1
-                    border.color: Theme.cardBorder
-                    Text { id: selAllTxt; anchors.centerIn: parent; text: "Select All Installed"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurface }
+                    implicitWidth: selAllTxt.implicitWidth + 16
+                    implicitHeight: 28
+                    radius: Theme.r(14)
+                    color: selAllMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                    Text { id: selAllTxt; anchors.centerIn: parent; text: "Select All Installed"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.m3Ink }
                     MouseArea { id: selAllMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectPreset(false) }
                 }
 
                 Rectangle {
                     visible: root.selectedPkgs.length > 0
-                    implicitWidth: clrSelTxt.implicitWidth + 14
-                    implicitHeight: 24
-                    radius: Theme.r(7)
-                    color: clrSelMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: 1
-                    border.color: Theme.cardBorder
-                    Text { id: clrSelTxt; anchors.centerIn: parent; text: "Clear"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                    implicitWidth: clrSelTxt.implicitWidth + 16
+                    implicitHeight: 28
+                    radius: Theme.r(14)
+                    color: clrSelMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                    Text { id: clrSelTxt; anchors.centerIn: parent; text: "Clear"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.m3InkDim }
                     MouseArea { id: clrSelMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectedPkgs = [] }
                 }
             }
@@ -890,15 +858,13 @@ ColumnLayout {
             // Selection Action Bar
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 38
-                radius: Theme.r(10)
-                color: root.selectedPkgs.length > 0 ? Theme.withAlpha(Theme.error, 0.12) : Theme.subCardBg
-                border.width: 1
-                border.color: root.selectedPkgs.length > 0 ? Theme.withAlpha(Theme.error, 0.45) : Theme.cardBorder
+                implicitHeight: 42
+                radius: Theme.r(16)
+                color: root.selectedPkgs.length > 0 ? Theme.m3ErrorContainer : Theme.m3SurfaceHigh
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: 12
                     anchors.rightMargin: 10
                     spacing: 8
 
@@ -910,17 +876,15 @@ ColumnLayout {
                         elide: Text.ElideRight
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
-                        color: root.selectedPkgs.length > 0 ? Theme.fgSurface : Theme.fgSurfaceVariant
+                        color: root.selectedPkgs.length > 0 ? Theme.m3OnErrorContainer : Theme.m3InkDim
                     }
 
-                    Rectangle {
+                    M3Btn {
                         visible: root.selectedPkgs.length > 0
-                        implicitWidth: rmSelTxt.implicitWidth + 18
-                        implicitHeight: 26
-                        radius: Theme.r(8)
-                        color: rmSelMouse.containsMouse ? Qt.lighter(Theme.error, 1.08) : Theme.error
-                        Text { id: rmSelTxt; anchors.centerIn: parent; text: "Remove Selected (" + root.selectedPkgs.length + ")"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.fgError }
-                        MouseArea { id: rmSelMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.requestRemovePlan(root.selectedPkgs) }
+                        text: "Remove Selected (" + root.selectedPkgs.length + ")"
+                        variant: "danger"
+                        compact: true
+                        onClicked: root.requestRemovePlan(root.selectedPkgs)
                     }
                 }
             }
@@ -935,7 +899,7 @@ ColumnLayout {
                     : "No packages match your current filter."
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
                 topPadding: 14
                 bottomPadding: 14
             }
@@ -952,29 +916,27 @@ ColumnLayout {
                     readonly property bool isCaution: String(modelData.risk || "") === "caution"
 
                     Layout.fillWidth: true
-                    implicitHeight: pkgInner.implicitHeight + 14
-                    radius: Theme.r(10)
+                    implicitHeight: pkgInner.implicitHeight + 16
+                    radius: Theme.r(18)
                     color: pkgRow.checked
-                        ? Theme.withAlpha(Theme.error, 0.10)
-                        : (pkgMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: pkgRow.checked ? 1 : Theme.subBorderWidth
-                    border.color: pkgRow.checked ? Theme.error : Theme.cardBorder
+                        ? Theme.m3ErrorContainer
+                        : (pkgMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
                     opacity: (root.scanData.matchesHost && !pkgRow.isInst) ? 0.62 : 1.0
 
                     RowLayout {
                         id: pkgInner
                         anchors.fill: parent
-                        anchors.margins: 8
+                        anchors.margins: 10
                         spacing: 10
 
                         // Checkbox
                         Rectangle {
-                            implicitWidth: 18
-                            implicitHeight: 18
-                            radius: Theme.r(5)
-                            color: pkgRow.checked ? Theme.error : Theme.surfaceContainerLowest
-                            border.width: 1
-                            border.color: pkgRow.checked ? Theme.error : Theme.cardBorder
+                            implicitWidth: 20
+                            implicitHeight: 20
+                            radius: Theme.r(6)
+                            color: pkgRow.checked ? Theme.m3Error : Theme.m3SurfaceLowest
+                            border.width: pkgRow.checked ? 0 : 1
+                            border.color: Theme.m3Outline
 
                             Text {
                                 anchors.centerIn: parent
@@ -982,7 +944,7 @@ ColumnLayout {
                                 text: "󰄬"
                                 font.family: Theme.iconFont
                                 font.pixelSize: Theme.fs(11)
-                                color: Theme.fgError
+                                color: Theme.m3OnPrimary
                             }
                         }
 
@@ -999,22 +961,22 @@ ColumnLayout {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(11)
                                     font.weight: Font.Bold
-                                    color: Theme.fgSurface
+                                    color: pkgRow.checked ? Theme.m3OnErrorContainer : Theme.m3Ink
                                 }
 
                                 Rectangle {
-                                    implicitWidth: pkgMono.implicitWidth + 10
-                                    implicitHeight: 17
-                                    radius: Theme.r(5)
-                                    color: Theme.surfaceContainerLowest
-                                    Text { id: pkgMono; anchors.centerIn: parent; text: pkgRow.pkgId; font.family: Theme.monoFont; font.pixelSize: Theme.fs(8); color: Theme.fgSurfaceVariant }
+                                    implicitWidth: pkgMono.implicitWidth + 12
+                                    implicitHeight: 18
+                                    radius: Theme.r(9)
+                                    color: Theme.m3SurfaceC
+                                    Text { id: pkgMono; anchors.centerIn: parent; text: pkgRow.pkgId; font.family: Theme.monoFont; font.pixelSize: Theme.fs(8); color: Theme.m3InkDim }
                                 }
 
                                 Rectangle {
-                                    implicitWidth: rskTxt.implicitWidth + 10
-                                    implicitHeight: 17
-                                    radius: Theme.r(5)
-                                    color: Theme.withAlpha(pkgRow.isCaution ? Theme.warning : Theme.success, 0.16)
+                                    implicitWidth: rskTxt.implicitWidth + 12
+                                    implicitHeight: 18
+                                    radius: Theme.r(9)
+                                    color: pkgRow.isCaution ? Theme.m3SecondaryContainer : Theme.m3PrimaryContainer
                                     Text {
                                         id: rskTxt
                                         anchors.centerIn: parent
@@ -1022,17 +984,17 @@ ColumnLayout {
                                         font.family: Theme.fontFamily
                                         font.pixelSize: Theme.fs(8)
                                         font.weight: Font.Bold
-                                        color: pkgRow.isCaution ? Theme.warning : Theme.success
+                                        color: pkgRow.isCaution ? Theme.warning : Theme.m3OnPrimaryContainer
                                     }
                                 }
 
                                 Rectangle {
                                     visible: pkgRow.isInst
-                                    implicitWidth: instTxt.implicitWidth + 10
-                                    implicitHeight: 17
-                                    radius: Theme.r(5)
-                                    color: Theme.withAlpha(Theme.primary, 0.18)
-                                    Text { id: instTxt; anchors.centerIn: parent; text: "Installed"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); font.weight: Font.Bold; color: Theme.primary }
+                                    implicitWidth: instTxt.implicitWidth + 12
+                                    implicitHeight: 18
+                                    radius: Theme.r(9)
+                                    color: Theme.m3Primary
+                                    Text { id: instTxt; anchors.centerIn: parent; text: "Installed"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); font.weight: Font.Bold; color: Theme.m3OnPrimary }
                                 }
 
                                 Item { Layout.fillWidth: true }
@@ -1044,33 +1006,23 @@ ColumnLayout {
                                 text: String(pkgRow.modelData.summary || "")
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(9)
-                                color: Theme.fgSurfaceVariant
+                                color: pkgRow.checked ? Theme.m3OnErrorContainer : Theme.m3InkDim
                             }
                         }
 
-                        Rectangle {
+                        M3Btn {
                             visible: pkgRow.isInst || !root.scanData.matchesHost
-                            implicitWidth: oneRmTxt.implicitWidth + 14
-                            implicitHeight: 24
-                            radius: Theme.r(7)
-                            color: oneRmMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.18) : Theme.surfaceContainerLowest
-                            border.width: 1
-                            border.color: Theme.withAlpha(Theme.error, 0.4)
-                            Text { id: oneRmTxt; anchors.centerIn: parent; text: "Remove"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.error }
-                            MouseArea {
-                                id: oneRmMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.requestRemovePlan([pkgRow.pkgId])
-                            }
+                            text: "Remove"
+                            variant: "danger"
+                            compact: true
+                            onClicked: root.requestRemovePlan([pkgRow.pkgId])
                         }
                     }
 
                     MouseArea {
                         id: pkgMouse
                         anchors.fill: parent
-                        anchors.rightMargin: 76
+                        anchors.rightMargin: 86
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.togglePkgSelection(pkgRow.pkgId)
@@ -1084,16 +1036,16 @@ ColumnLayout {
     Rectangle {
         visible: root.activeTab === "services"
         Layout.fillWidth: true
-        implicitHeight: svcCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: svcCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: svcCol
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             spacing: 10
 
             RowLayout {
@@ -1108,28 +1060,22 @@ ColumnLayout {
                         : "Live systemd status shown when running on systemd; showing unit catalog for reference."
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
-                    color: Theme.fgSurfaceVariant
+                    color: Theme.m3InkDim
                 }
 
-                Rectangle {
-                    implicitWidth: safeSvcTxt.implicitWidth + 14
-                    implicitHeight: 26
-                    radius: Theme.r(8)
-                    color: safeSvcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: 1
-                    border.color: Theme.withAlpha(Theme.success, 0.45)
-                    Text { id: safeSvcTxt; anchors.centerIn: parent; text: "Select Enabled Safe"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.success }
-                    MouseArea { id: safeSvcMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.selectSafeServices() }
+                M3Btn {
+                    text: "Select Enabled Safe"
+                    variant: "tonal"
+                    compact: true
+                    onClicked: root.selectSafeServices()
                 }
 
-                Rectangle {
+                M3Btn {
                     visible: root.selectedServices.length > 0
-                    implicitWidth: disSvcTxt.implicitWidth + 16
-                    implicitHeight: 26
-                    radius: Theme.r(8)
-                    color: disSvcMouse.containsMouse ? Qt.lighter(Theme.warning, 1.08) : Theme.warning
-                    Text { id: disSvcTxt; anchors.centerIn: parent; text: "Disable (" + root.selectedServices.length + ")"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.contrastInk(Theme.warning) }
-                    MouseArea { id: disSvcMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.requestServicePlan("disable", root.selectedServices) }
+                    text: "Disable (" + root.selectedServices.length + ")"
+                    variant: "danger"
+                    compact: true
+                    onClicked: root.requestServicePlan("disable", root.selectedServices)
                 }
             }
 
@@ -1144,24 +1090,22 @@ ColumnLayout {
                     readonly property bool checked: root.isServiceSelected(unitId)
 
                     Layout.fillWidth: true
-                    implicitHeight: svcInner.implicitHeight + 14
-                    radius: Theme.r(10)
-                    color: svcRow.checked ? Theme.withAlpha(Theme.warning, 0.12) : (svcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: svcRow.checked ? 1 : Theme.subBorderWidth
-                    border.color: svcRow.checked ? Theme.warning : Theme.cardBorder
+                    implicitHeight: svcInner.implicitHeight + 16
+                    radius: Theme.r(18)
+                    color: svcRow.checked ? Theme.m3SecondaryContainer : (svcMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                     RowLayout {
                         id: svcInner
                         anchors.fill: parent
-                        anchors.margins: 8
+                        anchors.margins: 10
                         spacing: 10
 
                         Rectangle {
-                            implicitWidth: 18; implicitHeight: 18; radius: Theme.r(5)
-                            color: svcRow.checked ? Theme.warning : Theme.surfaceContainerLowest
-                            border.width: 1
-                            border.color: svcRow.checked ? Theme.warning : Theme.cardBorder
-                            Text { anchors.centerIn: parent; visible: svcRow.checked; text: "󰄬"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.contrastInk(Theme.warning) }
+                            implicitWidth: 20; implicitHeight: 20; radius: Theme.r(6)
+                            color: svcRow.checked ? Theme.m3Primary : Theme.m3SurfaceLowest
+                            border.width: svcRow.checked ? 0 : 1
+                            border.color: Theme.m3Outline
+                            Text { anchors.centerIn: parent; visible: svcRow.checked; text: "󰄬"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.m3OnPrimary }
                         }
 
                         ColumnLayout {
@@ -1172,17 +1116,14 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 6
 
-                                Text { text: String(svcRow.modelData.name || svcRow.unitId); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.fgSurface }
-                                Text { text: svcRow.unitId; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                                Text { text: String(svcRow.modelData.name || svcRow.unitId); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.m3Ink }
+                                Text { text: svcRow.unitId; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.m3InkDim }
 
                                 Rectangle {
-                                    implicitWidth: stBadgeTxt.implicitWidth + 10
-                                    implicitHeight: 17
-                                    radius: Theme.r(5)
-                                    color: Theme.withAlpha(
-                                        svcRow.unitState === "enabled" ? Theme.warning : (svcRow.unitState === "disabled" ? Theme.success : Theme.fgSurfaceVariant),
-                                        0.16
-                                    )
+                                    implicitWidth: stBadgeTxt.implicitWidth + 12
+                                    implicitHeight: 18
+                                    radius: Theme.r(9)
+                                    color: Theme.m3SurfaceC
                                     Text {
                                         id: stBadgeTxt
                                         anchors.centerIn: parent
@@ -1190,44 +1131,27 @@ ColumnLayout {
                                         font.family: Theme.fontFamily
                                         font.pixelSize: Theme.fs(8)
                                         font.weight: Font.Bold
-                                        color: svcRow.unitState === "enabled" ? Theme.warning : (svcRow.unitState === "disabled" ? Theme.success : Theme.fgSurfaceVariant)
+                                        color: svcRow.unitState === "enabled" ? Theme.warning : (svcRow.unitState === "disabled" ? Theme.m3Primary : Theme.m3InkDim)
                                     }
                                 }
                             }
 
-                            Text { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: String(svcRow.modelData.summary || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                            Text { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: String(svcRow.modelData.summary || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.m3InkDim }
                         }
 
-                        Rectangle {
+                        M3Btn {
                             visible: svcRow.unitState !== "missing"
-                            implicitWidth: actSvcTxt.implicitWidth + 14
-                            implicitHeight: 24
-                            radius: Theme.r(7)
-                            color: Theme.surfaceContainerLowest
-                            border.width: 1
-                            border.color: Theme.cardBorder
-                            Text {
-                                id: actSvcTxt
-                                anchors.centerIn: parent
-                                text: svcRow.unitState === "enabled" ? "Disable" : "Enable"
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(9)
-                                font.weight: Font.Bold
-                                color: svcRow.unitState === "enabled" ? Theme.warning : Theme.primary
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.requestServicePlan(svcRow.unitState === "enabled" ? "disable" : "enable", [svcRow.unitId])
-                            }
+                            text: svcRow.unitState === "enabled" ? "Disable" : "Enable"
+                            variant: svcRow.unitState === "enabled" ? "tonal" : "filled"
+                            compact: true
+                            onClicked: root.requestServicePlan(svcRow.unitState === "enabled" ? "disable" : "enable", [svcRow.unitId])
                         }
                     }
 
                     MouseArea {
                         id: svcMouse
                         anchors.fill: parent
-                        anchors.rightMargin: 70
+                        anchors.rightMargin: 86
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.toggleServiceSelection(svcRow.unitId)
@@ -1241,49 +1165,45 @@ ColumnLayout {
     Rectangle {
         visible: root.activeTab === "tweaks"
         Layout.fillWidth: true
-        implicitHeight: twCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: twCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: twCol
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             spacing: 10
 
             // Direct non-root user cache cleanup card
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: ucRow.implicitHeight + 18
-                radius: Theme.r(12)
-                color: Theme.withAlpha(Theme.secondary, 0.10)
-                border.width: 1
-                border.color: Theme.withAlpha(Theme.secondary, 0.35)
+                implicitHeight: ucRow.implicitHeight + 20
+                radius: Theme.r(18)
+                color: Theme.m3SecondaryContainer
 
                 RowLayout {
                     id: ucRow
                     anchors.fill: parent
-                    anchors.margins: 9
-                    spacing: 10
+                    anchors.margins: 12
+                    spacing: 12
 
-                    Text { text: "󰃢"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(18); color: Theme.secondary }
+                    Text { text: "󰃢"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(19); color: Theme.m3OnSecondaryContainer }
 
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 2
-                        Text { text: "Clean User Thumbnails & AUR Build Clones (No Sudo)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.fgSurface }
-                        Text { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Safely prunes ~/.cache/thumbnails, ~/.cache/paru/clone, and ~/.cache/yay build artifacts. Current size: " + String(root.scanData.userCacheHuman || "0 B") + "."; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                        Text { text: "Clean User Thumbnails & AUR Build Clones (No Sudo)"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.m3OnSecondaryContainer }
+                        Text { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Safely prunes ~/.cache/thumbnails, ~/.cache/paru/clone, and ~/.cache/yay build artifacts. Current size: " + String(root.scanData.userCacheHuman || "0 B") + "."; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.m3OnSecondaryContainer }
                     }
 
-                    Rectangle {
-                        implicitWidth: cuTxt.implicitWidth + 18
-                        implicitHeight: 28
-                        radius: Theme.r(8)
-                        color: cuMouse.containsMouse ? Qt.lighter(Theme.secondary, 1.08) : Theme.secondary
-                        Text { id: cuTxt; anchors.centerIn: parent; text: root.busyOp ? "Cleaning..." : "Clean Now"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); font.weight: Font.Bold; color: Theme.contrastInk(Theme.secondary) }
-                        MouseArea { id: cuMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.cleanUserCaches() }
+                    M3Btn {
+                        text: root.busyOp ? "Cleaning..." : "Clean Now"
+                        primary: true
+                        compact: true
+                        onClicked: root.cleanUserCaches()
                     }
                 }
             }
@@ -1297,16 +1217,14 @@ ColumnLayout {
                     readonly property bool isApplied: Boolean(modelData.applied)
 
                     Layout.fillWidth: true
-                    implicitHeight: twInner.implicitHeight + 16
-                    radius: Theme.r(11)
-                    color: twMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.subBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitHeight: twInner.implicitHeight + 18
+                    radius: Theme.r(18)
+                    color: twMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                     RowLayout {
                         id: twInner
                         anchors.fill: parent
-                        anchors.margins: 9
+                        anchors.margins: 10
                         spacing: 10
 
                         ColumnLayout {
@@ -1316,42 +1234,40 @@ ColumnLayout {
                             RowLayout {
                                 Layout.fillWidth: true
                                 spacing: 6
-                                Text { text: String(twCard.modelData.title || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.fgSurface }
+                                Text { text: String(twCard.modelData.title || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.m3Ink }
                                 Rectangle {
                                     visible: twCard.isApplied
-                                    implicitWidth: apTxt.implicitWidth + 10
-                                    implicitHeight: 16
-                                    radius: Theme.r(5)
-                                    color: Theme.withAlpha(Theme.success, 0.16)
-                                    Text { id: apTxt; anchors.centerIn: parent; text: "Applied"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); font.weight: Font.Bold; color: Theme.success }
+                                    implicitWidth: apTxt.implicitWidth + 12
+                                    implicitHeight: 18
+                                    radius: Theme.r(9)
+                                    color: Theme.m3PrimaryContainer
+                                    Text { id: apTxt; anchors.centerIn: parent; text: "Applied"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(8); font.weight: Font.Bold; color: Theme.m3OnPrimaryContainer }
                                 }
                                 Rectangle {
                                     visible: Boolean(twCard.modelData.requiresRoot)
-                                    implicitWidth: rtTxt.implicitWidth + 10
-                                    implicitHeight: 16
-                                    radius: Theme.r(5)
-                                    color: Theme.surfaceContainerLowest
-                                    Text { id: rtTxt; anchors.centerIn: parent; text: "Sudo"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(8); color: Theme.fgSurfaceVariant }
+                                    implicitWidth: rtTxt.implicitWidth + 12
+                                    implicitHeight: 18
+                                    radius: Theme.r(9)
+                                    color: Theme.m3SurfaceC
+                                    Text { id: rtTxt; anchors.centerIn: parent; text: "Sudo"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(8); color: Theme.m3InkDim }
                                 }
                             }
 
-                            Text { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: String(twCard.modelData.summary || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                            Text { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: String(twCard.modelData.summary || ""); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); color: Theme.m3InkDim }
                         }
 
-                        Rectangle {
-                            implicitWidth: pvTxt.implicitWidth + 16
-                            implicitHeight: 26
-                            radius: Theme.r(8)
-                            color: pvMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-                            Text { id: pvTxt; anchors.centerIn: parent; text: "Preview & Run"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgPrimary }
-                            MouseArea { id: pvMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.requestTweakPlan(String(twCard.modelData.id || "")) }
+                        M3Btn {
+                            text: "Preview & Run"
+                            primary: true
+                            compact: true
+                            onClicked: root.requestTweakPlan(String(twCard.modelData.id || ""))
                         }
                     }
 
                     MouseArea {
                         id: twMouse
                         anchors.fill: parent
-                        anchors.rightMargin: 110
+                        anchors.rightMargin: 120
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.requestTweakPlan(String(twCard.modelData.id || ""))
@@ -1365,16 +1281,16 @@ ColumnLayout {
     Rectangle {
         visible: root.activeTab === "history"
         Layout.fillWidth: true
-        implicitHeight: histCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        implicitHeight: histCol.implicitHeight + 28
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: histCol
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             spacing: 10
 
             Text {
@@ -1383,7 +1299,7 @@ ColumnLayout {
                 text: "Removed package batches are logged locally in ~/.local/share/aurora/debloat-history.json so you can restore any app in one click."
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
 
             Text {
@@ -1393,7 +1309,7 @@ ColumnLayout {
                 text: "No debloat removals recorded yet."
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
                 topPadding: 14
                 bottomPadding: 14
             }
@@ -1408,32 +1324,28 @@ ColumnLayout {
                     readonly property string hTarget: String(modelData.target || "cachyos")
 
                     Layout.fillWidth: true
-                    implicitHeight: hInner.implicitHeight + 16
-                    radius: Theme.r(11)
-                    color: Theme.subCardBg
-                    border.width: Theme.subBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitHeight: hInner.implicitHeight + 18
+                    radius: Theme.r(18)
+                    color: Theme.m3SurfaceHigh
 
                     ColumnLayout {
                         id: hInner
                         anchors.fill: parent
-                        anchors.margins: 9
-                        spacing: 6
+                        anchors.margins: 12
+                        spacing: 8
 
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 8
 
-                            Text { text: hRow.hTarget === "fedora" ? "Fedora" : "CachyOS / Arch"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.fgSurface }
-                            Text { Layout.fillWidth: true; text: String(hRow.modelData.timeLabel || ""); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
+                            Text { text: hRow.hTarget === "fedora" ? "Fedora" : "CachyOS / Arch"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.m3Ink }
+                            Text { Layout.fillWidth: true; text: String(hRow.modelData.timeLabel || ""); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.m3InkDim }
 
-                            Rectangle {
-                                implicitWidth: rstAllTxt.implicitWidth + 14
-                                implicitHeight: 24
-                                radius: Theme.r(7)
-                                color: rstAllMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-                                Text { id: rstAllTxt; anchors.centerIn: parent; text: "Reinstall Batch"; font.family: Theme.fontFamily; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgPrimary }
-                                MouseArea { id: rstAllMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.requestReinstallPlan(hRow.hTarget, hRow.hPkgs) }
+                            M3Btn {
+                                text: "Reinstall Batch"
+                                primary: true
+                                compact: true
+                                onClicked: root.requestReinstallPlan(hRow.hTarget, hRow.hPkgs)
                             }
                         }
 
@@ -1447,13 +1359,11 @@ ColumnLayout {
                                 delegate: Rectangle {
                                     id: hpChip
                                     required property string modelData
-                                    implicitWidth: hpTxt.implicitWidth + 14
-                                    implicitHeight: 22
-                                    radius: Theme.r(6)
-                                    color: hpMouse.containsMouse ? Theme.hoverBg : Theme.surfaceContainerLowest
-                                    border.width: 1
-                                    border.color: Theme.cardBorder
-                                    Text { id: hpTxt; anchors.centerIn: parent; text: "+ " + hpChip.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.primary }
+                                    implicitWidth: hpTxt.implicitWidth + 16
+                                    implicitHeight: 24
+                                    radius: Theme.r(12)
+                                    color: hpMouse.containsMouse ? Theme.m3PrimaryContainer : Theme.m3SurfaceC
+                                    Text { id: hpTxt; anchors.centerIn: parent; text: "+ " + hpChip.modelData; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3Primary }
                                     MouseArea { id: hpMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.requestReinstallPlan(hRow.hTarget, [hpChip.modelData]) }
                                 }
                             }

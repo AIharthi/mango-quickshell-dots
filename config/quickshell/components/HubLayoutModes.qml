@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import ".."
+import "../m3"
 
 Item {
     id: root
@@ -709,66 +710,35 @@ Item {
                 anchors.fill: parent
                 spacing: 0
 
-                // Artwork Banner Area
+                // Artwork Showcase Area (M3WavyArc + spinning cookie M3ShapeImage)
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
-                    Rectangle {
-                        anchors.fill: parent
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: Theme.withAlpha(Theme.primary, root.isPlaying ? 0.24 : 0.12) }
-                            GradientStop { position: 1.0; color: "transparent" }
-                        }
-                    }
-
-                    Image {
-                        id: stageArtImg
-                        anchors.fill: parent
-                        source: root.artUrl
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        cache: true
-                        sourceSize: Qt.size(320, 320)
-                        visible: root.artUrl.length > 0 && status === Image.Ready
-                    }
-
-                    // Crisp centered disc medallion when no album art is loaded
-                    Rectangle {
+                    Item {
                         anchors.centerIn: parent
-                        visible: !stageArtImg.visible
-                        implicitWidth: 74
-                        implicitHeight: 74
-                        radius: Theme.r(37)
-                        color: Theme.subCardBg
+                        width: Math.min(138, parent.height - 14)
+                        height: width
 
-                        Rectangle {
-                            anchors.centerIn: parent
-                            implicitWidth: 46
-                            implicitHeight: 46
-                            radius: Theme.r(23)
-                            color: Theme.surfaceContainerHighest
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰓇"
-                                font.family: Theme.iconFont
-                                font.pixelSize: 22
-                                color: Theme.fgSurfaceVariant
-                            }
+                        M3WavyArc {
+                            anchors.fill: parent
+                            value: (root.trackLength > 0) ? Math.max(0, Math.min(1, root.displayPosition / root.trackLength)) : 0
+                            moving: root.active && root.isPlaying && root.layoutMode === "stage"
+                            color: Theme.m3Primary
+                            track: Theme.m3Track
                         }
-                    }
 
-                    // Bottom scrim so artwork transitions cleanly into controls
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        height: 36
-                        visible: stageArtImg.visible
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: "transparent" }
-                            GradientStop { position: 1.0; color: Theme.cardBg }
+                        M3ShapeImage {
+                            anchors.centerIn: parent
+                            width: Math.round(parent.width * 0.78)
+                            height: width
+                            kind: Theme.isSimple ? "square" : "cookie"
+                            source: root.artUrl
+                            empty: Theme.m3PrimaryContainer
+                            fallbackGlyph: "󰓇"
+                            fallbackColor: Theme.m3OnPrimaryContainer
+                            spinning: root.active && root.isPlaying && root.layoutMode === "stage" && ShellState.pillSpinArt
+                            spinDurationMs: 24000
                         }
                     }
 
@@ -781,7 +751,7 @@ Item {
                         implicitHeight: 20
                         implicitWidth: stageBadge.implicitWidth + 12
                         radius: Theme.r(10)
-                        color: Theme.isDark ? Qt.rgba(0, 0, 0, 0.52) : Qt.rgba(1, 1, 1, 0.80)
+                        color: Theme.m3SecondaryContainer
 
                         Text {
                             id: stageBadge
@@ -790,7 +760,7 @@ Item {
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold
-                            color: Theme.fgSurface
+                            color: Theme.m3OnSecondaryContainer
                         }
                     }
                 }
@@ -838,44 +808,23 @@ Item {
                         Layout.fillWidth: true
                         spacing: 2
 
-                        Item {
-                            id: stageSeekItem
+                        M3WavyLine {
                             Layout.fillWidth: true
-                            implicitHeight: 12
-                            readonly property real ratio: (root.trackLength > 0)
-                                ? Math.max(0.0, Math.min(1.0, root.displayPosition / root.trackLength))
-                                : 0.0
-
-                            Rectangle {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width
-                                height: 4
-                                radius: 2
-                                color: Theme.surfaceContainerHighest
-
-                                Rectangle {
-                                    height: parent.height
-                                    width: parent.width * stageSeekItem.ratio
-                                    radius: 2
-                                    color: Theme.primary
-                                }
+                            implicitHeight: 18
+                            value: (root.trackLength > 0) ? Math.max(0.0, Math.min(1.0, root.displayPosition / root.trackLength)) : 0.0
+                            moving: root.active && root.isPlaying && root.layoutMode === "stage"
+                            seekable: root.hasPlayer && root.player.canSeek && root.player.positionSupported && root.trackLength > 0
+                            color: Theme.m3Primary
+                            track: Theme.m3Track
+                            onMoved: v => {
+                                if (!root.hasPlayer || root.trackLength <= 0) return;
+                                const sec = Math.max(0, Math.min(1, v)) * root.trackLength;
+                                root.displayPosition = sec;
+                                root.player.seek(sec - (root.player.position || 0));
                             }
-
-                            MouseArea {
-                                id: stageSeekMouse
-                                anchors.fill: parent
-                                enabled: root.hasPlayer && root.player.canSeek && root.player.positionSupported && root.trackLength > 0
-                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                function seekAt(mx: real): void {
-                                    const r = Math.max(0.0, Math.min(1.0, mx / width));
-                                    const sec = r * root.trackLength;
-                                    root.displayPosition = sec;
-                                    root.player.seek(sec - (root.player.position || 0));
-                                }
-                                onPressed: m => { root._seeking = true; root.controlInteractionChanged(true); seekAt(m.x); }
-                                onPositionChanged: m => { if (pressed) seekAt(m.x); }
-                                onReleased: { root._seeking = false; root.controlInteractionChanged(false); }
-                                onCanceled: { root._seeking = false; root.controlInteractionChanged(false); }
+                            onDraggingChanged: a => {
+                                root._seeking = a;
+                                root.controlInteractionChanged(a);
                             }
                         }
 
@@ -1295,30 +1244,16 @@ Item {
                     anchors.margins: 7
                     spacing: 8
 
-                    ClippingRectangle {
+                    M3ShapeImage {
                         implicitWidth: 36
                         implicitHeight: 36
-                        radius: Theme.r(10)
-                        color: Theme.primaryContainer
-                        contentUnderBorder: false
-                        contentInsideBorder: true
-
-                        Image {
-                            id: ckArtImg
-                            anchors.fill: parent
-                            source: root.artUrl
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            cache: true
-                            sourceSize: Qt.size(96, 96)
-                            visible: root.artUrl.length > 0 && status === Image.Ready
-                        }
-                        Text {
-                            anchors.centerIn: parent
-                            visible: !ckArtImg.visible
-                            text: "󰓇"
-                            font.family: Theme.iconFont; font.pixelSize: 17; color: Theme.fgPrimaryContainer
-                        }
+                        kind: "circle"
+                        source: root.artUrl
+                        empty: Theme.m3PrimaryContainer
+                        fallbackGlyph: "󰓇"
+                        fallbackColor: Theme.m3OnPrimaryContainer
+                        spinning: root.active && root.isPlaying && root.layoutMode === "cockpit" && ShellState.pillSpinArt
+                        spinDurationMs: 14000
                     }
 
                     ColumnLayout {

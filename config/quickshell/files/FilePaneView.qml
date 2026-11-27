@@ -32,10 +32,10 @@ Rectangle {
     signal trashEmptyRequested()
     signal paneClicked()
 
-    radius: Theme.r(12)
+    radius: Theme.r(24)
     color: root.fileStyle.paneBg
-    border.width: (ShellState.fmDualPane && root.isActivePane) ? Math.max(1, Theme.cardBorderWidth) : Theme.cardBorderWidth
-    border.color: (ShellState.fmDualPane && root.isActivePane) ? Theme.withAlpha(root.fileStyle.accent, 0.55) : Theme.cardBorder
+    border.width: 1
+    border.color: (ShellState.fmDualPane && root.isActivePane) ? root.fileStyle.accent : Theme.m3Line
     clip: true
 
     function isSelected(p: string): bool {

@@ -4,7 +4,9 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import ".."
+import "../m3"
 
+// Material 3 Expressive Control Center Quick Controls modeled on DarkShadowShell ControlCenter.qml
 Rectangle {
     id: root
 
@@ -14,13 +16,16 @@ Rectangle {
     property bool hideStyleFooter: false
     property bool showFocusAwakeRow: false
     property bool tallActionTiles: false
+
     signal draggingChanged(bool dragging)
     signal openSettingsRequested(string page)
 
     property real _dragRatio: 0.5
-    readonly property real volumeLevel: root._dragging ? root._dragRatio : Math.max(0.0, Math.min(1.0, MangoState.volPercent / 100.0))
+    readonly property real maxVolRatio: ShellState.audioOverAmp ? 1.5 : 1.0
+    readonly property real volumeLevel: root._dragging ? root._dragRatio : Math.max(0.0, Math.min(root.maxVolRatio, MangoState.volPercent / 100.0))
     readonly property bool volumeMuted: MangoState.volMuted
     readonly property bool micMuted: MangoState.micMuted
+    property real micLevel: 0.85
     property bool _dragging: false
 
     property real brightnessLevel: 0.8
@@ -33,7 +38,6 @@ Rectangle {
     property string btDevice: "Off"
 
     readonly property string defaultSinkLabel: MangoState.defaultSinkLabel
-    property string hoveredActionLabel: ""
 
     onActiveChanged: {
         if (active)
@@ -69,7 +73,7 @@ Rectangle {
     property int _pendingBrightPct: -1
 
     function applyVolume(ratio: real): void {
-        const clamped = Math.max(0.0, Math.min(1.0, ratio));
+        const clamped = Math.max(0.0, Math.min(root.maxVolRatio, ratio));
         root._dragRatio = clamped;
         MangoState.setVolumeRatio(clamped);
     }
@@ -97,7 +101,6 @@ Rectangle {
         }
     }
 
-    // --- System Queries (gated on detected hardware) ---
     function cycleAudioSink(): void {
         MangoState.cycleAudioSink();
     }
@@ -137,7 +140,7 @@ Rectangle {
                 root.wifiEnabled = (parts[0] === "enabled");
                 root.wifiSsid = (parts.length > 1 && parts[1].length > 0)
                     ? parts[1]
-                    : (root.wifiEnabled ? "Disconnected" : "Off");
+                    : (root.wifiEnabled ? "On" : "Off");
             }
         }
     }
@@ -171,18 +174,18 @@ Rectangle {
         onTriggered: root.refreshAll()
     }
 
-    radius: Theme.r(18)
-    implicitHeight: qcCol.implicitHeight + 20
-    color: Theme.cardBg
-    border.width: Theme.cardBorderWidth
-    border.color: Theme.cardBorder
+    radius: root.hideHeader ? 0 : Theme.r(26)
+    implicitHeight: qcCol.implicitHeight + (root.hideHeader ? 0 : 20)
+    color: root.hideHeader ? "transparent" : Theme.m3SurfaceC
+    border.width: root.hideHeader ? 0 : 1
+    border.color: Theme.m3Line
     clip: true
 
     ColumnLayout {
         id: qcCol
         anchors.fill: parent
-        anchors.margins: root.hideHeader ? 10 : 10
-        spacing: root.hideHeader ? 8 : 6
+        anchors.margins: root.hideHeader ? 0 : 10
+        spacing: 10
 
         RowLayout {
             Layout.fillWidth: true
@@ -192,9 +195,9 @@ Rectangle {
             Text {
                 text: "Quick Controls"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(11)
                 font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
 
             Item { Layout.fillWidth: true }
@@ -202,708 +205,379 @@ Rectangle {
             Text {
                 text: DeviceCaps.deviceType === "laptop" ? "󰌢" : "󰍹"
                 font.family: Theme.iconFont
-                font.pixelSize: 12
-                color: Theme.fgSurfaceVariant
+                font.pixelSize: Theme.fs(12)
+                color: Theme.m3InkDim
             }
         }
 
-        // --- Apple Control Center Capsule Volume Slider ---
+        // --- Brightness Full-Width 46px M3 Capsule Slider ---
+        M3CapsuleSlider {
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            visible: DeviceCaps.hasBacklight && root.brightnessSupported
+            icon: "󰃟"
+            label: "Display"
+            value: root.brightnessLevel
+            activeColor: Theme.m3Primary
+            onMoved: v => root.applyBrightness(v)
+            onIconClicked: root.openSettingsRequested("displays")
+            onDraggingChanged: d => {
+                root._dragging = d;
+                root.draggingChanged(d);
+            }
+        }
+
+        // --- Sound (62%) + Mic Toggle/Volume (38%) 46px M3 Capsule Row ---
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
             spacing: 8
 
-            Item {
-                id: volCapsule
+            M3CapsuleSlider {
                 Layout.fillWidth: true
-                implicitHeight: root.tallActionTiles ? 34 : 32
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Theme.r(root.tallActionTiles ? 17 : 16)
-                    color: Theme.subCardBg
-                    border.width: Theme.activeControlBorderWidth
-                    border.color: Theme.cardBorder
-                    clip: true
-
-                    Rectangle {
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        anchors.left: parent.left
-                        width: Math.max(parent.height, parent.width * root.volumeLevel)
-                        radius: Theme.r(root.tallActionTiles ? 17 : 16)
-                        color: root.volumeMuted ? Theme.surfaceContainerHighest : Theme.primary
-
-                        Behavior on width {
-                            enabled: !root._dragging && !Theme.reducedMotion
-                            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
-                        }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 6
-
-                        Text {
-                            text: root.volumeMuted ? "󰝟" : (root.volumeLevel <= 0.45 ? "󰖀" : "󰕾")
-                            font.family: Theme.iconFont
-                            font.pixelSize: 15
-                            color: root.volumeMuted ? Theme.fgSurfaceVariant : Theme.fgPrimary
-
-                            MouseArea {
-                                anchors.fill: parent
-                                anchors.margins: -6
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: MangoState.toggleMute()
-                            }
-                        }
-
-                        Text {
-                            text: root.volumeMuted ? "Muted" : "Sound"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 10
-                            font.weight: Font.Bold
-                            color: root.volumeLevel > 0.25 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        Text {
-                            text: Math.round(root.volumeLevel * 100) + "%"
-                            font.family: Theme.monoFont
-                            font.pixelSize: 10
-                            font.weight: Font.Bold
-                            color: root.volumeLevel > 0.88 && !root.volumeMuted ? Theme.fgPrimary : Theme.fgSurface
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        anchors.leftMargin: 32
-                        cursorShape: Qt.PointingHandCursor
-                        onPressed: mouse => {
-                            root._dragRatio = Math.max(0.0, Math.min(1.0, (mouse.x + 32) / volCapsule.width));
-                            root._dragging = true;
-                            root.draggingChanged(true);
-                            root.applyVolume(root._dragRatio);
-                        }
-                        onPositionChanged: mouse => {
-                            if (pressed)
-                                root.applyVolume((mouse.x + 32) / volCapsule.width);
-                        }
-                        onReleased: {
-                            root._dragging = false;
-                            root.draggingChanged(false);
-                        }
-                        onCanceled: {
-                            root._dragging = false;
-                            root.draggingChanged(false);
-                        }
-                    }
+                Layout.preferredWidth: 62
+                icon: root.volumeMuted ? "󰝟" : (root.volumeLevel <= 0.45 ? "󰖀" : "󰕾")
+                label: root.volumeMuted ? "Muted" : "Sound"
+                value: root.volumeLevel
+                maxValue: root.maxVolRatio
+                muted: root.volumeMuted
+                activeColor: Theme.m3Primary
+                onMoved: v => {
+                    root._dragging = true;
+                    root.applyVolume(v);
+                }
+                onIconClicked: MangoState.toggleMute()
+                onRightClicked: root.cycleAudioSink()
+                onDraggingChanged: d => {
+                    root._dragging = d;
+                    root.draggingChanged(d);
                 }
             }
 
+            // Mic 46px capsule toggle
             Rectangle {
-                implicitWidth: root.tallActionTiles ? 34 : 32
-                implicitHeight: root.tallActionTiles ? 34 : 32
-                radius: Theme.r(root.tallActionTiles ? 17 : 16)
-                color: root.micMuted
-                    ? Theme.error
-                    : (micMuteArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                border.width: Theme.activeControlBorderWidth
-                border.color: root.micMuted ? Theme.error : Theme.cardBorder
+                Layout.preferredWidth: 112
+                implicitHeight: 46
+                radius: Theme.r(micArea.pressed ? 16 : 23)
+                color: root.micMuted ? Theme.m3SurfaceHigh : Theme.m3SecondaryContainer
+                border.width: 1
+                border.color: Theme.m3Line
 
-                Text {
-                    anchors.centerIn: parent
-                    text: root.micMuted ? "󰍭" : "󰍬"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 14
-                    color: root.micMuted ? Theme.fgError : Theme.fgSurface
-                }
-
-                MouseArea {
-                    id: micMuteArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: MangoState.toggleMicMute()
-                }
-            }
-        }
-
-        // --- Apple Capsule Brightness Slider (laptops / external DDC) ---
-        Item {
-            id: brightCapsule
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            implicitHeight: 30
-            visible: DeviceCaps.hasBacklight
-            opacity: root.brightnessSupported ? 1.0 : 0.45
-
-            Rectangle {
-                anchors.fill: parent
-                radius: Theme.r(15)
-                color: Theme.subCardBg
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
-                clip: true
-
-                Rectangle {
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.left: parent.left
-                    width: root.brightnessSupported ? Math.max(parent.height, parent.width * root.brightnessLevel) : parent.height
-                    radius: Theme.r(15)
-                    color: Theme.warning
-
-                    Behavior on width {
-                        enabled: !root._dragging && !Theme.reducedMotion
-                        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
-                    }
-                }
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160 } }
+                Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
 
                 RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
+                    anchors.centerIn: parent
                     spacing: 6
 
                     Text {
-                        text: "󰃠"
+                        text: root.micMuted ? "󰍭" : "󰍬"
                         font.family: Theme.iconFont
-                        font.pixelSize: 14
-                        color: root.brightnessLevel > 0.15 ? Theme.fgPrimary : Theme.warning
+                        font.pixelSize: Theme.fs(16)
+                        color: root.micMuted ? Theme.m3Error : Theme.m3OnSecondaryContainer
                     }
 
                     Text {
-                        text: "Display"
+                        text: root.micMuted ? "Muted" : "Mic On"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        font.weight: Font.Bold
-                        color: root.brightnessLevel > 0.25 ? Theme.fgPrimary : Theme.fgSurface
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    Text {
-                        text: root.brightnessSupported ? (Math.round(root.brightnessLevel * 100) + "%") : "N/A"
-                        font.family: Theme.monoFont
-                        font.pixelSize: 10
-                        font.weight: Font.Bold
-                        color: root.brightnessLevel > 0.88 ? Theme.fgPrimary : Theme.fgSurface
+                        font.pixelSize: Theme.fs(11)
+                        font.weight: Font.Medium
+                        color: root.micMuted ? Theme.m3Error : Theme.m3OnSecondaryContainer
                     }
                 }
 
                 MouseArea {
+                    id: micArea
                     anchors.fill: parent
-                    enabled: root.brightnessSupported
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onPressed: mouse => {
-                        root._dragging = true;
-                        root.draggingChanged(true);
-                        root.applyBrightness(mouse.x / brightCapsule.width);
-                    }
-                    onPositionChanged: mouse => {
-                        if (pressed)
-                            root.applyBrightness(mouse.x / brightCapsule.width);
-                    }
-                    onReleased: {
-                        root._dragging = false;
-                        root.draggingChanged(false);
-                    }
-                    onCanceled: {
-                        root._dragging = false;
-                        root.draggingChanged(false);
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton)
+                            Qt.callLater(() => root.openSettingsRequested("audio"));
+                        else
+                            MangoState.toggleMicMute();
                     }
                 }
             }
         }
 
-        // --- Hardware-Aware Wi-Fi & Bluetooth Pills (only shown when hardware exists) ---
+        // --- 2 Wide 62px M3 Connectivity / Audio Cards with Chevron ---
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
             spacing: 8
-            visible: DeviceCaps.hasWifi || DeviceCaps.hasBluetooth
+            visible: DeviceCaps.hasWifi || DeviceCaps.hasBluetooth || !root.hideDuplicateToggles
 
-            // Wi-Fi Pill (borderless tonal elevation + solid accent disc)
+            // Left Wide Card: Wi-Fi (or Output Sink on Desktop without Wi-Fi)
             Rectangle {
+                id: wideLeft
                 Layout.fillWidth: true
-                implicitHeight: 34
-                visible: DeviceCaps.hasWifi
-                radius: Theme.r(12)
-                color: root.wifiEnabled
-                    ? Theme.tileActiveBg
-                    : (wifiArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                border.width: root.wifiEnabled ? Theme.activeControlBorderWidth : 0
-                border.color: Theme.primary
-                scale: wifiArea.pressed ? 0.97 : 1.0
+                Layout.preferredWidth: 1
+                implicitHeight: 62
+                radius: Theme.r(wlMouse.pressed ? 16 : 24)
+                readonly property bool isOn: DeviceCaps.hasWifi ? root.wifiEnabled : !root.volumeMuted
+                color: isOn ? Theme.m3Primary : (wlMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                border.width: 1
+                border.color: isOn ? Theme.m3Primary : Theme.m3Line
 
-                Behavior on color {
-                    enabled: !Theme.isSimple
-                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
-                }
-                Behavior on scale {
-                    enabled: !Theme.isSimple
-                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-                }
+                Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                readonly property color inkCol: isOn ? Theme.m3OnPrimary : Theme.m3Ink
+                readonly property color subCol: isOn ? Theme.withAlpha(Theme.m3OnPrimary, 0.78) : Theme.m3InkDim
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 10
-                    spacing: 7
-
-                    Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
-                        radius: Theme.r(11)
-                        color: root.wifiEnabled ? Theme.primary : Theme.surfaceContainerHighest
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: root.wifiEnabled ? "󰤨" : "󰤭"
-                            font.family: Theme.iconFont
-                            font.pixelSize: 12
-                            color: root.wifiEnabled ? Theme.fgPrimary : Theme.fgSurfaceVariant
-                        }
-                    }
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 6
+                    spacing: 10
 
                     Text {
-                        Layout.fillWidth: true
-                        text: root.wifiSsid
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                        font.weight: root.wifiEnabled ? Font.Bold : Font.DemiBold
-                        color: root.wifiEnabled ? Theme.fgSurface : Theme.fgSurfaceVariant
-                    }
-                }
-
-                MouseArea {
-                    id: wifiArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: mouse => {
-                        if (mouse.button === Qt.RightButton) {
-                            Qt.callLater(() => root.openSettingsRequested("network"));
-                        } else {
-                            const target = root.wifiEnabled ? "off" : "on";
-                            root.runDbusGuardedToggle("org.freedesktop.NetworkManager", ["timeout", "2", "nmcli", "radio", "wifi", target]);
-                        }
-                    }
-                }
-            }
-
-            // Bluetooth Pill (borderless tonal elevation + solid accent disc)
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 34
-                visible: DeviceCaps.hasBluetooth
-                radius: Theme.r(12)
-                color: root.btEnabled
-                    ? Theme.tileActiveBg
-                    : (btArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                border.width: root.btEnabled ? Theme.activeControlBorderWidth : 0
-                border.color: Theme.secondary
-                scale: btArea.pressed ? 0.97 : 1.0
-
-                Behavior on color {
-                    enabled: !Theme.isSimple
-                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
-                }
-                Behavior on scale {
-                    enabled: !Theme.isSimple
-                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 10
-                    spacing: 7
-
-                    Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
-                        radius: Theme.r(11)
-                        color: root.btEnabled ? Theme.secondary : Theme.surfaceContainerHighest
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: root.btEnabled ? "󰂯" : "󰂲"
-                            font.family: Theme.iconFont
-                            font.pixelSize: 12
-                            color: root.btEnabled ? Theme.fgSecondary : Theme.fgSurfaceVariant
-                        }
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: root.btDevice
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                        font.weight: root.btEnabled ? Font.Bold : Font.DemiBold
-                        color: root.btEnabled ? Theme.fgSurface : Theme.fgSurfaceVariant
-                    }
-                }
-
-                MouseArea {
-                    id: btArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: mouse => {
-                        if (mouse.button === Qt.RightButton) {
-                            Qt.callLater(() => root.openSettingsRequested("bluetooth"));
-                        } else {
-                            const target = root.btEnabled ? "off" : "on";
-                            root.runDbusGuardedToggle("org.bluez", ["timeout", "2", "bluetoothctl", "power", target]);
-                        }
-                    }
-                }
-            }
-        }
-
-        // --- Desktop Audio & Settings Shortcut ---
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            implicitHeight: 32
-            visible: !DeviceCaps.hasExtraQuickControls && !root.hideDuplicateToggles
-            radius: Theme.r(11)
-            color: audioSettingsArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-            border.width: Theme.activeControlBorderWidth
-            border.color: Theme.cardBorder
-            scale: audioSettingsArea.pressed ? 0.97 : 1.0
-
-            Behavior on color {
-                enabled: !Theme.isSimple
-                ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
-            }
-            Behavior on scale {
-                enabled: !Theme.isSimple
-                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-            }
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                spacing: 8
-
-                Text {
-                    text: "󰋋"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 14
-                    color: Theme.fgSurfaceVariant
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: root.defaultSinkLabel
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    font.weight: Font.Medium
-                    color: Theme.fgSurface
-                }
-
-                Rectangle {
-                    implicitWidth: 22
-                    implicitHeight: 22
-                    radius: Theme.r(7)
-                    color: cycSinkMouse.containsMouse ? Theme.tileActiveBg : "transparent"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "󰓃"
+                        text: DeviceCaps.hasWifi ? (root.wifiEnabled ? "󰤨" : "󰤭") : "󰋋"
                         font.family: Theme.iconFont
-                        font.pixelSize: 13
-                        color: cycSinkMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(19)
+                        color: wideLeft.inkCol
                     }
 
-                    MouseArea {
-                        id: cycSinkMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.cycleAudioSink()
-                    }
-                }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
 
-                Text {
-                    text: "󰒓"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 13
-                    color: Theme.fgSurfaceVariant
-                }
-            }
-
-            MouseArea {
-                id: audioSettingsArea
-                anchors.fill: parent
-                anchors.rightMargin: 28
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.openSettingsRequested("audio")
-            }
-        }
-
-        // --- Optional Focus & Keep Awake Row (fills Desktop Cockpit deck cleanly) ---
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            spacing: 6
-            visible: root.showFocusAwakeRow && !root.hideDuplicateToggles
-
-            Repeater {
-                model: [
-                    { id: "dnd",   label: "Focus",      sub: ShellState.dnd ? "DND On" : "Normal", icon: ShellState.dnd ? "󰂛" : "󰂚", active: ShellState.dnd, tint: Theme.secondary },
-                    { id: "awake", label: "Keep Awake", sub: ShellState.keepAwake ? "Paused" : "Auto", icon: "󰅶", active: ShellState.keepAwake, tint: Theme.warning }
-                ]
-
-                delegate: Rectangle {
-                    id: faTile
-                    required property var modelData
-                    Layout.fillWidth: true
-                    implicitHeight: 32
-                    radius: Theme.r(10)
-                    color: faTile.modelData.active
-                        ? Theme.tileActiveBg
-                        : (faMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                    border.width: faTile.modelData.active ? Theme.activeControlBorderWidth : 0
-                    border.color: faTile.modelData.tint
-                    scale: faMouse.pressed ? 0.96 : 1.0
-
-                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 7
-                        anchors.rightMargin: 9
-                        spacing: 7
-
-                        Rectangle {
-                            implicitWidth: 20
-                            implicitHeight: 20
-                            radius: Theme.r(10)
-                            color: faTile.modelData.active ? faTile.modelData.tint : Theme.surfaceContainerHighest
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: faTile.modelData.icon
-                                font.family: Theme.iconFont
-                                font.pixelSize: 11
-                                color: faTile.modelData.active ? Theme.fgPrimary : Theme.fgSurfaceVariant
-                            }
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: DeviceCaps.hasWifi ? (root.wifiEnabled && root.wifiSsid !== "On" ? root.wifiSsid : "Wi-Fi") : "Output"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(12)
+                            font.weight: Font.DemiBold
+                            color: wideLeft.inkCol
                         }
 
                         Text {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
-                            text: faTile.modelData.label
+                            text: DeviceCaps.hasWifi
+                                ? (root.wifiEnabled ? (root.wifiSsid !== "On" && root.wifiSsid !== "Off" ? "Connected" : "On") : "Off")
+                                : root.defaultSinkLabel
                             font.family: Theme.fontFamily
-                            font.pixelSize: 10
-                            font.weight: faTile.modelData.active ? Font.Bold : Font.DemiBold
-                            color: faTile.modelData.active ? Theme.fgSurface : Theme.fgSurfaceVariant
-                        }
-
-                        Text {
-                            text: faTile.modelData.sub
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 9
-                            color: faTile.modelData.active ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.72)
+                            font.pixelSize: Theme.fs(10)
+                            color: wideLeft.subCol
                         }
                     }
 
-                    MouseArea {
-                        id: faMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (faTile.modelData.id === "dnd")
-                                ShellState.toggleDnd();
-                            else
-                                ShellState.toggleKeepAwake();
+                    Item {
+                        implicitWidth: 34
+                        implicitHeight: 54
+                        Text { anchors.centerIn: parent; text: "󰅂"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(15); color: wideLeft.subCol }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.openSettingsRequested(DeviceCaps.hasWifi ? "network" : "audio")
                         }
                     }
-                }
-            }
-        }
-
-        // --- Decluttered 4-Pill Quick Actions Strip ---
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            spacing: 6
-
-            Repeater {
-                model: root.hideDuplicateToggles
-                    ? [
-                        { id: "shot",  label: "Capture", icon: "󰹑", active: false, isAlert: false, tint: Theme.primary },
-                        { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, isAlert: true, tint: Theme.error },
-                        { id: "keys",  label: "Keys",    icon: "󰌌", active: false, isAlert: false, tint: Theme.primary },
-                        { id: "wins",  label: "Windows", icon: "󰖯", active: false, isAlert: false, tint: Theme.primary }
-                    ]
-                    : [
-                        { id: "shot",  label: "Capture", icon: "󰹑", active: false, isAlert: false, tint: Theme.primary },
-                        { id: "rec",   label: "Record",  icon: "󰑊", active: ShellState.recordingActive, isAlert: true, tint: Theme.error },
-                        { id: "game",  label: "Game",    icon: "󰊴", active: ShellState.gameModeActive, isAlert: false, tint: Theme.tertiary },
-                        { id: "wins",  label: "Windows", icon: "󰖯", active: false, isAlert: false, tint: Theme.primary }
-                    ]
-
-                delegate: Rectangle {
-                    id: qaBtn
-                    required property var modelData
-                    Layout.fillWidth: true
-                    implicitHeight: root.tallActionTiles ? 54 : 30
-                    radius: Theme.r(root.tallActionTiles ? 12 : 10)
-                    color: {
-                        if (qaBtn.modelData.active)
-                            return qaBtn.modelData.isAlert ? Theme.error : Theme.tileActiveBg;
-                        return qaMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg;
-                    }
-                    border.width: qaBtn.modelData.active ? Theme.activeControlBorderWidth : 0
-                    border.color: qaBtn.modelData.tint
-                    clip: true
-                    scale: qaMouse.pressed ? 0.94 : 1.0
-
-                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-                    ColumnLayout {
-                        visible: root.tallActionTiles
-                        anchors.centerIn: parent
-                        spacing: 3
-
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: qaBtn.modelData.icon
-                            font.family: Theme.iconFont
-                            font.pixelSize: 15
-                            color: qaBtn.modelData.active
-                                ? (qaBtn.modelData.isAlert ? Theme.fgError : qaBtn.modelData.tint)
-                                : (qaMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant)
-                        }
-
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            Layout.maximumWidth: Math.max(24, qaBtn.width - 8)
-                            elide: Text.ElideRight
-                            text: qaBtn.modelData.label
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 9
-                            font.weight: qaBtn.modelData.active ? Font.Bold : Font.DemiBold
-                            color: qaBtn.modelData.active
-                                ? (qaBtn.modelData.isAlert ? Theme.fgError : Theme.fgSurface)
-                                : Theme.fgSurface
-                        }
-                    }
-
-                    RowLayout {
-                        visible: !root.tallActionTiles
-                        anchors.centerIn: parent
-                        spacing: 4
-
-                        Text {
-                            text: qaBtn.modelData.icon
-                            font.family: Theme.iconFont
-                            font.pixelSize: 12
-                            color: qaBtn.modelData.active
-                                ? (qaBtn.modelData.isAlert ? Theme.fgError : qaBtn.modelData.tint)
-                                : (qaMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant)
-                        }
-
-                        Text {
-                            Layout.maximumWidth: Math.max(20, qaBtn.width - 22)
-                            elide: Text.ElideRight
-                            text: qaBtn.modelData.label
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 9
-                            font.weight: qaBtn.modelData.active ? Font.Bold : Font.DemiBold
-                            color: qaBtn.modelData.active
-                                ? (qaBtn.modelData.isAlert ? Theme.fgError : Theme.fgSurface)
-                                : Theme.fgSurface
-                        }
-                    }
-
-                    MouseArea {
-                        id: qaMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            const aid = qaBtn.modelData.id;
-                            if (aid === "shot") {
-                                Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--area"]);
-                            } else if (aid === "rec") {
-                                Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "toggle", "--area"]);
-                            } else if (aid === "game") {
-                                ShellState.toggleGameMode();
-                            } else if (aid === "keys") {
-                                Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleKeybindSheet"]);
-                            } else if (aid === "wins") {
-                                Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleWindowSwitcher"]);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Night Light compact icon (shown when wlsunset/hyprsunset/gammastep installed)
-            Rectangle {
-                visible: DeviceCaps.hasNightLight
-                implicitWidth: root.tallActionTiles ? 38 : 32
-                implicitHeight: root.tallActionTiles ? 54 : 30
-                radius: Theme.r(root.tallActionTiles ? 12 : 10)
-                color: ShellState.nightLightEnabled
-                    ? Theme.tileActiveBg
-                    : (nlMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                border.width: ShellState.nightLightEnabled ? Theme.activeControlBorderWidth : 0
-                border.color: Theme.warning
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "󰖔"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 13
-                    color: ShellState.nightLightEnabled ? Theme.warning : (nlMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant)
                 }
 
                 MouseArea {
-                    id: nlMouse
+                    id: wlMouse
                     anchors.fill: parent
+                    anchors.rightMargin: 36
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp)
+                    onClicked: {
+                        if (DeviceCaps.hasWifi) {
+                            const target = root.wifiEnabled ? "off" : "on";
+                            root.runDbusGuardedToggle("org.freedesktop.NetworkManager", ["timeout", "2", "nmcli", "radio", "wifi", target]);
+                        } else {
+                            root.cycleAudioSink();
+                        }
+                    }
+                }
+            }
+
+            // Right Wide Card: Bluetooth (or Night Light on Desktop without BT)
+            Rectangle {
+                id: wideRight
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                implicitHeight: 62
+                radius: Theme.r(wrMouse.pressed ? 16 : 24)
+                readonly property bool isOn: DeviceCaps.hasBluetooth ? root.btEnabled : ShellState.nightLightEnabled
+                color: isOn ? Theme.m3Primary : (wrMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                border.width: 1
+                border.color: isOn ? Theme.m3Primary : Theme.m3Line
+
+                Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                readonly property color inkCol: isOn ? Theme.m3OnPrimary : Theme.m3Ink
+                readonly property color subCol: isOn ? Theme.withAlpha(Theme.m3OnPrimary, 0.78) : Theme.m3InkDim
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 6
+                    spacing: 10
+
+                    Text {
+                        text: DeviceCaps.hasBluetooth ? (root.btEnabled ? "󰂯" : "󰂲") : "󰖔"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(19)
+                        color: wideRight.inkCol
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: DeviceCaps.hasBluetooth ? (root.btEnabled && root.btDevice !== "On" && root.btDevice !== "Off" ? root.btDevice : "Bluetooth") : "Night Light"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(12)
+                            font.weight: Font.DemiBold
+                            color: wideRight.inkCol
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: DeviceCaps.hasBluetooth
+                                ? (root.btEnabled ? (root.btDevice !== "On" && root.btDevice !== "Off" ? "Connected" : "On") : "Off")
+                                : (ShellState.nightLightEnabled ? (ShellState.nightLightTemp + "K") : "Off")
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            color: wideRight.subCol
+                        }
+                    }
+
+                    Item {
+                        implicitWidth: 34
+                        implicitHeight: 54
+                        Text { anchors.centerIn: parent; text: "󰅂"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(15); color: wideRight.subCol }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.openSettingsRequested(DeviceCaps.hasBluetooth ? "bluetooth" : "displays")
+                        }
+                    }
+                }
+
+                MouseArea {
+                    id: wrMouse
+                    anchors.fill: parent
+                    anchors.rightMargin: 36
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (DeviceCaps.hasBluetooth) {
+                            const target = root.btEnabled ? "off" : "on";
+                            root.runDbusGuardedToggle("org.bluez", ["timeout", "2", "bluetoothctl", "power", target]);
+                        } else {
+                            ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp);
+                        }
+                    }
                 }
             }
         }
 
-        // --- Clean Apple Visual Style Summary Pill (LMB -> Settings Appearance, RMB -> Cycle Mode) ---
+        // --- 4-Column Morphing M3 Tiles (radius 34 -> 22 -> 14) ---
+        GridLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            columns: 4
+            rowSpacing: 8
+            columnSpacing: 8
+
+            M3Tile {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                icon: ShellState.dnd ? "󰂛" : "󰂚"
+                label: "DND"
+                active: ShellState.dnd
+                onClicked: ShellState.toggleDnd()
+            }
+
+            M3Tile {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                icon: "󰖔"
+                label: "Night Light"
+                active: ShellState.nightLightEnabled
+                onClicked: ShellState.setNightLight(!ShellState.nightLightEnabled, ShellState.nightLightTemp)
+            }
+
+            M3Tile {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                icon: "󰅶"
+                label: "Keep Awake"
+                active: ShellState.keepAwake
+                onClicked: ShellState.toggleKeepAwake()
+            }
+
+            M3Tile {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                icon: "󰊴"
+                label: "Game"
+                active: ShellState.gameModeActive
+                onClicked: ShellState.toggleGameMode()
+            }
+
+            M3Tile {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                icon: "󰹑"
+                label: "Capture"
+                active: false
+                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--area"])
+            }
+
+            M3Tile {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                icon: ShellState.recordingActive ? "󰓛" : "󰑊"
+                label: ShellState.recordingActive ? ShellState.formatTimer(ShellState.recordingElapsedSec) : "Record"
+                active: ShellState.recordingActive
+                accentColor: Theme.m3Error
+                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "toggle", "--area"])
+            }
+
+            M3Tile {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                icon: Theme.colorScheme === "dark" ? "󰖙" : "󰖔"
+                label: Theme.colorScheme === "dark" ? "Dark" : "Light"
+                active: Theme.colorScheme === "light"
+                onClicked: Theme.toggleScheme()
+            }
+
+            M3Tile {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                icon: root.hideDuplicateToggles ? "󰌌" : "󰖯"
+                label: root.hideDuplicateToggles ? "Shortcuts" : "Windows"
+                active: false
+                onClicked: Quickshell.execDetached([
+                    "qs", "ipc", "call", "island",
+                    root.hideDuplicateToggles ? "toggleKeybindSheet" : "toggleWindowSwitcher"
+                ])
+            }
+        }
+
+        // --- Clean M3 Visual Style Pill Footer ---
         Rectangle {
             id: styleSummaryCard
             visible: !root.hideStyleFooter
             Layout.fillWidth: true
             Layout.fillHeight: false
-            implicitHeight: 30
-            radius: Theme.r(10)
-            color: styleSummaryMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-            border.width: Theme.activeControlBorderWidth
-            border.color: Theme.cardBorder
-            scale: styleSummaryMouse.pressed ? 0.97 : 1.0
-
-            Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+            implicitHeight: 36
+            radius: Theme.r(18)
+            color: styleSummaryMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+            border.width: 1
+            border.color: Theme.m3Line
 
             readonly property var curModeObj: {
                 const modes = Theme.availableModes;
@@ -916,15 +590,15 @@ Rectangle {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
                 spacing: 8
 
                 Text {
                     text: styleSummaryCard.curModeObj ? styleSummaryCard.curModeObj.icon : "󰏘"
                     font.family: Theme.iconFont
-                    font.pixelSize: 13
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(14)
+                    color: Theme.m3Primary
                 }
 
                 Text {
@@ -932,17 +606,26 @@ Rectangle {
                     elide: Text.ElideRight
                     text: "Style: " + (styleSummaryCard.curModeObj ? styleSummaryCard.curModeObj.label : "Island")
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
-                    font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    font.pixelSize: Theme.fs(11)
+                    font.weight: Font.Medium
+                    color: Theme.m3Ink
                 }
 
-                Text {
-                    text: "Appearance"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 9
-                    font.weight: Font.DemiBold
-                    color: styleSummaryMouse.containsMouse ? Theme.fgSurface : Theme.primary
+                Rectangle {
+                    implicitHeight: 22
+                    implicitWidth: appPillTxt.implicitWidth + 14
+                    radius: Theme.r(11)
+                    color: Theme.m3SecondaryContainer
+
+                    Text {
+                        id: appPillTxt
+                        anchors.centerIn: parent
+                        text: "Appearance"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Medium
+                        color: Theme.m3OnSecondaryContainer
+                    }
                 }
             }
 

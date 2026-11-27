@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import ".."
+import "../m3"
 
 Item {
     id: root
@@ -46,22 +47,24 @@ Item {
         const title = root.player.trackTitle || "";
         const artist = root.player.trackArtist || "";
         if (title.length > 0 && artist.length > 0)
-            return title + " · " + artist;
+            return title + "  ·  " + artist;
         return title || artist || (root.player.identity || "Playing");
     }
 
-    readonly property int podHeight: ShellState.splitBarHeight
+    readonly property int podHeight: Math.max(32, ShellState.splitBarHeight)
     readonly property int podRadius: {
+        if (Theme.isSimple)
+            return 0;
         if (ShellState.splitPodStyle === "compact")
-            return Theme.r(8);
+            return Theme.r(10);
         if (ShellState.splitPodStyle === "rounded")
-            return Theme.r(12);
+            return Theme.r(14);
         return Theme.r(Math.round(root.podHeight / 2));
     }
     readonly property color glassFill: ShellState.splitBarTranslucent
-        ? Theme.withAlpha(Theme.surfaceContainerLowest, Math.min(0.86, ShellState.shellOpacity))
-        : Theme.surfaceContainerLowest
-    readonly property color activeGlassFill: Theme.withAlpha(Theme.notchBg, 0.96)
+        ? Theme.m3BarBg
+        : Theme.m3Surface
+    readonly property color activeGlassFill: Theme.m3PanelBg
 
     function switchTagRelative(delta: int): void {
         const cur = Math.max(1, Math.min(9, root.activeTagIndex || 1));
@@ -74,7 +77,7 @@ Item {
         precision: ShellState.clockShowSeconds ? SystemClock.Seconds : SystemClock.Minutes
     }
 
-    // ==================== 1. LEFT POD: SPACES, APP TITLE & QUICK LAUNCH ====================
+    // ==================== 1. LEFT POD: PRIMARY LAUNCHER, STRETCHING WORKSPACES & APP ====================
     Rectangle {
         id: leftPod
         anchors.left: parent.left
@@ -82,18 +85,16 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: ShellState.splitTopMargin
         height: root.podHeight
-        width: Math.min(leftRow.implicitWidth + 18, Math.max(180, Math.round(root.width * 0.35)))
+        width: Math.min(leftRow.implicitWidth + 18, Math.max(180, Math.round(root.width * 0.36)))
         radius: root.podRadius
         color: root.openPanelMode === "left" ? root.activeGlassFill : root.glassFill
-        border.width: root.openPanelMode === "left"
-            ? Math.max(1, Theme.activeControlBorderWidth)
-            : Math.max(1, Theme.islandBorderWidth)
-        border.color: root.openPanelMode === "left"
-            ? Theme.primary
-            : (Theme.islandBorderWidth > 0 ? Theme.islandBorder : Theme.hairlineBorder)
+        border.width: 1
+        border.color: root.openPanelMode === "left" ? Theme.m3Primary : Theme.m3Line
         clip: true
 
-        // Click anywhere on left pod padding to toggle Left Spaces/Quick Hub
+        Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
+        Behavior on border.color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
+
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -109,26 +110,28 @@ Item {
         RowLayout {
             id: leftRow
             anchors.centerIn: parent
-            width: Math.min(implicitWidth, parent.width - 16)
-            spacing: 7
+            width: Math.min(implicitWidth, parent.width - 14)
+            spacing: 8
 
-            // Leading Pod Glyph (LMB: Left Hub, RMB: Split Settings)
+            // DarkShadowShell style primary circular launcher / pod menu button
             Rectangle {
                 visible: ShellState.splitShowLauncherIcon
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: Math.max(20, root.podHeight - 8)
-                implicitHeight: Math.max(20, root.podHeight - 8)
-                radius: Math.min(root.podRadius, Theme.r(10))
-                color: root.openPanelMode === "left"
-                    ? Theme.tileActiveBg
-                    : (spMenuMouse.containsMouse ? Theme.controlFillHover : Theme.withAlpha(Theme.fgSurface, 0.06))
+                implicitWidth: Math.max(22, root.podHeight - 8)
+                implicitHeight: Math.max(22, root.podHeight - 8)
+                radius: Theme.isSimple ? 0 : (spMenuMouse.pressed ? Theme.r(7) : Math.round(implicitHeight / 2))
+                color: spMenuMouse.containsMouse ? Qt.lighter(Theme.m3Primary, 1.08) : Theme.m3Primary
+                scale: spMenuMouse.pressed ? 0.92 : 1.0
+
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160; easing.type: Theme.m3Springy } }
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 100 } }
 
                 Text {
                     anchors.centerIn: parent
                     text: ShellState.menuGlyphFor(ShellState.splitMenuIcon)
                     font.family: Theme.iconFont
                     font.pixelSize: Theme.fs(12)
-                    color: root.openPanelMode === "left" ? Theme.primary : Theme.fgSurface
+                    color: Theme.m3OnPrimary
                 }
 
                 MouseArea {
@@ -146,118 +149,53 @@ Item {
                 }
             }
 
-            // Workspaces Strip (Scroll wheel cycles 1..9 tags)
-            Item {
+            // Stretching Active Pill Workspaces Strip (WsStrip style)
+            M3WsStrip {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowWorkspaces
-                implicitWidth: wsRow.implicitWidth
-                implicitHeight: 20
-
-                WheelHandler {
-                    onWheel: event => root.switchTagRelative(event.angleDelta.y > 0 ? -1 : 1)
-                }
-
-                Row {
-                    id: wsRow
-                    anchors.centerIn: parent
-                    spacing: 3
-
-                    Repeater {
-                        model: root.visibleTags
-
-                        delegate: Rectangle {
-                            id: spTag
-                            required property var modelData
-                            readonly property bool isActive: spTag.modelData.is_active
-                            readonly property bool isUrgent: spTag.modelData.is_urgent
-                            readonly property bool isOccupied: spTag.modelData.client_count > 0
-
-                            width: spTag.isActive ? 20 : 18
-                            height: 18
-                            radius: Theme.r(6)
-                            color: {
-                                if (spTag.isUrgent) return Theme.error;
-                                if (spTag.isActive) return Theme.isDark ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.11);
-                                if (spTagMouse.containsMouse) return Theme.controlFillHover;
-                                return "transparent";
-                            }
-                            border.width: spTag.isActive ? Theme.activeControlBorderWidth : 0
-                            border.color: Theme.primary
-
-                            Text {
-                                anchors.centerIn: parent
-                                anchors.verticalCenterOffset: (spTag.isOccupied && !spTag.isActive && !spTag.isUrgent) ? -1 : 0
-                                text: spTag.modelData.index
-                                font.family: Theme.monoFont
-                                font.pixelSize: Theme.fs(10)
-                                font.weight: spTag.isActive ? Font.Bold : Font.Medium
-                                color: {
-                                    if (spTag.isUrgent) return Theme.fgError;
-                                    if (spTag.isActive) return Theme.fgSurface;
-                                    return spTag.isOccupied ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.55);
-                                }
-                            }
-
-                            Rectangle {
-                                visible: spTag.isOccupied && !spTag.isActive && !spTag.isUrgent
-                                anchors.bottom: parent.bottom
-                                anchors.bottomMargin: 1.5
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: 3
-                                height: 3
-                                radius: 1.5
-                                color: Theme.fgSurfaceVariant
-                            }
-
-                            MouseArea {
-                                id: spTagMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + spTag.modelData.index + ",0"])
-                            }
-                        }
-                    }
-                }
+                model: root.visibleTags
+                barHeight: root.podHeight
+                compact: root.podHeight <= 32
+                onSwitchRequested: wid => Quickshell.execDetached(["mmsg", "dispatch", "view," + wid + ",0"])
+                onRelativeSwitchRequested: delta => root.switchTagRelative(delta)
             }
 
-            // Fallback Tag Badge when Workspaces strip is hidden
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: !ShellState.splitShowWorkspaces
-                implicitHeight: 18
-                implicitWidth: spTagOnly.implicitWidth + 10
-                radius: Theme.r(6)
-                color: Theme.withAlpha(Theme.fgSurface, 0.06)
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spTagOnly.implicitWidth + 14
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3Primary
 
                 Text {
                     id: spTagOnly
                     anchors.centerIn: parent
                     text: "Space " + root.activeTagIndex
                     font.family: Theme.monoFont
-                    font.pixelSize: Theme.fs(9)
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    color: Theme.m3OnPrimary
                 }
             }
 
-            // Tiling Layout Badge
+            // Tonal Tiling Layout Pill
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowLayout
-                implicitHeight: 18
-                implicitWidth: spLayTxt.implicitWidth + 8
-                radius: Theme.r(6)
-                color: spLayMouse.containsMouse ? Theme.controlFillHover : Theme.withAlpha(Theme.fgSurface, 0.06)
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spLayTxt.implicitWidth + 14
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: spLayMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                 Text {
                     id: spLayTxt
                     anchors.centerIn: parent
                     text: root.currentLayout
                     font.family: Theme.monoFont
-                    font.pixelSize: Theme.fs(9)
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: spLayMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    color: spLayMouse.containsMouse ? Theme.m3Ink : Theme.m3InkDim
                 }
 
                 MouseArea {
@@ -269,11 +207,11 @@ Item {
                 }
             }
 
-            // Active App Name & Window Title
+            // Active App & Window Title
             Text {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.fillWidth: true
-                Layout.maximumWidth: 160
+                Layout.maximumWidth: 165
                 visible: ShellState.splitShowAppTitle && MangoState.activeAppName.length > 0
                 elide: Text.ElideRight
                 text: {
@@ -284,14 +222,14 @@ Item {
                     return app;
                 }
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.DemiBold
-                color: Theme.fgSurface
+                font.pixelSize: Theme.fs(11)
+                font.weight: Font.Medium
+                color: Theme.m3Ink
             }
         }
     }
 
-    // ==================== 2. CENTER POD: CLOCK, MEDIA, WEATHER & LIVE ACTIVITY ====================
+    // ==================== 2. CENTER POD: DARKSHADOWSHELL DYNISLAND CAPSULE ====================
     Rectangle {
         id: centerPod
         anchors.horizontalCenter: parent.horizontalCenter
@@ -299,18 +237,18 @@ Item {
         anchors.topMargin: ShellState.splitTopMargin
         height: root.podHeight
         readonly property int maxCenterWidth: Math.max(150, root.width - leftPod.width - rightPod.width - ShellState.splitSideMargin * 2 - 24)
-        width: Math.max(116, Math.min(maxCenterWidth, centerRow.implicitWidth + 24))
+        width: Math.max(118, Math.min(maxCenterWidth, centerRow.implicitWidth + 18))
         radius: root.podRadius
         color: root.openPanelMode === "center"
             ? root.activeGlassFill
-            : (centerMouse.containsMouse ? Qt.lighter(root.glassFill, 1.07) : root.glassFill)
-        border.width: root.openPanelMode === "center"
-            ? Math.max(1, Theme.activeControlBorderWidth)
-            : Math.max(1, Theme.islandBorderWidth)
-        border.color: root.openPanelMode === "center"
-            ? Theme.primary
-            : (Theme.islandBorderWidth > 0 ? Theme.islandBorder : Theme.hairlineBorder)
+            : (centerMouse.containsMouse ? Theme.m3SurfaceHigh : root.glassFill)
+        border.width: 1
+        border.color: root.openPanelMode === "center" ? Theme.m3Primary : Theme.m3Line
         clip: true
+
+        Behavior on width { enabled: !Theme.reducedMotion; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
+        Behavior on border.color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
 
         MouseArea {
             id: centerMouse
@@ -333,18 +271,10 @@ Item {
         RowLayout {
             id: centerRow
             anchors.centerIn: parent
-            width: Math.min(implicitWidth, centerPod.width - 16)
+            width: Math.min(implicitWidth, centerPod.width - 12)
             spacing: 7
 
-            Text {
-                Layout.alignment: Qt.AlignVCenter
-                text: ShellState.formatTime(clock.date)
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fs(12)
-                font.weight: Font.Bold
-                color: Theme.fgSurface
-            }
-
+            // Date label before clock pill (DynIsland "Day, DD/MM" layout)
             Text {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowDate
@@ -352,61 +282,54 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Medium
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
 
-            // Optional Weather Badge
+            // Signature DarkShadowShell primary Time Pill
+            Rectangle {
+                Layout.alignment: Qt.AlignVCenter
+                implicitHeight: Math.max(20, root.podHeight - 8)
+                implicitWidth: spTimeTxt.implicitWidth + 16
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3Primary
+
+                Text {
+                    id: spTimeTxt
+                    anchors.centerIn: parent
+                    text: ShellState.formatTime(clock.date)
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fs(11)
+                    font.weight: Font.Bold
+                    color: Theme.m3OnPrimary
+                }
+            }
+
+            // Optional Weather Pill
             RowLayout {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.weatherEnabled && ShellState.splitShowWeather && ShellState.weatherAvailable
                 spacing: 3
-                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
-                Text { text: ShellState.weatherTemp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
+                Text { text: ShellState.weatherIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.m3InkDim }
+                Text { text: ShellState.weatherTemp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: Theme.m3Ink }
             }
 
-            // Circular Vinyl Art + Media Label + Equalizer
+            // Circular Spinning Cover Art (M3ShapeImage) + Track + Equalizer
             RowLayout {
                 Layout.alignment: Qt.AlignVCenter
                 visible: root.hasMedia
                 spacing: 6
 
-                ClippingRectangle {
+                M3ShapeImage {
                     Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: 18
-                    implicitHeight: 18
-                    radius: 9
-                    color: Theme.primaryContainer
-                    contentUnderBorder: false
-                    contentInsideBorder: true
-
-                    rotation: 0
-                    RotationAnimation on rotation {
-                        from: 0
-                        to: 360
-                        duration: 12000
-                        loops: Animation.Infinite
-                        running: root.visible && root.isPlaying && spMediaImg.visible && ShellState.pillSpinArt && !Theme.reducedMotion
-                    }
-
-                    Image {
-                        id: spMediaImg
-                        anchors.fill: parent
-                        source: root.artUrl
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        cache: true
-                        sourceSize: Qt.size(40, 40)
-                        visible: root.artUrl.length > 0 && status === Image.Ready
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        visible: !spMediaImg.visible
-                        text: "󰎈"
-                        font.family: Theme.iconFont
-                        font.pixelSize: Theme.fs(10)
-                        color: Theme.fgPrimaryContainer
-                    }
+                    implicitWidth: Math.max(20, root.podHeight - 8)
+                    implicitHeight: Math.max(20, root.podHeight - 8)
+                    kind: "circle"
+                    source: root.artUrl
+                    empty: Theme.m3PrimaryContainer
+                    fallbackGlyph: "󰎈"
+                    fallbackColor: Theme.m3OnPrimaryContainer
+                    spinning: root.visible && root.isPlaying && ShellState.pillSpinArt
+                    spinDurationMs: 14000
                 }
 
                 Text {
@@ -417,7 +340,7 @@ Item {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Medium
-                    color: root.isPlaying ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    color: root.isPlaying ? Theme.m3Ink : Theme.m3InkDim
                 }
 
                 Row {
@@ -428,7 +351,7 @@ Item {
                     Repeater {
                         model: [
                             { minH: 4, maxH: 12, dur: 420 },
-                            { minH: 6, maxH: 14, dur: 310 },
+                            { minH: 6, maxH: 15, dur: 310 },
                             { minH: 3, maxH: 10, dur: 480 }
                         ]
                         delegate: Rectangle {
@@ -438,7 +361,7 @@ Item {
                             height: spEqBar.modelData.minH
                             radius: 1.25
                             anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.primary
+                            color: Theme.m3Primary
 
                             SequentialAnimation on height {
                                 running: root.visible && root.isPlaying && ShellState.pillShowEqualizer && !Theme.reducedMotion
@@ -451,20 +374,20 @@ Item {
                 }
             }
 
-            // Live Activity Pills (REC, Game, Timer, Stopwatch, FM Progress)
+            // Live Activity Pills (REC, Game, Timer, Stopwatch, FM)
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.recordingActive
-                implicitHeight: 18
-                implicitWidth: spRecRow.implicitWidth + 8
-                radius: Theme.r(7)
-                color: Theme.withAlpha(Theme.error, 0.22)
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spRecRow.implicitWidth + 12
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3ErrorContainer
                 RowLayout {
                     id: spRecRow
                     anchors.centerIn: parent
-                    spacing: 3
-                    Text { text: "󰑊"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.error }
-                    Text { text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.error }
+                    spacing: 4
+                    Text { text: "󰑊"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.m3Error }
+                    Text { text: "REC " + ShellState.formatTimer(ShellState.recordingElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3OnErrorContainer }
                 }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/record-screen.sh"), "stop"]) }
             }
@@ -472,64 +395,64 @@ Item {
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.timerActive
-                implicitHeight: 18
-                implicitWidth: spTmRow.implicitWidth + 8
-                radius: Theme.r(7)
-                color: Theme.controlFillHover
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spTmRow.implicitWidth + 12
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3SecondaryContainer
                 RowLayout {
                     id: spTmRow
                     anchors.centerIn: parent
-                    spacing: 3
-                    Text { text: "󰔛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.primary }
-                    Text { text: ShellState.formatTimer(ShellState.timerRemainingSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                    spacing: 4
+                    Text { text: "󰔛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.m3Primary }
+                    Text { text: ShellState.formatTimer(ShellState.timerRemainingSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3OnSecondaryContainer }
                 }
             }
 
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.stopwatchActive
-                implicitHeight: 18
-                implicitWidth: spSwRow.implicitWidth + 8
-                radius: Theme.r(7)
-                color: Theme.controlFillHover
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spSwRow.implicitWidth + 12
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3SecondaryContainer
                 RowLayout {
                     id: spSwRow
                     anchors.centerIn: parent
-                    spacing: 3
-                    Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.secondary }
-                    Text { text: ShellState.formatTimer(ShellState.stopwatchElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.fgSurface }
+                    spacing: 4
+                    Text { text: "󱎫"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.m3Primary }
+                    Text { text: ShellState.formatTimer(ShellState.stopwatchElapsedSec); font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.Bold; color: Theme.m3OnSecondaryContainer }
                 }
             }
 
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.gameModeActive
-                implicitHeight: 18
-                implicitWidth: 20
-                radius: Theme.r(7)
-                color: Theme.tileActiveBg
-                Text { anchors.centerIn: parent; text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.primary }
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: Math.max(22, root.podHeight - 10)
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3PrimaryContainer
+                Text { anchors.centerIn: parent; text: "󰊴"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.m3OnPrimaryContainer }
             }
 
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.fmOpActive
-                implicitHeight: 18
-                implicitWidth: spFmRow.implicitWidth + 8
-                radius: Theme.r(7)
-                color: Theme.controlFillHover
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spFmRow.implicitWidth + 12
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3SurfaceHigh
                 RowLayout {
                     id: spFmRow
                     anchors.centerIn: parent
-                    spacing: 3
-                    Text { text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurface }
-                    Text { text: Math.round(ShellState.fmOpProgress * 100) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurface }
+                    spacing: 4
+                    Text { text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.m3Primary }
+                    Text { text: Math.round(ShellState.fmOpProgress * 100) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); color: Theme.m3Ink }
                 }
             }
         }
     }
 
-    // ==================== 3. RIGHT POD: TELEMETRY, SYSTEM STATUS & CONTROL CENTER ====================
+    // ==================== 3. RIGHT POD: TELEMETRY, TRAY, VOLUME & CONTROL CENTER ====================
     Rectangle {
         id: rightPod
         anchors.right: parent.right
@@ -542,13 +465,14 @@ Item {
         color: (root.openPanelMode === "controls" || root.openPanelMode === "notifications")
             ? root.activeGlassFill
             : root.glassFill
-        border.width: (root.openPanelMode === "controls" || root.openPanelMode === "notifications")
-            ? Math.max(1, Theme.activeControlBorderWidth)
-            : Math.max(1, Theme.islandBorderWidth)
+        border.width: 1
         border.color: (root.openPanelMode === "controls" || root.openPanelMode === "notifications")
-            ? Theme.primary
-            : (Theme.islandBorderWidth > 0 ? Theme.islandBorder : Theme.hairlineBorder)
+            ? Theme.m3Primary
+            : Theme.m3Line
         clip: true
+
+        Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
+        Behavior on border.color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
 
         MouseArea {
             anchors.fill: parent
@@ -565,23 +489,23 @@ Item {
         RowLayout {
             id: rightRow
             anchors.centerIn: parent
-            width: Math.min(implicitWidth, parent.width - 16)
-            spacing: 6
+            width: Math.min(implicitWidth, parent.width - 14)
+            spacing: 5
 
             RowLayout {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowSystem
                 spacing: 5
-                Text { text: "󰍛 " + Math.round(SystemTelemetry.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: SystemTelemetry.cpuPercent > 85 ? Theme.error : Theme.fgSurfaceVariant }
-                Text { text: "󰘚 " + Math.round(SystemTelemetry.memPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: SystemTelemetry.memPercent > 85 ? Theme.warning : Theme.fgSurfaceVariant }
+                Text { text: "󰍛 " + Math.round(SystemTelemetry.cpuPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: SystemTelemetry.cpuPercent > 85 ? Theme.m3Error : Theme.m3InkDim }
+                Text { text: "󰘚 " + Math.round(SystemTelemetry.memPercent) + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: SystemTelemetry.memPercent > 85 ? Theme.warning : Theme.m3InkDim }
             }
 
             RowLayout {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowNetSpeed
                 spacing: 4
-                Text { text: "󰇚 " + SystemTelemetry.netDown; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
-                Text { text: "󰕒 " + SystemTelemetry.netUp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurfaceVariant }
+                Text { text: "󰇚 " + SystemTelemetry.netDown; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.m3InkDim }
+                Text { text: "󰕒 " + SystemTelemetry.netUp; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.m3InkDim }
             }
 
             SystemTrayStrip {
@@ -591,31 +515,31 @@ Item {
                 compact: true
             }
 
-            // Volume Control (LMB: mute, Wheel: +/-5%, RMB: cycle audio output sink)
+            // Tonal Volume Pill
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowVolume && DeviceCaps.hasAudio
-                implicitHeight: 20
-                implicitWidth: spVolRow.implicitWidth + 8
-                radius: Theme.r(6)
-                color: spVolMouse.containsMouse ? Theme.controlFillHover : "transparent"
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spVolRow.implicitWidth + 12
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: spVolMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
 
                 RowLayout {
                     id: spVolRow
                     anchors.centerIn: parent
-                    spacing: 3
+                    spacing: 4
                     Text {
                         text: MangoState.volMuted ? "󰝟" : (MangoState.volPercent <= 50 ? "󰖀" : "󰕾")
                         font.family: Theme.iconFont
-                        font.pixelSize: Theme.fs(12)
-                        color: MangoState.volMuted ? Theme.withAlpha(Theme.fgSurfaceVariant, 0.65) : Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(11)
+                        color: MangoState.volMuted ? Theme.m3InkDim : Theme.m3Primary
                     }
                     Text {
                         text: MangoState.volMuted ? "Mute" : (MangoState.volPercent + "%")
                         font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.DemiBold
-                        color: MangoState.volMuted ? Theme.withAlpha(Theme.fgSurfaceVariant, 0.65) : Theme.fgSurfaceVariant
+                        color: MangoState.volMuted ? Theme.m3InkDim : Theme.m3Ink
                     }
                 }
 
@@ -635,91 +559,117 @@ Item {
                 }
             }
 
-            // Keyboard Layout Badge
+            // Keyboard Layout Pill
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowKbLayout && MangoState.kbLayoutShort.length > 0
-                implicitHeight: 18
-                implicitWidth: spKbRow.implicitWidth + 8
-                radius: Theme.r(5)
-                color: Theme.withAlpha(Theme.fgSurface, 0.06)
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spKbRow.implicitWidth + 12
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3SurfaceC
 
                 RowLayout {
                     id: spKbRow
                     anchors.centerIn: parent
                     spacing: 3
-                    Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(9); color: Theme.fgSurfaceVariant }
-                    Text { text: MangoState.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.fgSurface }
+                    Text { text: "󰌌"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(10); color: Theme.m3InkDim }
+                    Text { text: MangoState.kbLayoutShort; font.family: Theme.monoFont; font.pixelSize: Theme.fs(9); font.weight: Font.DemiBold; color: Theme.m3Ink }
                 }
             }
 
-            // Quick DND / Keep Awake status chips
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.dnd
-                implicitWidth: 20; implicitHeight: 20; radius: Theme.r(6)
-                color: spDndMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                Text { anchors.centerIn: parent; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
+                implicitWidth: Math.max(20, root.podHeight - 10)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: spDndMouse.containsMouse ? Theme.m3SecondaryContainer : Theme.m3SurfaceC
+                Text { anchors.centerIn: parent; text: "󰂛"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.m3Primary }
                 MouseArea { id: spDndMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleDnd() }
             }
 
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.keepAwake
-                implicitWidth: 20; implicitHeight: 20; radius: Theme.r(6)
-                color: spAwakeMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                Text { anchors.centerIn: parent; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurfaceVariant }
+                implicitWidth: Math.max(20, root.podHeight - 10)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: spAwakeMouse.containsMouse ? Theme.m3SecondaryContainer : Theme.m3SurfaceC
+                Text { anchors.centerIn: parent; text: "󰅶"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.m3Primary }
                 MouseArea { id: spAwakeMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ShellState.toggleKeepAwake() }
             }
 
-            // Battery
-            RowLayout {
+            // Battery Pill
+            Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowBattery && DeviceCaps.hasBattery
-                spacing: 3
-                Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: DeviceCaps.batteryLow ? Theme.error : (DeviceCaps.batteryCharging ? Theme.success : Theme.fgSurfaceVariant) }
-                Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.error : Theme.fgSurfaceVariant }
+                implicitHeight: Math.max(20, root.podHeight - 10)
+                implicitWidth: spBatRow.implicitWidth + 12
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: DeviceCaps.batteryLow ? Theme.m3ErrorContainer : Theme.m3SurfaceC
+
+                RowLayout {
+                    id: spBatRow
+                    anchors.centerIn: parent
+                    spacing: 3
+                    Text { text: DeviceCaps.batteryIcon; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: DeviceCaps.batteryLow ? Theme.m3Error : (DeviceCaps.batteryCharging ? Theme.m3Primary : Theme.m3InkDim) }
+                    Text { text: DeviceCaps.batteryPercent + "%"; font.family: Theme.monoFont; font.pixelSize: Theme.fs(10); font.weight: Font.DemiBold; color: DeviceCaps.batteryLow ? Theme.m3OnErrorContainer : Theme.m3Ink }
+                }
             }
 
-            // App Store Button
+            // Store Circular Tonal Button
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowStore
-                implicitWidth: 20; implicitHeight: 20; radius: Theme.r(6)
-                color: spStoreMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                Text { anchors.centerIn: parent; text: "󰏖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spStoreMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
+                implicitWidth: Math.max(22, root.podHeight - 9)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: spStoreMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent"
+                Text { anchors.centerIn: parent; text: "󰏖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spStoreMouse.containsMouse ? Theme.m3Ink : Theme.m3InkDim }
                 MouseArea { id: spStoreMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openStoreRequested() }
             }
 
-            // Files Button
+            // Files Circular Tonal Button
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.splitShowFiles
-                implicitWidth: 20; implicitHeight: 20; radius: Theme.r(6)
-                color: spFilesMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spFilesMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
+                implicitWidth: Math.max(22, root.podHeight - 9)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: spFilesMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent"
+                Text { anchors.centerIn: parent; text: "󰉋"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: spFilesMouse.containsMouse ? Theme.m3Ink : Theme.m3InkDim }
                 MouseArea { id: spFilesMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.openFilesRequested("") }
             }
 
             // Spotlight Trigger
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: 20; implicitHeight: 20; radius: Theme.r(6)
+                implicitWidth: Math.max(22, root.podHeight - 9)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
                 color: root.openPanelMode === "launcher"
-                    ? Theme.tileActiveBg
-                    : (spSpotMouse.containsMouse ? Theme.controlFillHover : "transparent")
-                Text { anchors.centerIn: parent; text: "󰍉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: Theme.fgSurface }
+                    ? Theme.m3SecondaryContainer
+                    : (spSpotMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
+                Text { anchors.centerIn: parent; text: "󰍉"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(11); color: root.openPanelMode === "launcher" ? Theme.m3OnSecondaryContainer : Theme.m3Ink }
                 MouseArea { id: spSpotMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.toggleSpotlightRequested() }
             }
 
             // Control Center Button
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: 22; implicitHeight: 20; radius: Theme.r(6)
+                implicitWidth: Math.max(22, root.podHeight - 9)
+                implicitHeight: implicitWidth
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
                 color: root.openPanelMode === "controls"
-                    ? Theme.tileActiveBg
-                    : (spCcMouse.containsMouse ? Theme.controlFillHover : "transparent")
-                Text { anchors.centerIn: parent; text: "󰕰"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: root.openPanelMode === "controls" ? Theme.primary : Theme.fgSurface }
+                    ? Theme.m3Primary
+                    : (spCcMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰕰"
+                    font.family: Theme.iconFont
+                    font.pixelSize: Theme.fs(11)
+                    color: root.openPanelMode === "controls" ? Theme.m3OnPrimary : Theme.m3Ink
+                }
                 MouseArea {
                     id: spCcMouse
                     anchors.fill: parent
@@ -735,15 +685,15 @@ Item {
                 }
             }
 
-            // Notifications Button (with unread badge)
+            // Notifications Button (with unread badge pill)
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: spNotifRow.implicitWidth + 8
-                implicitHeight: 20
-                radius: Theme.r(6)
+                implicitWidth: ShellState.unreadCount > 0 ? (spNotifRow.implicitWidth + 12) : Math.max(22, root.podHeight - 9)
+                implicitHeight: Math.max(22, root.podHeight - 9)
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
                 color: root.openPanelMode === "notifications"
-                    ? Theme.tileActiveBg
-                    : (spNotifMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                    ? Theme.m3Primary
+                    : (ShellState.unreadCount > 0 ? Theme.m3PrimaryContainer : (spNotifMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC))
 
                 RowLayout {
                     id: spNotifRow
@@ -754,16 +704,18 @@ Item {
                         text: "󰂚"
                         font.family: Theme.iconFont
                         font.pixelSize: Theme.fs(11)
-                        color: root.openPanelMode === "notifications" || ShellState.unreadCount > 0 ? Theme.primary : Theme.fgSurfaceVariant
+                        color: root.openPanelMode === "notifications"
+                            ? Theme.m3OnPrimary
+                            : (ShellState.unreadCount > 0 ? Theme.m3Primary : Theme.m3InkDim)
                     }
 
                     Text {
                         visible: ShellState.unreadCount > 0
                         text: String(ShellState.unreadCount)
                         font.family: Theme.monoFont
-                        font.pixelSize: Theme.fs(8)
+                        font.pixelSize: Theme.fs(9)
                         font.weight: Font.Bold
-                        color: Theme.primary
+                        color: root.openPanelMode === "notifications" ? Theme.m3OnPrimary : Theme.m3OnPrimaryContainer
                     }
                 }
 

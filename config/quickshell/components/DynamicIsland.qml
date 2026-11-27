@@ -247,8 +247,8 @@ Item {
             return Math.round(Theme.r(Math.round(ShellState.pillHeight / 2) + 1));
         }
         if (root.islandState === "osd" || root.islandState === "notification")
-            return Math.round(Theme.r(24));
-        return Math.round(Theme.r(26));
+            return Math.round(Theme.r(26));
+        return Math.round(Theme.r(30));
     }
 
     Connections {
@@ -322,9 +322,11 @@ Item {
         visible: !hiddenInSimple
         clip: true
 
-        color: root.splitCollapsed ? "transparent" : Theme.notchBg
-        border.width: root.splitCollapsed ? 0 : Theme.islandBorderWidth
-        border.color: Theme.islandBorder
+        color: root.splitCollapsed
+            ? "transparent"
+            : (root.islandState === "collapsed" ? Theme.m3BarBg : Theme.m3PanelBg)
+        border.width: root.splitCollapsed ? 0 : Math.max(1, Theme.islandBorderWidth)
+        border.color: root.splitCollapsed ? "transparent" : Theme.islandBorder
 
         Behavior on width {
             enabled: !Theme.reducedMotion

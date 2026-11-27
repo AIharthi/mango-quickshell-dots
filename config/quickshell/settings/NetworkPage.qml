@@ -204,10 +204,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: ifaceCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: ifaceCol
@@ -372,10 +372,10 @@ ColumnLayout {
         visible: root.hasNmcli && root.connections.length > 0
         Layout.fillWidth: true
         implicitHeight: nmCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: nmCol
@@ -512,10 +512,10 @@ ColumnLayout {
         visible: DeviceCaps.hasWifi
         Layout.fillWidth: true
         implicitHeight: 48
-        radius: Theme.r(14)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         RowLayout {
             anchors.fill: parent
@@ -674,10 +674,10 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: netCol.implicitHeight + 24
         visible: DeviceCaps.hasWifi && root.wifiEnabled
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: netCol

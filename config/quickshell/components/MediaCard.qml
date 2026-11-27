@@ -3,7 +3,9 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Widgets
 import ".."
+import "../m3"
 
+// Material 3 Expressive media card modeled on DarkShadowShell ControlCenter & DynIsland.
 ClippingRectangle {
     id: root
 
@@ -17,14 +19,11 @@ ClippingRectangle {
     readonly property bool isPlaying: root.player !== null && root.player.isPlaying
     readonly property real trackLength: (root.player && root.player.length > 0) ? root.player.length : 0
     readonly property string artUrl: (root.player && root.player.trackArtUrl) ? root.player.trackArtUrl : ""
-
-    property int _eqPhase: 0
-    Timer {
-        interval: 260
-        repeat: true
-        running: root.active && root.isPlaying && !Theme.reducedMotion
-        onTriggered: root._eqPhase = (root._eqPhase + 1) % 6
-    }
+    readonly property bool wideArt: root.width >= 360
+    readonly property bool canSeek: root.hasPlayer && root.player.canSeek && root.player.positionSupported && root.trackLength > 0
+    readonly property real progressRatio: (root.trackLength > 0)
+        ? Math.max(0.0, Math.min(1.0, root.displayPosition / root.trackLength))
+        : 0.0
 
     function formatTime(secs: real): string {
         if (!secs || secs < 0 || isNaN(secs))
@@ -35,6 +34,24 @@ ClippingRectangle {
         return m + ":" + (s < 10 ? "0" + s : s);
     }
 
+    function seekToRatio(ratio: real): void {
+        if (!root.canSeek)
+            return;
+        const clamped = Math.max(0.0, Math.min(1.0, ratio));
+        const targetSec = clamped * root.trackLength;
+        root.displayPosition = targetSec;
+        const delta = targetSec - (root.player.position || 0);
+        root.player.seek(delta);
+    }
+
+    function seekRelative(deltaSec: real): void {
+        if (!root.canSeek)
+            return;
+        const targetSec = Math.max(0, Math.min(root.trackLength, root.displayPosition + deltaSec));
+        root.displayPosition = targetSec;
+        root.player.seek(targetSec - (root.player.position || 0));
+    }
+
     onPlayerChanged: {
         root.displayPosition = (root.player && root.player.position >= 0) ? root.player.position : 0;
     }
@@ -43,7 +60,7 @@ ClippingRectangle {
         target: root.player
         ignoreUnknownSignals: true
         function onPositionChanged(): void {
-            if (!seekArea.pressed && root.player)
+            if (!wavyProgress.isDragging && root.player)
                 root.displayPosition = root.player.position;
         }
         function onPostTrackChanged(): void {
@@ -55,7 +72,7 @@ ClippingRectangle {
     Timer {
         interval: 1000
         repeat: true
-        running: root.active && root.isPlaying && !seekArea.pressed
+        running: root.active && root.isPlaying && !wavyProgress.isDragging
         onTriggered: {
             if (!root.player)
                 return;
@@ -69,144 +86,70 @@ ClippingRectangle {
         }
     }
 
-    radius: Theme.r(18)
-    implicitHeight: mediaCol.implicitHeight + 24
-    color: Theme.cardBg
-    border.width: Theme.cardBorderWidth
-    border.color: Theme.cardBorder
+    radius: Theme.r(28)
+    implicitHeight: Math.max(154, mediaRow.implicitHeight + 24)
+    color: Theme.m3SurfaceC
+    border.width: 1
+    border.color: Theme.m3Line
     contentUnderBorder: false
     contentInsideBorder: true
 
-    // Soft faded album art atmosphere
+    // Soft ambient art glow
     Image {
         anchors.fill: parent
         source: root.artUrl
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
-        sourceSize: Qt.size(96, 96)
-        opacity: (root.artUrl.length > 0 && status === Image.Ready && !Theme.isSimple && !Theme.isRetro) ? 0.14 : 0.0
+        sourceSize: Qt.size(64, 64)
+        opacity: (root.artUrl.length > 0 && status === Image.Ready && !Theme.isSimple && !Theme.isRetro) ? 0.12 : 0.0
         visible: opacity > 0.01
     }
 
-    // Subtle top ambient gradient wash
-    Rectangle {
-        anchors.fill: parent
-        visible: !Theme.isSimple
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.withAlpha(Theme.primary, root.isPlaying ? 0.15 : 0.07) }
-            GradientStop { position: 0.65; color: "transparent" }
-        }
-    }
-
-    ColumnLayout {
-        id: mediaCol
+    RowLayout {
+        id: mediaRow
         anchors.fill: parent
         anchors.margins: 12
-        spacing: 8
+        spacing: 14
 
-        // --- Header + Album Info ---
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            spacing: 10
+        // Left: Cookie-shaped album art inside wavy circular progress ring
+        Item {
+            id: artFrame
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: root.wideArt ? 116 : 86
+            implicitHeight: root.wideArt ? 116 : 86
 
-            ClippingRectangle {
-                implicitWidth: 52
-                implicitHeight: 52
-                radius: Theme.r(12)
-                color: Theme.primaryContainer
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.primary
-                contentUnderBorder: false
-                contentInsideBorder: true
-
-                Image {
-                    id: coverImg
-                    anchors.fill: parent
-                    source: root.artUrl
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    cache: true
-                    sourceSize: Qt.size(120, 120)
-                    visible: root.artUrl.length > 0 && status === Image.Ready
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: !coverImg.visible
-                    text: "󰓇"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 22
-                    color: Theme.fgPrimaryContainer
-                }
+            M3WavyArc {
+                anchors.fill: parent
+                value: root.hasPlayer ? root.progressRatio : 0.0
+                moving: root.active && root.isPlaying
+                color: Theme.m3Primary
+                track: Theme.m3Track
             }
 
-            ColumnLayout {
+            M3ShapeImage {
+                anchors.centerIn: parent
+                width: root.wideArt ? 88 : 64
+                height: root.wideArt ? 88 : 64
+                kind: Theme.isSimple ? "square" : "cookie"
+                source: root.artUrl
+                empty: Theme.m3PrimaryContainer
+                fallbackGlyph: "󰓇"
+                fallbackColor: Theme.m3OnPrimaryContainer
+                spinning: root.active && root.isPlaying && ShellState.pillSpinArt
+                spinDurationMs: 24000
+            }
+        }
+
+        // Right: Track info + M3WavyLine + 5 morphing M3 transport buttons
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+            spacing: 4
+
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: 2
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    Rectangle {
-                        visible: root.hasPlayer
-                        implicitHeight: 16
-                        implicitWidth: badgeText.implicitWidth + 10
-                        radius: Theme.r(8)
-                        color: root.isPlaying
-                            ? Theme.tileActiveBg
-                            : Theme.subCardBg
-                        border.width: Theme.activeControlBorderWidth
-                        border.color: Theme.primary
-
-                        Text {
-                            id: badgeText
-                            anchors.centerIn: parent
-                            text: root.hasPlayer
-                                ? (root.player.identity || "Media")
-                                : ""
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 9
-                            font.weight: Font.Bold
-                            color: root.isPlaying ? Theme.fgSurface : Theme.fgSurfaceVariant
-                        }
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    // 4-Bar Animated Equalizer when playing
-                    Row {
-                        visible: root.isPlaying
-                        spacing: 2
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Repeater {
-                            model: [
-                                [5, 11, 8, 13, 6, 10],
-                                [10, 6, 13, 8, 12, 5],
-                                [7, 13, 6, 11, 8, 13],
-                                [12, 8, 10, 5, 13, 7]
-                            ]
-
-                            delegate: Rectangle {
-                                id: eqBar
-                                required property var modelData
-                                width: 2.5
-                                height: Theme.reducedMotion ? 9 : eqBar.modelData[root._eqPhase % 6]
-                                anchors.verticalCenter: parent.verticalCenter
-                                radius: Theme.r(1.5)
-                                color: Theme.primary
-
-                                Behavior on height {
-                                    enabled: !Theme.reducedMotion
-                                    NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-                                }
-                            }
-                        }
-                    }
-                }
+                spacing: 6
 
                 Text {
                     Layout.fillWidth: true
@@ -216,117 +159,71 @@ ClippingRectangle {
                     elide: Text.ElideRight
                     maximumLineCount: 1
                     font.family: Theme.fontFamily
-                    font.pixelSize: 13
-                    font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    font.pixelSize: Theme.fs(14)
+                    font.weight: Font.DemiBold
+                    color: Theme.m3Ink
                 }
 
-                Text {
-                    Layout.fillWidth: true
-                    text: {
-                        if (!root.player)
-                            return "Open Spotify or any MPRIS player";
-                        const artist = root.player.trackArtist || "";
-                        const album = root.player.trackAlbum || "";
-                        if (artist && album)
-                            return artist + " · " + album;
-                        return artist || album || "Ready";
+                Rectangle {
+                    visible: root.hasPlayer
+                    implicitHeight: 20
+                    implicitWidth: badgeText.implicitWidth + 12
+                    radius: Theme.r(10)
+                    color: root.isPlaying ? Theme.m3PrimaryContainer : Theme.m3SurfaceHigh
+
+                    Text {
+                        id: badgeText
+                        anchors.centerIn: parent
+                        text: root.hasPlayer ? (root.player.identity || "Media") : ""
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(9)
+                        font.weight: Font.Bold
+                        color: root.isPlaying ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                     }
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    color: Theme.fgSurfaceVariant
                 }
             }
-        }
 
-        // --- Interactive Track Progress Bar ---
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            spacing: 3
-
-            Item {
-                id: seekBar
+            Text {
                 Layout.fillWidth: true
-                implicitHeight: 14
-
-                readonly property real progressRatio: (root.trackLength > 0)
-                    ? Math.max(0.0, Math.min(1.0, root.displayPosition / root.trackLength))
-                    : 0.0
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width
-                    height: 5
-                    radius: Theme.r(2.5)
-                    color: Theme.surfaceContainerHighest
-
-                    Rectangle {
-                        height: parent.height
-                        width: parent.width * seekBar.progressRatio
-                        radius: Theme.r(2.5)
-                        color: Theme.primary
-
-                        Behavior on width {
-                            enabled: !seekArea.pressed && !Theme.isSimple
-                            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
-                        }
-                    }
+                text: {
+                    if (!root.player)
+                        return "Open Spotify or any MPRIS player";
+                    const artist = root.player.trackArtist || "";
+                    const album = root.player.trackAlbum || "";
+                    if (artist && album)
+                        return artist + "  ·  " + album;
+                    return artist || album || "Ready";
                 }
+                elide: Text.ElideRight
+                maximumLineCount: 1
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(11)
+                color: Theme.m3InkDim
+            }
 
-                Rectangle {
-                    width: seekArea.containsMouse || seekArea.pressed ? 12 : 0
-                    height: width
-                    radius: Theme.r(width / 2)
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Math.max(0, Math.min(parent.width - width, parent.width * seekBar.progressRatio - width / 2))
-                    color: Theme.primary
-                    visible: root.hasPlayer && root.trackLength > 0
-
-                    Behavior on width {
-                        enabled: !Theme.isSimple
-                        NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
-                    }
-                }
-
-                MouseArea {
-                    id: seekArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: root.hasPlayer && root.player.canSeek && root.player.positionSupported && root.trackLength > 0
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-
-                    function seekToMouse(mx: real): void {
-                        const ratio = Math.max(0.0, Math.min(1.0, mx / width));
-                        const targetSec = ratio * root.trackLength;
-                        root.displayPosition = targetSec;
-                        const delta = targetSec - (root.player.position || 0);
-                        root.player.seek(delta);
-                    }
-
-                    onPressed: mouse => {
-                        root.seekingChanged(true);
-                        seekToMouse(mouse.x);
-                    }
-                    onPositionChanged: mouse => {
-                        if (pressed)
-                            seekToMouse(mouse.x);
-                    }
-                    onReleased: root.seekingChanged(false)
-                    onCanceled: root.seekingChanged(false)
-                }
+            M3WavyLine {
+                id: wavyProgress
+                Layout.fillWidth: true
+                Layout.topMargin: 2
+                implicitHeight: 20
+                value: root.progressRatio
+                moving: root.active && root.isPlaying
+                seekable: root.canSeek
+                color: Theme.m3Primary
+                track: Theme.m3Track
+                onMoved: v => root.seekToRatio(v)
+                onDraggingChanged: active => root.seekingChanged(active)
             }
 
             RowLayout {
                 Layout.fillWidth: true
+                visible: root.trackLength > 0
 
                 Text {
                     text: root.formatTime(root.displayPosition)
                     font.family: Theme.monoFont
-                    font.pixelSize: 10
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(10)
+                    color: Theme.m3InkDim
                 }
 
                 Item { Layout.fillWidth: true }
@@ -334,110 +231,82 @@ ClippingRectangle {
                 Text {
                     text: root.formatTime(root.trackLength)
                     font.family: Theme.monoFont
-                    font.pixelSize: 10
-                    color: Theme.fgSurfaceVariant
-                }
-            }
-        }
-
-        // --- Transport Controls (Prev / Play-Pause / Next) ---
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            spacing: 12
-
-            Item { Layout.fillWidth: true }
-
-            Rectangle {
-                implicitWidth: 34
-                implicitHeight: 34
-                radius: Theme.r(17)
-                color: prevArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
-                opacity: (root.hasPlayer && root.player.canGoPrevious) ? 1.0 : 0.45
-                scale: prevArea.pressed ? 0.90 : 1.0
-
-                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "󰒮"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 16
-                    color: Theme.fgSurface
-                }
-
-                MouseArea {
-                    id: prevArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: root.hasPlayer && root.player.canGoPrevious
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: root.player.previous()
+                    font.pixelSize: Theme.fs(10)
+                    color: Theme.m3InkDim
                 }
             }
 
-            // Play / Pause
-            Rectangle {
-                implicitWidth: 46
-                implicitHeight: 34
-                radius: Theme.r(17)
-                color: playArea.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-                opacity: (root.hasPlayer && root.player.canTogglePlaying) ? 1.0 : 0.50
-                scale: playArea.pressed ? 0.90 : 1.0
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 2
+                spacing: 5
 
-                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+                Repeater {
+                    model: [
+                        { id: "prev",   icon: "󰒮", big: false, extra: false },
+                        { id: "back",   icon: "󰓕", big: false, extra: true  },
+                        { id: "toggle", icon: "",  big: true,  extra: false },
+                        { id: "fwd",    icon: "󰓗", big: false, extra: true  },
+                        { id: "next",   icon: "󰒭", big: false, extra: false }
+                    ]
 
-                Text {
-                    anchors.centerIn: parent
-                    text: root.isPlaying ? "󰏤" : "󰐊"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 18
-                    color: Theme.fgPrimary
+                    delegate: Rectangle {
+                        id: tBtn
+                        required property var modelData
+                        readonly property bool isBig: tBtn.modelData.big
+                        readonly property bool isEnabled: {
+                            if (!root.hasPlayer) return false;
+                            if (tBtn.modelData.id === "prev") return root.player.canGoPrevious;
+                            if (tBtn.modelData.id === "next") return root.player.canGoNext;
+                            if (tBtn.modelData.id === "toggle") return root.player.canTogglePlaying;
+                            return root.canSeek;
+                        }
+
+                        visible: !tBtn.modelData.extra || root.width >= 300
+                        implicitWidth: tBtn.isBig ? 52 : 34
+                        implicitHeight: 36
+                        radius: Theme.isSimple ? 0 : Theme.r(tMouse.pressed ? 11 : (tBtn.isBig && root.isPlaying ? 14 : 18))
+                        color: tBtn.isBig
+                            ? Theme.m3Primary
+                            : (tMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                        opacity: tBtn.isEnabled ? 1.0 : 0.42
+                        scale: tMouse.pressed ? 0.92 : 1.0
+
+                        Behavior on radius {
+                            enabled: !Theme.reducedMotion
+                            NumberAnimation { duration: 240; easing.type: Theme.m3Springy; easing.overshoot: 1.5 }
+                        }
+                        Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 130 } }
+                        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: tBtn.isBig ? (root.isPlaying ? "󰏤" : "󰐊") : tBtn.modelData.icon
+                            font.family: Theme.iconFont
+                            font.pixelSize: Theme.fs(tBtn.isBig ? 18 : 14)
+                            color: tBtn.isBig ? Theme.m3OnPrimary : Theme.m3Ink
+                        }
+
+                        MouseArea {
+                            id: tMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            enabled: tBtn.isEnabled
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: {
+                                const act = tBtn.modelData.id;
+                                if (act === "toggle") root.player.togglePlaying();
+                                else if (act === "prev") root.player.previous();
+                                else if (act === "next") root.player.next();
+                                else if (act === "back") root.seekRelative(-10);
+                                else if (act === "fwd") root.seekRelative(10);
+                            }
+                        }
+                    }
                 }
 
-                MouseArea {
-                    id: playArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: root.hasPlayer && root.player.canTogglePlaying
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: root.player.togglePlaying()
-                }
+                Item { Layout.fillWidth: true }
             }
-
-            Rectangle {
-                implicitWidth: 34
-                implicitHeight: 34
-                radius: Theme.r(17)
-                color: nextArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
-                opacity: (root.hasPlayer && root.player.canGoNext) ? 1.0 : 0.45
-                scale: nextArea.pressed ? 0.90 : 1.0
-
-                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "󰒭"
-                    font.family: Theme.iconFont
-                    font.pixelSize: 16
-                    color: Theme.fgSurface
-                }
-
-                MouseArea {
-                    id: nextArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: root.hasPlayer && root.player.canGoNext
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: root.player.next()
-                }
-            }
-
-            Item { Layout.fillWidth: true }
         }
     }
 }

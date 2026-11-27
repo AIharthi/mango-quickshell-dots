@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import ".."
+import "../m3"
 
 ColumnLayout {
     id: root
@@ -1176,28 +1177,26 @@ ColumnLayout {
     readonly property bool anyInputFocused: searchInput.activeFocus || snipTitleInput.activeFocus || snipTagInput.activeFocus || snipBodyInput.activeFocus
     onAnyInputFocusedChanged: root.searchFocusChanged(anyInputFocused)
 
-    // --- macOS Spotlight Search / Expression Bar ---
+    // --- M3 Expressive Spotlight Search / Expression Capsule ---
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: 46
-        Layout.minimumHeight: 46
-        Layout.maximumHeight: 46
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: searchInput.activeFocus ? 1.5 : Theme.cardBorderWidth
-        border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
+        Layout.preferredHeight: 54
+        Layout.minimumHeight: 54
+        Layout.maximumHeight: 54
+        radius: Theme.r(27)
+        color: searchInput.activeFocus ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+        border.width: searchInput.activeFocus ? 2 : 1
+        border.color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
 
-        Behavior on border.color {
-            enabled: !Theme.isSimple
-            ColorAnimation { duration: 150 }
-        }
+        Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
+        Behavior on border.color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 14
-            anchors.rightMargin: 12
-            spacing: 10
+            anchors.leftMargin: 18
+            anchors.rightMargin: 14
+            spacing: 12
 
             Text {
                 text: {
@@ -1209,8 +1208,10 @@ ColumnLayout {
                     return "󰍉";
                 }
                 font.family: Theme.iconFont
-                font.pixelSize: 18
-                color: searchInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
+                font.pixelSize: 20
+                color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3InkDim
+                rotation: searchInput.text.length > 0 ? -12 : 0
+                Behavior on rotation { enabled: !Theme.reducedMotion; NumberAnimation { duration: 280; easing.type: Easing.OutBack } }
             }
 
             Item {
@@ -1231,19 +1232,19 @@ ColumnLayout {
                     elide: Text.ElideRight
                     width: parent.width
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: 13
+                    color: Theme.m3InkDim
                 }
 
                 TextInput {
                     id: searchInput
                     anchors.fill: parent
                     verticalAlignment: TextInput.AlignVCenter
-                    color: Theme.fgSurface
-                    selectionColor: Theme.primary
-                    selectedTextColor: Theme.fgPrimary
+                    color: Theme.m3Ink
+                    selectionColor: Theme.m3Primary
+                    selectedTextColor: Theme.m3OnPrimary
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: 15
                     clip: true
 
                     onTextChanged: {
@@ -1268,17 +1269,17 @@ ColumnLayout {
 
             Rectangle {
                 visible: searchInput.text.length > 0
-                implicitWidth: 22
-                implicitHeight: 22
-                radius: Theme.r(11)
-                color: clrSearchMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                implicitWidth: 28
+                implicitHeight: 28
+                radius: Theme.r(14)
+                color: clrSearchMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰅖"
                     font.family: Theme.iconFont
-                    font.pixelSize: 11
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: 12
+                    color: Theme.m3InkDim
                 }
 
                 MouseArea {
@@ -1294,10 +1295,10 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitHeight: 22
-                implicitWidth: cntBadgeLbl.implicitWidth + 12
-                radius: Theme.r(11)
-                color: Theme.subCardBg
+                implicitHeight: 26
+                implicitWidth: cntBadgeLbl.implicitWidth + 16
+                radius: Theme.r(13)
+                color: Theme.m3SecondaryContainer
 
                 Text {
                     id: cntBadgeLbl
@@ -1306,33 +1307,33 @@ ColumnLayout {
                     font.family: Theme.monoFont
                     font.pixelSize: 9
                     font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    color: Theme.m3OnSecondaryContainer
                 }
             }
         }
     }
 
-    // --- Apple Segmented Mode Bar + Contextual Hints ---
+    // --- M3 Expressive Mode Filter Bar + Contextual Actions ---
     RowLayout {
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: 30
-        Layout.minimumHeight: 30
-        Layout.maximumHeight: 30
+        Layout.preferredHeight: 36
+        Layout.minimumHeight: 36
+        Layout.maximumHeight: 36
         spacing: 8
 
         Rectangle {
-            implicitHeight: 30
-            implicitWidth: modePillRow.implicitWidth + 6
-            radius: Theme.r(15)
-            color: Theme.cardBg
-            border.width: Theme.subBorderWidth
-            border.color: Theme.cardBorder
+            implicitHeight: 36
+            implicitWidth: modePillRow.implicitWidth + 8
+            radius: Theme.r(18)
+            color: Theme.m3SurfaceC
+            border.width: 1
+            border.color: Theme.m3Line
 
             RowLayout {
                 id: modePillRow
                 anchors.centerIn: parent
-                spacing: 2
+                spacing: 3
 
                 Repeater {
                     model: [
@@ -1349,17 +1350,15 @@ ColumnLayout {
                         required property var modelData
                         readonly property bool selected: root.effectiveMode === modeBtn.modelData.id
 
-                        implicitHeight: 24
-                        implicitWidth: modeContent.implicitWidth + 12
-                        radius: Theme.r(12)
+                        implicitHeight: 28
+                        implicitWidth: modeContent.implicitWidth + 14
+                        radius: Theme.r(modeBtn.selected ? 11 : 14)
                         color: modeBtn.selected
-                            ? Theme.primary
-                            : (modeMouse.containsMouse ? Theme.hoverBg : "transparent")
+                            ? Theme.m3Primary
+                            : (modeMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
-                        Behavior on color {
-                            enabled: !Theme.isSimple
-                            ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                        }
+                        Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                        Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
                         RowLayout {
                             id: modeContent
@@ -1370,7 +1369,7 @@ ColumnLayout {
                                 text: modeBtn.modelData.icon
                                 font.family: Theme.iconFont
                                 font.pixelSize: 11
-                                color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                color: modeBtn.selected ? Theme.m3OnPrimary : Theme.m3InkDim
                             }
 
                             Text {
@@ -1378,7 +1377,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 10
                                 font.weight: modeBtn.selected ? Font.Bold : Font.Medium
-                                color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                color: modeBtn.selected ? Theme.m3OnPrimary : Theme.m3InkDim
                             }
                         }
 
@@ -1402,12 +1401,12 @@ ColumnLayout {
         // Clear unpinned clipboard entries button
         Rectangle {
             visible: root.effectiveMode === "clip" && root.clipboardItems.length > 0
-            implicitHeight: 26
-            implicitWidth: clrClipLbl.implicitWidth + 14
-            radius: Theme.r(13)
-            color: clrClipMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.cardBg
-            border.width: Theme.subBorderWidth
-            border.color: clrClipMouse.containsMouse ? Theme.error : Theme.cardBorder
+            implicitHeight: 32
+            implicitWidth: clrClipLbl.implicitWidth + 18
+            radius: Theme.r(clrClipMouse.pressed ? 10 : 16)
+            color: clrClipMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceC
+            border.width: 1
+            border.color: clrClipMouse.containsMouse ? Theme.m3Error : Theme.m3Line
 
             Text {
                 id: clrClipLbl
@@ -1415,8 +1414,8 @@ ColumnLayout {
                 text: "Clear Unpinned"
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
-                font.weight: Font.DemiBold
-                color: clrClipMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                font.weight: Font.Bold
+                color: clrClipMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim
             }
 
             MouseArea {
@@ -1434,12 +1433,12 @@ ColumnLayout {
             spacing: 6
 
             Rectangle {
-                implicitHeight: 26
-                implicitWidth: newSnipLbl.implicitWidth + 14
-                radius: Theme.r(8)
+                implicitHeight: 32
+                implicitWidth: newSnipLbl.implicitWidth + 18
+                radius: Theme.r(16)
                 color: (root.composerOpen && !root._composerClipboardMode)
-                    ? Theme.primary
-                    : (newSnipMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+                    ? Theme.m3Primary
+                    : (newSnipMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                 Text {
                     id: newSnipLbl
@@ -1447,8 +1446,8 @@ ColumnLayout {
                     text: "+ New"
                     font.family: Theme.fontFamily
                     font.pixelSize: 10
-                    font.weight: Font.DemiBold
-                    color: (root.composerOpen && !root._composerClipboardMode) ? Theme.fgPrimary : Theme.fgSurface
+                    font.weight: Font.Bold
+                    color: (root.composerOpen && !root._composerClipboardMode) ? Theme.m3OnPrimary : Theme.m3Ink
                 }
 
                 MouseArea {
@@ -1468,12 +1467,12 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitHeight: 26
-                implicitWidth: clipSnipLbl.implicitWidth + 14
-                radius: Theme.r(8)
+                implicitHeight: 32
+                implicitWidth: clipSnipLbl.implicitWidth + 18
+                radius: Theme.r(16)
                 color: (root.composerOpen && root._composerClipboardMode)
-                    ? Theme.primary
-                    : (clipSnipMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+                    ? Theme.m3Primary
+                    : (clipSnipMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                 Text {
                     id: clipSnipLbl
@@ -1481,8 +1480,8 @@ ColumnLayout {
                     text: "+ Clipboard"
                     font.family: Theme.fontFamily
                     font.pixelSize: 10
-                    font.weight: Font.DemiBold
-                    color: (root.composerOpen && root._composerClipboardMode) ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                    font.weight: Font.Bold
+                    color: (root.composerOpen && root._composerClipboardMode) ? Theme.m3OnPrimary : Theme.m3InkDim
                 }
 
                 MouseArea {
@@ -1509,22 +1508,20 @@ ColumnLayout {
 
             Repeater {
                 model: [
-                    { k: "↑↓", l: "Select" },
-                    { k: "Enter", l: "Open" },
+                    { k: "Nav", l: "Up/Down" },
+                    { k: "Ret", l: "Open" },
                     { k: "Esc", l: "Close" }
                 ]
                 delegate: RowLayout {
                     id: khItem
                     required property var modelData
-                    spacing: 3
+                    spacing: 4
 
                     Rectangle {
-                        implicitHeight: 18
-                        implicitWidth: khTxt.implicitWidth + 8
-                        radius: Theme.r(5)
-                        color: Theme.subCardBg
-                        border.width: Theme.subBorderWidth
-                        border.color: Theme.cardBorder
+                        implicitHeight: 20
+                        implicitWidth: khTxt.implicitWidth + 10
+                        radius: Theme.r(7)
+                        color: Theme.m3SurfaceHigh
 
                         Text {
                             id: khTxt
@@ -1533,7 +1530,7 @@ ColumnLayout {
                             font.family: Theme.monoFont
                             font.pixelSize: 8
                             font.weight: Font.Bold
-                            color: Theme.fgSurface
+                            color: Theme.m3Ink
                         }
                     }
 
@@ -1541,7 +1538,7 @@ ColumnLayout {
                         text: khItem.modelData.l
                         font.family: Theme.fontFamily
                         font.pixelSize: 9
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
                 }
             }
@@ -1552,10 +1549,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Theme.r(18)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(24)
+        color: Theme.m3PaneBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         // 1. Applications List
@@ -1563,8 +1560,8 @@ ColumnLayout {
             id: appList
             visible: root.effectiveMode === "apps"
             anchors.fill: parent
-            anchors.margins: 8
-            spacing: 4
+            anchors.margins: 10
+            spacing: 5
             clip: true
             model: root.filteredApps
 
@@ -1576,38 +1573,26 @@ ColumnLayout {
                 readonly property bool isSelected: appRow.index === root.selectedIndex
 
                 width: appList.width
-                height: 48
-                radius: Theme.r(13)
+                height: 54
+                radius: Theme.r(20)
                 color: appRow.isSelected
-                    ? Theme.rowSelectedBg
-                    : (rowMouse.containsMouse ? Theme.controlFillHover : "transparent")
-                border.width: appRow.isSelected ? Theme.activeControlBorderWidth : 0
-                border.color: Theme.primary
+                    ? Theme.m3PrimaryContainer
+                    : (rowMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
 
-                Rectangle {
-                    visible: appRow.isSelected
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.topMargin: 10
-                    anchors.bottomMargin: 10
-                    width: 3
-                    radius: 1.5
-                    color: Theme.primary
-                }
+                Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 110 } }
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 12
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 14
                     spacing: 12
 
                     Rectangle {
                         Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: 32
-                        implicitHeight: 32
-                        radius: Theme.r(9)
-                        color: appIcon.visible ? "transparent" : Theme.surfaceContainerHigh
+                        implicitWidth: 36
+                        implicitHeight: 36
+                        radius: Theme.r(12)
+                        color: appIcon.visible ? "transparent" : (appRow.isSelected ? Theme.m3Primary : Theme.m3SurfaceHigh)
 
                         IconImage {
                             id: appIcon
@@ -1623,14 +1608,14 @@ ColumnLayout {
                             visible: !appIcon.visible
                             text: "󰣆"
                             font.family: Theme.iconFont
-                            font.pixelSize: 16
-                            color: appRow.isSelected ? Theme.primary : Theme.fgSurfaceVariant
+                            font.pixelSize: 17
+                            color: appRow.isSelected ? Theme.m3OnPrimary : Theme.m3InkDim
                         }
                     }
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 1
+                        spacing: 2
 
                         Text {
                             Layout.fillWidth: true
@@ -1638,9 +1623,9 @@ ColumnLayout {
                             elide: Text.ElideRight
                             maximumLineCount: 1
                             font.family: Theme.fontFamily
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.weight: appRow.isSelected ? Font.Bold : Font.DemiBold
-                            color: appRow.isSelected ? Theme.primary : Theme.fgSurface
+                            color: appRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Ink
                         }
 
                         Text {
@@ -1655,16 +1640,16 @@ ColumnLayout {
                             maximumLineCount: 1
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
-                            color: Theme.fgSurfaceVariant
+                            color: appRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                         }
                     }
 
                     Rectangle {
                         visible: appRow.isSelected
-                        implicitHeight: 22
-                        implicitWidth: openHintLbl.implicitWidth + 14
-                        radius: Theme.r(11)
-                        color: Theme.withAlpha(Theme.primary, 0.22)
+                        implicitHeight: 24
+                        implicitWidth: openHintLbl.implicitWidth + 16
+                        radius: Theme.r(12)
+                        color: Theme.m3Primary
 
                         Text {
                             id: openHintLbl
@@ -1673,7 +1658,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold
-                            color: Theme.primary
+                            color: Theme.m3OnPrimary
                         }
                     }
                 }
@@ -1694,8 +1679,8 @@ ColumnLayout {
             id: clipList
             visible: root.effectiveMode === "clip"
             anchors.fill: parent
-            anchors.margins: 8
-            spacing: 4
+            anchors.margins: 10
+            spacing: 5
             clip: true
             model: root.filteredClipboard
 
@@ -1707,25 +1692,11 @@ ColumnLayout {
                 readonly property bool isSelected: clipRow.index === root.selectedIndex
 
                 width: clipList.width
-                height: 48
-                radius: Theme.r(13)
+                height: 52
+                radius: Theme.r(18)
                 color: clipRow.isSelected
-                    ? Theme.rowSelectedBg
-                    : (clipMouse.containsMouse ? Theme.controlFillHover : "transparent")
-                border.width: clipRow.isSelected ? Theme.activeControlBorderWidth : 0
-                border.color: Theme.primary
-
-                Rectangle {
-                    visible: clipRow.isSelected
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.topMargin: 10
-                    anchors.bottomMargin: 10
-                    width: 3
-                    radius: 1.5
-                    color: Theme.primary
-                }
+                    ? Theme.m3PrimaryContainer
+                    : (clipMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
 
                 MouseArea {
                     id: clipMouse
@@ -1738,24 +1709,24 @@ ColumnLayout {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
                     spacing: 10
 
                     Rectangle {
-                        implicitWidth: 26
-                        implicitHeight: 26
-                        radius: Theme.r(13)
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        radius: Theme.r(14)
                         color: clipRow.modelData.pinned
-                            ? Theme.withAlpha(Theme.primary, 0.22)
-                            : (pinMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
+                            ? Theme.m3Primary
+                            : (pinMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                         Text {
                             anchors.centerIn: parent
                             text: "󰐃"
                             font.family: Theme.iconFont
-                            font.pixelSize: 11
-                            color: clipRow.modelData.pinned ? Theme.primary : Theme.fgSurfaceVariant
+                            font.pixelSize: 12
+                            color: clipRow.modelData.pinned ? Theme.m3OnPrimary : Theme.m3InkDim
                         }
 
                         MouseArea {
@@ -1779,29 +1750,29 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: 11
                             font.weight: clipRow.isSelected ? Font.Bold : Font.Medium
-                            color: clipRow.isSelected ? Theme.primary : Theme.fgSurface
+                            color: clipRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Ink
                         }
 
                         Text {
                             text: (clipRow.modelData.pinned ? "Pinned · " : "") + (clipRow.modelData.time || "")
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
-                            color: Theme.fgSurfaceVariant
+                            color: clipRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                         }
                     }
 
                     Rectangle {
-                        implicitWidth: 26
-                        implicitHeight: 26
-                        radius: Theme.r(13)
-                        color: delMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : "transparent"
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        radius: Theme.r(14)
+                        color: delMouse.containsMouse ? Theme.m3ErrorContainer : "transparent"
 
                         Text {
                             anchors.centerIn: parent
                             text: "󰆴"
                             font.family: Theme.iconFont
                             font.pixelSize: 12
-                            color: delMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                            color: delMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim
                         }
 
                         MouseArea {
@@ -1821,7 +1792,7 @@ ColumnLayout {
             id: calcList
             visible: root.effectiveMode === "calc"
             anchors.fill: parent
-            anchors.margins: 8
+            anchors.margins: 10
             spacing: 6
             clip: true
             model: root.calcResults
@@ -1834,44 +1805,34 @@ ColumnLayout {
                 readonly property bool isSelected: calcRow.index === root.selectedIndex
 
                 width: calcList.width
-                height: 58
-                radius: Theme.r(14)
+                height: 62
+                radius: Theme.r(20)
                 color: calcRow.isSelected
-                    ? Theme.rowSelectedBg
-                    : (calcMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                border.width: calcRow.isSelected ? Theme.activeControlBorderWidth : Theme.subBorderWidth
-                border.color: calcRow.isSelected ? Theme.primary : Theme.cardBorder
-
-                Rectangle {
-                    visible: calcRow.isSelected
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.topMargin: 11
-                    anchors.bottomMargin: 11
-                    width: 3
-                    radius: 1.5
-                    color: Theme.primary
-                }
+                    ? Theme.m3PrimaryContainer
+                    : (calcMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
                     spacing: 12
 
-                    Rectangle {
-                        implicitWidth: 36
-                        implicitHeight: 36
-                        radius: Theme.r(18)
-                        color: Theme.withAlpha(Theme.primary, 0.16)
+                    Item {
+                        implicitWidth: 40
+                        implicitHeight: 40
+
+                        M3Blob {
+                            anchors.fill: parent
+                            kind: ShellState.m3Shape
+                            color: calcRow.isSelected ? Theme.m3Primary : Theme.m3SecondaryContainer
+                        }
 
                         Text {
                             anchors.centerIn: parent
                             text: calcRow.modelData.icon
                             font.family: Theme.iconFont
                             font.pixelSize: 17
-                            color: Theme.primary
+                            color: calcRow.isSelected ? Theme.m3OnPrimary : Theme.m3OnSecondaryContainer
                         }
                     }
 
@@ -1886,22 +1847,22 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: 18
                             font.weight: Font.Bold
-                            color: Theme.fgSurface
+                            color: calcRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Ink
                         }
 
                         Text {
                             text: calcRow.modelData.sub
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
-                            color: Theme.fgSurfaceVariant
+                            color: calcRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                         }
                     }
 
                     Rectangle {
-                        implicitHeight: 24
-                        implicitWidth: copyHintLbl.implicitWidth + 14
-                        radius: Theme.r(12)
-                        color: Theme.withAlpha(Theme.primary, 0.22)
+                        implicitHeight: 26
+                        implicitWidth: copyHintLbl.implicitWidth + 16
+                        radius: Theme.r(13)
+                        color: calcRow.isSelected ? Theme.m3Primary : Theme.m3SecondaryContainer
 
                         Text {
                             id: copyHintLbl
@@ -1910,7 +1871,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
                             font.weight: Font.Bold
-                            color: Theme.primary
+                            color: calcRow.isSelected ? Theme.m3OnPrimary : Theme.m3OnSecondaryContainer
                         }
                     }
                 }
@@ -1934,8 +1895,8 @@ ColumnLayout {
             id: cmdsList
             visible: root.effectiveMode === "cmds"
             anchors.fill: parent
-            anchors.margins: 8
-            spacing: 4
+            anchors.margins: 10
+            spacing: 5
             clip: true
             model: root.filteredCommands
 
@@ -1947,44 +1908,30 @@ ColumnLayout {
                 readonly property bool isSelected: cmdRow.index === root.selectedIndex
 
                 width: cmdsList.width
-                height: 46
-                radius: Theme.r(13)
+                height: 52
+                radius: Theme.r(18)
                 color: cmdRow.isSelected
-                    ? Theme.rowSelectedBg
-                    : (cmdMouse.containsMouse ? Theme.controlFillHover : "transparent")
-                border.width: cmdRow.isSelected ? Theme.activeControlBorderWidth : 0
-                border.color: Theme.primary
-
-                Rectangle {
-                    visible: cmdRow.isSelected
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.topMargin: 9
-                    anchors.bottomMargin: 9
-                    width: 3
-                    radius: 1.5
-                    color: Theme.primary
-                }
+                    ? Theme.m3PrimaryContainer
+                    : (cmdMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 12
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 14
                     spacing: 12
 
                     Rectangle {
-                        implicitWidth: 30
-                        implicitHeight: 30
-                        radius: Theme.r(15)
-                        color: cmdRow.isSelected ? Theme.withAlpha(Theme.primary, 0.22) : Theme.subCardBg
+                        implicitWidth: 34
+                        implicitHeight: 34
+                        radius: Theme.r(17)
+                        color: cmdRow.isSelected ? Theme.m3Primary : Theme.m3SurfaceHigh
 
                         Text {
                             anchors.centerIn: parent
                             text: cmdRow.modelData.icon
                             font.family: Theme.iconFont
-                            font.pixelSize: 14
-                            color: cmdRow.isSelected ? Theme.primary : Theme.secondary
+                            font.pixelSize: 15
+                            color: cmdRow.isSelected ? Theme.m3OnPrimary : Theme.m3Primary
                         }
                     }
 
@@ -1999,7 +1946,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: 12
                             font.weight: cmdRow.isSelected ? Font.Bold : Font.DemiBold
-                            color: cmdRow.isSelected ? Theme.primary : Theme.fgSurface
+                            color: cmdRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Ink
                         }
 
                         Text {
@@ -2008,16 +1955,16 @@ ColumnLayout {
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
-                            color: Theme.fgSurfaceVariant
+                            color: cmdRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                         }
                     }
 
                     Rectangle {
                         visible: cmdRow.isSelected
-                        implicitHeight: 22
-                        implicitWidth: runHintLbl.implicitWidth + 14
-                        radius: Theme.r(11)
-                        color: Theme.withAlpha(Theme.primary, 0.22)
+                        implicitHeight: 24
+                        implicitWidth: runHintLbl.implicitWidth + 16
+                        radius: Theme.r(12)
+                        color: Theme.m3Primary
 
                         Text {
                             id: runHintLbl
@@ -2026,7 +1973,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: 9
                             font.weight: Font.Bold
-                            color: Theme.primary
+                            color: Theme.m3OnPrimary
                         }
                     }
                 }
@@ -2061,12 +2008,12 @@ ColumnLayout {
 
                 width: emojiGrid.cellWidth - 4
                 height: emojiGrid.cellHeight - 4
-                radius: Theme.r(12)
+                radius: Theme.r(emojiCell.isSelected ? 11 : 16)
                 color: emojiCell.isSelected
-                    ? Theme.tileActiveBg
-                    : (emojiMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                border.width: emojiCell.isSelected ? Theme.activeControlBorderWidth : 0
-                border.color: Theme.primary
+                    ? Theme.m3PrimaryContainer
+                    : (emojiMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                border.width: emojiCell.isSelected ? 2 : 0
+                border.color: Theme.m3Primary
                 scale: emojiMouse.containsMouse ? 1.06 : 1.0
 
                 Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
@@ -2076,7 +2023,7 @@ ColumnLayout {
                     text: emojiCell.modelData.g
                     font.family: Theme.iconFont
                     font.pixelSize: 21
-                    color: Theme.fgSurface
+                    color: emojiCell.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Ink
                 }
 
                 MouseArea {
@@ -2097,54 +2044,56 @@ ColumnLayout {
         ColumnLayout {
             visible: root.effectiveMode === "snippets"
             anchors.fill: parent
-            anchors.margins: 8
+            anchors.margins: 10
             spacing: 8
 
             Rectangle {
                 visible: root.composerOpen
                 Layout.fillWidth: true
-                implicitHeight: compCol.implicitHeight + 16
-                radius: Theme.r(12)
-                color: Theme.subCardBg
+                implicitHeight: compCol.implicitHeight + 18
+                radius: Theme.r(18)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 ColumnLayout {
                     id: compCol
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 6
+                    anchors.margins: 10
+                    spacing: 8
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: 8
 
                         Rectangle {
                             Layout.fillWidth: true
-                            implicitHeight: 30
-                            radius: Theme.r(8)
-                            color: Theme.cardBg
+                            implicitHeight: 36
+                            radius: Theme.r(18)
+                            color: Theme.m3SurfaceHigh
                             border.width: snipTitleInput.activeFocus ? 1 : 0
-                            border.color: Theme.primary
+                            border.color: Theme.m3Primary
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.left: parent.left
-                                anchors.leftMargin: 10
+                                anchors.leftMargin: 12
                                 visible: snipTitleInput.text.length === 0
                                 text: "Snippet title"
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 11
-                                color: Theme.fgSurfaceVariant
+                                color: Theme.m3InkDim
                             }
 
                             TextInput {
                                 id: snipTitleInput
                                 anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
                                 verticalAlignment: TextInput.AlignVCenter
-                                color: Theme.fgSurface
-                                selectionColor: Theme.primary
-                                selectedTextColor: Theme.fgPrimary
+                                color: Theme.m3Ink
+                                selectionColor: Theme.m3Primary
+                                selectedTextColor: Theme.m3OnPrimary
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 11
                                 clip: true
@@ -2163,33 +2112,33 @@ ColumnLayout {
                         }
 
                         Rectangle {
-                            Layout.preferredWidth: 110
-                            implicitHeight: 30
-                            radius: Theme.r(8)
-                            color: Theme.cardBg
+                            Layout.preferredWidth: 120
+                            implicitHeight: 36
+                            radius: Theme.r(18)
+                            color: Theme.m3SurfaceHigh
                             border.width: snipTagInput.activeFocus ? 1 : 0
-                            border.color: Theme.primary
+                            border.color: Theme.m3Primary
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.left: parent.left
-                                anchors.leftMargin: 10
+                                anchors.leftMargin: 12
                                 visible: snipTagInput.text.length === 0
                                 text: "Tag (shell)"
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 11
-                                color: Theme.fgSurfaceVariant
+                                color: Theme.m3InkDim
                             }
 
                             TextInput {
                                 id: snipTagInput
                                 anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
                                 verticalAlignment: TextInput.AlignVCenter
-                                color: Theme.fgSurface
-                                selectionColor: Theme.primary
-                                selectedTextColor: Theme.fgPrimary
+                                color: Theme.m3Ink
+                                selectionColor: Theme.m3Primary
+                                selectedTextColor: Theme.m3OnPrimary
                                 font.family: Theme.monoFont
                                 font.pixelSize: 10
                                 clip: true
@@ -2214,30 +2163,30 @@ ColumnLayout {
                     Rectangle {
                         visible: !root._composerClipboardMode
                         Layout.fillWidth: true
-                        implicitHeight: 62
-                        radius: Theme.r(8)
-                        color: Theme.cardBg
+                        implicitHeight: 66
+                        radius: Theme.r(14)
+                        color: Theme.m3SurfaceHigh
                         border.width: snipBodyInput.activeFocus ? 1 : 0
-                        border.color: Theme.primary
+                        border.color: Theme.m3Primary
 
                         Text {
                             anchors.top: parent.top
                             anchors.left: parent.left
-                            anchors.margins: 8
+                            anchors.margins: 10
                             visible: snipBodyInput.text.length === 0
                             text: "Enter reusable command, path, or template text..."
                             font.family: Theme.fontFamily
                             font.pixelSize: 11
-                            color: Theme.fgSurfaceVariant
+                            color: Theme.m3InkDim
                         }
 
                         TextEdit {
                             id: snipBodyInput
                             anchors.fill: parent
-                            anchors.margins: 8
-                            color: Theme.fgSurface
-                            selectionColor: Theme.primary
-                            selectedTextColor: Theme.fgPrimary
+                            anchors.margins: 10
+                            color: Theme.m3Ink
+                            selectionColor: Theme.m3Primary
+                            selectedTextColor: Theme.m3OnPrimary
                             font.family: Theme.monoFont
                             font.pixelSize: 11
                             wrapMode: TextEdit.Wrap
@@ -2251,7 +2200,7 @@ ColumnLayout {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: 8
 
                         Text {
                             Layout.fillWidth: true
@@ -2261,14 +2210,14 @@ ColumnLayout {
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
                             font.pixelSize: 10
-                            color: root.snippetsError.length > 0 ? Theme.error : Theme.fgSurfaceVariant
+                            color: root.snippetsError.length > 0 ? Theme.m3Error : Theme.m3InkDim
                         }
 
                         Rectangle {
-                            implicitHeight: 24
-                            implicitWidth: cnlSnipTxt.implicitWidth + 14
-                            radius: Theme.r(7)
-                            color: cnlSnipMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg
+                            implicitHeight: 28
+                            implicitWidth: cnlSnipTxt.implicitWidth + 16
+                            radius: Theme.r(14)
+                            color: cnlSnipMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                             Text {
                                 id: cnlSnipTxt
@@ -2276,7 +2225,7 @@ ColumnLayout {
                                 text: "Cancel"
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 10
-                                color: Theme.fgSurfaceVariant
+                                color: Theme.m3InkDim
                             }
 
                             MouseArea {
@@ -2292,10 +2241,10 @@ ColumnLayout {
                         }
 
                         Rectangle {
-                            implicitHeight: 24
-                            implicitWidth: svSnipTxt.implicitWidth + 16
-                            radius: Theme.r(7)
-                            color: Theme.primary
+                            implicitHeight: 28
+                            implicitWidth: svSnipTxt.implicitWidth + 18
+                            radius: Theme.r(14)
+                            color: Theme.m3Primary
 
                             Text {
                                 id: svSnipTxt
@@ -2304,7 +2253,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 10
                                 font.weight: Font.Bold
-                                color: Theme.fgPrimary
+                                color: Theme.m3OnPrimary
                             }
 
                             MouseArea {
@@ -2323,7 +2272,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: !root.snippetsLoading && root.snippetsError.length === 0 && root.filteredSnippets.length > 0
-                spacing: 4
+                spacing: 5
                 clip: true
                 model: root.filteredSnippets
 
@@ -2335,13 +2284,11 @@ ColumnLayout {
                     readonly property bool isSelected: snipRow.index === root.selectedIndex
 
                     width: snipList.width
-                    height: 52
-                    radius: Theme.r(12)
+                    height: 54
+                    radius: Theme.r(18)
                     color: snipRow.isSelected
-                        ? Theme.rowSelectedBg
-                        : (snipMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                    border.width: snipRow.isSelected ? 1 : 0
-                    border.color: Theme.primary
+                        ? Theme.m3PrimaryContainer
+                        : (snipMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
 
                     MouseArea {
                         id: snipMouse
@@ -2354,24 +2301,24 @@ ColumnLayout {
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
                         spacing: 10
 
                         Rectangle {
-                            implicitWidth: 26
-                            implicitHeight: 26
-                            radius: Theme.r(13)
+                            implicitWidth: 28
+                            implicitHeight: 28
+                            radius: Theme.r(14)
                             color: snipRow.modelData.pinned
-                                ? Theme.withAlpha(Theme.primary, 0.22)
-                                : (snipPinMouse.containsMouse ? Theme.hoverBg : Theme.cardBg)
+                                ? Theme.m3Primary
+                                : (snipPinMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰐃"
                                 font.family: Theme.iconFont
-                                font.pixelSize: 11
-                                color: snipRow.modelData.pinned ? Theme.primary : Theme.fgSurfaceVariant
+                                font.pixelSize: 12
+                                color: snipRow.modelData.pinned ? Theme.m3OnPrimary : Theme.m3InkDim
                             }
 
                             MouseArea {
@@ -2398,14 +2345,14 @@ ColumnLayout {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: 11
                                     font.weight: snipRow.isSelected ? Font.Bold : Font.DemiBold
-                                    color: snipRow.isSelected ? Theme.primary : Theme.fgSurface
+                                    color: snipRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Ink
                                 }
 
                                 Rectangle {
-                                    implicitHeight: 17
-                                    implicitWidth: tagBadgeLbl.implicitWidth + 10
-                                    radius: Theme.r(5)
-                                    color: Theme.cardBg
+                                    implicitHeight: 20
+                                    implicitWidth: tagBadgeLbl.implicitWidth + 12
+                                    radius: Theme.r(10)
+                                    color: snipRow.isSelected ? Theme.m3Primary : Theme.m3SecondaryContainer
 
                                     Text {
                                         id: tagBadgeLbl
@@ -2413,7 +2360,7 @@ ColumnLayout {
                                         text: String(snipRow.modelData.tag || "general")
                                         font.family: Theme.monoFont
                                         font.pixelSize: 9
-                                        color: Theme.secondary
+                                        color: snipRow.isSelected ? Theme.m3OnPrimary : Theme.m3OnSecondaryContainer
                                     }
                                 }
                             }
@@ -2425,22 +2372,22 @@ ColumnLayout {
                                 maximumLineCount: 1
                                 font.family: Theme.monoFont
                                 font.pixelSize: 10
-                                color: Theme.fgSurfaceVariant
+                                color: snipRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                             }
                         }
 
                         Rectangle {
-                            implicitWidth: 26
-                            implicitHeight: 26
-                            radius: Theme.r(13)
-                            color: snipDelMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : "transparent"
+                            implicitWidth: 28
+                            implicitHeight: 28
+                            radius: Theme.r(14)
+                            color: snipDelMouse.containsMouse ? Theme.m3ErrorContainer : "transparent"
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰆴"
                                 font.family: Theme.iconFont
                                 font.pixelSize: 12
-                                color: snipDelMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                                color: snipDelMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim
                             }
 
                             MouseArea {
@@ -2462,21 +2409,33 @@ ColumnLayout {
             visible: root.effectiveMode === "snippets"
                 ? (!root.composerOpen && (root.snippetsLoading || root.snippetsError.length > 0 || root.filteredSnippets.length === 0))
                 : (root.currentCount === 0)
-            spacing: 6
+            spacing: 10
 
-            Text {
+            Item {
                 Layout.alignment: Qt.AlignHCenter
-                text: {
-                    if (root.effectiveMode === "clip") return "󰅌";
-                    if (root.effectiveMode === "snippets") return root.snippetsError.length > 0 ? "󰀦" : "󰅍";
-                    if (root.effectiveMode === "calc") return "󰪚";
-                    if (root.effectiveMode === "cmds") return "󰘳";
-                    if (root.effectiveMode === "emoji") return "󰞅";
-                    return "󰍉";
+                implicitWidth: 64
+                implicitHeight: 64
+
+                M3Blob {
+                    anchors.fill: parent
+                    kind: ShellState.m3Shape
+                    color: (root.effectiveMode === "snippets" && root.snippetsError.length > 0) ? Theme.m3ErrorContainer : Theme.m3PrimaryContainer
                 }
-                font.family: Theme.iconFont
-                font.pixelSize: 28
-                color: (root.effectiveMode === "snippets" && root.snippetsError.length > 0) ? Theme.error : Theme.fgSurfaceVariant
+
+                Text {
+                    anchors.centerIn: parent
+                    text: {
+                        if (root.effectiveMode === "clip") return "󰅌";
+                        if (root.effectiveMode === "snippets") return root.snippetsError.length > 0 ? "󰀦" : "󰅍";
+                        if (root.effectiveMode === "calc") return "󰪚";
+                        if (root.effectiveMode === "cmds") return "󰘳";
+                        if (root.effectiveMode === "emoji") return "󰞅";
+                        return "󰍉";
+                    }
+                    font.family: Theme.iconFont
+                    font.pixelSize: 26
+                    color: (root.effectiveMode === "snippets" && root.snippetsError.length > 0) ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer
+                }
             }
 
             Text {
@@ -2501,7 +2460,7 @@ ColumnLayout {
                 }
                 font.family: Theme.fontFamily
                 font.pixelSize: 11
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
         }
     }

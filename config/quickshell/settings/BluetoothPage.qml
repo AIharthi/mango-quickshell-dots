@@ -108,10 +108,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: 48
-        radius: Theme.r(14)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         RowLayout {
             anchors.fill: parent
@@ -186,10 +186,10 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: devCol.implicitHeight + 24
         visible: root.powered
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: devCol

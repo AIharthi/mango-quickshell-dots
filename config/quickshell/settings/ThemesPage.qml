@@ -402,10 +402,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: vibeCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: vibeCol
@@ -543,10 +543,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: engineCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: engineCol
@@ -710,10 +710,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: presetsCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: presetsCol
@@ -845,10 +845,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: seedCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: seedCol
@@ -1070,10 +1070,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: wpStudioCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: wpStudioCol
@@ -1571,10 +1571,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: slotCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: slotCol
@@ -2005,10 +2005,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: mangoCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: mangoCol

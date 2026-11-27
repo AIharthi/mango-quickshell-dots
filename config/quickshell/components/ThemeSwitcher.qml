@@ -5,12 +5,13 @@ import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Widgets
 import ".."
+import "../m3"
 
 ColumnLayout {
     id: root
 
     property bool active: false
-    readonly property bool narrowLayout: root.width < 450
+    readonly property bool narrowLayout: root.width < 520
     signal openSettingsRequested(string page)
     spacing: 10
 
@@ -27,27 +28,27 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: false
-        spacing: 6
+        spacing: 8
 
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
-            Layout.preferredHeight: 34
-            spacing: 6
+            Layout.preferredHeight: 36
+            spacing: 8
 
             // Dynamic / Presets / Accent Mode Switch
             Rectangle {
-                implicitHeight: 32
-                implicitWidth: modeRow.implicitWidth + 6
-                radius: Theme.r(16)
-                color: Theme.cardBg
-                border.width: Theme.subBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 36
+                implicitWidth: modeRow.implicitWidth + 8
+                radius: Theme.r(18)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 RowLayout {
                     id: modeRow
                     anchors.centerIn: parent
-                    spacing: 2
+                    spacing: 3
 
                     Repeater {
                         model: [
@@ -61,17 +62,15 @@ ColumnLayout {
                             required property var modelData
                             readonly property bool selected: Theme.themeMode === modeBtn.modelData.id
 
-                            implicitHeight: 26
-                            implicitWidth: modeContent.implicitWidth + 12
-                            radius: Theme.r(13)
+                            implicitHeight: 28
+                            implicitWidth: modeContent.implicitWidth + 14
+                            radius: Theme.r(modeBtn.selected ? 11 : 14)
                             color: modeBtn.selected
-                                ? Theme.primary
-                                : (modeMouse.containsMouse ? Theme.hoverBg : "transparent")
+                                ? Theme.m3Primary
+                                : (modeMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
-                            Behavior on color {
-                                enabled: !Theme.isSimple
-                                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
-                            }
+                            Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                            Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
                             RowLayout {
                                 id: modeContent
@@ -82,14 +81,14 @@ ColumnLayout {
                                     text: modeBtn.modelData.icon
                                     font.family: Theme.iconFont
                                     font.pixelSize: 11
-                                    color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                    color: modeBtn.selected ? Theme.m3OnPrimary : Theme.m3InkDim
                                 }
                                 Text {
                                     text: modeBtn.modelData.label
                                     font.family: Theme.fontFamily
                                     font.pixelSize: 10
                                     font.weight: modeBtn.selected ? Font.Bold : Font.Medium
-                                    color: modeBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                    color: modeBtn.selected ? Theme.m3OnPrimary : Theme.m3InkDim
                                 }
                             }
 
@@ -108,14 +107,13 @@ ColumnLayout {
             // Shuffle Wallpaper Capsule (wide row)
             Rectangle {
                 visible: !root.narrowLayout
-                implicitHeight: 32
-                implicitWidth: rndLbl.implicitWidth + 14
-                radius: Theme.r(16)
-                color: rndMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                border.width: Theme.subBorderWidth
-                border.color: Theme.cardBorder
-                scale: rndMouse.pressed ? 0.95 : 1.0
+                implicitHeight: 34
+                implicitWidth: rndLbl.implicitWidth + 18
+                radius: Theme.r(rndMouse.pressed ? 11 : 17)
+                color: rndMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                scale: rndMouse.pressed ? 0.96 : 1.0
 
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
                 Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 Text {
@@ -125,7 +123,7 @@ ColumnLayout {
                     font.family: Theme.fontFamily
                     font.pixelSize: 10
                     font.weight: Font.Bold
-                    color: Theme.secondary
+                    color: Theme.m3OnSecondaryContainer
                 }
 
                 MouseArea {
@@ -140,14 +138,13 @@ ColumnLayout {
             // Studio Button (wide row)
             Rectangle {
                 visible: !root.narrowLayout
-                implicitHeight: 32
-                implicitWidth: stuLbl.implicitWidth + 14
-                radius: Theme.r(16)
-                color: stuMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                border.width: Theme.subBorderWidth
-                border.color: Theme.cardBorder
-                scale: stuMouse.pressed ? 0.95 : 1.0
+                implicitHeight: 34
+                implicitWidth: stuLbl.implicitWidth + 18
+                radius: Theme.r(stuMouse.pressed ? 11 : 17)
+                color: stuMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                scale: stuMouse.pressed ? 0.96 : 1.0
 
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
                 Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 Text {
@@ -157,7 +154,7 @@ ColumnLayout {
                     font.family: Theme.fontFamily
                     font.pixelSize: 10
                     font.weight: Font.Bold
-                    color: Theme.primary
+                    color: Theme.m3Primary
                 }
 
                 MouseArea {
@@ -180,19 +177,18 @@ ColumnLayout {
                 font.family: Theme.fontFamily
                 font.pixelSize: 9
                 font.weight: Font.Medium
-                color: Theme.applyingTheme ? Theme.primary : Theme.error
+                color: Theme.applyingTheme ? Theme.m3Primary : Theme.m3Error
             }
 
             // Dark / Light Appearance Toggle Capsule
             Rectangle {
-                implicitHeight: 32
-                implicitWidth: schemeRow.implicitWidth + 14
-                radius: Theme.r(16)
-                color: schemeArea.containsMouse ? Theme.hoverBg : Theme.cardBg
-                border.width: Theme.subBorderWidth
-                border.color: Theme.cardBorder
-                scale: schemeArea.pressed ? 0.95 : 1.0
+                implicitHeight: 34
+                implicitWidth: schemeRow.implicitWidth + 18
+                radius: Theme.r(schemeArea.pressed ? 11 : 17)
+                color: schemeArea.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
+                scale: schemeArea.pressed ? 0.96 : 1.0
 
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
                 Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 RowLayout {
@@ -204,7 +200,7 @@ ColumnLayout {
                         text: Theme.colorScheme === "dark" ? "󰖔" : "󰖙"
                         font.family: Theme.iconFont
                         font.pixelSize: 13
-                        color: Theme.primary
+                        color: Theme.m3OnSecondaryContainer
                     }
 
                     Text {
@@ -212,7 +208,7 @@ ColumnLayout {
                         font.family: Theme.fontFamily
                         font.pixelSize: 10
                         font.weight: Font.Bold
-                        color: Theme.fgSurface
+                        color: Theme.m3OnSecondaryContainer
                     }
                 }
 
@@ -231,18 +227,17 @@ ColumnLayout {
             visible: root.narrowLayout
             Layout.fillWidth: true
             Layout.fillHeight: false
-            Layout.preferredHeight: 30
-            spacing: 6
+            Layout.preferredHeight: 32
+            spacing: 8
 
             Rectangle {
-                implicitHeight: 28
-                implicitWidth: rndLblNarrow.implicitWidth + 14
-                radius: Theme.r(14)
-                color: rndMouseNarrow.containsMouse ? Theme.hoverBg : Theme.cardBg
-                border.width: Theme.subBorderWidth
-                border.color: Theme.cardBorder
-                scale: rndMouseNarrow.pressed ? 0.95 : 1.0
+                implicitHeight: 32
+                implicitWidth: rndLblNarrow.implicitWidth + 18
+                radius: Theme.r(rndMouseNarrow.pressed ? 11 : 16)
+                color: rndMouseNarrow.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                scale: rndMouseNarrow.pressed ? 0.96 : 1.0
 
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
                 Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 Text {
@@ -252,7 +247,7 @@ ColumnLayout {
                     font.family: Theme.fontFamily
                     font.pixelSize: 10
                     font.weight: Font.Bold
-                    color: Theme.secondary
+                    color: Theme.m3OnSecondaryContainer
                 }
 
                 MouseArea {
@@ -265,14 +260,13 @@ ColumnLayout {
             }
 
             Rectangle {
-                implicitHeight: 28
-                implicitWidth: stuLblNarrow.implicitWidth + 14
-                radius: Theme.r(14)
-                color: stuMouseNarrow.containsMouse ? Theme.hoverBg : Theme.cardBg
-                border.width: Theme.subBorderWidth
-                border.color: Theme.cardBorder
-                scale: stuMouseNarrow.pressed ? 0.95 : 1.0
+                implicitHeight: 32
+                implicitWidth: stuLblNarrow.implicitWidth + 18
+                radius: Theme.r(stuMouseNarrow.pressed ? 11 : 16)
+                color: stuMouseNarrow.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                scale: stuMouseNarrow.pressed ? 0.96 : 1.0
 
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
                 Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
                 Text {
@@ -282,7 +276,7 @@ ColumnLayout {
                     font.family: Theme.fontFamily
                     font.pixelSize: 10
                     font.weight: Font.Bold
-                    color: Theme.primary
+                    color: Theme.m3Primary
                 }
 
                 MouseArea {
@@ -304,7 +298,7 @@ ColumnLayout {
                 font.family: Theme.fontFamily
                 font.pixelSize: 9
                 font.weight: Font.Medium
-                color: Theme.applyingTheme ? Theme.primary : Theme.error
+                color: Theme.applyingTheme ? Theme.m3Primary : Theme.m3Error
             }
         }
     }
@@ -314,17 +308,17 @@ ColumnLayout {
         visible: Theme.themeMode === "preset"
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: Math.min(118, Math.max(70, presetFlow.implicitHeight + 16))
-        Layout.minimumHeight: 68
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        Layout.preferredHeight: Math.min(126, Math.max(74, presetFlow.implicitHeight + 18))
+        Layout.minimumHeight: 72
+        radius: Theme.r(24)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         Flickable {
             anchors.fill: parent
-            anchors.margins: 8
+            anchors.margins: 10
             contentWidth: width
             contentHeight: presetFlow.implicitHeight
             clip: true
@@ -333,7 +327,7 @@ ColumnLayout {
             Flow {
                 id: presetFlow
                 width: parent.width
-                spacing: 5
+                spacing: 6
 
                 Repeater {
                     model: Theme.availablePresets
@@ -343,35 +337,34 @@ ColumnLayout {
                         required property var modelData
                         readonly property bool isSelected: Theme.themeMode === "preset" && Theme.presetName === presetChip.modelData.id
 
-                        implicitHeight: 26
-                        implicitWidth: presetChipRow.implicitWidth + 12
-                        radius: Theme.r(13)
+                        implicitHeight: 28
+                        implicitWidth: presetChipRow.implicitWidth + 14
+                        radius: Theme.r(presetChip.isSelected ? 11 : 14)
                         color: presetChip.isSelected
-                            ? Theme.primary
-                            : (presetMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                        border.width: presetChip.isSelected ? Theme.activeControlBorderWidth : Theme.subBorderWidth
-                        border.color: presetChip.isSelected ? Theme.primary : Theme.cardBorder
+                            ? Theme.m3Primary
+                            : (presetMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                        Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
 
                         RowLayout {
                             id: presetChipRow
                             anchors.centerIn: parent
-                            spacing: 5
+                            spacing: 6
 
                             Rectangle {
-                                implicitWidth: 9
-                                implicitHeight: 9
-                                radius: 4.5
+                                implicitWidth: 10
+                                implicitHeight: 10
+                                radius: 5
                                 color: presetChip.modelData.swatch
-                                border.width: 1
-                                border.color: presetChip.isSelected ? Theme.fgPrimary : "transparent"
+                                border.width: presetChip.isSelected ? 1 : 0
+                                border.color: presetChip.isSelected ? Theme.m3OnPrimary : "transparent"
                             }
 
                             Text {
                                 text: presetChip.modelData.label
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 9
+                                font.pixelSize: 10
                                 font.weight: presetChip.isSelected ? Font.Bold : Font.Medium
-                                color: presetChip.isSelected ? Theme.fgPrimary : Theme.fgSurface
+                                color: presetChip.isSelected ? Theme.m3OnPrimary : Theme.m3Ink
                             }
                         }
 
@@ -393,19 +386,19 @@ ColumnLayout {
         visible: Theme.themeMode === "accent"
         Layout.fillWidth: true
         Layout.fillHeight: false
-        Layout.preferredHeight: Math.max(46, accOuter.implicitHeight + 18)
-        Layout.minimumHeight: 46
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        Layout.preferredHeight: Math.max(52, accOuter.implicitHeight + 20)
+        Layout.minimumHeight: 52
+        radius: Theme.r(24)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         RowLayout {
             id: accOuter
             anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
+            anchors.leftMargin: 14
+            anchors.rightMargin: 14
             spacing: 10
 
             Text {
@@ -414,7 +407,7 @@ ColumnLayout {
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
 
             Flow {
@@ -432,12 +425,13 @@ ColumnLayout {
 
                         width: 24
                         height: 24
-                        radius: 12
+                        radius: accChip.isSelected ? Theme.r(8) : 12
                         color: accChip.modelData
-                        border.width: Theme.activeControlBorderWidth > 0 && accChip.isSelected ? 2 : 1
-                        border.color: accChip.isSelected ? Theme.fgSurface : Theme.hairlineBorder
+                        border.width: accChip.isSelected ? 2 : 1
+                        border.color: accChip.isSelected ? Theme.m3Ink : Theme.m3Line
                         scale: accChip.isSelected ? 1.12 : (accMouse.containsMouse ? 1.08 : 1.0)
 
+                        Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
                         Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 100 } }
 
                         Text {
@@ -462,14 +456,14 @@ ColumnLayout {
         }
     }
 
-    // --- macOS Wallpaper Gallery Card (~/Pictures/Wallpapers) ---
+    // --- Wallpaper Gallery Card (~/Pictures/Wallpapers) ---
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Theme.r(18)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(24)
+        color: Theme.m3PaneBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         FolderListModel {
@@ -521,8 +515,8 @@ ColumnLayout {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 5
-                    radius: Theme.r(14)
-                    color: Theme.subCardBg
+                    radius: Theme.r(20)
+                    color: Theme.m3SurfaceC
                     scale: wallArea.containsMouse ? 1.02 : 1.0
 
                     Behavior on scale {
@@ -533,12 +527,12 @@ ColumnLayout {
                     ClippingRectangle {
                         anchors.fill: parent
                         anchors.margins: 0
-                        radius: Theme.r(12)
-                        color: Theme.surfaceContainerLowest
+                        radius: Theme.r(20)
+                        color: Theme.m3SurfaceLowest
                         contentUnderBorder: false
                         contentInsideBorder: true
-                        border.width: wallDelegate.isCurrent ? Theme.activeControlBorderWidth : 0
-                        border.color: Theme.primary
+                        border.width: wallDelegate.isCurrent ? 2 : 0
+                        border.color: Theme.m3Primary
 
                         Image {
                             anchors.fill: parent
@@ -581,18 +575,18 @@ ColumnLayout {
                             visible: wallDelegate.isCurrent
                             anchors.top: parent.top
                             anchors.right: parent.right
-                            anchors.margins: 7
-                            width: 22
-                            height: 22
-                            radius: Theme.r(11)
-                            color: Theme.primary
+                            anchors.margins: 8
+                            width: 24
+                            height: 24
+                            radius: Theme.r(12)
+                            color: Theme.m3Primary
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰄬"
                                 font.family: Theme.iconFont
                                 font.pixelSize: 12
-                                color: Theme.fgPrimary
+                                color: Theme.m3OnPrimary
                             }
                         }
                     }

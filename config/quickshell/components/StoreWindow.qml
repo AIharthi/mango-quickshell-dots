@@ -55,13 +55,13 @@ PanelWindow {
         Rectangle {
             id: dialog
             anchors.centerIn: parent
-            width: Math.min(parent.width - 48, 960)
-            height: Math.min(parent.height - 48, 660)
-            radius: Theme.r(22)
-            color: Theme.notchBg
+            width: Math.min(parent.width - 48, 1020)
+            height: Math.min(parent.height - 48, 690)
+            radius: Theme.r(30)
+            color: Theme.m3PanelBg
             clip: true
-            border.width: Math.max(1, Theme.islandBorderWidth)
-            border.color: Theme.islandBorder
+            border.width: 1
+            border.color: Theme.m3Line
 
             opacity: root.shown ? 1.0 : 0.0
             scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
@@ -83,7 +83,7 @@ PanelWindow {
             StoreView {
                 id: storeView
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: 20
                 active: root.isOpen
                 embedded: false
                 onCloseRequested: root.closeRequested()

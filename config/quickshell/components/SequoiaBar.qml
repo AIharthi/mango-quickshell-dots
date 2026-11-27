@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import ".."
+import "../m3"
 
 Item {
     id: root
@@ -64,22 +65,22 @@ Item {
         anchors.rightMargin: ShellState.sequoiaBarFloating ? 8 : 0
         anchors.topMargin: ShellState.sequoiaBarFloating ? 4 : 0
         anchors.bottomMargin: ShellState.sequoiaBarFloating ? 4 : 0
-        radius: ShellState.sequoiaBarFloating ? Theme.r(10) : 0
+        radius: ShellState.sequoiaBarFloating ? Theme.r(Math.round(height / 2)) : 0
         color: ShellState.sequoiaBarTranslucent
-            ? Theme.withAlpha(Theme.surfaceContainerLowest, Math.min(0.86, ShellState.shellOpacity))
-            : Theme.surfaceContainerLowest
-        border.width: ShellState.sequoiaBarFloating ? Math.max(1, Theme.islandBorderWidth) : 0
-        border.color: Theme.islandBorderWidth > 0 ? Theme.islandBorder : Theme.hairlineBorder
+            ? Theme.m3BarBg
+            : Theme.m3Surface
+        border.width: ShellState.sequoiaBarFloating ? 1 : 0
+        border.color: Theme.m3Line
         clip: true
 
-        // Crisp 1px bottom hairline in flush macOS mode
+        // Crisp 1px bottom hairline in flush bar mode
         Rectangle {
             visible: !ShellState.sequoiaBarFloating
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: 1
-            color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.10)
+            color: Theme.m3Line
             z: 5
         }
 
@@ -93,17 +94,17 @@ Item {
 
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
-                implicitWidth: 24
-                implicitHeight: Math.max(20, barSurface.height - 6)
-                radius: Theme.r(6)
-                color: menuBtnMouse.containsMouse ? Theme.controlFillHover : "transparent"
+                implicitWidth: Math.max(22, barSurface.height - 6)
+                implicitHeight: Math.max(22, barSurface.height - 6)
+                radius: Theme.isSimple ? 0 : (menuBtnMouse.pressed ? Theme.r(7) : Math.round(implicitHeight / 2))
+                color: menuBtnMouse.containsMouse ? Qt.lighter(Theme.m3Primary, 1.08) : Theme.m3Primary
 
                 Text {
                     anchors.centerIn: parent
                     text: root.menuGlyph
                     font.family: Theme.iconFont
-                    font.pixelSize: Theme.fs(13)
-                    color: Theme.fgSurface
+                    font.pixelSize: Theme.fs(12)
+                    color: Theme.m3OnPrimary
                 }
 
                 MouseArea {
@@ -155,76 +156,14 @@ Item {
                 color: Theme.hairlineBorder
             }
 
-            Item {
+            M3WsStrip {
                 Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.sequoiaShowWorkspaces
-                implicitWidth: seqWsRow.implicitWidth
-                implicitHeight: 20
-
-                WheelHandler {
-                    onWheel: event => root.switchTagRelative(event.angleDelta.y > 0 ? -1 : 1)
-                }
-
-                Row {
-                    id: seqWsRow
-                    anchors.centerIn: parent
-                    spacing: 3
-
-                    Repeater {
-                        model: root.visibleTags
-
-                        delegate: Rectangle {
-                            id: tgPill
-                            required property var modelData
-                            readonly property bool isActive: tgPill.modelData.is_active
-                            readonly property bool isUrgent: tgPill.modelData.is_urgent
-                            readonly property bool isOccupied: tgPill.modelData.client_count > 0
-
-                            width: tgPill.isActive ? 20 : 18
-                            height: 18
-                            radius: Theme.r(6)
-                            color: {
-                                if (tgPill.isUrgent) return Theme.error;
-                                if (tgPill.isActive) return Theme.isDark ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.11);
-                                if (tgMouse.containsMouse) return Theme.controlFillHover;
-                                return "transparent";
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                anchors.verticalCenterOffset: (tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent) ? -1 : 0
-                                text: tgPill.modelData.index
-                                font.family: Theme.monoFont
-                                font.pixelSize: Theme.fs(10)
-                                font.weight: tgPill.isActive ? Font.Bold : Font.Medium
-                                color: {
-                                    if (tgPill.isUrgent) return Theme.fgError;
-                                    if (tgPill.isActive) return Theme.fgSurface;
-                                    return tgPill.isOccupied ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.55);
-                                }
-                            }
-
-                            Rectangle {
-                                visible: tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent
-                                anchors.bottom: parent.bottom
-                                anchors.bottomMargin: 1.5
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: 3
-                                height: 3
-                                radius: 1.5
-                                color: Theme.fgSurfaceVariant
-                            }
-
-                            MouseArea {
-                                id: tgMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + tgPill.modelData.index + ",0"])
-                            }
-                        }
-                    }
-                }
+                model: root.visibleTags
+                barHeight: barSurface.height
+                compact: barSurface.height <= 30
+                onSwitchRequested: wid => Quickshell.execDetached(["mmsg", "dispatch", "view," + wid + ",0"])
+                onRelativeSwitchRequested: delta => root.switchTagRelative(delta)
             }
 
             Rectangle {
@@ -272,43 +211,17 @@ Item {
                 width: Math.min(implicitWidth, centerMediaPill.width - 10)
                 spacing: 6
 
-                ClippingRectangle {
+                M3ShapeImage {
                     Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: 18
-                    implicitHeight: 18
-                    radius: 9
-                    color: Theme.primaryContainer
-                    contentUnderBorder: false
-                    contentInsideBorder: true
-
-                    rotation: 0
-                    RotationAnimation on rotation {
-                        from: 0
-                        to: 360
-                        duration: 12000
-                        loops: Animation.Infinite
-                        running: root.visible && root.isPlaying && seqMediaImg.visible && ShellState.pillSpinArt && !Theme.reducedMotion
-                    }
-
-                    Image {
-                        id: seqMediaImg
-                        anchors.fill: parent
-                        source: root.artUrl
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        cache: true
-                        sourceSize: Qt.size(40, 40)
-                        visible: root.artUrl.length > 0 && status === Image.Ready
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        visible: !seqMediaImg.visible
-                        text: "󰎈"
-                        font.family: Theme.iconFont
-                        font.pixelSize: Theme.fs(10)
-                        color: Theme.fgPrimaryContainer
-                    }
+                    implicitWidth: Math.max(18, barSurface.height - 8)
+                    implicitHeight: Math.max(18, barSurface.height - 8)
+                    kind: "circle"
+                    source: root.artUrl
+                    empty: Theme.m3PrimaryContainer
+                    fallbackGlyph: "󰎈"
+                    fallbackColor: Theme.m3OnPrimaryContainer
+                    spinning: root.visible && root.isPlaying && ShellState.pillSpinArt
+                    spinDurationMs: 14000
                 }
 
                 Text {
@@ -319,7 +232,7 @@ Item {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Medium
-                    color: root.isPlaying ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    color: root.isPlaying ? Theme.m3Ink : Theme.m3InkDim
                 }
             }
 
@@ -648,20 +561,20 @@ Item {
                 }
             }
 
-            // Date & Clock / Notification Center Trigger
+            // Date & Clock Pill / Notification Center Trigger
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 implicitWidth: seqDateRow.implicitWidth + 10
-                implicitHeight: 20
-                radius: Theme.r(6)
+                implicitHeight: Math.max(20, barSurface.height - 6)
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
                 color: root.openPanelMode === "notifications"
-                    ? Theme.tileActiveBg
-                    : (seqDateMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                    ? Theme.m3SecondaryContainer
+                    : (seqDateMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                 RowLayout {
                     id: seqDateRow
                     anchors.centerIn: parent
-                    spacing: 5
+                    spacing: 6
 
                     Text {
                         visible: ShellState.sequoiaShowDate
@@ -669,15 +582,24 @@ Item {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Medium
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
 
-                    Text {
-                        text: ShellState.formatTime(clock.date)
-                        font.family: Theme.monoFont
-                        font.pixelSize: Theme.fs(11)
-                        font.weight: Font.Bold
-                        color: Theme.fgSurface
+                    Rectangle {
+                        implicitHeight: Math.max(18, barSurface.height - 8)
+                        implicitWidth: seqClkTxt.implicitWidth + 12
+                        radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                        color: Theme.m3Primary
+
+                        Text {
+                            id: seqClkTxt
+                            anchors.centerIn: parent
+                            text: ShellState.formatTime(clock.date)
+                            font.family: Theme.monoFont
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Bold
+                            color: Theme.m3OnPrimary
+                        }
                     }
 
                     Rectangle {
@@ -685,7 +607,7 @@ Item {
                         implicitWidth: 6
                         implicitHeight: 6
                         radius: 3
-                        color: Theme.primary
+                        color: Theme.m3Primary
                     }
                 }
 

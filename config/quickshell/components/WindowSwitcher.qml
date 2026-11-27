@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import ".."
+import "../m3"
 
 PanelWindow {
     id: root
@@ -270,18 +271,19 @@ PanelWindow {
 
     // Main Modal
     Rectangle {
+        id: dialog
         anchors.centerIn: parent
         width: Math.min(720, Math.max(400, root.width - 64))
-        height: Math.min(560, Math.max(255, 206 + Math.max(1, root.filteredClients.length) * 56))
+        height: Math.min(560, Math.max(280, 224 + Math.max(1, root.filteredClients.length) * 60))
         Behavior on height {
             enabled: !Theme.reducedMotion && !Theme.isSimple
             NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
         }
-        radius: Theme.r(24)
-        color: Theme.notchBg
+        radius: Theme.r(30)
+        color: Theme.m3PanelBg
         clip: true
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+        border.width: 1
+        border.color: Theme.m3Line
 
         opacity: root.shown ? 1.0 : 0.0
         scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.95)
@@ -299,49 +301,48 @@ PanelWindow {
             anchors.fill: parent
         }
 
-        // Specular sheen
-        Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: 44
-            visible: Theme.showGlassSheen
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(1, 1, 1, 0.30) }
-                GradientStop { position: 1.0; color: "transparent" }
-            }
-        }
-
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 16
-            spacing: 10
+            anchors.margins: 20
+            spacing: 12
 
             // Header
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 12
 
-                Text {
-                    text: "󰖯"
-                    font.family: Theme.iconFont
-                    font.pixelSize: Theme.fs(17)
-                    color: Theme.primary
+                Item {
+                    implicitWidth: 40
+                    implicitHeight: 40
+
+                    M3Blob {
+                        anchors.fill: parent
+                        kind: ShellState.m3Shape
+                        color: Theme.m3PrimaryContainer
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰖯"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(18)
+                        color: Theme.m3OnPrimaryContainer
+                    }
                 }
 
                 Text {
                     text: "Window Switcher"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(14)
+                    font.pixelSize: Theme.fs(16)
                     font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    color: Theme.m3Ink
                 }
 
                 Rectangle {
-                    implicitHeight: 20
-                    implicitWidth: cntTxt.implicitWidth + 12
-                    radius: Theme.r(10)
-                    color: Theme.cardBg
+                    implicitHeight: 24
+                    implicitWidth: cntTxt.implicitWidth + 16
+                    radius: Theme.r(12)
+                    color: Theme.m3SecondaryContainer
 
                     Text {
                         id: cntTxt
@@ -350,26 +351,25 @@ PanelWindow {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
-                        color: Theme.primary
+                        color: Theme.m3OnSecondaryContainer
                     }
                 }
 
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: Theme.r(13)
-                    color: clsBtnMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.cardBg
-                    border.width: Theme.subBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitWidth: 36
+                    implicitHeight: 36
+                    radius: Theme.r(18)
+                    color: clsBtnMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceC
+                    Behavior on color { ColorAnimation { duration: 150 } }
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰅖"
                         font.family: Theme.iconFont
-                        font.pixelSize: Theme.fs(12)
-                        color: clsBtnMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(14)
+                        color: clsBtnMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim
                     }
 
                     MouseArea {
@@ -385,23 +385,24 @@ PanelWindow {
             // Search Bar
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 38
-                radius: Theme.r(12)
-                color: Theme.cardBg
-                border.width: searchInput.activeFocus ? 1 : Theme.subBorderWidth
-                border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
+                implicitHeight: 48
+                radius: Theme.r(24)
+                color: searchInput.activeFocus ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                border.width: searchInput.activeFocus ? 2 : 1
+                border.color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
+                Behavior on color { ColorAnimation { duration: 150 } }
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    spacing: 8
+                    anchors.leftMargin: 16
+                    anchors.rightMargin: 16
+                    spacing: 10
 
                     Text {
                         text: "󰍉"
                         font.family: Theme.iconFont
-                        font.pixelSize: Theme.fs(14)
-                        color: searchInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(16)
+                        color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3InkDim
                     }
 
                     Item {
@@ -413,17 +414,17 @@ PanelWindow {
                             visible: searchInput.text.length === 0
                             text: "Switch window by title, app, or workspace..."
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(11)
-                            color: Theme.fgSurfaceVariant
+                            font.pixelSize: Theme.fs(12)
+                            color: Theme.m3InkDim
                         }
 
                         TextInput {
                             id: searchInput
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
-                            color: Theme.fgSurface
-                            selectionColor: Theme.primary
-                            selectedTextColor: Theme.fgPrimary
+                            color: Theme.m3Ink
+                            selectionColor: Theme.m3Primary
+                            selectedTextColor: Theme.m3OnPrimary
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(12)
                             clip: true
@@ -463,17 +464,17 @@ PanelWindow {
             // Saved Workspace Sessions Strip (Rust-backed)
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: wsStripCol.implicitHeight + 14
-                radius: Theme.r(12)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: wsStripCol.implicitHeight + 18
+                radius: Theme.r(20)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 ColumnLayout {
                     id: wsStripCol
                     anchors.fill: parent
-                    anchors.margins: 7
-                    spacing: 6
+                    anchors.margins: 10
+                    spacing: 8
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -484,7 +485,7 @@ PanelWindow {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
-                            color: Theme.fgSurfaceVariant
+                            color: Theme.m3InkDim
                         }
 
                         Text {
@@ -499,25 +500,25 @@ PanelWindow {
                             }
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(9)
-                            color: root.sessionsError.length > 0 ? Theme.error : Theme.fgSurfaceVariant
+                            color: root.sessionsError.length > 0 ? Theme.m3Error : Theme.m3InkDim
                         }
 
                         Rectangle {
-                            implicitHeight: 22
-                            implicitWidth: saveWsTxt.implicitWidth + 14
-                            radius: Theme.r(7)
+                            implicitHeight: 28
+                            implicitWidth: saveWsTxt.implicitWidth + 18
+                            radius: Theme.r(14)
                             color: root.saveSessionOpen
-                                ? Theme.primary
-                                : (saveWsMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                                ? Theme.m3Primary
+                                : (saveWsMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer)
 
                             Text {
                                 id: saveWsTxt
                                 anchors.centerIn: parent
                                 text: root.saveSessionOpen ? "Cancel" : "+ Save session"
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(9)
-                                font.weight: Font.DemiBold
-                                color: root.saveSessionOpen ? Theme.fgPrimary : Theme.primary
+                                font.pixelSize: Theme.fs(10)
+                                font.weight: Font.Bold
+                                color: root.saveSessionOpen ? Theme.m3OnPrimary : Theme.m3OnSecondaryContainer
                             }
 
                             MouseArea {
@@ -542,36 +543,36 @@ PanelWindow {
                     RowLayout {
                         visible: root.saveSessionOpen
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: 8
 
                         Rectangle {
                             Layout.fillWidth: true
-                            implicitHeight: 28
-                            radius: Theme.r(7)
-                            color: Theme.subCardBg
+                            implicitHeight: 34
+                            radius: Theme.r(17)
+                            color: Theme.m3SurfaceHigh
                             border.width: sessionNameInput.activeFocus ? 1 : 0
-                            border.color: Theme.primary
+                            border.color: Theme.m3Primary
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.left: parent.left
-                                anchors.leftMargin: 10
+                                anchors.leftMargin: 12
                                 visible: sessionNameInput.text.length === 0
                                 text: "Session name, e.g. Dev"
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
-                                color: Theme.fgSurfaceVariant
+                                color: Theme.m3InkDim
                             }
 
                             TextInput {
                                 id: sessionNameInput
                                 anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
                                 verticalAlignment: TextInput.AlignVCenter
-                                color: Theme.fgSurface
-                                selectionColor: Theme.primary
-                                selectedTextColor: Theme.fgPrimary
+                                color: Theme.m3Ink
+                                selectionColor: Theme.m3Primary
+                                selectedTextColor: Theme.m3OnPrimary
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 clip: true
@@ -585,10 +586,10 @@ PanelWindow {
                         }
 
                         Rectangle {
-                            implicitHeight: 28
-                            implicitWidth: commitWsTxt.implicitWidth + 16
-                            radius: Theme.r(7)
-                            color: Theme.primary
+                            implicitHeight: 34
+                            implicitWidth: commitWsTxt.implicitWidth + 20
+                            radius: Theme.r(17)
+                            color: Theme.m3Primary
 
                             Text {
                                 id: commitWsTxt
@@ -597,7 +598,7 @@ PanelWindow {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: Font.Bold
-                                color: Theme.fgPrimary
+                                color: Theme.m3OnPrimary
                             }
 
                             MouseArea {
@@ -612,9 +613,9 @@ PanelWindow {
                     Flickable {
                         visible: root.sessions.length > 0
                         Layout.fillWidth: true
-                        implicitHeight: 26
+                        implicitHeight: 30
                         contentWidth: wsPillRow.implicitWidth
-                        contentHeight: 26
+                        contentHeight: 30
                         clip: true
 
                         Row {
@@ -627,10 +628,10 @@ PanelWindow {
                                 delegate: Rectangle {
                                     id: wsPill
                                     required property var modelData
-                                    implicitHeight: 26
-                                    implicitWidth: wsPillInner.implicitWidth + 14
-                                    radius: Theme.r(8)
-                                    color: wsOpenMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                                    implicitHeight: 30
+                                    implicitWidth: wsPillInner.implicitWidth + 18
+                                    radius: Theme.r(15)
+                                    color: wsOpenMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                                     RowLayout {
                                         id: wsPillInner
@@ -642,21 +643,21 @@ PanelWindow {
                                             font.family: Theme.fontFamily
                                             font.pixelSize: Theme.fs(10)
                                             font.weight: Font.DemiBold
-                                            color: Theme.fgSurface
+                                            color: Theme.m3Ink
                                         }
 
                                         Rectangle {
-                                            implicitWidth: 16
-                                            implicitHeight: 16
-                                            radius: Theme.r(8)
-                                            color: wsDelMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.25) : "transparent"
+                                            implicitWidth: 18
+                                            implicitHeight: 18
+                                            radius: Theme.r(9)
+                                            color: wsDelMouse.containsMouse ? Theme.m3ErrorContainer : "transparent"
 
                                             Text {
                                                 anchors.centerIn: parent
                                                 text: "󰅖"
                                                 font.family: Theme.iconFont
                                                 font.pixelSize: Theme.fs(9)
-                                                color: wsDelMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                                                color: wsDelMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim
                                             }
 
                                             MouseArea {
@@ -688,17 +689,17 @@ PanelWindow {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: Theme.r(16)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                radius: Theme.r(24)
+                color: Theme.m3PaneBg
+                border.width: 1
+                border.color: Theme.m3Line
                 clip: true
 
                 ListView {
                     id: winList
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 5
+                    anchors.margins: 10
+                    spacing: 6
                     clip: true
                     model: root.filteredClients
 
@@ -714,25 +715,12 @@ PanelWindow {
                             : 0
 
                         width: winList.width
-                        height: 50
-                        radius: Theme.r(12)
+                        height: 54
+                        radius: Theme.r(20)
                         color: winRow.isSelected
-                            ? Theme.rowSelectedBg
-                            : (rowMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                        border.width: winRow.isSelected ? Theme.activeControlBorderWidth : 0
-                        border.color: Theme.primary
-
-                        Rectangle {
-                            visible: winRow.isSelected
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            anchors.topMargin: 10
-                            anchors.bottomMargin: 10
-                            width: 3
-                            radius: 1.5
-                            color: Theme.primary
-                        }
+                            ? Theme.m3PrimaryContainer
+                            : (rowMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                        Behavior on color { ColorAnimation { duration: 120 } }
 
                         MouseArea {
                             id: rowMouse
@@ -745,15 +733,15 @@ PanelWindow {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 10
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            spacing: 12
 
                             Rectangle {
-                                implicitWidth: 30
-                                implicitHeight: 30
-                                radius: Theme.r(8)
-                                color: appIc.visible ? "transparent" : Theme.surfaceContainerHigh
+                                implicitWidth: 34
+                                implicitHeight: 34
+                                radius: Theme.r(12)
+                                color: appIc.visible ? "transparent" : (winRow.isSelected ? Theme.m3Primary : Theme.m3SurfaceHigh)
 
                                 IconImage {
                                     id: appIc
@@ -769,14 +757,14 @@ PanelWindow {
                                     visible: !appIc.visible
                                     text: "󰖯"
                                     font.family: Theme.iconFont
-                                    font.pixelSize: Theme.fs(15)
-                                    color: Theme.primary
+                                    font.pixelSize: Theme.fs(16)
+                                    color: winRow.isSelected ? Theme.m3OnPrimary : Theme.m3Primary
                                 }
                             }
 
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: 1
+                                spacing: 2
 
                                 RowLayout {
                                     Layout.fillWidth: true
@@ -784,10 +772,10 @@ PanelWindow {
 
                                     Rectangle {
                                         visible: !!winRow.modelData.is_focused
-                                        implicitWidth: 6
-                                        implicitHeight: 6
-                                        radius: 3
-                                        color: Theme.primary
+                                        implicitWidth: 7
+                                        implicitHeight: 7
+                                        radius: 3.5
+                                        color: winRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Primary
                                     }
 
                                     Text {
@@ -798,7 +786,7 @@ PanelWindow {
                                         font.family: Theme.fontFamily
                                         font.pixelSize: Theme.fs(12)
                                         font.weight: winRow.isSelected ? Font.Bold : Font.DemiBold
-                                        color: winRow.isSelected ? Theme.primary : Theme.fgSurface
+                                        color: winRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Ink
                                     }
                                 }
 
@@ -812,16 +800,16 @@ PanelWindow {
                                     elide: Text.ElideRight
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(10)
-                                    color: Theme.fgSurfaceVariant
+                                    color: winRow.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                                 }
                             }
 
                             Rectangle {
                                 visible: winRow.firstTag > 0
-                                implicitHeight: 20
-                                implicitWidth: tagChipLbl.implicitWidth + 10
-                                radius: Theme.r(6)
-                                color: Theme.withAlpha(Theme.secondary, 0.18)
+                                implicitHeight: 24
+                                implicitWidth: tagChipLbl.implicitWidth + 14
+                                radius: Theme.r(12)
+                                color: winRow.isSelected ? Theme.m3Primary : Theme.m3SecondaryContainer
 
                                 Text {
                                     id: tagChipLbl
@@ -830,22 +818,22 @@ PanelWindow {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(9)
                                     font.weight: Font.Bold
-                                    color: Theme.secondary
+                                    color: winRow.isSelected ? Theme.m3OnPrimary : Theme.m3OnSecondaryContainer
                                 }
                             }
 
                             Rectangle {
-                                implicitWidth: 24
-                                implicitHeight: 24
-                                radius: Theme.r(8)
-                                color: killMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.25) : "transparent"
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                radius: Theme.r(14)
+                                color: killMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceHigh
 
                                 Text {
                                     anchors.centerIn: parent
                                     text: "󰅖"
                                     font.family: Theme.iconFont
                                     font.pixelSize: Theme.fs(11)
-                                    color: killMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                                    color: killMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim
                                 }
 
                                 MouseArea {
@@ -866,7 +854,7 @@ PanelWindow {
                     text: "No open windows found"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(12)
-                    color: Theme.fgSurfaceVariant
+                    color: Theme.m3InkDim
                 }
             }
         }

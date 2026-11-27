@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import ".."
+import "../m3"
 
 PanelWindow {
     id: root
@@ -253,111 +254,100 @@ PanelWindow {
         }
     }
 
-    // ==================== 1. TOP-RIGHT CONTROL CENTER POPOVER ====================
+    // ==================== 1. TOP-RIGHT M3 CONTROL CENTER DRAWER ====================
     Rectangle {
         id: controlsCard
         visible: root.panelMode === "controls"
         anchors.top: parent.top
-        anchors.topMargin: root.topBarOffset + 6
+        anchors.topMargin: root.topBarOffset + 8
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: 12
         readonly property int targetControlsWidth: root.controlsTab === "files"
             ? 680
-            : (root.controlsTab === "themes" ? 560 : 416)
-        readonly property int tabViewportH: Math.min(460, Math.max(280, root.height - root.topBarOffset - 92))
-        width: Math.min(Math.max(340, root.width - 20), targetControlsWidth)
-        height: Math.min(Math.max(200, root.height - root.topBarOffset - 24), controlsCol.implicitHeight + 24)
-        radius: Theme.r(20)
-        color: Theme.notchBg
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+            : (root.controlsTab === "themes" ? 560 : 456)
+        readonly property int maxDrawerH: Math.max(260, root.height - root.topBarOffset - 22)
+        readonly property int tabViewportH: Math.min(500, Math.max(280, root.height - root.topBarOffset - 96))
+        width: Math.min(Math.max(360, root.width - 24), targetControlsWidth)
+        height: Math.min(maxDrawerH, controlsCol.implicitHeight + 28)
+        radius: Theme.r(32)
+        color: Theme.m3PanelBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         opacity: root.shown ? 1.0 : 0.0
-        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
+        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.95)
         transformOrigin: Item.TopRight
 
-        Behavior on width { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on width { enabled: !Theme.reducedMotion; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 200; easing.type: Theme.m3Springy } }
 
-        // Eat inside clicks so backdrop does not dismiss popover
         MouseArea { anchors.fill: parent }
-
-        // Top glass specular sheen when frosted mode is active
-        Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: 44
-            radius: parent.radius
-            visible: Theme.showGlassSheen
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(1, 1, 1, 0.36) }
-                GradientStop { position: 1.0; color: "transparent" }
-            }
-        }
 
         ColumnLayout {
             id: controlsCol
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.margins: 12
-            spacing: 10
+            anchors.margins: 14
+            spacing: 12
 
-            // Header: Segmented Tab Pill + Utility Actions
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
 
                 Rectangle {
-                    implicitHeight: 30
-                    implicitWidth: ccSegRow.implicitWidth + 6
-                    radius: Theme.r(15)
-                    color: Theme.cardBg
-                    border.width: Theme.activeControlBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                    color: sqClsMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+                    Text { anchors.centerIn: parent; text: "󰅖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
+                    MouseArea { id: sqClsMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeRequested() }
+                }
 
-                    RowLayout {
-                        id: ccSegRow
-                        anchors.centerIn: parent
-                        spacing: 2
+                Item { Layout.fillWidth: true }
 
-                        Repeater {
-                            model: [
-                                { id: "controls", icon: "󰕰", label: "Controls" },
-                                { id: "themes",   icon: "󰏘", label: "Themes" },
-                                { id: "files",    icon: "󰉋", label: "Files" }
-                            ]
+                RowLayout {
+                    id: ccSegRow
+                    spacing: 4
 
-                            delegate: Rectangle {
-                                id: segBtn
-                                required property var modelData
-                                readonly property bool selected: root.controlsTab === segBtn.modelData.id
+                    Repeater {
+                        model: [
+                            { id: "controls", label: "Controls" },
+                            { id: "overview", label: "Overview" },
+                            { id: "themes",   label: "Themes" },
+                            { id: "files",    label: "Files" }
+                        ]
 
-                                implicitHeight: 24
-                                implicitWidth: segContent.implicitWidth + 12
-                                radius: Theme.r(12)
-                                color: segBtn.selected
-                                    ? Theme.primary
-                                    : (segMouse.containsMouse ? Theme.hoverBg : "transparent")
+                        delegate: Rectangle {
+                            id: segBtn
+                            required property var modelData
+                            readonly property bool selected: root.controlsTab === segBtn.modelData.id
 
-                                RowLayout {
-                                    id: segContent
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    Text { text: segBtn.modelData.icon; font.family: Theme.iconFont; font.pixelSize: 11; color: segBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant }
-                                    Text { text: segBtn.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: segBtn.selected ? Font.Bold : Font.Medium; color: segBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant }
-                                }
+                            implicitHeight: 34
+                            implicitWidth: segTxt.implicitWidth + 18
+                            radius: Theme.r(17)
+                            color: segBtn.selected
+                                ? Theme.m3Primary
+                                : (segMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC)
 
-                                MouseArea {
-                                    id: segMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.switchControlsTab(segBtn.modelData.id)
-                                }
+                            Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 160 } }
+
+                            Text {
+                                id: segTxt
+                                anchors.centerIn: parent
+                                text: segBtn.modelData.label
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                font.weight: Font.Medium
+                                color: segBtn.selected ? Theme.m3OnPrimary : Theme.m3Ink
+                            }
+
+                            MouseArea {
+                                id: segMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.switchControlsTab(segBtn.modelData.id)
                             }
                         }
                     }
@@ -365,76 +355,24 @@ PanelWindow {
 
                 Item { Layout.fillWidth: true }
 
-                // Cycle Sequoia Hub Style (LMB cycle, RMB -> Sequoia Settings)
                 Rectangle {
-                    visible: root.controlsTab === "controls"
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: Theme.r(13)
-                    color: ccLayMouse.containsMouse ? Theme.controlFillHover : "transparent"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: {
-                            if (ShellState.sequoiaHubStyle === "media") return "󰓇";
-                            if (ShellState.sequoiaHubStyle === "compact") return "󰘔";
-                            return "󰕰";
-                        }
-                        font.family: Theme.iconFont
-                        font.pixelSize: 12
-                        color: ccLayMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
-                    }
-
-                    MouseArea {
-                        id: ccLayMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
-                            if (mouse.button === Qt.RightButton)
-                                Qt.callLater(() => root.openSettingsRequested("sequoia"));
-                            else
-                                ShellState.cycleSequoiaHubStyle();
-                        }
-                    }
-                }
-
-                // Store Shortcut
-                Rectangle {
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: Theme.r(13)
-                    color: ccStoreMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                    Text { anchors.centerIn: parent; text: "󰏖"; font.family: Theme.iconFont; font.pixelSize: 12; color: ccStoreMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
-                    MouseArea { id: ccStoreMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.closeRequested(); root.openStoreRequested(); } }
-                }
-
-                // Sequoia Settings Shortcut
-                Rectangle {
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: Theme.r(13)
-                    color: ccSetMouse.containsMouse ? Theme.controlFillHover : "transparent"
-                    Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: 12; color: ccSetMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant }
+                    implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                    color: ccSetMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+                    Text { anchors.centerIn: parent; text: "󰒓"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
                     MouseArea { id: ccSetMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.closeRequested(); root.openSettingsRequested("sequoia"); } }
                 }
 
-                // Power Strip Toggle
                 Rectangle {
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: Theme.r(13)
-                    color: root.powerMenuOpen ? Theme.error : (ccPwrMouse.containsMouse ? Theme.controlFillHover : "transparent")
-                    Text { anchors.centerIn: parent; text: "󰐥"; font.family: Theme.iconFont; font.pixelSize: 12; color: root.powerMenuOpen ? Theme.fgError : (ccPwrMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant) }
+                    implicitWidth: 34; implicitHeight: 34; radius: Theme.r(17)
+                    color: root.powerMenuOpen ? Theme.m3ErrorContainer : (ccPwrMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC)
+                    Text { anchors.centerIn: parent; text: "󰐥"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: root.powerMenuOpen ? Theme.m3OnErrorContainer : Theme.m3Error }
                     MouseArea { id: ccPwrMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.togglePowerMenuRequested() }
                 }
             }
 
-            // Collapsible Power Menu
             Loader {
                 Layout.fillWidth: true
-                Layout.preferredHeight: active ? 36 : 0
+                Layout.preferredHeight: active ? 40 : 0
                 active: root.powerMenuOpen
                 visible: active
                 source: "PowerMenu.qml"
@@ -444,12 +382,11 @@ PanelWindow {
                 }
             }
 
-            // Sub-Tab 1: Sequoia Control Center / Compact Stack / Studio Platter
             Flickable {
                 visible: root.controlsTab === "controls"
                 Layout.fillWidth: true
                 Layout.preferredHeight: visible
-                    ? Math.min(controlsInnerCol.implicitHeight, Math.max(180, root.height - root.topBarOffset - (root.powerMenuOpen ? 132 : 86)))
+                    ? Math.min(controlsInnerCol.implicitHeight, Math.max(200, controlsCard.maxDrawerH - (root.powerMenuOpen ? 124 : 76)))
                     : 0
                 contentWidth: width
                 contentHeight: controlsInnerCol.implicitHeight
@@ -460,389 +397,137 @@ PanelWindow {
                 ColumnLayout {
                     id: controlsInnerCol
                     width: parent.width
-                    spacing: 8
+                    spacing: 10
 
-                // 2x2 Connectivity & Focus Platter (Control Center style)
-                Rectangle {
-                    visible: ShellState.sequoiaHubStyle === "controlcenter"
-                    Layout.fillWidth: true
-                    implicitHeight: 112
-                    radius: Theme.r(16)
-                    color: Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
+                    Loader {
+                        id: qcLoader
+                        Layout.fillWidth: true
+                        readonly property int qcH: 250
+                            + (DeviceCaps.hasBacklight ? 56 : 0)
+                            + ((DeviceCaps.hasWifi || DeviceCaps.hasBluetooth) ? 72 : 0)
+                        readonly property bool showQc: root.panelMode === "controls" && root.controlsTab === "controls"
+                        Layout.preferredHeight: showQc ? (item ? Math.max(120, Math.ceil(item.implicitHeight)) : qcH) : 0
+                        active: root._controlsMainLoaded
+                        visible: showQc
+                        source: "QuickControls.qml"
+                        onLoaded: {
+                            if (item) {
+                                item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
+                                item.hideHeader = true;
+                                item.hideStyleFooter = true;
+                                item.hideDuplicateToggles = true;
+                                item.tallActionTiles = true;
+                                item.openSettingsRequested.connect(page => {
+                                    root.closeRequested();
+                                    root.openSettingsRequested(page);
+                                });
+                            }
+                        }
+                    }
 
-                    GridLayout {
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        columns: 2
-                        rowSpacing: 6
-                        columnSpacing: 6
+                    Loader {
+                        Layout.fillWidth: true
+                        readonly property bool showMedia: root.panelMode === "controls"
+                            && root.controlsTab === "controls"
+                            && (ShellState.sequoiaHubStyle === "controlcenter" || ShellState.sequoiaHubStyle === "media" || root.player !== null)
+                        Layout.preferredHeight: showMedia ? (item ? Math.max(158, Math.ceil(item.implicitHeight)) : 162) : 0
+                        active: root._controlsMainLoaded
+                        visible: showMedia
+                        source: "MediaCard.qml"
+                        onLoaded: {
+                            if (item) {
+                                item.player = Qt.binding(() => root.player);
+                                item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
+                            }
+                        }
+                    }
 
-                        Repeater {
-                            model: [
-                                { id: "sink",  icon: "󰋋", title: "Output",     sub: MangoState.defaultSinkLabel, active: !MangoState.volMuted, tint: Theme.primary },
-                                { id: "dnd",   icon: ShellState.dnd ? "󰂛" : "󰂚", title: "Focus", sub: ShellState.dnd ? "DND Active" : "Alerts On", active: ShellState.dnd, tint: Theme.secondary },
-                                { id: "awake", icon: "󰅶", title: "Keep Awake", sub: ShellState.keepAwake ? "Idle Paused" : "Auto-Lock On", active: ShellState.keepAwake, tint: Theme.warning },
-                                { id: "game",  icon: "󰊴", title: "Game Mode",  sub: ShellState.gameModeActive ? "Boost Active" : "Standard", active: ShellState.gameModeActive, tint: Theme.tertiary }
-                            ]
+                    // Spaces + Store Strip
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 42
+                        radius: Theme.r(21)
+                        color: Theme.m3SurfaceC
+                        border.width: 1
+                        border.color: Theme.m3Line
 
-                            delegate: Rectangle {
-                                id: sqTile
-                                required property var modelData
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 4
+
+                            RowLayout {
                                 Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: Theme.r(11)
-                                color: sqTile.modelData.active
-                                    ? Theme.tileActiveBg
-                                    : (sqTileMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                                border.width: sqTile.modelData.active ? Theme.activeControlBorderWidth : 0
-                                border.color: sqTile.modelData.tint
+                                spacing: 3
 
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 8
-                                    anchors.rightMargin: 8
-                                    spacing: 7
+                                Repeater {
+                                    model: MangoState.tagsForScreen(root.screenName)
 
-                                    Rectangle {
-                                        implicitWidth: 28
-                                        implicitHeight: 28
-                                        radius: Theme.r(14)
-                                        color: sqTile.modelData.active ? sqTile.modelData.tint : Theme.surfaceContainerHighest
+                                    delegate: Rectangle {
+                                        id: spTag
+                                        required property var modelData
+                                        readonly property bool isActive: spTag.modelData.is_active
+                                        readonly property bool isUrgent: spTag.modelData.is_urgent
+                                        readonly property bool isOccupied: spTag.modelData.client_count > 0
+
+                                        Layout.fillWidth: true
+                                        implicitHeight: 26
+                                        radius: Theme.r(spTag.isActive ? 13 : 9)
+                                        color: {
+                                            if (spTag.isUrgent) return Theme.m3Error;
+                                            if (spTag.isActive) return Theme.m3Primary;
+                                            if (spTagMouse.containsMouse) return Theme.m3SurfaceHighest;
+                                            return spTag.isOccupied ? Theme.m3SecondaryContainer : "transparent";
+                                        }
 
                                         Text {
                                             anchors.centerIn: parent
-                                            text: sqTile.modelData.icon
-                                            font.family: Theme.iconFont
-                                            font.pixelSize: 13
-                                            color: sqTile.modelData.active ? Theme.contrastInk(sqTile.modelData.tint) : Theme.fgSurfaceVariant
+                                            text: spTag.modelData.index
+                                            font.family: Theme.monoFont
+                                            font.pixelSize: Theme.fs(10)
+                                            font.weight: spTag.isActive ? Font.Bold : Font.Medium
+                                            color: spTag.isUrgent ? Theme.m3OnErrorContainer : (spTag.isActive ? Theme.m3OnPrimary : (spTag.isOccupied ? Theme.m3OnSecondaryContainer : Theme.m3InkDim))
                                         }
-                                    }
 
-                                    ColumnLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 1
-                                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: sqTile.modelData.title; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: sqTile.modelData.active ? Font.Bold : Font.DemiBold; color: Theme.fgSurface }
-                                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: sqTile.modelData.sub; font.family: Theme.fontFamily; font.pixelSize: 8; color: Theme.fgSurfaceVariant }
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: sqTileMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: mouse => {
-                                        const cid = sqTile.modelData.id;
-                                        if (cid === "sink") {
-                                            if (mouse.button === Qt.RightButton) {
-                                                Qt.callLater(() => {
-                                                    root.closeRequested();
-                                                    root.openSettingsRequested("audio");
-                                                });
-                                            } else {
-                                                MangoState.cycleAudioSink();
-                                            }
-                                        } else if (cid === "dnd") {
-                                            ShellState.toggleDnd();
-                                        } else if (cid === "awake") {
-                                            ShellState.toggleKeepAwake();
-                                        } else if (cid === "game") {
-                                            ShellState.toggleGameMode();
+                                        MouseArea {
+                                            id: spTagMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + spTag.modelData.index + ",0"])
                                         }
                                     }
                                 }
                             }
-                        }
-                    }
-                }
 
-                // Compact Quick Toggles Row (Compact Stack style)
-                RowLayout {
-                    visible: ShellState.sequoiaHubStyle === "compact"
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    Repeater {
-                        model: [
-                            { id: "dnd",   icon: ShellState.dnd ? "󰂛" : "󰂚", label: "Focus", active: ShellState.dnd, tint: Theme.secondary },
-                            { id: "awake", icon: "󰅶", label: "Awake", active: ShellState.keepAwake, tint: Theme.warning },
-                            { id: "shot",  icon: "󰹑", label: "Capture", active: false, tint: Theme.primary },
-                            { id: "game",  icon: "󰊴", label: "Game", active: ShellState.gameModeActive, tint: Theme.tertiary }
-                        ]
-
-                        delegate: Rectangle {
-                            id: cmpAct
-                            required property var modelData
-                            Layout.fillWidth: true
-                            implicitHeight: 42
-                            radius: Theme.r(11)
-                            color: cmpAct.modelData.active ? Theme.tileActiveBg : (cmpActMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
-                            border.width: cmpAct.modelData.active ? Theme.activeControlBorderWidth : Theme.cardBorderWidth
-                            border.color: cmpAct.modelData.active ? cmpAct.modelData.tint : Theme.cardBorder
-
-                            ColumnLayout {
-                                anchors.centerIn: parent
-                                spacing: 2
-                                Text { Layout.alignment: Qt.AlignHCenter; text: cmpAct.modelData.icon; font.family: Theme.iconFont; font.pixelSize: 13; color: cmpAct.modelData.active ? cmpAct.modelData.tint : Theme.fgSurfaceVariant }
-                                Text { Layout.alignment: Qt.AlignHCenter; text: cmpAct.modelData.label; font.family: Theme.fontFamily; font.pixelSize: 9; font.weight: cmpAct.modelData.active ? Font.Bold : Font.Medium; color: Theme.fgSurface }
-                            }
-
-                            MouseArea {
-                                id: cmpActMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    const id = cmpAct.modelData.id;
-                                    if (id === "dnd") ShellState.toggleDnd();
-                                    else if (id === "awake") ShellState.toggleKeepAwake();
-                                    else if (id === "shot") Quickshell.execDetached([Quickshell.shellPath("scripts/screenshot.sh"), "--area"]);
-                                    else if (id === "game") ShellState.toggleGameMode();
-                                }
+                            Rectangle {
+                                implicitWidth: 28; implicitHeight: 28; radius: Theme.r(14)
+                                color: ccStM.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
+                                Text { anchors.centerIn: parent; text: "󰏖"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(12); color: Theme.m3OnSecondaryContainer }
+                                MouseArea { id: ccStM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.closeRequested(); root.openStoreRequested(); } }
                             }
                         }
                     }
                 }
+            }
 
-                // Studio Media Card + Output Switcher (Media Studio style)
-                Loader {
-                    Layout.fillWidth: true
-                    readonly property int cardH: item ? Math.max(166, Math.ceil(item.implicitHeight)) : 168
-                    readonly property bool showCard: root.panelMode === "controls" && root.controlsTab === "controls" && ShellState.sequoiaHubStyle === "media"
-                    Layout.preferredHeight: showCard ? cardH : 0
-                    active: root._controlsMainLoaded && ShellState.sequoiaHubStyle === "media"
-                    visible: showCard
-                    source: "MediaCard.qml"
-                    onLoaded: {
-                        if (item) {
-                            item.player = Qt.binding(() => root.player);
-                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
-                        }
-                    }
-                }
+            Flickable {
+                visible: root.controlsTab === "overview"
+                Layout.fillWidth: true
+                Layout.preferredHeight: visible
+                    ? Math.min(seqOverviewTab.implicitHeight, Math.max(200, controlsCard.maxDrawerH - (root.powerMenuOpen ? 124 : 76)))
+                    : 0
+                contentWidth: width
+                contentHeight: seqOverviewTab.implicitHeight
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
 
-                Rectangle {
-                    visible: ShellState.sequoiaHubStyle === "media"
-                    Layout.fillWidth: true
-                    implicitHeight: 30
-                    radius: Theme.r(10)
-                    color: seqSinkMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        spacing: 6
-                        Text { text: "󰋋"; font.family: Theme.iconFont; font.pixelSize: 12; color: Theme.primary }
-                        Text { Layout.fillWidth: true; elide: Text.ElideRight; text: MangoState.defaultSinkLabel; font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.DemiBold; color: Theme.fgSurface }
-                        Text { text: "Cycle"; font.family: Theme.fontFamily; font.pixelSize: 9; color: Theme.fgSurfaceVariant }
-                    }
-
-                    MouseArea {
-                        id: seqSinkMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
-                            if (mouse.button === Qt.RightButton) {
-                                Qt.callLater(() => {
-                                    root.closeRequested();
-                                    root.openSettingsRequested("audio");
-                                });
-                            } else {
-                                MangoState.cycleAudioSink();
-                            }
-                        }
-                    }
-                }
-
-                // Sliders + Connectivity Deck (shared QuickControls tuned for Sequoia)
-                Loader {
-                    id: qcLoader
-                    Layout.fillWidth: true
-                    readonly property int qcH: (ShellState.sequoiaHubStyle === "compact" ? 104 : 114)
-                        + (DeviceCaps.hasBacklight ? 38 : 0)
-                        + ((DeviceCaps.hasWifi || DeviceCaps.hasBluetooth) ? 42 : 0)
-                    readonly property bool showQc: root.panelMode === "controls" && root.controlsTab === "controls"
-                    Layout.preferredHeight: showQc ? (item ? Math.max(92, Math.ceil(item.implicitHeight)) : qcH) : 0
-                    active: root._controlsMainLoaded
-                    visible: showQc
-                    source: "QuickControls.qml"
-                    onLoaded: {
-                        if (item) {
-                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
-                            item.hideHeader = true;
-                            item.hideStyleFooter = true;
-                            item.hideDuplicateToggles = true;
-                            item.tallActionTiles = false;
-                            item.openSettingsRequested.connect(page => {
-                                root.closeRequested();
-                                root.openSettingsRequested(page);
-                            });
-                        }
-                    }
-                }
-
-                // Compact Media Strip (for Control Center & Compact Stack)
-                Loader {
-                    Layout.fillWidth: true
-                    readonly property bool showCompactMedia: root.panelMode === "controls"
-                        && root.controlsTab === "controls"
-                        && ShellState.sequoiaHubStyle !== "media"
-                        && (ShellState.sequoiaHubStyle === "controlcenter" || root.player !== null)
-                    Layout.preferredHeight: showCompactMedia ? (item ? Math.max(158, Math.ceil(item.implicitHeight)) : 160) : 0
-                    active: root._controlsMainLoaded && ShellState.sequoiaHubStyle !== "media"
-                    visible: showCompactMedia
-                    source: "MediaCard.qml"
-                    onLoaded: {
-                        if (item) {
-                            item.player = Qt.binding(() => root.player);
-                            item.active = Qt.binding(() => root.isOpen && root.panelMode === "controls" && root.controlsTab === "controls");
-                        }
-                    }
-                }
-
-                // Spaces Strip (1..9 + Layout + Window Switcher)
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 38
-                    radius: Theme.r(14)
-                    color: Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 7
-                        anchors.rightMargin: 7
-                        spacing: 5
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 2
-
-                            Repeater {
-                                model: MangoState.tagsForScreen(root.screenName)
-
-                                delegate: Rectangle {
-                                    id: spTag
-                                    required property var modelData
-                                    readonly property bool isActive: spTag.modelData.is_active
-                                    readonly property bool isUrgent: spTag.modelData.is_urgent
-                                    readonly property bool isOccupied: spTag.modelData.client_count > 0
-
-                                    Layout.fillWidth: true
-                                    implicitHeight: 24
-                                    radius: Theme.r(8)
-                                    color: {
-                                        if (spTag.isUrgent) return Theme.error;
-                                        if (spTag.isActive) return Theme.primary;
-                                        if (spTagMouse.containsMouse) return Theme.tileActiveBg;
-                                        if (spTag.isOccupied) return Theme.controlFillHover;
-                                        return "transparent";
-                                    }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: spTag.modelData.index
-                                        font.family: Theme.monoFont
-                                        font.pixelSize: 10
-                                        font.weight: spTag.isActive ? Font.Bold : Font.Medium
-                                        color: spTag.isUrgent ? Theme.fgError : (spTag.isActive ? Theme.fgPrimary : (spTag.isOccupied ? Theme.fgSurface : Theme.fgSurfaceVariant))
-                                    }
-
-                                    MouseArea {
-                                        id: spTagMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + spTag.modelData.index + ",0"])
-                                    }
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            implicitHeight: 24
-                            implicitWidth: Math.max(24, sqLayTxt.implicitWidth + 10)
-                            radius: Theme.r(8)
-                            color: sqLayMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-
-                            Text {
-                                id: sqLayTxt
-                                anchors.centerIn: parent
-                                text: MangoState.layoutForScreen(root.screenName)
-                                font.family: Theme.monoFont
-                                font.pixelSize: 10
-                                font.weight: Font.Bold
-                                color: Theme.fgSurface
-                            }
-
-                            MouseArea {
-                                id: sqLayMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Quickshell.execDetached(["mmsg", "dispatch", "switch_layout"])
-                            }
-                        }
-                    }
-                }
-
-                // Compact Telemetry Footer (Control Center & Studio Platter)
-                Rectangle {
-                    visible: ShellState.sequoiaHubStyle !== "compact"
-                    Layout.fillWidth: true
-                    implicitHeight: 30
-                    radius: Theme.r(10)
-                    color: Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        spacing: 10
-
-                        Text {
-                            text: "CPU " + Math.round(SystemTelemetry.cpuPercent) + "%"
-                                + (SystemTelemetry.cpuTempC > 0 ? (" · " + SystemTelemetry.cpuTempC + "°C") : "")
-                            font.family: Theme.monoFont
-                            font.pixelSize: 9
-                            font.weight: Font.DemiBold
-                            color: SystemTelemetry.cpuPercent > 85 ? Theme.error : Theme.fgSurfaceVariant
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        Text {
-                            text: "RAM " + SystemTelemetry.memUsedGb.toFixed(1) + "/" + SystemTelemetry.memTotalGb.toFixed(0) + "G"
-                            font.family: Theme.monoFont
-                            font.pixelSize: 9
-                            font.weight: Font.DemiBold
-                            color: SystemTelemetry.memPercent > 85 ? Theme.warning : Theme.fgSurfaceVariant
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        Text {
-                            text: DeviceCaps.hasBattery
-                                ? ("BAT " + DeviceCaps.batteryPercent + "%")
-                                : ("DISK " + Math.round(SystemTelemetry.diskPercent) + "%")
-                            font.family: Theme.monoFont
-                            font.pixelSize: 9
-                            font.weight: Font.DemiBold
-                            color: DeviceCaps.hasBattery && DeviceCaps.batteryLow ? Theme.error : Theme.fgSurfaceVariant
-                        }
-                    }
-                }
+                M3OverviewTab {
+                    id: seqOverviewTab
+                    width: parent.width
+                    active: root.isOpen && root.panelMode === "controls" && root.controlsTab === "overview"
                 }
             }
 
@@ -890,29 +575,29 @@ PanelWindow {
     Rectangle {
         visible: root.panelMode === "notifications"
         anchors.top: parent.top
-        anchors.topMargin: root.topBarOffset + 6
+        anchors.topMargin: root.topBarOffset + 8
         anchors.right: parent.right
-        anchors.rightMargin: 10
-        width: Math.min(720, Math.max(360, root.width - 20))
-        height: Math.min(504, Math.max(320, root.height - root.topBarOffset - 24))
-        radius: Theme.r(20)
-        color: Theme.notchBg
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+        anchors.rightMargin: 12
+        width: Math.min(720, Math.max(360, root.width - 24))
+        height: Math.min(548, Math.max(320, root.height - root.topBarOffset - 24))
+        radius: Theme.r(32)
+        color: Theme.m3PanelBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         opacity: root.shown ? 1.0 : 0.0
-        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
+        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.95)
         transformOrigin: Item.TopRight
 
-        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 190; easing.type: Theme.m3Springy } }
 
         MouseArea { anchors.fill: parent }
 
         Loader {
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             active: root._notifsPanelLoaded
             visible: root.panelMode === "notifications"
             source: "NotificationsTab.qml"
@@ -923,31 +608,31 @@ PanelWindow {
         }
     }
 
-    // ==================== 3. CENTERED FLOATING SPOTLIGHT LAUNCHER ====================
+    // ==================== 3. CENTERED FLOATING M3 LAUNCHER ====================
     Rectangle {
         visible: root.panelMode === "launcher"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: Math.max(56, root.topBarOffset + 36)
-        width: Math.min(680, Math.max(420, root.width - 48))
-        height: Math.min(476, Math.max(320, root.height - root.topBarOffset - 72))
-        radius: Theme.r(22)
-        color: Theme.notchBg
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+        width: Math.min(700, Math.max(420, root.width - 48))
+        height: Math.min(500, Math.max(320, root.height - root.topBarOffset - 72))
+        radius: Theme.r(34)
+        color: Theme.m3PanelBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         opacity: root.shown ? 1.0 : 0.0
-        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
+        scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.95)
 
-        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 190; easing.type: Theme.m3Springy } }
 
         MouseArea { anchors.fill: parent }
 
         Loader {
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             active: root._launcherPanelLoaded
             visible: root.panelMode === "launcher"
             source: "AppLauncher.qml"
@@ -990,10 +675,10 @@ PanelWindow {
         anchors.right: root.panelMode === "notification" ? parent.right : undefined
         anchors.rightMargin: root.panelMode === "notification" ? 12 : 0
         anchors.horizontalCenter: root.panelMode === "osd" ? parent.horizontalCenter : undefined
-        width: root.panelMode === "notification" ? 384 : 310
+        width: root.panelMode === "notification" ? 420 : 320
         height: root.panelMode === "notification"
-            ? Math.max(76, Math.min(156, Math.round(osdOverlay.notificationHeight) + 22))
-            : 58
+            ? Math.max(82, Math.min(164, Math.round(osdOverlay.notificationHeight) + 24))
+            : 60
 
         HoverHandler {
             id: toastHover
@@ -1008,10 +693,10 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            radius: Theme.r(18)
-            color: Theme.notchBg
-            border.width: Math.max(1, Theme.islandBorderWidth)
-            border.color: (root.panelMode === "notification" && osdOverlay.isUrgent) ? Theme.error : Theme.islandBorder
+            radius: Theme.r(28)
+            color: Theme.m3PanelBg
+            border.width: 1
+            border.color: (root.panelMode === "notification" && osdOverlay.isUrgent) ? Theme.m3Error : Theme.m3Line
             clip: true
 
             opacity: root.shown ? 1.0 : 0.0

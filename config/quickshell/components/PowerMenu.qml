@@ -45,11 +45,11 @@ Rectangle {
         onTriggered: root.pendingAction = ""
     }
 
-    implicitHeight: 36
-    radius: Theme.r(16)
-    color: Theme.cardBg
-    border.width: Theme.cardBorderWidth
-    border.color: Theme.cardBorder
+    implicitHeight: 40
+    radius: Theme.r(20)
+    color: Theme.m3SurfaceC
+    border.width: 1
+    border.color: Theme.m3Line
     clip: true
 
     RowLayout {
@@ -67,27 +67,29 @@ Rectangle {
                 readonly property bool isPending: root.pendingAction === btn.modelData.id
 
                 Layout.fillWidth: true
-                Layout.preferredHeight: 26
-                radius: Theme.r(13)
+                Layout.preferredHeight: 30
+                radius: Theme.r(btnArea.pressed ? 9 : 15)
                 clip: true
                 color: {
                     if (btn.isPending)
-                        return Theme.error;
+                        return Theme.m3Error;
                     if (btnArea.containsMouse)
-                        return btn.modelData.danger ? Theme.withAlpha(Theme.error, 0.22) : Theme.hoverBg;
-                    return Theme.subCardBg;
+                        return btn.modelData.danger ? Theme.m3ErrorContainer : Theme.m3SecondaryContainer;
+                    return Theme.m3SurfaceHigh;
                 }
-                border.width: Theme.cardBorderWidth
-                border.color: btn.isPending ? Theme.error : Theme.cardBorder
-                scale: btnArea.pressed ? 0.95 : 1.0
+                scale: btnArea.pressed ? 0.94 : 1.0
 
                 Behavior on color {
-                    enabled: !Theme.isSimple
-                    ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    enabled: !Theme.reducedMotion
+                    ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+                }
+                Behavior on radius {
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 150 }
                 }
                 Behavior on scale {
-                    enabled: !Theme.isSimple
-                    NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                    enabled: !Theme.reducedMotion
+                    NumberAnimation { duration: 90 }
                 }
 
                 RowLayout {
@@ -97,27 +99,31 @@ Rectangle {
                     Text {
                         text: btn.modelData.icon
                         font.family: Theme.iconFont
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fs(12)
                         color: {
                             if (btn.isPending)
-                                return Theme.fgError;
+                                return Theme.m3OnErrorContainer;
                             if (btn.modelData.danger && btnArea.containsMouse)
-                                return Theme.error;
-                            return Theme.fgSurface;
+                                return Theme.m3OnErrorContainer;
+                            if (btn.modelData.danger)
+                                return Theme.m3Error;
+                            return btnArea.containsMouse ? Theme.m3OnSecondaryContainer : Theme.m3Ink;
                         }
                     }
 
                     Text {
                         text: btn.isPending ? "Confirm?" : btn.modelData.label
                         font.family: Theme.fontFamily
-                        font.pixelSize: root.compact ? 9 : 10
-                        font.weight: btn.isPending ? Font.Bold : Font.DemiBold
+                        font.pixelSize: Theme.fs(root.compact ? 9 : 10)
+                        font.weight: btn.isPending ? Font.Bold : Font.Medium
                         color: {
                             if (btn.isPending)
-                                return Theme.fgError;
+                                return Theme.m3OnErrorContainer;
                             if (btn.modelData.danger && btnArea.containsMouse)
-                                return Theme.error;
-                            return Theme.fgSurface;
+                                return Theme.m3OnErrorContainer;
+                            if (btn.modelData.danger)
+                                return Theme.m3Error;
+                            return btnArea.containsMouse ? Theme.m3OnSecondaryContainer : Theme.m3Ink;
                         }
                     }
                 }

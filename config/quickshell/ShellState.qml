@@ -108,6 +108,9 @@ Singleton {
     property int pillHeight: 32
     property string hubUiStyle: "cupertino"      // "cupertino" | "stage" | "cockpit" | "bento"
     property string barUiStyle: "apple"          // "apple" | "split" | "menubar" | "classic"
+    property string m3Shape: "verysunny"
+    property bool m3WavyProgress: true
+    property real m3WaveThick: 4.0
 
     // --- Sequoia Menu Bar & Dedicated Control Center ---
     property int sequoiaBarHeight: 28
@@ -341,6 +344,13 @@ Singleton {
                 if (bs === "apple" || bs === "split" || bs === "menubar" || bs === "classic")
                     root.barUiStyle = bs;
             }
+            if (d.m3Shape !== undefined) {
+                const shp = String(d.m3Shape).toLowerCase();
+                if (["verysunny", "cookie", "cookie6", "cookie12", "flower", "clover", "pentagon", "hexagon", "gem", "circle", "square", "softburst"].indexOf(shp) >= 0)
+                    root.m3Shape = shp;
+            }
+            if (d.m3WavyProgress !== undefined) root.m3WavyProgress = !!d.m3WavyProgress;
+            if (d.m3WaveThick !== undefined) root.m3WaveThick = Math.max(2.0, Math.min(7.0, Number(d.m3WaveThick)));
             if (d.sequoiaBarHeight !== undefined) root.sequoiaBarHeight = Math.max(24, Math.min(36, Number(d.sequoiaBarHeight)));
             if (d.sequoiaBarFloating !== undefined) root.sequoiaBarFloating = !!d.sequoiaBarFloating;
             if (d.sequoiaBarTranslucent !== undefined) root.sequoiaBarTranslucent = !!d.sequoiaBarTranslucent;
@@ -542,6 +552,13 @@ Singleton {
             if (bs === "apple" || bs === "split" || bs === "menubar" || bs === "classic")
                 root.barUiStyle = bs;
         }
+        else if (key === "m3Shape") {
+            const shp = String(value).toLowerCase();
+            if (["verysunny", "cookie", "cookie6", "cookie12", "flower", "clover", "pentagon", "hexagon", "gem", "circle", "square", "softburst"].indexOf(shp) >= 0)
+                root.m3Shape = shp;
+        }
+        else if (key === "m3WavyProgress") root.m3WavyProgress = !!value;
+        else if (key === "m3WaveThick") root.m3WaveThick = Math.max(2.0, Math.min(7.0, Number(value)));
         else if (key === "sequoiaBarHeight") root.sequoiaBarHeight = Math.max(24, Math.min(36, Number(value)));
         else if (key === "sequoiaBarFloating") root.sequoiaBarFloating = !!value;
         else if (key === "sequoiaBarTranslucent") root.sequoiaBarTranslucent = !!value;

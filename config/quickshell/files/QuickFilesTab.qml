@@ -184,10 +184,10 @@ RowLayout {
         Layout.minimumWidth: Math.min(136, sideW)
         Layout.maximumWidth: sideW
         Layout.fillHeight: true
-        radius: Theme.r(18)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         ScrollView {
@@ -199,16 +199,16 @@ RowLayout {
 
             ColumnLayout {
                 width: Math.max(110, sideScroll.availableWidth)
-                spacing: 3
+                spacing: 4
 
                 Text {
-                    leftPadding: 4
+                    leftPadding: 6
                     bottomPadding: 2
                     text: "Favorites"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: Theme.fgSurfaceVariant
+                    color: Theme.m3InkDim
                 }
 
                 Repeater {
@@ -218,33 +218,22 @@ RowLayout {
                         required property var modelData
                         readonly property bool cur: !root.inTrashView && root.currentPath === String(qpBtn.modelData.path || "")
                         Layout.fillWidth: true
-                        implicitHeight: 28
-                        radius: Theme.r(10)
+                        implicitHeight: 32
+                        radius: Theme.r(16)
                         clip: true
-                        color: qpBtn.cur ? Theme.rowSelectedBg : (qpMouse.containsMouse ? Theme.controlFillHover : "transparent")
-                        border.width: qpBtn.cur ? Theme.activeControlBorderWidth : 0
-                        border.color: Theme.withAlpha(fstyle.accent, 0.45)
-
-                        Rectangle {
-                            visible: qpBtn.cur
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            width: 3
-                            color: fstyle.accent
-                        }
+                        color: qpBtn.cur ? Theme.m3SecondaryContainer : (qpMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            spacing: 7
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            spacing: 8
 
                             Text {
                                 text: String(qpBtn.modelData.icon || "󰉋")
                                 font.family: Theme.iconFont
                                 font.pixelSize: Theme.fs(13)
-                                color: qpBtn.cur ? fstyle.accent : Theme.fgSurfaceVariant
+                                color: qpBtn.cur ? Theme.m3OnSecondaryContainer : Theme.m3InkDim
                             }
                             Text {
                                 Layout.fillWidth: true
@@ -252,7 +241,7 @@ RowLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: qpBtn.cur ? Font.Bold : Font.Medium
-                                color: qpBtn.cur ? fstyle.accent : Theme.fgSurface
+                                color: qpBtn.cur ? Theme.m3OnSecondaryContainer : Theme.m3Ink
                                 elide: Text.ElideRight
                             }
                         }
@@ -443,41 +432,39 @@ RowLayout {
         }
     }
 
-    // --- Right macOS Finder Browser Pane ---
+    // --- Right File Browser Pane ---
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Theme.r(18)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(24)
+        color: Theme.m3PaneBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: 12
             spacing: 8
 
-            // Interactive macOS Breadcrumb Path Bar + Action Pills
+            // Interactive Breadcrumb Path Bar + Action Pills
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.preferredHeight: 30
-                Layout.minimumHeight: 30
-                Layout.maximumHeight: 30
+                Layout.preferredHeight: 34
+                Layout.minimumHeight: 34
+                Layout.maximumHeight: 34
                 spacing: 6
 
                 Rectangle {
-                    implicitWidth: 28
-                    implicitHeight: 28
-                    radius: Theme.r(14)
-                    color: upMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                    border.width: Theme.subBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitWidth: 32
+                    implicitHeight: 32
+                    radius: Theme.r(16)
+                    color: upMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
                     enabled: !root.inTrashView && root.parentPath.length > 0
                     opacity: enabled ? 1.0 : 0.45
 
-                    Text { anchors.centerIn: parent; text: "󰁝"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.fgSurface }
+                    Text { anchors.centerIn: parent; text: "󰁝"; font.family: Theme.iconFont; font.pixelSize: Theme.fs(13); color: Theme.m3Ink }
                     MouseArea {
                         id: upMouse
                         anchors.fill: parent
@@ -490,11 +477,11 @@ RowLayout {
                 // Scrollable Interactive Breadcrumb Capsule
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 30
-                    radius: Theme.r(15)
-                    color: Theme.subCardBg
-                    border.width: Theme.subBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitHeight: 34
+                    radius: Theme.r(17)
+                    color: Theme.m3SurfaceC
+                    border.width: 1
+                    border.color: Theme.m3Line
                     clip: true
 
                     RowLayout {

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import ".."
+import "../m3"
 
 ColumnLayout {
     id: root
@@ -513,28 +514,30 @@ ColumnLayout {
     // --- 1. Header Bar ---
     RowLayout {
         Layout.fillWidth: true
-        spacing: 10
+        spacing: 12
 
-        Rectangle {
-            implicitWidth: 36
-            implicitHeight: 36
-            radius: Theme.r(10)
-            color: Theme.withAlpha(Theme.primary, 0.16)
-            border.width: 1
-            border.color: Theme.withAlpha(Theme.primary, 0.35)
+        Item {
+            implicitWidth: 42
+            implicitHeight: 42
+
+            M3Blob {
+                anchors.fill: parent
+                kind: ShellState.m3Shape
+                color: Theme.m3PrimaryContainer
+            }
 
             Text {
                 anchors.centerIn: parent
                 text: root.distroIcon()
                 font.family: Theme.iconFont
-                font.pixelSize: Theme.fs(18)
-                color: Theme.primary
+                font.pixelSize: Theme.fs(19)
+                color: Theme.m3OnPrimaryContainer
             }
         }
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 1
+            spacing: 2
 
             RowLayout {
                 spacing: 8
@@ -542,18 +545,16 @@ ColumnLayout {
                 Text {
                     text: "Aurora App Store"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(14)
+                    font.pixelSize: Theme.fs(15)
                     font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    color: Theme.m3Ink
                 }
 
                 Rectangle {
-                    implicitWidth: distroTag.implicitWidth + 12
-                    implicitHeight: 20
-                    radius: Theme.r(6)
-                    color: Theme.subCardBg
-                    border.width: Theme.subBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitWidth: distroTag.implicitWidth + 16
+                    implicitHeight: 22
+                    radius: Theme.r(11)
+                    color: Theme.m3SecondaryContainer
 
                     Text {
                         id: distroTag
@@ -563,7 +564,8 @@ ColumnLayout {
                             + (root.storeStatus.hasFlatpak ? " + flatpak" : "")
                         font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(9)
-                        color: Theme.primary
+                        font.weight: Font.Bold
+                        color: Theme.m3OnSecondaryContainer
                     }
                 }
             }
@@ -572,25 +574,23 @@ ColumnLayout {
                 text: root.storeStatus.nativeCount + " native packages · " + root.storeStatus.flatpakCount + " Flatpak apps"
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
         }
 
         // Refresh
         Rectangle {
-            implicitWidth: 30
-            implicitHeight: 30
-            radius: Theme.r(9)
-            color: refMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-            border.width: Theme.subBorderWidth
-            border.color: Theme.cardBorder
+            implicitWidth: 34
+            implicitHeight: 34
+            radius: Theme.r(17)
+            color: refMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
             Text {
                 anchors.centerIn: parent
                 text: "󰑐"
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(14)
-                color: Theme.fgSurface
+                color: Theme.m3Ink
             }
 
             MouseArea {
@@ -603,48 +603,29 @@ ColumnLayout {
         }
 
         // Pop out standalone Store window (when embedded inside Settings)
-        Rectangle {
+        M3Btn {
             visible: root.embedded
-            implicitWidth: popTxt.implicitWidth + 16
-            implicitHeight: 30
-            radius: Theme.r(9)
-            color: popMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-
-            Text {
-                id: popTxt
-                anchors.centerIn: parent
-                text: "󰏖 Open Store Window"
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-                font.weight: Font.Bold
-                color: Theme.fgPrimary
-            }
-
-            MouseArea {
-                id: popMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.openWindowRequested()
-            }
+            text: "Open Store Window"
+            icon: "󰏖"
+            primary: true
+            compact: true
+            onClicked: root.openWindowRequested()
         }
 
         // Close button (when in standalone StoreWindow)
         Rectangle {
             visible: !root.embedded
-            implicitWidth: 30
-            implicitHeight: 30
-            radius: Theme.r(9)
-            color: clsMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.2) : Theme.subCardBg
-            border.width: Theme.subBorderWidth
-            border.color: Theme.cardBorder
+            implicitWidth: 34
+            implicitHeight: 34
+            radius: Theme.r(17)
+            color: clsMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceHigh
 
             Text {
                 anchors.centerIn: parent
                 text: "󰅖"
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(14)
-                color: clsMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                color: clsMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim
             }
 
             MouseArea {
@@ -661,23 +642,23 @@ ColumnLayout {
     Rectangle {
         visible: root.storeStatus.needsAurSetup || root.storeStatus.needsRpmFusionSetup || root.storeStatus.needsFlathubSetup
         Layout.fillWidth: true
-        implicitHeight: setupRow.implicitHeight + 14
-        radius: Theme.r(12)
-        color: Theme.withAlpha(Theme.tertiary, 0.14)
+        implicitHeight: setupRow.implicitHeight + 18
+        radius: Theme.r(20)
+        color: Theme.m3SecondaryContainer
         border.width: 1
-        border.color: Theme.withAlpha(Theme.tertiary, 0.35)
+        border.color: Theme.m3Line
 
         RowLayout {
             id: setupRow
             anchors.fill: parent
-            anchors.margins: 7
-            spacing: 8
+            anchors.margins: 10
+            spacing: 10
 
             Text {
                 text: "󰒓"
                 font.family: Theme.iconFont
-                font.pixelSize: Theme.fs(14)
-                color: Theme.tertiary
+                font.pixelSize: Theme.fs(15)
+                color: Theme.m3Primary
             }
 
             Text {
@@ -692,85 +673,31 @@ ColumnLayout {
                 }
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
-                color: Theme.fgSurface
+                color: Theme.m3OnSecondaryContainer
             }
 
-            Rectangle {
+            M3Btn {
                 visible: root.storeStatus.needsAurSetup
-                implicitWidth: setupAurTxt.implicitWidth + 16
-                implicitHeight: 26
-                radius: Theme.r(8)
-                color: setupAurMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-
-                Text {
-                    id: setupAurTxt
-                    anchors.centerIn: parent
-                    text: "Install paru-bin"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgPrimary
-                }
-
-                MouseArea {
-                    id: setupAurMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.requestPlan("setup-aur", "aur", [], "Install paru AUR Helper")
-                }
+                text: "Install paru-bin"
+                primary: true
+                compact: true
+                onClicked: root.requestPlan("setup-aur", "aur", [], "Install paru AUR Helper")
             }
 
-            Rectangle {
+            M3Btn {
                 visible: root.storeStatus.needsRpmFusionSetup
-                implicitWidth: setupRpmTxt.implicitWidth + 16
-                implicitHeight: 26
-                radius: Theme.r(8)
-                color: setupRpmMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-
-                Text {
-                    id: setupRpmTxt
-                    anchors.centerIn: parent
-                    text: "Enable RPM Fusion"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgPrimary
-                }
-
-                MouseArea {
-                    id: setupRpmMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.requestPlan("setup-rpmfusion", "rpmfusion", [], "Enable RPM Fusion")
-                }
+                text: "Enable RPM Fusion"
+                primary: true
+                compact: true
+                onClicked: root.requestPlan("setup-rpmfusion", "rpmfusion", [], "Enable RPM Fusion")
             }
 
-            Rectangle {
+            M3Btn {
                 visible: root.storeStatus.needsFlathubSetup
-                implicitWidth: setupFhTxt.implicitWidth + 16
-                implicitHeight: 26
-                radius: Theme.r(8)
-                color: setupFhMouse.containsMouse ? Qt.lighter(Theme.secondary, 1.08) : Theme.secondary
-
-                Text {
-                    id: setupFhTxt
-                    anchors.centerIn: parent
-                    text: "Add Flathub"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.contrastInk(Theme.secondary)
-                }
-
-                MouseArea {
-                    id: setupFhMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.requestPlan("setup-flathub", "flatpak", [], "Add Flathub Repository")
-                }
+                text: "Add Flathub"
+                variant: "tonal"
+                compact: true
+                onClicked: root.requestPlan("setup-flathub", "flatpak", [], "Add Flathub Repository")
             }
         }
     }
@@ -778,60 +705,70 @@ ColumnLayout {
     // --- 3. Tabs + Search Input + Source Filter Chips ---
     RowLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: 10
 
         // Tabs
-        RowLayout {
-            spacing: 4
+        Rectangle {
+            implicitHeight: 38
+            implicitWidth: tabGroupRow.implicitWidth + 8
+            radius: Theme.r(19)
+            color: Theme.m3SurfaceC
+            border.width: 1
+            border.color: Theme.m3Line
 
-            Repeater {
-                model: [
-                    { id: "discover",  label: "Discover",  icon: "󰀻" },
-                    { id: "search",    label: "Search",    icon: "󰍉" },
-                    { id: "installed", label: "Installed", icon: "󰄬" },
-                    { id: "updates",   label: root.updateItems.length > 0 ? ("Updates (" + root.updateItems.length + ")") : "Updates", icon: "󰚰" }
-                ]
+            RowLayout {
+                id: tabGroupRow
+                anchors.centerIn: parent
+                spacing: 3
 
-                delegate: Rectangle {
-                    id: tabChip
-                    required property var modelData
-                    readonly property bool selected: root.activeTab === modelData.id
-                    implicitWidth: tabRow.implicitWidth + 16
-                    implicitHeight: 30
-                    radius: Theme.r(9)
-                    color: tabChip.selected
-                        ? Theme.primary
-                        : (tabMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                    border.width: tabChip.selected ? 0 : Theme.subBorderWidth
-                    border.color: Theme.cardBorder
+                Repeater {
+                    model: [
+                        { id: "discover",  label: "Discover",  icon: "󰀻" },
+                        { id: "search",    label: "Search",    icon: "󰍉" },
+                        { id: "installed", label: "Installed", icon: "󰄬" },
+                        { id: "updates",   label: root.updateItems.length > 0 ? ("Updates (" + root.updateItems.length + ")") : "Updates", icon: "󰚰" }
+                    ]
 
-                    RowLayout {
-                        id: tabRow
-                        anchors.centerIn: parent
-                        spacing: 5
+                    delegate: Rectangle {
+                        id: tabChip
+                        required property var modelData
+                        readonly property bool selected: root.activeTab === modelData.id
+                        implicitWidth: tabRow.implicitWidth + 16
+                        implicitHeight: 30
+                        radius: Theme.r(tabChip.selected ? 11 : 15)
+                        color: tabChip.selected
+                            ? Theme.m3Primary
+                            : (tabMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
+                        Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150 } }
 
-                        Text {
-                            text: tabChip.modelData.icon
-                            font.family: Theme.iconFont
-                            font.pixelSize: Theme.fs(12)
-                            color: tabChip.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                        RowLayout {
+                            id: tabRow
+                            anchors.centerIn: parent
+                            spacing: 5
+
+                            Text {
+                                text: tabChip.modelData.icon
+                                font.family: Theme.iconFont
+                                font.pixelSize: Theme.fs(12)
+                                color: tabChip.selected ? Theme.m3OnPrimary : Theme.m3InkDim
+                            }
+
+                            Text {
+                                text: tabChip.modelData.label
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                font.weight: tabChip.selected ? Font.Bold : Font.Medium
+                                color: tabChip.selected ? Theme.m3OnPrimary : Theme.m3Ink
+                            }
                         }
 
-                        Text {
-                            text: tabChip.modelData.label
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(10)
-                            font.weight: tabChip.selected ? Font.Bold : Font.DemiBold
-                            color: tabChip.selected ? Theme.fgPrimary : Theme.fgSurface
+                        MouseArea {
+                            id: tabMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.activeTab = tabChip.modelData.id
                         }
-                    }
-
-                    MouseArea {
-                        id: tabMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.activeTab = tabChip.modelData.id
                     }
                 }
             }
@@ -840,23 +777,23 @@ ColumnLayout {
         // Search box
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 30
-            radius: Theme.r(9)
-            color: Theme.subCardBg
-            border.width: searchInput.activeFocus ? 1 : Theme.subBorderWidth
-            border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
+            implicitHeight: 38
+            radius: Theme.r(19)
+            color: searchInput.activeFocus ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+            border.width: searchInput.activeFocus ? 2 : 1
+            border.color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 8
-                spacing: 6
+                anchors.leftMargin: 14
+                anchors.rightMargin: 12
+                spacing: 8
 
                 Text {
                     text: "󰍉"
                     font.family: Theme.iconFont
-                    font.pixelSize: Theme.fs(13)
-                    color: Theme.fgSurfaceVariant
+                    font.pixelSize: Theme.fs(14)
+                    color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3InkDim
                 }
 
                 Item {
@@ -869,8 +806,9 @@ ColumnLayout {
                         verticalAlignment: TextInput.AlignVCenter
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(11)
-                        color: Theme.fgSurface
-                        selectionColor: Theme.withAlpha(Theme.primary, 0.35)
+                        color: Theme.m3Ink
+                        selectionColor: Theme.m3Primary
+                        selectedTextColor: Theme.m3OnPrimary
                         clip: true
                         text: root.query
                         onTextChanged: {
@@ -907,7 +845,7 @@ ColumnLayout {
                             : "Filter apps or press Enter for live repo search..."
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                         elide: Text.ElideRight
                     }
                 }
@@ -917,7 +855,7 @@ ColumnLayout {
                     text: "󰅖"
                     font.family: Theme.iconFont
                     font.pixelSize: Theme.fs(12)
-                    color: clrQMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                    color: clrQMouse.containsMouse ? Theme.m3Ink : Theme.m3InkDim
 
                     MouseArea {
                         id: clrQMouse
@@ -955,23 +893,22 @@ ColumnLayout {
                 id: srcChip
                 required property var modelData
                 readonly property bool selected: root.sourceFilter === modelData.id
-                implicitWidth: srcTxt.implicitWidth + 14
-                implicitHeight: 24
-                radius: Theme.r(7)
+                implicitWidth: srcTxt.implicitWidth + 18
+                implicitHeight: 28
+                radius: Theme.r(srcChip.selected ? 10 : 14)
                 color: srcChip.selected
-                    ? Theme.withAlpha(Theme.secondary, 0.22)
-                    : (srcMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg)
-                border.width: srcChip.selected ? 1 : Theme.subBorderWidth
-                border.color: srcChip.selected ? Theme.secondary : Theme.cardBorder
+                    ? Theme.m3SecondaryContainer
+                    : (srcMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC)
+                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
 
                 Text {
                     id: srcTxt
                     anchors.centerIn: parent
-                    text: srcChip.modelData.label
+                    text: (srcChip.selected ? "󰄬 " : "") + srcChip.modelData.label
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(9)
-                    font.weight: srcChip.selected ? Font.Bold : Font.Normal
-                    color: srcChip.selected ? Theme.secondary : Theme.fgSurface
+                    font.weight: srcChip.selected ? Font.Bold : Font.Medium
+                    color: srcChip.selected ? Theme.m3OnSecondaryContainer : Theme.m3Ink
                 }
 
                 MouseArea {
@@ -985,44 +922,27 @@ ColumnLayout {
         }
 
         // Update All button (shown on Updates tab)
-        Rectangle {
+        M3Btn {
             visible: root.activeTab === "updates" && root.updateAllCmd.length > 0
-            implicitWidth: updAllTxt.implicitWidth + 16
-            implicitHeight: 24
-            radius: Theme.r(7)
-            color: updAllMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-
-            Text {
-                id: updAllTxt
-                anchors.centerIn: parent
-                text: "󰚰 Update All System & Apps"
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(9)
-                font.weight: Font.Bold
-                color: Theme.fgPrimary
-            }
-
-            MouseArea {
-                id: updAllMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.requestPlan("update-all", "all", [], "Update System & Apps")
-            }
+            text: "Update All"
+            icon: "󰚰"
+            primary: true
+            compact: true
+            onClicked: root.requestPlan("update-all", "all", [], "Update System & Apps")
         }
 
         // Scrollable category strip when on Discover tab
         Flickable {
             visible: root.activeTab === "discover"
             Layout.fillWidth: true
-            implicitHeight: 24
+            implicitHeight: 28
             contentWidth: catRow.implicitWidth
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
             Row {
                 id: catRow
-                spacing: 4
+                spacing: 5
 
                 Repeater {
                     model: root.categories
@@ -1031,14 +951,12 @@ ColumnLayout {
                         id: catPill
                         required property string modelData
                         readonly property bool selected: root.selectedCategory === modelData
-                        width: catLbl.implicitWidth + 14
-                        height: 24
-                        radius: Theme.r(7)
+                        width: catLbl.implicitWidth + 16
+                        height: 28
+                        radius: Theme.r(catPill.selected ? 10 : 14)
                         color: catPill.selected
-                            ? Theme.withAlpha(Theme.primary, 0.2)
-                            : (catMouse.containsMouse ? Theme.hoverBg : "transparent")
-                        border.width: catPill.selected ? 1 : 0
-                        border.color: Theme.primary
+                            ? Theme.m3Primary
+                            : (catMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                         Text {
                             id: catLbl
@@ -1047,7 +965,7 @@ ColumnLayout {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(9)
                             font.weight: catPill.selected ? Font.Bold : Font.Normal
-                            color: catPill.selected ? Theme.primary : Theme.fgSurfaceVariant
+                            color: catPill.selected ? Theme.m3OnPrimary : Theme.m3InkDim
                         }
 
                         MouseArea {
@@ -1072,23 +990,21 @@ ColumnLayout {
     Rectangle {
         visible: root.bannerMsg.length > 0 || root.runningDirectOp
         Layout.fillWidth: true
-        implicitHeight: bnrRow.implicitHeight + 12
-        radius: Theme.r(10)
-        color: root.bannerIsError ? Theme.withAlpha(Theme.error, 0.16) : Theme.withAlpha(Theme.primary, 0.14)
-        border.width: 1
-        border.color: root.bannerIsError ? Theme.withAlpha(Theme.error, 0.4) : Theme.withAlpha(Theme.primary, 0.35)
+        implicitHeight: bnrRow.implicitHeight + 14
+        radius: Theme.r(18)
+        color: root.bannerIsError ? Theme.m3ErrorContainer : Theme.m3PrimaryContainer
 
         RowLayout {
             id: bnrRow
             anchors.fill: parent
-            anchors.margins: 6
+            anchors.margins: 8
             spacing: 8
 
             Text {
                 text: root.bannerIsError ? "󰀨" : (root.runningDirectOp ? "󰑐" : "󰋼")
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(13)
-                color: root.bannerIsError ? Theme.error : Theme.primary
+                color: root.bannerIsError ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer
             }
 
             Text {
@@ -1097,7 +1013,7 @@ ColumnLayout {
                 text: root.bannerMsg
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
-                color: Theme.fgSurface
+                color: root.bannerIsError ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer
             }
 
             Text {
@@ -1105,7 +1021,7 @@ ColumnLayout {
                 text: "󰅖"
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(11)
-                color: Theme.fgSurfaceVariant
+                color: root.bannerIsError ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer
 
                 MouseArea {
                     anchors.fill: parent
@@ -1121,23 +1037,21 @@ ColumnLayout {
     Rectangle {
         visible: root.installQueue.length > 0
         Layout.fillWidth: true
-        implicitHeight: qBarRow.implicitHeight + 12
-        radius: Theme.r(10)
-        color: Theme.withAlpha(Theme.secondary, 0.14)
-        border.width: 1
-        border.color: Theme.withAlpha(Theme.secondary, 0.4)
+        implicitHeight: qBarRow.implicitHeight + 14
+        radius: Theme.r(18)
+        color: Theme.m3SecondaryContainer
 
         RowLayout {
             id: qBarRow
             anchors.fill: parent
-            anchors.margins: 6
+            anchors.margins: 8
             spacing: 8
 
             Text {
                 text: "󰏗"
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(13)
-                color: Theme.secondary
+                color: Theme.m3OnSecondaryContainer
             }
 
             Text {
@@ -1148,54 +1062,21 @@ ColumnLayout {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.DemiBold
-                color: Theme.fgSurface
+                color: Theme.m3OnSecondaryContainer
             }
 
-            Rectangle {
-                implicitWidth: clrQueueTxt.implicitWidth + 12
-                implicitHeight: 24
-                radius: Theme.r(7)
-                color: Theme.subCardBg
-                border.width: 1
-                border.color: Theme.cardBorder
-
-                Text {
-                    id: clrQueueTxt
-                    anchors.centerIn: parent
-                    text: "Clear"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(9)
-                    color: Theme.fgSurface
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.clearQueue()
-                }
+            M3Btn {
+                text: "Clear"
+                variant: "outlined"
+                compact: true
+                onClicked: root.clearQueue()
             }
 
-            Rectangle {
-                implicitWidth: instQueueTxt.implicitWidth + 16
-                implicitHeight: 24
-                radius: Theme.r(7)
-                color: Theme.secondary
-
-                Text {
-                    id: instQueueTxt
-                    anchors.centerIn: parent
-                    text: "Install Queued"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(9)
-                    font.weight: Font.Bold
-                    color: Theme.contrastInk(Theme.secondary)
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.runQueuedInstall()
-                }
+            M3Btn {
+                text: "Install Queued"
+                primary: true
+                compact: true
+                onClicked: root.runQueuedInstall()
             }
         }
     }
@@ -1204,24 +1085,24 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Theme.r(14)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(24)
+        color: Theme.m3PaneBg
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         // Loading State
         ColumnLayout {
             anchors.centerIn: parent
             visible: root.isBusy
-            spacing: 8
+            spacing: 10
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: "󰑐"
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(24)
-                color: Theme.primary
+                color: Theme.m3Primary
             }
 
             Text {
@@ -1231,7 +1112,7 @@ ColumnLayout {
                     : (root.activeTab === "updates" ? "Checking available updates..." : "Loading package index...")
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
         }
 
@@ -1246,7 +1127,7 @@ ColumnLayout {
                 text: "󰀨"
                 font.family: Theme.iconFont
                 font.pixelSize: Theme.fs(24)
-                color: Theme.error
+                color: Theme.m3Error
             }
 
             Text {
@@ -1254,31 +1135,15 @@ ColumnLayout {
                 text: root.errorMsg
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
-                color: Theme.fgSurface
+                color: Theme.m3Ink
             }
 
-            Rectangle {
+            M3Btn {
                 Layout.alignment: Qt.AlignHCenter
-                implicitWidth: retryTxt.implicitWidth + 18
-                implicitHeight: 28
-                radius: Theme.r(8)
-                color: Theme.primary
-
-                Text {
-                    id: retryTxt
-                    anchors.centerIn: parent
-                    text: "Retry"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: Font.Bold
-                    color: Theme.fgPrimary
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.refreshCurrent()
-                }
+                text: "Retry"
+                primary: true
+                compact: true
+                onClicked: root.refreshCurrent()
             }
         }
 
@@ -1286,14 +1151,26 @@ ColumnLayout {
         ColumnLayout {
             anchors.centerIn: parent
             visible: !root.isBusy && root.errorMsg.length === 0 && root.visibleItems.length === 0
-            spacing: 8
+            spacing: 10
 
-            Text {
+            Item {
                 Layout.alignment: Qt.AlignHCenter
-                text: root.activeTab === "updates" ? "󰄬" : "󰏖"
-                font.family: Theme.iconFont
-                font.pixelSize: Theme.fs(26)
-                color: root.activeTab === "updates" ? Theme.success : Theme.fgSurfaceVariant
+                implicitWidth: 64
+                implicitHeight: 64
+
+                M3Blob {
+                    anchors.fill: parent
+                    kind: ShellState.m3Shape
+                    color: root.activeTab === "updates" ? Theme.m3PrimaryContainer : Theme.m3SecondaryContainer
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: root.activeTab === "updates" ? "󰄬" : "󰏖"
+                    font.family: Theme.iconFont
+                    font.pixelSize: Theme.fs(26)
+                    color: root.activeTab === "updates" ? Theme.m3OnPrimaryContainer : Theme.m3OnSecondaryContainer
+                }
             }
 
             Text {
@@ -1306,7 +1183,7 @@ ColumnLayout {
                 }
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
         }
 
@@ -1314,7 +1191,7 @@ ColumnLayout {
         ListView {
             id: pkgList
             anchors.fill: parent
-            anchors.margins: 8
+            anchors.margins: 10
             visible: !root.isBusy && root.visibleItems.length > 0
             clip: true
             spacing: 6
@@ -1326,11 +1203,11 @@ ColumnLayout {
                 id: pkgCard
                 required property var modelData
                 width: pkgList.width
-                implicitHeight: cardRow.implicitHeight + 16
-                radius: Theme.r(12)
-                color: cardHover.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                border.width: Theme.subBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: cardRow.implicitHeight + 18
+                radius: Theme.r(20)
+                color: cardHover.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 readonly property bool isDiscover: root.activeTab === "discover"
                 readonly property string primaryPkg: {
@@ -1357,24 +1234,26 @@ ColumnLayout {
                 RowLayout {
                     id: cardRow
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 10
+                    anchors.margins: 10
+                    spacing: 12
 
                     // Icon
-                    Rectangle {
-                        implicitWidth: 36
-                        implicitHeight: 36
-                        radius: Theme.r(10)
-                        color: Theme.withAlpha(root.sourceAccent(pkgCard.primarySrc), 0.14)
-                        border.width: 1
-                        border.color: Theme.withAlpha(root.sourceAccent(pkgCard.primarySrc), 0.30)
+                    Item {
+                        implicitWidth: 40
+                        implicitHeight: 40
+
+                        M3Blob {
+                            anchors.fill: parent
+                            kind: "cookie"
+                            color: Theme.m3PrimaryContainer
+                        }
 
                         Text {
                             anchors.centerIn: parent
                             text: String(pkgCard.modelData.icon || (pkgCard.primarySrc === "flatpak" ? "󰏗" : "󰏖"))
                             font.family: Theme.iconFont
                             font.pixelSize: Theme.fs(16)
-                            color: root.sourceAccent(pkgCard.primarySrc)
+                            color: Theme.m3OnPrimaryContainer
                         }
                     }
 
@@ -1392,17 +1271,17 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(12)
                                 font.weight: Font.Bold
-                                color: Theme.fgSurface
+                                color: Theme.m3Ink
                                 elide: Text.ElideRight
                             }
 
                             // Primary source badge
                             Rectangle {
                                 visible: pkgCard.primarySrc.length > 0
-                                implicitWidth: sBadgeTxt.implicitWidth + 10
-                                implicitHeight: 18
-                                radius: Theme.r(5)
-                                color: Theme.withAlpha(root.sourceAccent(pkgCard.primarySrc), 0.18)
+                                implicitWidth: sBadgeTxt.implicitWidth + 12
+                                implicitHeight: 20
+                                radius: Theme.r(10)
+                                color: Theme.m3SecondaryContainer
 
                                 Text {
                                     id: sBadgeTxt
@@ -1411,17 +1290,17 @@ ColumnLayout {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(8)
                                     font.weight: Font.Bold
-                                    color: root.sourceAccent(pkgCard.primarySrc)
+                                    color: Theme.m3OnSecondaryContainer
                                 }
                             }
 
                             // Installed badge
                             Rectangle {
                                 visible: pkgCard.isInstalled && root.activeTab !== "installed" && root.activeTab !== "updates"
-                                implicitWidth: instBadgeTxt.implicitWidth + 10
-                                implicitHeight: 18
-                                radius: Theme.r(5)
-                                color: Theme.withAlpha(Theme.success, 0.18)
+                                implicitWidth: instBadgeTxt.implicitWidth + 12
+                                implicitHeight: 20
+                                radius: Theme.r(10)
+                                color: Theme.m3PrimaryContainer
 
                                 Text {
                                     id: instBadgeTxt
@@ -1432,7 +1311,7 @@ ColumnLayout {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(8)
                                     font.weight: Font.Bold
-                                    color: Theme.success
+                                    color: Theme.m3OnPrimaryContainer
                                 }
                             }
 
@@ -1442,7 +1321,7 @@ ColumnLayout {
                                 text: pkgCard.primaryPkg + (pkgCard.modelData.version ? (" · " + pkgCard.modelData.version) : "")
                                 font.family: Theme.monoFont
                                 font.pixelSize: Theme.fs(9)
-                                color: Theme.fgSurfaceVariant
+                                color: Theme.m3InkDim
                             }
                         }
 
@@ -1452,7 +1331,7 @@ ColumnLayout {
                             text: String(pkgCard.modelData.summary || "System package")
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
-                            color: Theme.fgSurfaceVariant
+                            color: Theme.m3InkDim
                         }
                     }
 
@@ -1467,12 +1346,10 @@ ColumnLayout {
                                 && String(pkgCard.modelData.flatpakId || "").length > 0
                                 && !Boolean(pkgCard.modelData.flatpakInstalled)
                                 && pkgCard.primarySrc !== "flatpak"
-                            implicitWidth: fpAltTxt.implicitWidth + 14
-                            implicitHeight: 26
-                            radius: Theme.r(7)
-                            color: fpAltMouse.containsMouse ? Theme.hoverBg : Theme.cardBg
-                            border.width: 1
-                            border.color: Theme.withAlpha(Theme.secondary, 0.45)
+                            implicitWidth: fpAltTxt.implicitWidth + 16
+                            implicitHeight: 30
+                            radius: Theme.r(15)
+                            color: fpAltMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                             Text {
                                 id: fpAltTxt
@@ -1481,7 +1358,7 @@ ColumnLayout {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(9)
                                 font.weight: Font.DemiBold
-                                color: Theme.secondary
+                                color: Theme.m3Primary
                             }
 
                             MouseArea {
@@ -1501,12 +1378,10 @@ ColumnLayout {
                         // Queue Toggle (Discover & Search for uninstalled packages)
                         Rectangle {
                             visible: !pkgCard.isInstalled && pkgCard.primaryPkg.length > 0 && root.activeTab !== "updates"
-                            implicitWidth: qBtnTxt.implicitWidth + 12
-                            implicitHeight: 26
-                            radius: Theme.r(7)
-                            color: pkgCard.queuedPrimary ? Theme.withAlpha(Theme.secondary, 0.22) : Theme.cardBg
-                            border.width: 1
-                            border.color: pkgCard.queuedPrimary ? Theme.secondary : Theme.cardBorder
+                            implicitWidth: qBtnTxt.implicitWidth + 16
+                            implicitHeight: 30
+                            radius: Theme.r(15)
+                            color: pkgCard.queuedPrimary ? Theme.m3SecondaryContainer : Theme.m3SurfaceHigh
 
                             Text {
                                 id: qBtnTxt
@@ -1514,8 +1389,8 @@ ColumnLayout {
                                 text: pkgCard.queuedPrimary ? "Queued" : "+ Queue"
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(9)
-                                font.weight: pkgCard.queuedPrimary ? Font.Bold : Font.Normal
-                                color: pkgCard.queuedPrimary ? Theme.secondary : Theme.fgSurface
+                                font.weight: pkgCard.queuedPrimary ? Font.Bold : Font.Medium
+                                color: pkgCard.queuedPrimary ? Theme.m3OnSecondaryContainer : Theme.m3Ink
                             }
 
                             MouseArea {
@@ -1531,81 +1406,41 @@ ColumnLayout {
                         }
 
                         // Updates Tab -> Update button
-                        Rectangle {
+                        M3Btn {
                             visible: root.activeTab === "updates"
-                            implicitWidth: updBtnTxt.implicitWidth + 16
-                            implicitHeight: 26
-                            radius: Theme.r(7)
-                            color: updBtnMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary
-
-                            Text {
-                                id: updBtnTxt
-                                anchors.centerIn: parent
-                                text: "Update"
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(9)
-                                font.weight: Font.Bold
-                                color: Theme.fgPrimary
-                            }
-
-                            MouseArea {
-                                id: updBtnMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.requestPlan(
-                                    "update",
-                                    pkgCard.primarySrc,
-                                    [pkgCard.primaryPkg],
-                                    "Update " + pkgCard.primaryPkg
-                                )
-                            }
+                            text: "Update"
+                            primary: true
+                            compact: true
+                            onClicked: root.requestPlan(
+                                "update",
+                                pkgCard.primarySrc,
+                                [pkgCard.primaryPkg],
+                                "Update " + pkgCard.primaryPkg
+                            )
                         }
 
                         // Primary Install / Remove button
-                        Rectangle {
+                        M3Btn {
                             visible: root.activeTab !== "updates" && pkgCard.primaryPkg.length > 0
-                            implicitWidth: actBtnTxt.implicitWidth + 16
-                            implicitHeight: 26
-                            radius: Theme.r(7)
-                            color: pkgCard.isInstalled
-                                ? (actMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.2) : Theme.cardBg)
-                                : (actMouse.containsMouse ? Qt.lighter(Theme.primary, 1.08) : Theme.primary)
-                            border.width: pkgCard.isInstalled ? 1 : 0
-                            border.color: pkgCard.isInstalled ? Theme.withAlpha(Theme.error, 0.5) : "transparent"
-
-                            Text {
-                                id: actBtnTxt
-                                anchors.centerIn: parent
-                                text: pkgCard.isInstalled ? "Remove" : "Install"
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(9)
-                                font.weight: Font.Bold
-                                color: pkgCard.isInstalled ? Theme.error : Theme.fgPrimary
-                            }
-
-                            MouseArea {
-                                id: actMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (pkgCard.isInstalled) {
-                                        const rmPkg = pkgCard.isDiscover && pkgCard.modelData.flatpakInstalled && !pkgCard.modelData.nativeInstalled
-                                            ? String(pkgCard.modelData.flatpakId)
-                                            : pkgCard.primaryPkg;
-                                        const rmSrc = pkgCard.isDiscover && pkgCard.modelData.installedVia
-                                            ? String(pkgCard.modelData.installedVia)
-                                            : pkgCard.primarySrc;
-                                        root.requestPlan("remove", rmSrc, [rmPkg], "Remove " + rmPkg);
-                                    } else {
-                                        root.requestPlan(
-                                            "install",
-                                            pkgCard.primarySrc,
-                                            [pkgCard.primaryPkg],
-                                            "Install " + String(pkgCard.modelData.name || pkgCard.primaryPkg)
-                                        );
-                                    }
+                            text: pkgCard.isInstalled ? "Remove" : "Install"
+                            variant: pkgCard.isInstalled ? "danger" : "filled"
+                            compact: true
+                            onClicked: {
+                                if (pkgCard.isInstalled) {
+                                    const rmPkg = pkgCard.isDiscover && pkgCard.modelData.flatpakInstalled && !pkgCard.modelData.nativeInstalled
+                                        ? String(pkgCard.modelData.flatpakId)
+                                        : pkgCard.primaryPkg;
+                                    const rmSrc = pkgCard.isDiscover && pkgCard.modelData.installedVia
+                                        ? String(pkgCard.modelData.installedVia)
+                                        : pkgCard.primarySrc;
+                                    root.requestPlan("remove", rmSrc, [rmPkg], "Remove " + rmPkg);
+                                } else {
+                                    root.requestPlan(
+                                        "install",
+                                        pkgCard.primarySrc,
+                                        [pkgCard.primaryPkg],
+                                        "Install " + String(pkgCard.modelData.name || pkgCard.primaryPkg)
+                                    );
                                 }
                             }
                         }

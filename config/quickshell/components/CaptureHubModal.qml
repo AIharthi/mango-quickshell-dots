@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import ".."
+import "../m3"
 
 PanelWindow {
     id: root
@@ -313,11 +314,11 @@ PanelWindow {
         anchors.centerIn: parent
         width: Math.min(840, Math.max(480, root.width - 56))
         height: Math.min(580, Math.max(400, root.height - 56))
-        radius: Theme.r(20)
-        color: Theme.notchBg
+        radius: Theme.r(32)
+        color: Theme.m3PanelBg
         clip: true
-        border.width: Math.max(1, Theme.islandBorderWidth)
-        border.color: Theme.islandBorder
+        border.width: 1
+        border.color: Theme.m3Line
         Keys.onEscapePressed: root.closeRequested()
 
         opacity: root.shown ? 1.0 : 0.0
@@ -338,34 +339,46 @@ PanelWindow {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 16
-            spacing: 10
+            anchors.margins: 20
+            spacing: 12
 
             // Header Row
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 12
 
-                Text {
-                    text: "󰹑"
-                    font.family: Theme.iconFont
-                    font.pixelSize: Theme.fs(17)
-                    color: Theme.primary
+                Item {
+                    implicitWidth: 40
+                    implicitHeight: 40
+
+                    M3Blob {
+                        anchors.fill: parent
+                        kind: ShellState.m3Shape
+                        color: Theme.m3PrimaryContainer
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰹑"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(18)
+                        color: Theme.m3OnPrimaryContainer
+                    }
                 }
 
                 Text {
                     text: "Capture Studio"
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(15)
+                    font.pixelSize: Theme.fs(16)
                     font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    color: Theme.m3Ink
                 }
 
                 Rectangle {
-                    implicitHeight: 22
-                    implicitWidth: summaryTxt.implicitWidth + 14
-                    radius: Theme.r(11)
-                    color: Theme.subCardBg
+                    implicitHeight: 24
+                    implicitWidth: summaryTxt.implicitWidth + 16
+                    radius: Theme.r(12)
+                    color: Theme.m3SecondaryContainer
 
                     Text {
                         id: summaryTxt
@@ -373,17 +386,17 @@ PanelWindow {
                         text: root.screenshotCount + " shots · " + root.recordingCount + " clips · " + root.totalSizeLabel
                         font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(9)
-                        font.weight: Font.Medium
-                        color: Theme.fgSurfaceVariant
+                        font.weight: Font.Bold
+                        color: Theme.m3OnSecondaryContainer
                     }
                 }
 
                 Rectangle {
                     visible: ShellState.recordingActive
-                    implicitHeight: 22
-                    implicitWidth: recPillTxt.implicitWidth + 14
-                    radius: Theme.r(11)
-                    color: Theme.error
+                    implicitHeight: 24
+                    implicitWidth: recPillTxt.implicitWidth + 16
+                    radius: Theme.r(12)
+                    color: Theme.m3Error
 
                     Text {
                         id: recPillTxt
@@ -392,7 +405,7 @@ PanelWindow {
                         font.family: Theme.monoFont
                         font.pixelSize: Theme.fs(9)
                         font.weight: Font.Bold
-                        color: Theme.fgError
+                        color: Theme.m3OnPrimary
                     }
 
                     MouseArea {
@@ -410,21 +423,21 @@ PanelWindow {
                     text: root.statusBanner
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
-                    color: Theme.primary
+                    color: Theme.m3Primary
                 }
 
                 Rectangle {
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: Theme.r(13)
-                    color: refBtnMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    radius: Theme.r(17)
+                    color: refBtnMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰑐"
                         font.family: Theme.iconFont
-                        font.pixelSize: Theme.fs(12)
-                        color: refBtnMouse.containsMouse ? Theme.primary : Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(13)
+                        color: refBtnMouse.containsMouse ? Theme.m3Primary : Theme.m3InkDim
                     }
 
                     MouseArea {
@@ -437,17 +450,17 @@ PanelWindow {
                 }
 
                 Rectangle {
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: Theme.r(13)
-                    color: clsBtnMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : Theme.subCardBg
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    radius: Theme.r(17)
+                    color: clsBtnMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceC
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰅖"
                         font.family: Theme.iconFont
-                        font.pixelSize: Theme.fs(12)
-                        color: clsBtnMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(13)
+                        color: clsBtnMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim
                     }
 
                     MouseArea {
@@ -463,16 +476,16 @@ PanelWindow {
             // Quick Capture Action Bar
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 42
-                radius: Theme.r(14)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 50
+                radius: Theme.r(20)
+                color: Theme.m3SurfaceC
+                border.width: 1
+                border.color: Theme.m3Line
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
                     spacing: 6
 
                     Repeater {
@@ -486,10 +499,11 @@ PanelWindow {
                         delegate: Rectangle {
                             id: actPill
                             required property var modelData
-                            implicitHeight: 28
-                            implicitWidth: actRow.implicitWidth + 16
-                            radius: Theme.r(8)
-                            color: actMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                            implicitHeight: 34
+                            implicitWidth: actRow.implicitWidth + 18
+                            radius: Theme.r(actMouse.pressed ? 11 : 17)
+                            color: actMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                            Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
 
                             RowLayout {
                                 id: actRow
@@ -500,7 +514,7 @@ PanelWindow {
                                     text: actPill.modelData.icon
                                     font.family: Theme.iconFont
                                     font.pixelSize: Theme.fs(12)
-                                    color: Theme.primary
+                                    color: Theme.m3Primary
                                 }
 
                                 Text {
@@ -508,7 +522,7 @@ PanelWindow {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(10)
                                     font.weight: Font.DemiBold
-                                    color: Theme.fgSurface
+                                    color: Theme.m3Ink
                                 }
                             }
 
@@ -524,12 +538,12 @@ PanelWindow {
 
                     Rectangle {
                         visible: DeviceCaps.hasWfRecorder || ShellState.recordingActive
-                        implicitHeight: 28
-                        implicitWidth: recActRow.implicitWidth + 16
-                        radius: Theme.r(8)
+                        implicitHeight: 34
+                        implicitWidth: recActRow.implicitWidth + 18
+                        radius: Theme.r(recMouse.pressed ? 11 : 17)
                         color: ShellState.recordingActive
-                            ? Theme.error
-                            : (recMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
+                            ? Theme.m3Error
+                            : (recMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                         RowLayout {
                             id: recActRow
@@ -540,7 +554,7 @@ PanelWindow {
                                 text: "󰑊"
                                 font.family: Theme.iconFont
                                 font.pixelSize: Theme.fs(12)
-                                color: ShellState.recordingActive ? Theme.fgError : Theme.error
+                                color: ShellState.recordingActive ? Theme.m3OnPrimary : Theme.m3Error
                             }
 
                             Text {
@@ -548,7 +562,7 @@ PanelWindow {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(10)
                                 font.weight: Font.DemiBold
-                                color: ShellState.recordingActive ? Theme.fgError : Theme.fgSurface
+                                color: ShellState.recordingActive ? Theme.m3OnPrimary : Theme.m3Ink
                             }
                         }
 
@@ -564,10 +578,10 @@ PanelWindow {
                     Item { Layout.fillWidth: true }
 
                     Rectangle {
-                        implicitHeight: 28
-                        implicitWidth: dlyTxt.implicitWidth + 16
-                        radius: Theme.r(8)
-                        color: dlyMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
+                        implicitHeight: 34
+                        implicitWidth: dlyTxt.implicitWidth + 18
+                        radius: Theme.r(17)
+                        color: dlyMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                         Text {
                             id: dlyTxt
@@ -575,8 +589,8 @@ PanelWindow {
                             text: "Delay: " + ShellState.screenshotDelay + "s"
                             font.family: Theme.monoFont
                             font.pixelSize: Theme.fs(10)
-                            font.weight: Font.Medium
-                            color: ShellState.screenshotDelay > 0 ? Theme.primary : Theme.fgSurfaceVariant
+                            font.weight: Font.Bold
+                            color: ShellState.screenshotDelay > 0 ? Theme.m3Primary : Theme.m3InkDim
                         }
 
                         MouseArea {
@@ -596,17 +610,17 @@ PanelWindow {
                 spacing: 8
 
                 Rectangle {
-                    implicitHeight: 34
-                    implicitWidth: filterRow.implicitWidth + 6
-                    radius: Theme.r(10)
-                    color: Theme.cardBg
-                    border.width: Theme.cardBorderWidth
-                    border.color: Theme.cardBorder
+                    implicitHeight: 40
+                    implicitWidth: filterRow.implicitWidth + 10
+                    radius: Theme.r(20)
+                    color: Theme.m3SurfaceC
+                    border.width: 1
+                    border.color: Theme.m3Line
 
                     RowLayout {
                         id: filterRow
                         anchors.centerIn: parent
-                        spacing: 3
+                        spacing: 4
 
                         Repeater {
                             model: [
@@ -620,21 +634,22 @@ PanelWindow {
                                 required property var modelData
                                 readonly property bool selected: root.kindFilter === fltBtn.modelData.id
 
-                                implicitHeight: 26
-                                implicitWidth: fltLbl.implicitWidth + 14
-                                radius: Theme.r(8)
+                                implicitHeight: 30
+                                implicitWidth: fltLbl.implicitWidth + 18
+                                radius: Theme.r(fltBtn.selected ? 11 : 15)
                                 color: fltBtn.selected
-                                    ? Theme.primary
-                                    : (fltMouse.containsMouse ? Theme.controlFillHover : "transparent")
+                                    ? Theme.m3Primary
+                                    : (fltMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
+                                Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 150 } }
 
                                 Text {
                                     id: fltLbl
                                     anchors.centerIn: parent
-                                    text: fltBtn.modelData.label
+                                    text: (fltBtn.selected ? "󰄬 " : "") + fltBtn.modelData.label
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(10)
                                     font.weight: fltBtn.selected ? Font.Bold : Font.Medium
-                                    color: fltBtn.selected ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                                    color: fltBtn.selected ? Theme.m3OnPrimary : Theme.m3InkDim
                                 }
 
                                 MouseArea {
@@ -654,23 +669,23 @@ PanelWindow {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 34
-                    radius: Theme.r(10)
-                    color: Theme.cardBg
-                    border.width: searchInput.activeFocus ? 1 : Theme.cardBorderWidth
-                    border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
+                    implicitHeight: 40
+                    radius: Theme.r(20)
+                    color: searchInput.activeFocus ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+                    border.width: searchInput.activeFocus ? 2 : 1
+                    border.color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
                         spacing: 8
 
                         Text {
                             text: "󰍉"
                             font.family: Theme.iconFont
-                            font.pixelSize: Theme.fs(13)
-                            color: searchInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
+                            font.pixelSize: Theme.fs(14)
+                            color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3InkDim
                         }
 
                         Item {
@@ -683,16 +698,16 @@ PanelWindow {
                                 text: "Filter captures by filename..."
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(11)
-                                color: Theme.fgSurfaceVariant
+                                color: Theme.m3InkDim
                             }
 
                             TextInput {
                                 id: searchInput
                                 anchors.fill: parent
                                 verticalAlignment: TextInput.AlignVCenter
-                                color: Theme.fgSurface
-                                selectionColor: Theme.primary
-                                selectedTextColor: Theme.fgPrimary
+                                color: Theme.m3Ink
+                                selectionColor: Theme.m3Primary
+                                selectedTextColor: Theme.m3OnPrimary
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(11)
                                 clip: true
@@ -742,10 +757,10 @@ PanelWindow {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: Theme.r(14)
-                color: Theme.cardBg
-                border.width: Theme.cardBorderWidth
-                border.color: Theme.cardBorder
+                radius: Theme.r(24)
+                color: Theme.m3PaneBg
+                border.width: 1
+                border.color: Theme.m3Line
                 clip: true
 
                 GridView {
@@ -754,7 +769,7 @@ PanelWindow {
                     anchors.fill: parent
                     anchors.margins: 10
                     cellWidth: Math.max(220, Math.floor(width / 2))
-                    cellHeight: 194
+                    cellHeight: 204
                     clip: true
                     model: root.filteredItems
 
@@ -773,12 +788,12 @@ PanelWindow {
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: 5
-                            radius: Theme.r(12)
+                            radius: Theme.r(20)
                             color: cellWrap.isSelected
-                                ? Theme.rowSelectedBg
-                                : (cardHover.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                            border.width: cellWrap.isSelected ? 1 : 0
-                            border.color: Theme.primary
+                                ? Theme.m3PrimaryContainer
+                                : (cardHover.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC)
+                            border.width: cellWrap.isSelected ? 2 : 1
+                            border.color: cellWrap.isSelected ? Theme.m3Primary : Theme.m3Line
 
                             MouseArea {
                                 id: cardHover
@@ -791,15 +806,15 @@ PanelWindow {
 
                             ColumnLayout {
                                 anchors.fill: parent
-                                anchors.margins: 8
+                                anchors.margins: 10
                                 spacing: 6
 
                                 // Thumbnail / Recording Frame
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 98
-                                    radius: Theme.r(8)
-                                    color: Theme.surfaceContainerLowest
+                                    radius: Theme.r(14)
+                                    color: Theme.m3SurfaceLowest
                                     clip: true
 
                                     Image {
@@ -823,7 +838,7 @@ PanelWindow {
                                             text: cellWrap.isShot ? "󰹑" : "󰑊"
                                             font.family: Theme.iconFont
                                             font.pixelSize: Theme.fs(22)
-                                            color: cellWrap.isShot ? Theme.fgSurfaceVariant : Theme.primary
+                                            color: cellWrap.isShot ? Theme.m3InkDim : Theme.m3Primary
                                         }
 
                                         Text {
@@ -832,7 +847,7 @@ PanelWindow {
                                             text: "Video clip"
                                             font.family: Theme.monoFont
                                             font.pixelSize: Theme.fs(9)
-                                            color: Theme.fgSurfaceVariant
+                                            color: Theme.m3InkDim
                                         }
                                     }
                                 }
@@ -845,7 +860,7 @@ PanelWindow {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(11)
                                     font.weight: cellWrap.isSelected ? Font.Bold : Font.DemiBold
-                                    color: cellWrap.isSelected ? Theme.primary : Theme.fgSurface
+                                    color: cellWrap.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3Ink
                                 }
 
                                 Text {
@@ -859,7 +874,7 @@ PanelWindow {
                                     elide: Text.ElideRight
                                     font.family: Theme.monoFont
                                     font.pixelSize: Theme.fs(9)
-                                    color: Theme.fgSurfaceVariant
+                                    color: cellWrap.isSelected ? Theme.m3OnPrimaryContainer : Theme.m3InkDim
                                 }
 
                                 // Card Actions Row
@@ -868,12 +883,12 @@ PanelWindow {
                                     spacing: 5
 
                                     Rectangle {
-                                        implicitHeight: 22
-                                        implicitWidth: copyBtnTxt.implicitWidth + 14
-                                        radius: Theme.r(6)
+                                        implicitHeight: 26
+                                        implicitWidth: copyBtnTxt.implicitWidth + 16
+                                        radius: Theme.r(13)
                                         color: cellWrap.isCopied
-                                            ? Theme.primary
-                                            : (cpMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg)
+                                            ? Theme.m3Primary
+                                            : (cpMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                                         Text {
                                             id: copyBtnTxt
@@ -882,7 +897,7 @@ PanelWindow {
                                             font.family: Theme.fontFamily
                                             font.pixelSize: Theme.fs(9)
                                             font.weight: Font.Bold
-                                            color: cellWrap.isCopied ? Theme.fgPrimary : Theme.fgSurface
+                                            color: cellWrap.isCopied ? Theme.m3OnPrimary : Theme.m3Ink
                                         }
 
                                         MouseArea {
@@ -896,10 +911,10 @@ PanelWindow {
 
                                     Rectangle {
                                         visible: cellWrap.isShot && (DeviceCaps.hasSatty || DeviceCaps.hasSwappy)
-                                        implicitHeight: 22
-                                        implicitWidth: annTxt.implicitWidth + 12
-                                        radius: Theme.r(6)
-                                        color: annMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg
+                                        implicitHeight: 26
+                                        implicitWidth: annTxt.implicitWidth + 14
+                                        radius: Theme.r(13)
+                                        color: annMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                                         Text {
                                             id: annTxt
@@ -908,7 +923,7 @@ PanelWindow {
                                             font.family: Theme.fontFamily
                                             font.pixelSize: Theme.fs(9)
                                             font.weight: Font.Medium
-                                            color: Theme.fgSurface
+                                            color: Theme.m3Ink
                                         }
 
                                         MouseArea {
@@ -921,10 +936,10 @@ PanelWindow {
                                     }
 
                                     Rectangle {
-                                        implicitHeight: 22
-                                        implicitWidth: fldTxt.implicitWidth + 12
-                                        radius: Theme.r(6)
-                                        color: fldMouse.containsMouse ? Theme.controlFillHover : Theme.cardBg
+                                        implicitHeight: 26
+                                        implicitWidth: fldTxt.implicitWidth + 14
+                                        radius: Theme.r(13)
+                                        color: fldMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                                         Text {
                                             id: fldTxt
@@ -933,7 +948,7 @@ PanelWindow {
                                             font.family: Theme.fontFamily
                                             font.pixelSize: Theme.fs(9)
                                             font.weight: Font.Medium
-                                            color: Theme.fgSurfaceVariant
+                                            color: Theme.m3InkDim
                                         }
 
                                         MouseArea {
@@ -948,17 +963,17 @@ PanelWindow {
                                     Item { Layout.fillWidth: true }
 
                                     Rectangle {
-                                        implicitWidth: 22
-                                        implicitHeight: 22
-                                        radius: Theme.r(6)
-                                        color: trMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.22) : "transparent"
+                                        implicitWidth: 26
+                                        implicitHeight: 26
+                                        radius: Theme.r(13)
+                                        color: trMouse.containsMouse ? Theme.m3ErrorContainer : "transparent"
 
                                         Text {
                                             anchors.centerIn: parent
                                             text: "󰆴"
                                             font.family: Theme.iconFont
                                             font.pixelSize: Theme.fs(11)
-                                            color: trMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                                            color: trMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3InkDim
                                         }
 
                                         MouseArea {
@@ -986,7 +1001,7 @@ PanelWindow {
                         text: "󰑐"
                         font.family: Theme.iconFont
                         font.pixelSize: Theme.fs(24)
-                        color: Theme.primary
+                        color: Theme.m3Primary
                     }
 
                     Text {
@@ -994,7 +1009,7 @@ PanelWindow {
                         text: "Loading recent captures..."
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(11)
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
                 }
 
@@ -1009,7 +1024,7 @@ PanelWindow {
                         text: "󰀦"
                         font.family: Theme.iconFont
                         font.pixelSize: Theme.fs(24)
-                        color: Theme.error
+                        color: Theme.m3Error
                     }
 
                     Text {
@@ -1017,33 +1032,15 @@ PanelWindow {
                         text: root.errorMessage
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(11)
-                        color: Theme.fgSurface
+                        color: Theme.m3Ink
                     }
 
-                    Rectangle {
+                    M3Btn {
                         Layout.alignment: Qt.AlignHCenter
-                        implicitHeight: 28
-                        implicitWidth: retryLbl.implicitWidth + 20
-                        radius: Theme.r(8)
-                        color: retryMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-
-                        Text {
-                            id: retryLbl
-                            anchors.centerIn: parent
-                            text: "Retry"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(10)
-                            font.weight: Font.Bold
-                            color: Theme.primary
-                        }
-
-                        MouseArea {
-                            id: retryMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.refresh()
-                        }
+                        text: "Retry"
+                        variant: "tonal"
+                        compact: true
+                        onClicked: root.refresh()
                     }
                 }
 
@@ -1051,15 +1048,27 @@ PanelWindow {
                 ColumnLayout {
                     anchors.centerIn: parent
                     visible: !root.loading && root.errorMessage.length === 0 && root.filteredItems.length === 0
-                    spacing: 8
+                    spacing: 10
                     width: Math.min(parent.width - 48, 420)
 
-                    Text {
+                    Item {
                         Layout.alignment: Qt.AlignHCenter
-                        text: "󰹑"
-                        font.family: Theme.iconFont
-                        font.pixelSize: Theme.fs(26)
-                        color: Theme.fgSurfaceVariant
+                        implicitWidth: 64
+                        implicitHeight: 64
+
+                        M3Blob {
+                            anchors.fill: parent
+                            kind: ShellState.m3Shape
+                            color: Theme.m3PrimaryContainer
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰹑"
+                            font.family: Theme.iconFont
+                            font.pixelSize: Theme.fs(26)
+                            color: Theme.m3OnPrimaryContainer
+                        }
                     }
 
                     Text {
@@ -1072,33 +1081,17 @@ PanelWindow {
                             : "No screenshots or recordings found yet. Capture an area or full screen above to inspect and copy files here."
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(11)
-                        color: Theme.fgSurfaceVariant
+                        color: Theme.m3InkDim
                     }
 
-                    Rectangle {
+                    M3Btn {
                         visible: root.query.length === 0 && root.kindFilter === "all"
                         Layout.alignment: Qt.AlignHCenter
-                        implicitHeight: 30
-                        implicitWidth: emptyShotTxt.implicitWidth + 20
-                        radius: Theme.r(8)
-                        color: Theme.primary
-
-                        Text {
-                            id: emptyShotTxt
-                            anchors.centerIn: parent
-                            text: "Capture area"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(10)
-                            font.weight: Font.Bold
-                            color: Theme.fgPrimary
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.triggerCapture("--area")
-                        }
+                        text: "Capture area"
+                        icon: "󰩭"
+                        primary: true
+                        compact: true
+                        onClicked: root.triggerCapture("--area")
                     }
                 }
             }

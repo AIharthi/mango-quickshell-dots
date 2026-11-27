@@ -174,6 +174,9 @@ def default_prefs():
         "pillHeight": 32,
         "hubUiStyle": "cupertino",
         "barUiStyle": "apple",
+        "m3Shape": "verysunny",
+        "m3WavyProgress": True,
+        "m3WaveThick": 4.0,
         "sequoiaBarHeight": 28,
         "sequoiaBarFloating": False,
         "sequoiaBarTranslucent": True,
@@ -407,6 +410,11 @@ def validate_and_apply_pref(prefs, key, raw_val):
     elif key == "barUiStyle":
         v = str(prefs[key]).strip().lower()
         prefs[key] = v if v in ("apple", "split", "menubar", "classic") else "apple"
+    elif key == "m3Shape":
+        v = str(prefs[key]).strip().lower()
+        prefs[key] = v if v in ("verysunny", "cookie", "cookie6", "cookie12", "flower", "clover", "pentagon", "hexagon", "gem", "circle", "square", "softburst") else "verysunny"
+    elif key == "m3WaveThick":
+        prefs[key] = round(max(2.0, min(7.0, float(prefs[key]))), 1)
     elif key == "sequoiaBarHeight":
         prefs[key] = max(24, min(36, int(prefs[key])))
     elif key == "sequoiaHubStyle":
@@ -561,6 +569,7 @@ def reset_appearance_impl(prefs):
         "wallpaperTransition", "wallpaperFps", "wallpaperDuration", "wallpaperResize",
         "surfaceStyle", "shellOpacity", "cardOpacity", "uiRadiusScale",
         "borderStyle", "uiBorderWidth", "uiFontScale",
+        "m3Shape", "m3WavyProgress", "m3WaveThick",
         "islandStyle", "islandTopMargin", "pillHeight",
         "accentSeedColor", "solidWallpaperColor",
         "mangoFocusColor", "mangoBorderColor", "mangoShadowTint", "mangoShadowAlpha", "mangoDimAlpha",

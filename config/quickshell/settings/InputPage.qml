@@ -229,10 +229,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: i2cCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: i2cCol
@@ -505,10 +505,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: kbCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: kbCol
@@ -934,10 +934,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: mouseCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: mouseCol
@@ -1106,10 +1106,10 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: tpCol.implicitHeight + 24
         visible: DeviceCaps.hasTouchpad
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: tpCol

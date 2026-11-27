@@ -31,10 +31,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: resetBarRow.implicitHeight + 16
-        radius: Theme.r(12)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         RowLayout {
             id: resetBarRow
@@ -104,10 +104,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: archCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: archCol
@@ -373,10 +373,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: barCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: barCol
@@ -495,10 +495,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: shotCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: shotCol
@@ -701,10 +701,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: a11yCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: a11yCol
@@ -784,10 +784,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: fmCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: fmCol
@@ -1386,10 +1386,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: extrasCol.implicitHeight + 24
-        radius: Theme.r(16)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(22)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
 
         ColumnLayout {
             id: extrasCol

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import ".."
+import "../m3"
 
 Item {
     id: root
@@ -106,77 +107,12 @@ Item {
         Quickshell.execDetached(["mmsg", "dispatch", "view," + next + ",0"]);
     }
 
-    component SpacesChipStrip : Item {
+    component SpacesChipStrip : M3WsStrip {
         id: scWrap
-        property var model: root.visibleTags
-        implicitWidth: scStrip.implicitWidth
-        implicitHeight: scStrip.implicitHeight
-
-        WheelHandler {
-            onWheel: event => root.switchTagRelative(event.angleDelta.y > 0 ? -1 : 1)
-        }
-
-        Row {
-            id: scStrip
-            spacing: 3
-
-            Repeater {
-                model: scWrap.model
-
-            delegate: Rectangle {
-                id: tgPill
-                required property var modelData
-                readonly property bool isActive: tgPill.modelData.is_active
-                readonly property bool isUrgent: tgPill.modelData.is_urgent
-                readonly property bool isOccupied: tgPill.modelData.client_count > 0
-
-                width: tgPill.isActive ? 20 : 18
-                height: 18
-                radius: Theme.r(7)
-                color: {
-                    if (tgPill.isUrgent) return Theme.error;
-                    if (tgPill.isActive) return Theme.isDark ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.11);
-                    if (tgMouse.containsMouse) return Theme.controlFillHover;
-                    return "transparent";
-                }
-                border.width: tgPill.isActive ? Theme.activeControlBorderWidth : 0
-                border.color: Theme.primary
-
-                Text {
-                    anchors.centerIn: parent
-                    anchors.verticalCenterOffset: (tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent) ? -1 : 0
-                    text: tgPill.modelData.index
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.weight: tgPill.isActive ? Font.Bold : Font.Medium
-                    color: {
-                        if (tgPill.isUrgent) return Theme.fgError;
-                        if (tgPill.isActive) return Theme.fgSurface;
-                        return tgPill.isOccupied ? Theme.fgSurface : Theme.withAlpha(Theme.fgSurfaceVariant, 0.55);
-                    }
-                }
-
-                Rectangle {
-                    visible: tgPill.isOccupied && !tgPill.isActive && !tgPill.isUrgent
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 1.5
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: 3
-                    height: 3
-                    radius: 1.5
-                    color: Theme.fgSurfaceVariant
-                }
-
-                MouseArea {
-                    id: tgMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + tgPill.modelData.index + ",0"])
-                }
-            }
-        }
-        }
+        barHeight: Math.max(32, ShellState.pillHeight)
+        compact: ShellState.pillHeight < 30
+        onSwitchRequested: wid => Quickshell.execDetached(["mmsg", "dispatch", "view," + wid + ",0"])
+        onRelativeSwitchRequested: delta => root.switchTagRelative(delta)
     }
 
     component MediaMiniGroup : RowLayout {
@@ -184,43 +120,17 @@ Item {
         property int maxTitleWidth: 165
         spacing: 6
 
-        ClippingRectangle {
+        M3ShapeImage {
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 20
-            implicitHeight: 20
-            radius: 10
-            color: Theme.primaryContainer
-            contentUnderBorder: false
-            contentInsideBorder: true
-
-            rotation: 0
-            RotationAnimation on rotation {
-                from: 0
-                to: 360
-                duration: 12000
-                loops: Animation.Infinite
-                running: root.active && root.isPlaying && root.visible && mmArtImg.visible && ShellState.pillSpinArt && !Theme.reducedMotion
-            }
-
-            Image {
-                id: mmArtImg
-                anchors.fill: parent
-                source: root.artUrl
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                cache: true
-                sourceSize: Qt.size(40, 40)
-                visible: root.artUrl.length > 0 && status === Image.Ready
-            }
-
-            Text {
-                anchors.centerIn: parent
-                visible: !mmArtImg.visible
-                text: "󰎈"
-                font.family: Theme.iconFont
-                font.pixelSize: Theme.fs(11)
-                color: Theme.fgPrimaryContainer
-            }
+            implicitWidth: Math.max(20, ShellState.pillHeight - 10)
+            implicitHeight: Math.max(20, ShellState.pillHeight - 10)
+            kind: "circle"
+            source: root.artUrl
+            empty: Theme.m3PrimaryContainer
+            fallbackGlyph: "󰎈"
+            fallbackColor: Theme.m3OnPrimaryContainer
+            spinning: root.active && root.isPlaying && root.visible && ShellState.pillSpinArt
+            spinDurationMs: 14000
         }
 
         Text {
@@ -232,7 +142,7 @@ Item {
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(11)
             font.weight: Font.Medium
-            color: root.isPlaying ? Theme.fgSurface : Theme.fgSurfaceVariant
+            color: root.isPlaying ? Theme.m3Ink : Theme.m3InkDim
         }
 
         Row {
@@ -253,7 +163,7 @@ Item {
                     height: eqBarM.modelData.minH
                     radius: 1.25
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.fgSurfaceVariant
+                    color: Theme.m3Primary
 
                     SequentialAnimation on height {
                         running: root.active && root.isPlaying && root.visible && ShellState.pillShowEqualizer && !Theme.reducedMotion
@@ -538,21 +448,30 @@ Item {
 
             Text {
                 Layout.alignment: Qt.AlignVCenter
-                text: ShellState.formatTime(clock.date)
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fs(12)
-                font.weight: Font.Bold
-                color: Theme.fgSurface
-            }
-
-            Text {
-                Layout.alignment: Qt.AlignVCenter
                 visible: ShellState.barShowDate
                 text: ShellState.formatDate(clock.date)
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
                 font.weight: Font.Medium
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
+            }
+
+            Rectangle {
+                Layout.alignment: Qt.AlignVCenter
+                implicitHeight: Math.max(20, ShellState.pillHeight - 10)
+                implicitWidth: apClockTxt.implicitWidth + 14
+                radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                color: Theme.m3Primary
+
+                Text {
+                    id: apClockTxt
+                    anchors.centerIn: parent
+                    text: ShellState.formatTime(clock.date)
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fs(11)
+                    font.weight: Font.Bold
+                    color: Theme.m3OnPrimary
+                }
             }
 
             MediaMiniGroup {
@@ -726,8 +645,14 @@ Item {
                     anchors.centerIn: parent
                     spacing: 8
 
-                    Text { text: ShellState.formatTime(clock.date); font.family: Theme.monoFont; font.pixelSize: Theme.fs(12); font.weight: Font.Bold; color: Theme.fgSurface }
-                    Text { visible: ShellState.barShowDate; text: ShellState.formatDate(clock.date); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.fgSurfaceVariant }
+                    Text { visible: ShellState.barShowDate; text: ShellState.formatDate(clock.date); font.family: Theme.fontFamily; font.pixelSize: Theme.fs(10); color: Theme.m3InkDim }
+                    Rectangle {
+                        implicitHeight: Math.max(20, ShellState.pillHeight - 10)
+                        implicitWidth: spTimeLbl.implicitWidth + 14
+                        radius: Theme.isSimple ? 0 : Math.round(implicitHeight / 2)
+                        color: Theme.m3Primary
+                        Text { id: spTimeLbl; anchors.centerIn: parent; text: ShellState.formatTime(clock.date); font.family: Theme.monoFont; font.pixelSize: Theme.fs(11); font.weight: Font.Bold; color: Theme.m3OnPrimary }
+                    }
                     MediaMiniGroup { visible: root.hasMedia; maxTitleWidth: 165 }
                 }
             }

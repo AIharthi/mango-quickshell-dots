@@ -3,7 +3,9 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import ".."
+import "../m3"
 
+// Material 3 Expressive MangoWC Workspaces card with morphing active tile radius.
 Rectangle {
     id: root
 
@@ -13,10 +15,10 @@ Rectangle {
     readonly property int totalClients: MangoState.totalClientsForScreen(root.screenName)
     readonly property var tagsModel: MangoState.tagsForScreen(root.screenName)
 
-    radius: Theme.r(18)
-    color: Theme.cardBg
-    border.width: Theme.cardBorderWidth
-    border.color: Theme.cardBorder
+    radius: Theme.r(26)
+    color: Theme.m3SurfaceC
+    border.width: 1
+    border.color: Theme.m3Line
     clip: true
 
     ColumnLayout {
@@ -31,30 +33,27 @@ Rectangle {
             Text {
                 text: "Workspaces"
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.fs(11)
                 font.weight: Font.Bold
-                color: Theme.fgSurfaceVariant
+                color: Theme.m3InkDim
             }
 
             Item { Layout.fillWidth: true }
 
-            // Interactive Layout Switcher Badge
             Rectangle {
-                implicitHeight: 20
-                implicitWidth: layoutLabel.implicitWidth + 14
-                radius: Theme.r(10)
-                color: layoutArea.containsMouse ? Theme.controlFillHover : Theme.subCardBg
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
+                implicitHeight: 24
+                implicitWidth: layoutLabel.implicitWidth + 16
+                radius: Theme.r(12)
+                color: layoutArea.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer
 
                 Text {
                     id: layoutLabel
                     anchors.centerIn: parent
                     text: "Layout: " + root.currentLayout
                     font.family: Theme.monoFont
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.fs(10)
                     font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    color: Theme.m3OnSecondaryContainer
                 }
 
                 MouseArea {
@@ -67,7 +66,6 @@ Rectangle {
             }
         }
 
-        // Interactive 1-9 Tag Pills + Windows/Overview 10th Tile (2x5 symmetric grid)
         GridLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -87,68 +85,57 @@ Rectangle {
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.preferredHeight: 40
-                    radius: Theme.r(12)
+                    Layout.preferredHeight: 44
+                    radius: Theme.isSimple ? 0 : Theme.r(tagMouse.pressed ? 10 : (tagBtn.isActive ? 22 : 12))
                     scale: tagMouse.pressed ? 0.92 : 1.0
 
+                    Behavior on radius {
+                        enabled: !Theme.reducedMotion
+                        NumberAnimation { duration: 240; easing.type: Theme.m3Springy; easing.overshoot: 1.5 }
+                    }
                     Behavior on scale {
                         enabled: !Theme.reducedMotion
                         NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
                     }
+                    Behavior on color {
+                        enabled: !Theme.reducedMotion
+                        ColorAnimation { duration: 150 }
+                    }
 
                     color: {
                         if (tagBtn.isUrgent)
-                            return Theme.error;
+                            return Theme.m3Error;
                         if (tagBtn.isActive)
-                            return Theme.primary;
-                        if (tagMouse.containsMouse)
-                            return Theme.tileActiveBg;
+                            return Theme.m3Primary;
                         if (tagBtn.isOccupied)
-                            return Theme.controlFillHover;
-                        return Theme.subCardBg;
+                            return tagMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SecondaryContainer;
+                        return tagMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh;
                     }
 
-                    border.width: Theme.activeControlBorderWidth
-                    border.color: tagBtn.isActive ? Theme.primary : Theme.cardBorder
-
-                    Behavior on color {
-                        enabled: !Theme.isSimple
-                        ColorAnimation { duration: 160; easing.type: Easing.OutCubic }
-                    }
-
-                    ColumnLayout {
+                    Column {
                         anchors.centerIn: parent
-                        spacing: 2
+                        spacing: 1
 
                         Text {
-                            Layout.alignment: Qt.AlignHCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
                             text: tagBtn.modelData.index
                             font.family: Theme.monoFont
-                            font.pixelSize: 13
+                            font.pixelSize: Theme.fs(13)
                             font.weight: Font.Bold
                             color: {
-                                if (tagBtn.isUrgent)
-                                    return Theme.fgError;
-                                if (tagBtn.isActive)
-                                    return Theme.fgPrimary;
-                                return tagBtn.isOccupied ? Theme.fgSurface : Theme.fgSurfaceVariant;
+                                if (tagBtn.isUrgent) return Theme.m3OnErrorContainer;
+                                if (tagBtn.isActive) return Theme.m3OnPrimary;
+                                return tagBtn.isOccupied ? Theme.m3OnSecondaryContainer : Theme.m3InkDim;
                             }
                         }
 
-                        // Client occupancy indicator dot / bar
                         Rectangle {
-                            Layout.alignment: Qt.AlignHCenter
-                            implicitWidth: tagBtn.isActive ? 12 : (tagBtn.modelData.client_count > 1 ? 10 : 5)
-                            implicitHeight: 3
-                            radius: Theme.r(1.5)
-                            visible: tagBtn.isOccupied || tagBtn.isActive
-                            color: {
-                                if (tagBtn.isUrgent)
-                                    return Theme.fgError;
-                                if (tagBtn.isActive)
-                                    return Theme.fgPrimary;
-                                return Theme.fgSurfaceVariant;
-                            }
+                            visible: tagBtn.isOccupied && !tagBtn.isActive
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 12
+                            height: 3
+                            radius: 1.5
+                            color: tagBtn.isUrgent ? Theme.m3OnErrorContainer : Theme.m3Primary
                         }
                     }
 
@@ -156,64 +143,57 @@ Rectangle {
                         id: tagMouse
                         anchors.fill: parent
                         hoverEnabled: true
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: Quickshell.execDetached(["mmsg", "dispatch", "view," + tagBtn.modelData.index + ",0"])
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.RightButton)
+                                Quickshell.execDetached(["mmsg", "dispatch", "toggletag," + tagBtn.modelData.index + ",0"]);
+                            else
+                                Quickshell.execDetached(["mmsg", "dispatch", "view," + tagBtn.modelData.index + ",0"]);
+                        }
                     }
                 }
             }
 
-            // 10th Tile: Open Window Switcher (LMB) / Overview Grid (RMB)
+            // 10th Overview Tile
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredHeight: 40
-                radius: Theme.r(12)
-                color: winTileMouse.containsMouse
-                    ? Theme.tileActiveBg
-                    : Theme.subCardBg
-                border.width: Theme.activeControlBorderWidth
-                border.color: Theme.cardBorder
-                scale: winTileMouse.pressed ? 0.92 : 1.0
+                Layout.preferredHeight: 44
+                radius: Theme.r(ovMouse.pressed ? 10 : 14)
+                color: ovMouse.containsMouse ? Theme.m3SecondaryContainer : Theme.m3SurfaceHigh
+                scale: ovMouse.pressed ? 0.92 : 1.0
 
-                Behavior on scale {
-                    enabled: !Theme.reducedMotion
-                    NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
-                }
+                Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90 } }
 
-                ColumnLayout {
+                Column {
                     anchors.centerIn: parent
                     spacing: 1
 
                     Text {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "󰖯"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "󰕮"
                         font.family: Theme.iconFont
-                        font.pixelSize: 13
-                        color: winTileMouse.containsMouse ? Theme.fgSurface : Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(14)
+                        color: ovMouse.containsMouse ? Theme.m3OnSecondaryContainer : Theme.m3Primary
                     }
 
                     Text {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: root.totalClients > 0 ? String(root.totalClients) : "Wins"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: root.totalClients > 0 ? (root.totalClients + " win") : "Grid"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 8
-                        font.weight: Font.Bold
-                        color: Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(8)
+                        font.weight: Font.Medium
+                        color: Theme.m3InkDim
                     }
                 }
 
                 MouseArea {
-                    id: winTileMouse
+                    id: ovMouse
                     anchors.fill: parent
                     hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: mouse => {
-                        if (mouse.button === Qt.RightButton)
-                            Qt.callLater(() => Quickshell.execDetached(["mmsg", "dispatch", "toggleoverview"]));
-                        else
-                            Quickshell.execDetached(["qs", "ipc", "call", "island", "toggleWindowSwitcher"]);
-                    }
+                    onClicked: Quickshell.execDetached(["mmsg", "dispatch", "toggleoverview"])
                 }
             }
         }

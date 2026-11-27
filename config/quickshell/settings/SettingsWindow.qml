@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import ".."
+import "../m3"
 
 PanelWindow {
     id: root
@@ -20,6 +21,10 @@ PanelWindow {
     property string searchQuery: ""
     property bool resetMenuOpen: false
     property bool confirmFactoryReset: false
+    property var pageHistory: []
+    property var lastInGroup: ({})
+    property int railTipIdx: -1
+    property real railTipY: 0
 
     Timer {
         id: drawerConfirmTimer
@@ -30,39 +35,42 @@ PanelWindow {
 
     Component.onCompleted: Qt.callLater(() => {
         root._entered = true;
-        if (root.isOpen) {
+        if (root.isOpen)
             settingsFocusScope.forceActiveFocus();
-            scrollActiveNavIntoView();
-        }
     })
     onIsOpenChanged: {
         if (isOpen) {
             Qt.callLater(() => {
                 settingsFocusScope.forceActiveFocus();
-                scrollActiveNavIntoView();
             });
         } else {
             searchQuery = "";
             resetMenuOpen = false;
             confirmFactoryReset = false;
+            railTipIdx = -1;
         }
     }
-    onResolvedPageChanged: Qt.callLater(scrollActiveNavIntoView)
 
-    function scrollActiveNavIntoView(): void {
-        if (!navFlick || !navCol)
+    function navigateTo(pageId: string): void {
+        if (!pageId || pageId === root.resolvedPage)
             return;
-        for (let i = 0; i < navCol.children.length; i++) {
-            const item = navCol.children[i];
-            if (item && item.isSelected) {
-                const top = item.y;
-                const bot = item.y + item.height;
-                if (top < navFlick.contentY + 8)
-                    navFlick.contentY = Math.max(0, top - 8);
-                else if (bot > navFlick.contentY + navFlick.height - 8)
-                    navFlick.contentY = Math.max(0, bot - navFlick.height + 8);
-                return;
-            }
+        const nextHist = root.pageHistory.concat([root.resolvedPage]).slice(-25);
+        root.pageHistory = nextHist;
+        const map = Object.assign({}, root.lastInGroup);
+        map[root.groupIdForPage(pageId)] = pageId;
+        root.lastInGroup = map;
+        root.railTipIdx = -1;
+        root.pageSelected(pageId);
+    }
+
+    function goBack(): void {
+        if (root.pageHistory.length > 0) {
+            const copy = root.pageHistory.slice();
+            const prev = copy.pop();
+            root.pageHistory = copy;
+            root.pageSelected(prev);
+        } else if (root.resolvedPage !== "appearance") {
+            root.pageSelected("appearance");
         }
     }
 
@@ -168,6 +176,46 @@ PanelWindow {
         return hits;
     }
 
+    readonly property int railW: 80
+
+    readonly property var railGroups: {
+        const defs = [
+            { id: "look",     label: "Look",     icon: "󰏘", pages: ["appearance", "themes"] },
+            { id: "bars",     label: "Bars",     icon: "󰕰", pages: ["split", "island", "sequoia", "shell"] },
+            { id: "desktop",  label: "Desktop",  icon: "󰖲", pages: ["windows", "input", "shortcuts", "notifications", "apps"] },
+            { id: "hardware", label: "Hardware", icon: "󰋋", pages: ["audio", "displays", "network", "bluetooth"] },
+            { id: "store",    label: "Store",    icon: "󰏖", pages: ["store"] },
+            { id: "debloat",  label: "Debloat",  icon: "󰃢", pages: ["debloat"] },
+            { id: "system",   label: "System",   icon: "󰍛", pages: ["terminals", "privacy", "monitor", "system"] }
+        ];
+        const byId = {};
+        for (let i = 0; i < root.navItems.length; i++)
+            byId[root.navItems[i].id] = root.navItems[i];
+        const out = [];
+        for (let g = 0; g < defs.length; g++) {
+            const sub = [];
+            for (let p = 0; p < defs[g].pages.length; p++) {
+                const it = byId[defs[g].pages[p]];
+                if (it)
+                    sub.push(it);
+            }
+            if (sub.length > 0)
+                out.push({ id: defs[g].id, label: defs[g].label, icon: defs[g].icon, items: sub });
+        }
+        return out;
+    }
+
+    function groupIdForPage(pid: string): string {
+        for (let g = 0; g < root.railGroups.length; g++) {
+            const items = root.railGroups[g].items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].id === pid)
+                    return root.railGroups[g].id;
+            }
+        }
+        return root.railGroups.length > 0 ? root.railGroups[0].id : "look";
+    }
+
     readonly property int currentNavIndex: {
         for (let i = 0; i < navItems.length; i++) {
             if (navItems[i].id === root.activePage)
@@ -179,6 +227,14 @@ PanelWindow {
     readonly property var currentNavItem: navItems[currentNavIndex]
     readonly property string resolvedPage: currentNavItem.id
     readonly property string pageSource: currentNavItem.source
+    readonly property string activeGroupId: groupIdForPage(resolvedPage)
+    readonly property var currentGroup: {
+        for (let i = 0; i < railGroups.length; i++) {
+            if (railGroups[i].id === activeGroupId)
+                return railGroups[i];
+        }
+        return railGroups[0];
+    }
 
     anchors {
         top: true
@@ -202,7 +258,14 @@ PanelWindow {
         anchors.fill: parent
         focus: root.isOpen
 
-        Keys.onEscapePressed: root.closeRequested()
+        Keys.onEscapePressed: {
+            if (root.resetMenuOpen)
+                root.resetMenuOpen = false;
+            else if (root.searchQuery.length > 0)
+                root.searchQuery = "";
+            else
+                root.closeRequested();
+        }
 
         // Dimmed scrim backdrop (click outside to close)
         Rectangle {
@@ -222,703 +285,822 @@ PanelWindow {
             }
         }
 
-        // Centered Settings Dialog
+        // Centered M3 Expressive Settings Dialog (DarkShadowShell layout)
         Rectangle {
             id: dialog
             anchors.centerIn: parent
-            width: Math.min(parent.width - 40, 940)
-            height: Math.min(parent.height - 40, 640)
-            radius: Theme.r(22)
-            color: Theme.notchBg
+            width: Math.min(parent.width - 40, 1080)
+            height: Math.min(parent.height - 40, 720)
+            radius: Theme.r(30)
+            color: Theme.m3PanelBg
             clip: true
-            border.width: Theme.islandBorderWidth
-            border.color: Theme.islandBorder
+            border.width: 1
+            border.color: Theme.m3Line
 
             opacity: root.shown ? 1.0 : 0.0
-            scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.96)
+            scale: root.shown ? 1.0 : (Theme.reducedMotion ? 1.0 : 0.965)
 
             Behavior on opacity {
                 enabled: !Theme.reducedMotion
-                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
             Behavior on scale {
                 enabled: !Theme.reducedMotion
-                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
             }
 
-            // Eat clicks inside dialog so backdrop MouseArea does not close it
+            // Eat clicks inside dialog and dismiss transient popovers
             MouseArea {
                 anchors.fill: parent
+                onClicked: root.resetMenuOpen = false
             }
 
-            // Subtle glass specular top sheen in Blur Mode
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: 48
-                radius: dialog.radius
-                visible: Theme.showGlassSheen
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: Theme.isDark ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(1, 1, 1, 0.30) }
-                    GradientStop { position: 1.0; color: "transparent" }
-                }
-            }
+            // ================= Left 80px M3 Navigation Rail =================
+            Item {
+                id: railArea
+                x: 0
+                y: 0
+                width: root.railW
+                height: parent.height
 
-            RowLayout {
-                anchors.fill: parent
-                spacing: 0
+                // Spinning M3Blob Emblem (Home -> Appearance)
+                Item {
+                    id: emblemBtn
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: 16
+                    width: 48
+                    height: 48
+                    scale: emblemMouse.pressed ? 0.92 : (emblemMouse.containsMouse ? 1.06 : 1.0)
+                    Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
 
-                // --- Left Navigation Sidebar ---
-                Rectangle {
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: 204
-                    topLeftRadius: Math.max(0, dialog.radius - dialog.border.width)
-                    bottomLeftRadius: Math.max(0, dialog.radius - dialog.border.width)
-                    topRightRadius: 0
-                    bottomRightRadius: 0
-                    color: Theme.isSimple ? Theme.surfaceContainerLow : Theme.withAlpha(Theme.surfaceContainerLow, Theme.isBlur ? 0.45 : 0.72)
-
-                    ColumnLayout {
+                    M3Blob {
                         anchors.fill: parent
-                        anchors.margins: 14
-                        spacing: 10
-
-                        // App Title & Device Chip
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 6
-
-                            RowLayout {
-                                spacing: 8
-
-                                Text {
-                                    text: "󰒓"
-                                    font.family: Theme.iconFont
-                                    font.pixelSize: Theme.fs(16)
-                                    color: Theme.primary
-                                }
-
-                                Text {
-                                    text: "Aurora Settings"
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(15)
-                                    font.weight: Font.Bold
-                                    color: Theme.fgSurface
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 24
-                                radius: Theme.r(8)
-                                color: Theme.subCardBg
-                                border.width: Theme.subBorderWidth
-                                border.color: Theme.cardBorder
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 8
-                                    anchors.rightMargin: 8
-                                    spacing: 6
-
-                                    Text {
-                                        text: DeviceCaps.deviceType === "laptop" ? "󰌢" : "󰍹"
-                                        font.family: Theme.iconFont
-                                        font.pixelSize: Theme.fs(12)
-                                        color: Theme.secondary
-                                    }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: (DeviceCaps.deviceType === "laptop" ? "Laptop" : "Desktop")
-                                            + (DeviceCaps.hostname.length > 0 ? (" · " + DeviceCaps.hostname) : "")
-                                        elide: Text.ElideRight
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fs(10)
-                                        font.weight: Font.Medium
-                                        color: Theme.fgSurfaceVariant
-                                    }
-                                }
-                            }
+                        kind: ShellState.m3Shape
+                        color: Theme.m3PrimaryContainer
+                        RotationAnimator on rotation {
+                            from: 0
+                            to: 360
+                            duration: 42000
+                            loops: Animation.Infinite
+                            running: root.shown && !Theme.reducedMotion
                         }
+                    }
 
-                        // Search Bar (jump directly to any setting group)
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 30
-                            radius: Theme.r(8)
-                            color: Theme.subCardBg
-                            border.width: searchInput.activeFocus ? 1 : Theme.subBorderWidth
-                            border.color: searchInput.activeFocus ? Theme.primary : Theme.cardBorder
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰒓"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(21)
+                        color: Theme.m3OnPrimaryContainer
+                    }
 
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 6
-                                spacing: 6
+                    MouseArea {
+                        id: emblemMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.navigateTo("appearance")
+                    }
+                }
 
-                                Text {
-                                    text: "󰍉"
-                                    font.family: Theme.iconFont
-                                    font.pixelSize: Theme.fs(12)
-                                    color: searchInput.activeFocus ? Theme.primary : Theme.fgSurfaceVariant
-                                }
+                // Rail Group Icons
+                Flickable {
+                    id: navFlick
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: emblemBtn.bottom
+                    anchors.topMargin: 12
+                    anchors.bottom: railResetBtn.top
+                    anchors.bottomMargin: 10
+                    contentWidth: width
+                    contentHeight: railCol.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
 
-                                Item {
-                                    Layout.fillWidth: true
-                                    implicitHeight: 18
+                    Column {
+                        id: railCol
+                        width: navFlick.width
+                        spacing: 6
 
-                                    Text {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Search settings..."
-                                        visible: searchInput.text.length === 0
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fs(11)
-                                        color: Theme.fgSurfaceVariant
-                                    }
+                        Repeater {
+                            model: root.railGroups
 
-                                    TextInput {
-                                        id: searchInput
-                                        anchors.fill: parent
-                                        verticalAlignment: TextInput.AlignVCenter
-                                        text: root.searchQuery
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fs(11)
-                                        color: Theme.fgSurface
-                                        clip: true
-                                        selectByMouse: true
-                                        onTextEdited: root.searchQuery = text
-                                        Keys.onEscapePressed: event => {
-                                            if (text.length > 0) {
-                                                root.searchQuery = "";
-                                                event.accepted = true;
-                                            } else {
-                                                root.closeRequested();
-                                                event.accepted = true;
-                                            }
-                                        }
-                                        Keys.onReturnPressed: {
-                                            if (root.searchMatches.length > 0) {
-                                                root.pageSelected(root.searchMatches[0].pageId);
-                                                root.searchQuery = "";
-                                            }
-                                        }
-                                    }
+                            delegate: Item {
+                                id: railItem
+                                required property var modelData
+                                required property int index
+                                readonly property bool on: root.activeGroupId === railItem.modelData.id
+                                readonly property bool gapAfter: railItem.index === 0 || railItem.modelData.id === "debloat"
+
+                                width: navFlick.width
+                                height: 52 + (railItem.gapAfter ? 12 : 0)
+
+                                Rectangle {
+                                    visible: railItem.gapAfter
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    y: 57
+                                    width: 28
+                                    height: 1
+                                    color: Theme.m3Line
                                 }
 
                                 Rectangle {
-                                    visible: root.searchQuery.length > 0
-                                    implicitWidth: 18
-                                    implicitHeight: 18
-                                    radius: Theme.r(6)
-                                    color: clearSearchMouse.containsMouse ? Theme.hoverBg : "transparent"
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    y: 4
+                                    width: railItem.on ? 54 : (railItemMouse.containsMouse ? 48 : 24)
+                                    height: railItem.on ? 44 : 40
+                                    radius: Theme.r(railItem.on ? 16 : 20)
+                                    color: railItem.on ? Theme.m3SecondaryContainer : Theme.m3SurfaceHigh
+                                    opacity: (railItem.on || railItemMouse.containsMouse) ? 1.0 : 0.0
 
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "󰅖"
-                                        font.family: Theme.iconFont
-                                        font.pixelSize: Theme.fs(10)
-                                        color: Theme.fgSurfaceVariant
+                                    Behavior on width { enabled: !Theme.reducedMotion; NumberAnimation { duration: 240; easing.type: Easing.OutBack } }
+                                    Behavior on height { enabled: !Theme.reducedMotion; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                                    Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                                    Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
+                                    Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 160 } }
+                                }
+
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    y: 4
+                                    height: railItem.on ? 44 : 40
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: railItem.modelData.icon
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: Theme.fs(20)
+                                    color: railItem.on ? Theme.m3OnSecondaryContainer : Theme.m3InkDim
+                                    Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 160 } }
+                                }
+
+                                MouseArea {
+                                    id: railItemMouse
+                                    width: parent.width
+                                    height: 52
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        const targetId = root.lastInGroup[railItem.modelData.id] || railItem.modelData.items[0].id;
+                                        root.navigateTo(targetId);
                                     }
-
-                                    MouseArea {
-                                        id: clearSearchMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.searchQuery = ""
+                                    onContainsMouseChanged: {
+                                        if (containsMouse) {
+                                            root.railTipIdx = railItem.index;
+                                            root.railTipY = railItem.mapToItem(dialog, 0, 8).y;
+                                        } else if (root.railTipIdx === railItem.index) {
+                                            root.railTipIdx = -1;
+                                        }
                                     }
                                 }
                             }
                         }
+                    }
+                }
 
-                        // Search Results OR Scrollable Grouped Category Navigation
-                        Flickable {
-                            id: navFlick
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
+                // Rail Footer Reset Trigger
+                Rectangle {
+                    id: railResetBtn
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 16
+                    width: 44
+                    height: 44
+                    radius: Theme.r(root.resetMenuOpen ? 14 : 22)
+                    color: root.resetMenuOpen
+                        ? Theme.m3ErrorContainer
+                        : (railRstMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                    Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160 } }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰑐"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(18)
+                        color: root.resetMenuOpen ? Theme.m3OnErrorContainer : Theme.warning
+                    }
+
+                    MouseArea {
+                        id: railRstMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.resetMenuOpen = !root.resetMenuOpen;
+                            if (!root.resetMenuOpen)
+                                root.confirmFactoryReset = false;
+                        }
+                    }
+                }
+            }
+
+            // Floating Rail Hover Tooltip
+            Rectangle {
+                readonly property var hoveredGroup: (root.railTipIdx >= 0 && root.railTipIdx < root.railGroups.length)
+                    ? root.railGroups[root.railTipIdx]
+                    : null
+                visible: hoveredGroup !== null && !root.resetMenuOpen
+                x: root.railW - 4
+                y: root.railTipY
+                z: 55
+                height: 34
+                width: railTipTxt.implicitWidth + 24
+                radius: Theme.r(17)
+                color: Theme.m3InverseSurface
+
+                Text {
+                    id: railTipTxt
+                    anchors.centerIn: parent
+                    text: parent.hoveredGroup ? parent.hoveredGroup.label : ""
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(12)
+                    font.weight: Font.Bold
+                    color: Theme.m3InverseInk
+                }
+            }
+
+            // Floating Reset Menu Popover
+            Rectangle {
+                visible: root.resetMenuOpen
+                x: root.railW + 4
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 14
+                z: 65
+                width: 224
+                implicitHeight: rstMenuCol.implicitHeight + 20
+                radius: Theme.r(22)
+                color: Theme.m3PanelBg
+                border.width: 1
+                border.color: Theme.m3Line
+
+                MouseArea { anchors.fill: parent }
+
+                ColumnLayout {
+                    id: rstMenuCol
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 6
+
+                    Text {
+                        Layout.leftMargin: 6
+                        text: "Reset Settings"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(11)
+                        font.weight: Font.Bold
+                        color: Theme.m3Ink
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        radius: Theme.r(16)
+                        color: sbRstAppMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Appearance & Theme"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.DemiBold
+                            color: Theme.warning
+                        }
+
+                        MouseArea {
+                            id: sbRstAppMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                ShellState.resetAppearance();
+                                root.resetMenuOpen = false;
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        radius: Theme.r(16)
+                        color: sbRstBarMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceC
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Bar & Shell"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.DemiBold
+                            color: Theme.m3Primary
+                        }
+
+                        MouseArea {
+                            id: sbRstBarMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                ShellState.resetBar();
+                                root.resetMenuOpen = false;
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        radius: Theme.r(16)
+                        color: root.confirmFactoryReset
+                            ? Theme.m3Error
+                            : (sbRstAllMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceC)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: root.confirmFactoryReset ? "Confirm Factory Reset?" : "Factory Reset All"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Bold
+                            color: root.confirmFactoryReset ? Theme.m3OnPrimary : (sbRstAllMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3Error)
+                        }
+
+                        MouseArea {
+                            id: sbRstAllMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (!root.confirmFactoryReset) {
+                                    root.confirmFactoryReset = true;
+                                    drawerConfirmTimer.restart();
+                                    return;
+                                }
+                                root.confirmFactoryReset = false;
+                                drawerConfirmTimer.stop();
+                                ShellState.resetAllSettings();
+                                root.resetMenuOpen = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ================= Top Header (Back, Breadcrumb, Search, Close) =================
+            Item {
+                id: topHeader
+                x: root.railW + 14
+                y: 14
+                width: parent.width - x - 18
+                height: 66
+
+                // Circular Back Button
+                Rectangle {
+                    id: backBtn
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 44
+                    height: 44
+                    radius: Theme.r(bkm.pressed ? 14 : 22)
+                    color: bkm.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                    opacity: (root.pageHistory.length === 0 && root.resolvedPage === "appearance") ? 0.35 : 1.0
+                    Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰁍"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(18)
+                        color: Theme.m3Ink
+                    }
+
+                    MouseArea {
+                        id: bkm
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.goBack()
+                    }
+                }
+
+                // Breadcrumb & Page Title
+                Column {
+                    anchors.left: backBtn.right
+                    anchors.leftMargin: 14
+                    anchors.right: searchBox.left
+                    anchors.rightMargin: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 1
+
+                    Row {
+                        spacing: 6
+
+                        Text {
+                            text: "SETTINGS"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Bold
+                            font.letterSpacing: 1.2
+                            color: crumbHomeMouse.containsMouse ? Theme.m3Primary : Theme.m3InkDim
+
+                            MouseArea {
+                                id: crumbHomeMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.navigateTo("appearance")
+                            }
+                        }
+
+                        Text {
+                            text: "\u203a"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(11)
+                            font.weight: Font.Bold
+                            color: Theme.m3InkDim
+                        }
+
+                        Text {
+                            text: root.currentGroup ? root.currentGroup.label.toUpperCase() : ""
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Bold
+                            font.letterSpacing: 1.2
+                            color: Theme.m3Primary
+                        }
+                    }
+
+                    Text {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        text: root.currentNavItem.label
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(24)
+                        font.weight: Font.Bold
+                        color: Theme.m3Ink
+                    }
+                }
+
+                // Search Capsule
+                Rectangle {
+                    id: searchBox
+                    anchors.right: headerCloseBtn.left
+                    anchors.rightMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.min(270, Math.max(180, parent.width * 0.28))
+                    height: 40
+                    radius: Theme.r(20)
+                    color: searchInput.activeFocus ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
+                    border.width: searchInput.activeFocus ? 2 : 1
+                    border.color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3Line
+                    Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 150 } }
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "󰍉"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(15)
+                        color: searchInput.activeFocus ? Theme.m3Primary : Theme.m3InkDim
+                    }
+
+                    Item {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 38
+                        anchors.right: clearSearchBtn.visible ? clearSearchBtn.left : parent.right
+                        anchors.rightMargin: 8
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Search settings..."
+                            visible: searchInput.text.length === 0
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(12)
+                            color: Theme.m3InkDim
+                        }
+
+                        TextInput {
+                            id: searchInput
+                            anchors.fill: parent
+                            verticalAlignment: TextInput.AlignVCenter
+                            text: root.searchQuery
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(12)
+                            color: Theme.m3Ink
+                            selectionColor: Theme.m3Primary
+                            selectedTextColor: Theme.m3OnPrimary
                             clip: true
-                            contentWidth: width
-                            contentHeight: root.searchQuery.trim().length > 0 ? searchCol.implicitHeight : navCol.implicitHeight
-                            boundsBehavior: Flickable.StopAtBounds
+                            selectByMouse: true
+                            onTextEdited: root.searchQuery = text
+                            Keys.onEscapePressed: event => {
+                                if (text.length > 0) {
+                                    root.searchQuery = "";
+                                    event.accepted = true;
+                                } else {
+                                    root.closeRequested();
+                                    event.accepted = true;
+                                }
+                            }
+                            Keys.onReturnPressed: {
+                                if (root.searchMatches.length > 0) {
+                                    root.navigateTo(root.searchMatches[0].pageId);
+                                    root.searchQuery = "";
+                                }
+                            }
+                        }
+                    }
 
-                            ColumnLayout {
-                                id: searchCol
-                                visible: root.searchQuery.trim().length > 0
-                                width: navFlick.width
-                                spacing: 4
+                    Rectangle {
+                        id: clearSearchBtn
+                        visible: root.searchQuery.length > 0
+                        anchors.right: parent.right
+                        anchors.rightMargin: 7
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 24
+                        height: 24
+                        radius: Theme.r(12)
+                        color: clearSearchMouse.containsMouse ? Theme.m3SurfaceC : "transparent"
 
-                                Text {
-                                    visible: root.searchMatches.length === 0
-                                    Layout.fillWidth: true
-                                    Layout.topMargin: 8
-                                    text: "No matching setting"
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(11)
-                                    color: Theme.fgSurfaceVariant
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰅖"
+                            font.family: Theme.iconFont
+                            font.pixelSize: Theme.fs(11)
+                            color: Theme.m3InkDim
+                        }
+
+                        MouseArea {
+                            id: clearSearchMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.searchQuery = ""
+                        }
+                    }
+                }
+
+                // Circular Close Button
+                Rectangle {
+                    id: headerCloseBtn
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 40
+                    height: 40
+                    radius: Theme.r(closeBtnMouse.pressed ? 14 : 20)
+                    color: closeBtnMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceHigh
+                    scale: closeBtnMouse.pressed ? 0.94 : 1.0
+                    Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 130 } }
+                    Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 140 } }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰅖"
+                        font.family: Theme.iconFont
+                        font.pixelSize: Theme.fs(15)
+                        color: closeBtnMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3Ink
+                    }
+
+                    MouseArea {
+                        id: closeBtnMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.closeRequested()
+                    }
+                }
+            }
+
+            // Floating Search Results Dropdown
+            Rectangle {
+                visible: root.searchQuery.trim().length > 0
+                anchors.right: parent.right
+                anchors.rightMargin: 18
+                y: 80
+                z: 60
+                width: 340
+                height: Math.min(340, Math.max(60, searchHitsCol.implicitHeight + 20))
+                radius: Theme.r(24)
+                color: Theme.m3PanelBg
+                border.width: 1
+                border.color: Theme.m3Line
+                clip: true
+
+                Flickable {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    contentWidth: width
+                    contentHeight: searchHitsCol.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    ColumnLayout {
+                        id: searchHitsCol
+                        width: parent.width
+                        spacing: 5
+
+                        Text {
+                            visible: root.searchMatches.length === 0
+                            Layout.fillWidth: true
+                            Layout.margins: 8
+                            text: "No matching setting"
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(11)
+                            color: Theme.m3InkDim
+                        }
+
+                        Repeater {
+                            model: root.searchMatches
+
+                            delegate: Rectangle {
+                                id: hitBtn
+                                required property var modelData
+                                Layout.fillWidth: true
+                                implicitHeight: 44
+                                radius: Theme.r(16)
+                                color: hitMouse.containsMouse ? Theme.m3SurfaceHigh : Theme.m3SurfaceC
+
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 12
+                                    anchors.rightMargin: 12
+                                    anchors.topMargin: 6
+                                    anchors.bottomMargin: 6
+                                    spacing: 1
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        text: hitBtn.modelData.label
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fs(11)
+                                        font.weight: Font.Bold
+                                        color: Theme.m3Ink
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        text: "in " + hitBtn.modelData.pageId
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fs(9)
+                                        color: Theme.m3Primary
+                                    }
                                 }
 
-                                Repeater {
-                                    model: root.searchMatches
-
-                                    delegate: Rectangle {
-                                        id: hitBtn
-                                        required property var modelData
-                                        Layout.fillWidth: true
-                                        implicitHeight: 38
-                                        radius: Theme.r(9)
-                                        color: hitMouse.containsMouse ? Theme.hoverBg : Theme.subCardBg
-                                        border.width: Theme.subBorderWidth
-                                        border.color: Theme.cardBorder
-
-                                        ColumnLayout {
-                                            anchors.fill: parent
-                                            anchors.leftMargin: 9
-                                            anchors.rightMargin: 9
-                                            anchors.topMargin: 5
-                                            anchors.bottomMargin: 5
-                                            spacing: 1
-
-                                            Text {
-                                                Layout.fillWidth: true
-                                                elide: Text.ElideRight
-                                                text: hitBtn.modelData.label
-                                                font.family: Theme.fontFamily
-                                                font.pixelSize: Theme.fs(11)
-                                                font.weight: Font.DemiBold
-                                                color: Theme.fgSurface
-                                            }
-
-                                            Text {
-                                                Layout.fillWidth: true
-                                                elide: Text.ElideRight
-                                                text: "in " + hitBtn.modelData.pageId
-                                                font.family: Theme.fontFamily
-                                                font.pixelSize: Theme.fs(9)
-                                                color: Theme.primary
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            id: hitMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                root.pageSelected(hitBtn.modelData.pageId);
-                                                root.searchQuery = "";
-                                            }
-                                        }
+                                MouseArea {
+                                    id: hitMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.navigateTo(hitBtn.modelData.pageId);
+                                        root.searchQuery = "";
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
 
-                            // Grouped Navigation Links (Personalize / Desktop & Input / Hardware / System)
-                            ColumnLayout {
-                                id: navCol
-                                visible: root.searchQuery.trim().length === 0
-                                width: navFlick.width
-                                spacing: 3
+            // ================= Rounded Content Pane Beside Rail =================
+            Rectangle {
+                id: pane
+                x: root.railW
+                y: 88
+                width: parent.width - x - 14
+                height: parent.height - y - 14
+                radius: Theme.r(28)
+                color: Theme.m3PaneBg
+                border.width: 1
+                border.color: Theme.m3Line
+                clip: true
 
-                                Repeater {
-                                    model: root.navItems
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
 
-                                    delegate: ColumnLayout {
-                                        id: navGroupWrap
-                                        required property var modelData
-                                        required property int index
-                                        readonly property bool isSelected: root.resolvedPage === navGroupWrap.modelData.id
-                                        readonly property bool showHeader: navGroupWrap.index === 0
-                                            || navGroupWrap.modelData.section !== root.navItems[navGroupWrap.index - 1].section
+                    // Sub-Tabs Strip + Subtitle Caption
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: subHdrCol.implicitHeight + 20
+                        color: "transparent"
 
-                                        Layout.fillWidth: true
-                                        spacing: 3
+                        ColumnLayout {
+                            id: subHdrCol
+                            anchors.fill: parent
+                            anchors.leftMargin: 20
+                            anchors.rightMargin: 20
+                            anchors.topMargin: 12
+                            anchors.bottomMargin: 8
+                            spacing: 8
 
-                                        Text {
-                                            visible: navGroupWrap.showHeader
-                                            Layout.fillWidth: true
-                                            Layout.topMargin: navGroupWrap.index === 0 ? 2 : 9
-                                            Layout.leftMargin: 8
-                                            Layout.bottomMargin: 2
-                                            text: navGroupWrap.modelData.section
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: Theme.fs(10)
-                                            font.weight: Font.DemiBold
-                                            color: Theme.fgSurfaceVariant
-                                        }
+                            Flickable {
+                                visible: root.currentGroup && root.currentGroup.items.length > 1
+                                Layout.fillWidth: true
+                                implicitHeight: 34
+                                contentWidth: subTabRow.implicitWidth
+                                contentHeight: 34
+                                clip: true
+                                boundsBehavior: Flickable.StopAtBounds
 
-                                        Rectangle {
-                                            Layout.fillWidth: true
-                                            implicitHeight: 32
-                                            radius: Theme.r(9)
-                                            color: navGroupWrap.isSelected
-                                                ? Theme.withAlpha(Theme.primary, Theme.isDark ? 0.16 : 0.14)
-                                                : (navMouse.containsMouse ? Theme.hoverBg : "transparent")
-                                            border.width: (navGroupWrap.isSelected && Theme.isSimple) ? 1 : 0
-                                            border.color: Theme.primary
-                                            scale: navMouse.pressed ? 0.98 : 1.0
+                                Row {
+                                    id: subTabRow
+                                    spacing: 6
 
-                                            Behavior on color {
-                                                enabled: !Theme.reducedMotion
-                                                ColorAnimation { duration: 130; easing.type: Easing.OutCubic }
-                                            }
-                                            Behavior on scale {
-                                                enabled: !Theme.reducedMotion
-                                                NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
-                                            }
+                                    Repeater {
+                                        model: root.currentGroup ? root.currentGroup.items : []
 
-                                            // Left Accent Indicator Bar
-                                            Rectangle {
-                                                visible: navGroupWrap.isSelected
-                                                anchors.left: parent.left
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                anchors.leftMargin: 4
-                                                width: 3
-                                                height: 16
-                                                radius: 1.5
-                                                color: Theme.primary
-                                            }
+                                        delegate: Rectangle {
+                                            id: subTabPill
+                                            required property var modelData
+                                            readonly property bool isSel: root.resolvedPage === subTabPill.modelData.id
 
-                                            RowLayout {
-                                                anchors.fill: parent
-                                                anchors.leftMargin: 12
-                                                anchors.rightMargin: 10
-                                                spacing: 9
+                                            height: 32
+                                            width: subTabInner.implicitWidth + 24
+                                            radius: Theme.r(subTabPill.isSel ? 12 : 16)
+                                            color: subTabPill.isSel
+                                                ? Theme.m3Primary
+                                                : (subTabMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
+                                            Behavior on radius { enabled: !Theme.reducedMotion; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                            Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 140 } }
+
+                                            Row {
+                                                id: subTabInner
+                                                anchors.centerIn: parent
+                                                spacing: 6
 
                                                 Text {
-                                                    text: navGroupWrap.modelData.icon
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: subTabPill.modelData.icon
                                                     font.family: Theme.iconFont
-                                                    font.pixelSize: Theme.fs(13)
-                                                    color: navGroupWrap.isSelected ? Theme.primary : Theme.fgSurfaceVariant
-
-                                                    Behavior on color {
-                                                        enabled: !Theme.reducedMotion
-                                                        ColorAnimation { duration: 130; easing.type: Easing.OutCubic }
-                                                    }
+                                                    font.pixelSize: Theme.fs(12)
+                                                    color: subTabPill.isSel ? Theme.m3OnPrimary : Theme.m3InkDim
                                                 }
 
                                                 Text {
-                                                    Layout.fillWidth: true
-                                                    elide: Text.ElideRight
-                                                    text: navGroupWrap.modelData.label
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: subTabPill.modelData.label
                                                     font.family: Theme.fontFamily
-                                                    font.pixelSize: Theme.fs(12)
-                                                    font.weight: navGroupWrap.isSelected ? Font.DemiBold : Font.Normal
-                                                    color: Theme.fgSurface
+                                                    font.pixelSize: Theme.fs(11)
+                                                    font.weight: subTabPill.isSel ? Font.Bold : Font.Medium
+                                                    color: subTabPill.isSel ? Theme.m3OnPrimary : Theme.m3Ink
                                                 }
                                             }
 
                                             MouseArea {
-                                                id: navMouse
+                                                id: subTabMouse
                                                 anchors.fill: parent
                                                 hoverEnabled: true
                                                 cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.pageSelected(navGroupWrap.modelData.id)
+                                                onClicked: root.navigateTo(subTabPill.modelData.id)
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        // Sidebar Reset Drawer (always accessible if a tweak goes wrong)
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: rstDrawerCol.implicitHeight + 10
-                            radius: Theme.r(9)
-                            color: Theme.subCardBg
-                            border.width: Theme.activeControlBorderWidth
-                            border.color: root.resetMenuOpen ? Theme.warning : Theme.cardBorder
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
 
-                            ColumnLayout {
-                                id: rstDrawerCol
-                                anchors.fill: parent
-                                anchors.margins: 5
-                                spacing: 4
-
-                                Rectangle {
+                                Text {
                                     Layout.fillWidth: true
-                                    implicitHeight: 24
-                                    radius: Theme.r(7)
-                                    color: rstToggleMouse.containsMouse ? Theme.hoverBg : "transparent"
-
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 6
-                                        anchors.rightMargin: 6
-                                        spacing: 6
-
-                                        Text {
-                                            text: "󰑐"
-                                            font.family: Theme.iconFont
-                                            font.pixelSize: Theme.fs(11)
-                                            color: Theme.warning
-                                        }
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: "Reset Settings"
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: Theme.fs(10)
-                                            font.weight: Font.Bold
-                                            color: Theme.fgSurface
-                                        }
-
-                                        Text {
-                                            text: root.resetMenuOpen ? "󰅃" : "󰅀"
-                                            font.family: Theme.iconFont
-                                            font.pixelSize: Theme.fs(11)
-                                            color: Theme.fgSurfaceVariant
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: rstToggleMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            root.resetMenuOpen = !root.resetMenuOpen;
-                                            if (!root.resetMenuOpen)
-                                                root.confirmFactoryReset = false;
-                                        }
-                                    }
+                                    elide: Text.ElideRight
+                                    text: root.currentNavItem.sub
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fs(11)
+                                    color: Theme.m3InkDim
                                 }
 
                                 Rectangle {
-                                    visible: root.resetMenuOpen
-                                    Layout.fillWidth: true
-                                    implicitHeight: 24
-                                    radius: Theme.r(6)
-                                    color: sbRstAppMouse.containsMouse ? Theme.withAlpha(Theme.warning, 0.20) : Theme.cardBg
+                                    implicitHeight: 22
+                                    implicitWidth: stylePillTxt.implicitWidth + 14
+                                    radius: Theme.r(11)
+                                    color: Theme.m3SecondaryContainer
 
                                     Text {
+                                        id: stylePillTxt
                                         anchors.centerIn: parent
-                                        text: "Appearance & Theme"
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fs(9)
-                                        font.weight: Font.Medium
-                                        color: Theme.warning
-                                    }
-
-                                    MouseArea {
-                                        id: sbRstAppMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            ShellState.resetAppearance();
-                                            root.resetMenuOpen = false;
+                                        text: {
+                                            for (let i = 0; i < Theme.availableModes.length; i++) {
+                                                if (Theme.availableModes[i].id === Theme.shellMode)
+                                                    return Theme.availableModes[i].label;
+                                            }
+                                            return "Island";
                                         }
-                                    }
-                                }
-
-                                Rectangle {
-                                    visible: root.resetMenuOpen
-                                    Layout.fillWidth: true
-                                    implicitHeight: 24
-                                    radius: Theme.r(6)
-                                    color: sbRstBarMouse.containsMouse ? Theme.withAlpha(Theme.secondary, 0.20) : Theme.cardBg
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "Bar & Shell"
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fs(9)
-                                        font.weight: Font.Medium
-                                        color: Theme.secondary
-                                    }
-
-                                    MouseArea {
-                                        id: sbRstBarMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            ShellState.resetBar();
-                                            root.resetMenuOpen = false;
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    visible: root.resetMenuOpen
-                                    Layout.fillWidth: true
-                                    implicitHeight: 24
-                                    radius: Theme.r(6)
-                                    color: root.confirmFactoryReset
-                                        ? Theme.error
-                                        : (sbRstAllMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.20) : Theme.cardBg)
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: root.confirmFactoryReset ? "Confirm Factory?" : "Factory Reset All"
                                         font.family: Theme.fontFamily
                                         font.pixelSize: Theme.fs(9)
                                         font.weight: Font.Bold
-                                        color: root.confirmFactoryReset ? Theme.fgError : Theme.error
+                                        color: Theme.m3OnSecondaryContainer
                                     }
-
-                                    MouseArea {
-                                        id: sbRstAllMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            if (!root.confirmFactoryReset) {
-                                                root.confirmFactoryReset = true;
-                                                drawerConfirmTimer.restart();
-                                                return;
-                                            }
-                                            root.confirmFactoryReset = false;
-                                            drawerConfirmTimer.stop();
-                                            ShellState.resetAllSettings();
-                                            root.resetMenuOpen = false;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Active Mode Pill in Footer
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 28
-                            radius: Theme.r(9)
-                            color: Theme.cardBg
-                            border.width: Theme.subBorderWidth
-                            border.color: Theme.cardBorder
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 9
-                                anchors.rightMargin: 9
-                                spacing: 6
-
-                                Text {
-                                    text: "Style"
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(10)
-                                    color: Theme.fgSurfaceVariant
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignRight
-                                    text: {
-                                        for (let i = 0; i < Theme.availableModes.length; i++) {
-                                            if (Theme.availableModes[i].id === Theme.shellMode)
-                                                return Theme.availableModes[i].label;
-                                        }
-                                        return "Island";
-                                    }
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(10)
-                                    font.weight: Font.DemiBold
-                                    color: Theme.primary
                                 }
                             }
                         }
                     }
-                }
 
-                // Vertical Hairline Divider
-                Rectangle {
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: 1
-                    color: Theme.isSimple ? Theme.outlineVariant : Theme.hairlineBorder
-                }
-
-                // --- Right Content Area ---
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 0
-
-                    // Page Header (anchor-pinned close button so it stays flush top-right at all widths)
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 20
-                        Layout.rightMargin: 20
-                        Layout.topMargin: 14
-                        Layout.bottomMargin: 12
-                        implicitHeight: Math.max(32, headerTitleCol.implicitHeight)
-
-                        ColumnLayout {
-                            id: headerTitleCol
-                            anchors.left: parent.left
-                            anchors.right: headerCloseBtn.left
-                            anchors.rightMargin: 12
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 2
-
-                            Text {
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                                text: root.currentNavItem.label
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(16)
-                                font.weight: Font.Bold
-                                color: Theme.fgSurface
-                            }
-
-                            Text {
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                                text: root.currentNavItem.sub
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(11)
-                                color: Theme.fgSurfaceVariant
-                            }
-                        }
-
-                        Rectangle {
-                            id: headerCloseBtn
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 28
-                            height: 28
-                            radius: Theme.r(14)
-                            color: closeBtnMouse.containsMouse
-                                ? Theme.withAlpha(Theme.error, 0.20)
-                                : Theme.subCardBg
-                            border.width: Theme.subBorderWidth
-                            border.color: Theme.cardBorder
-                            scale: closeBtnMouse.pressed ? 0.90 : 1.0
-
-                            Behavior on color {
-                                enabled: !Theme.reducedMotion
-                                ColorAnimation { duration: 130; easing.type: Easing.OutCubic }
-                            }
-                            Behavior on scale {
-                                enabled: !Theme.reducedMotion
-                                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰅖"
-                                font.family: Theme.iconFont
-                                font.pixelSize: Theme.fs(13)
-                                color: closeBtnMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
-                            }
-
-                            MouseArea {
-                                id: closeBtnMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.closeRequested()
-                            }
-                        }
-                    }
-
-                    // Horizontal Hairline Divider
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
-                        color: Theme.isSimple ? Theme.outlineVariant : Theme.hairlineBorder
+                        Layout.leftMargin: 20
+                        Layout.rightMargin: 20
+                        color: Theme.m3Line
                     }
 
                     // Scrollable Page Container with Animated Page Entry
@@ -927,7 +1109,7 @@ PanelWindow {
                         Layout.fillHeight: true
                         Layout.leftMargin: 20
                         Layout.rightMargin: 20
-                        Layout.topMargin: 14
+                        Layout.topMargin: 12
                         Layout.bottomMargin: 14
 
                         Flickable {
@@ -949,7 +1131,7 @@ PanelWindow {
                                     property: "opacity"
                                     from: 0.0
                                     to: 1.0
-                                    duration: 110
+                                    duration: 120
                                     easing.type: Easing.OutCubic
                                 }
 
@@ -966,7 +1148,7 @@ PanelWindow {
                                 target: pageLoader.item
                                 ignoreUnknownSignals: true
                                 function onOpenPageRequested(page) {
-                                    root.pageSelected(page);
+                                    root.navigateTo(page);
                                 }
                                 function onOpenStoreRequested() {
                                     root.closeRequested();

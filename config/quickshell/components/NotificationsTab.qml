@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import ".."
+import "../m3"
 
 RowLayout {
     id: root
@@ -117,19 +118,19 @@ RowLayout {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: false
-            Layout.preferredHeight: 206
-            Layout.minimumHeight: 202
-            Layout.maximumHeight: 212
-            radius: Theme.r(18)
-            color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
-            border.color: Theme.cardBorder
+            Layout.preferredHeight: 204
+            Layout.minimumHeight: 200
+            Layout.maximumHeight: 210
+            radius: Theme.r(26)
+            color: Theme.m3SurfaceC
+            border.width: 1
+            border.color: Theme.m3Line
             clip: true
 
             ColumnLayout {
                 id: calCol
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: 12
                 spacing: 6
 
                 RowLayout {
@@ -140,25 +141,25 @@ RowLayout {
                     Text {
                         text: root.monthNames[root.viewMonth] + " " + root.viewYear
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                        color: Theme.fgSurface
+                        font.pixelSize: Theme.fs(13)
+                        font.weight: Font.DemiBold
+                        color: Theme.m3Ink
                     }
 
                     Item { Layout.fillWidth: true }
 
                     Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
-                        radius: Theme.r(11)
-                        color: prevM.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                        implicitWidth: 26
+                        implicitHeight: 26
+                        radius: Theme.r(13)
+                        color: prevM.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                         Text {
                             anchors.centerIn: parent
                             text: "󰅁"
                             font.family: Theme.iconFont
-                            font.pixelSize: 12
-                            color: Theme.fgSurfaceVariant
+                            font.pixelSize: Theme.fs(12)
+                            color: Theme.m3InkDim
                         }
 
                         MouseArea {
@@ -171,19 +172,19 @@ RowLayout {
                     }
 
                     Rectangle {
-                        implicitHeight: 22
-                        implicitWidth: todayLbl.implicitWidth + 12
-                        radius: Theme.r(11)
-                        color: todayM.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                        implicitHeight: 26
+                        implicitWidth: todayLbl.implicitWidth + 14
+                        radius: Theme.r(13)
+                        color: todayM.containsMouse ? Theme.m3SecondaryContainer : Theme.m3SurfaceHigh
 
                         Text {
                             id: todayLbl
                             anchors.centerIn: parent
                             text: "Today"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(10)
                             font.weight: Font.Bold
-                            color: Theme.primary
+                            color: todayM.containsMouse ? Theme.m3OnSecondaryContainer : Theme.m3Primary
                         }
 
                         MouseArea {
@@ -196,17 +197,17 @@ RowLayout {
                     }
 
                     Rectangle {
-                        implicitWidth: 22
-                        implicitHeight: 22
-                        radius: Theme.r(11)
-                        color: nextM.containsMouse ? Theme.hoverBg : Theme.subCardBg
+                        implicitWidth: 26
+                        implicitHeight: 26
+                        radius: Theme.r(13)
+                        color: nextM.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh
 
                         Text {
                             anchors.centerIn: parent
                             text: "󰅂"
                             font.family: Theme.iconFont
-                            font.pixelSize: 12
-                            color: Theme.fgSurfaceVariant
+                            font.pixelSize: Theme.fs(12)
+                            color: Theme.m3InkDim
                         }
 
                         MouseArea {
@@ -219,7 +220,6 @@ RowLayout {
                     }
                 }
 
-                // Weekday headers + Circular Apple Day Cells
                 GridLayout {
                     Layout.fillWidth: true
                     columns: 7
@@ -234,9 +234,9 @@ RowLayout {
                             horizontalAlignment: Text.AlignHCenter
                             text: modelData
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(9)
                             font.weight: Font.Bold
-                            color: Theme.fgSurfaceVariant
+                            color: Theme.m3InkDim
                         }
                     }
 
@@ -246,30 +246,38 @@ RowLayout {
                             id: dayCell
                             required property var modelData
                             Layout.fillWidth: true
-                            implicitHeight: 21
+                            implicitHeight: 23
+
+                            M3Blob {
+                                visible: dayCell.modelData.isToday
+                                anchors.centerIn: parent
+                                width: 23
+                                height: 23
+                                kind: ShellState.m3Shape
+                                color: Theme.m3Primary
+                            }
 
                             Rectangle {
+                                visible: !dayCell.modelData.isToday
                                 anchors.centerIn: parent
-                                width: 20
-                                height: 20
-                                radius: 10
-                                color: dayCell.modelData.isToday
-                                    ? Theme.primary
-                                    : (dayHover.containsMouse && dayCell.modelData.inMonth ? Theme.hoverBg : "transparent")
+                                width: 22
+                                height: 22
+                                radius: 11
+                                color: (dayHover.containsMouse && dayCell.modelData.inMonth) ? Theme.m3SurfaceHigh : "transparent"
                             }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: dayCell.modelData.day
                                 font.family: Theme.monoFont
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fs(10)
                                 font.weight: dayCell.modelData.isToday ? Font.Bold : Font.Medium
                                 color: {
                                     if (dayCell.modelData.isToday)
-                                        return Theme.fgPrimary;
+                                        return Theme.m3OnPrimary;
                                     return dayCell.modelData.inMonth
-                                        ? Theme.fgSurface
-                                        : Theme.withAlpha(Theme.fgSurfaceVariant, Theme.isDark ? 0.62 : 0.68);
+                                        ? Theme.m3Ink
+                                        : Theme.withAlpha(Theme.m3InkDim, 0.50);
                                 }
                             }
 
@@ -284,17 +292,17 @@ RowLayout {
             }
         }
 
-        // --- 2-Segment Bottom Drawer Switcher (Focus & Weather | Notes) ---
+        // --- 2-Segment Bottom Drawer Switcher (Focus | Notes) ---
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: false
-            Layout.preferredHeight: 30
-            Layout.minimumHeight: 30
-            Layout.maximumHeight: 30
-            radius: Theme.r(15)
-            color: Theme.cardBg
-            border.width: Theme.cardBorderWidth
-            border.color: Theme.cardBorder
+            Layout.preferredHeight: 34
+            Layout.minimumHeight: 34
+            Layout.maximumHeight: 34
+            radius: Theme.r(17)
+            color: Theme.m3SurfaceC
+            border.width: 1
+            border.color: Theme.m3Line
 
             RowLayout {
                 anchors.fill: parent
@@ -303,7 +311,7 @@ RowLayout {
 
                 Repeater {
                     model: [
-                        { id: "timer", label: "󰔛 Focus & Weather" },
+                        { id: "timer", label: "󰔛 Focus" },
                         { id: "notes", label: "󰎞 Notes" }
                     ]
 
@@ -313,16 +321,16 @@ RowLayout {
                         readonly property bool sel: root.bottomWidget === bwTab.modelData.id
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        radius: Theme.r(12)
-                        color: bwTab.sel ? Theme.primary : (bwMouse.containsMouse ? Theme.hoverBg : "transparent")
+                        radius: Theme.r(14)
+                        color: bwTab.sel ? Theme.m3Primary : (bwMouse.containsMouse ? Theme.m3SurfaceHigh : "transparent")
 
                         Text {
                             anchors.centerIn: parent
                             text: bwTab.modelData.label
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: Theme.fs(10)
                             font.weight: bwTab.sel ? Font.Bold : Font.Medium
-                            color: bwTab.sel ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                            color: bwTab.sel ? Theme.m3OnPrimary : Theme.m3InkDim
                         }
 
                         MouseArea {
@@ -865,14 +873,14 @@ RowLayout {
         }
     }
 
-    // ==================== RIGHT COLUMN: macOS Notification Center ====================
+        // --- Right Column M3 Notification Feed ---
     Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Theme.r(18)
-        color: Theme.cardBg
-        border.width: Theme.cardBorderWidth
-        border.color: Theme.cardBorder
+        radius: Theme.r(26)
+        color: Theme.m3SurfaceC
+        border.width: 1
+        border.color: Theme.m3Line
         clip: true
 
         ColumnLayout {
@@ -880,7 +888,6 @@ RowLayout {
             anchors.margins: 12
             spacing: 10
 
-            // Header
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
@@ -889,57 +896,55 @@ RowLayout {
                 Text {
                     text: "Notifications"
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
-                    font.weight: Font.Bold
-                    color: Theme.fgSurface
+                    font.pixelSize: Theme.fs(13)
+                    font.weight: Font.DemiBold
+                    color: Theme.m3Ink
                 }
 
                 Rectangle {
-                    implicitHeight: 20
-                    implicitWidth: cntLbl.implicitWidth + 10
-                    radius: Theme.r(10)
-                    color: Theme.subCardBg
+                    implicitHeight: 22
+                    implicitWidth: Math.max(22, cntLbl.implicitWidth + 12)
+                    radius: Theme.r(11)
+                    color: Theme.m3PrimaryContainer
 
                     Text {
                         id: cntLbl
                         anchors.centerIn: parent
                         text: String((ShellState.notificationHistory || []).length)
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 9
+                        font.family: Theme.monoFont
+                        font.pixelSize: Theme.fs(10)
                         font.weight: Font.Bold
-                        color: Theme.primary
+                        color: Theme.m3OnPrimaryContainer
                     }
                 }
 
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
-                    implicitHeight: 24
-                    implicitWidth: dndRow.implicitWidth + 12
-                    radius: Theme.r(12)
+                    implicitHeight: 28
+                    implicitWidth: dndRow.implicitWidth + 16
+                    radius: Theme.r(14)
                     color: ShellState.dnd
-                        ? Theme.primary
-                        : (dndMouse.containsMouse ? Theme.controlFillHover : Theme.subCardBg)
-                    border.width: ShellState.dnd ? Theme.activeControlBorderWidth : Theme.subBorderWidth
-                    border.color: ShellState.dnd ? Theme.primary : Theme.cardBorder
+                        ? Theme.m3Primary
+                        : (dndMouse.containsMouse ? Theme.m3SurfaceHighest : Theme.m3SurfaceHigh)
 
                     RowLayout {
                         id: dndRow
                         anchors.centerIn: parent
-                        spacing: 4
+                        spacing: 5
 
                         Text {
                             text: ShellState.dnd ? "󰂛" : "󰂚"
                             font.family: Theme.iconFont
-                            font.pixelSize: 11
-                            color: ShellState.dnd ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                            font.pixelSize: Theme.fs(12)
+                            color: ShellState.dnd ? Theme.m3OnPrimary : Theme.m3InkDim
                         }
                         Text {
                             text: ShellState.dnd ? "DND On" : "DND"
                             font.family: Theme.fontFamily
-                            font.pixelSize: 9
-                            font.weight: Font.Bold
-                            color: ShellState.dnd ? Theme.fgPrimary : Theme.fgSurfaceVariant
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.Medium
+                            color: ShellState.dnd ? Theme.m3OnPrimary : Theme.m3Ink
                         }
                     }
 
@@ -954,21 +959,19 @@ RowLayout {
 
                 Rectangle {
                     visible: (ShellState.notificationHistory || []).length > 0
-                    implicitHeight: 24
-                    implicitWidth: clrAllLbl.implicitWidth + 12
-                    radius: Theme.r(12)
-                    color: clrAllMouse.containsMouse ? Theme.withAlpha(Theme.error, 0.20) : Theme.subCardBg
-                    border.width: Theme.subBorderWidth
-                    border.color: clrAllMouse.containsMouse ? Theme.error : Theme.cardBorder
+                    implicitHeight: 28
+                    implicitWidth: clrAllLbl.implicitWidth + 16
+                    radius: Theme.r(14)
+                    color: clrAllMouse.containsMouse ? Theme.m3ErrorContainer : Theme.m3SurfaceHigh
 
                     Text {
                         id: clrAllLbl
                         anchors.centerIn: parent
                         text: "Clear All"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 9
-                        font.weight: Font.Bold
-                        color: clrAllMouse.containsMouse ? Theme.error : Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(10)
+                        font.weight: Font.Medium
+                        color: clrAllMouse.containsMouse ? Theme.m3OnErrorContainer : Theme.m3Ink
                     }
 
                     MouseArea {
@@ -981,7 +984,6 @@ RowLayout {
                 }
             }
 
-            // Notification Feed
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -989,7 +991,7 @@ RowLayout {
                 ListView {
                     id: notifList
                     anchors.fill: parent
-                    spacing: 6
+                    spacing: 8
                     clip: true
                     model: ShellState.notificationHistory || []
 
@@ -999,121 +1001,117 @@ RowLayout {
                         readonly property bool urgent: Number(nCard.modelData.urgency || 0) === 2
 
                         width: notifList.width
-                        implicitHeight: nCol.implicitHeight + 18
-                        radius: Theme.r(14)
-                        color: Theme.subCardBg
-                        border.width: nCard.urgent ? Theme.activeControlBorderWidth : Theme.subBorderWidth
-                        border.color: nCard.urgent ? Theme.error : Theme.cardBorder
+                        implicitHeight: nCol.implicitHeight + 22
+                        radius: Theme.r(24)
+                        color: Theme.m3SurfaceHigh
+                        border.width: nCard.urgent ? 1 : 0
+                        border.color: Theme.m3Error
                         clip: true
 
-                        Rectangle {
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            anchors.topMargin: 8
-                            anchors.bottomMargin: 8
-                            width: 3
-                            radius: 1.5
-                            color: nCard.urgent ? Theme.error : Theme.primary
-                        }
-
-                        ColumnLayout {
+                        RowLayout {
                             id: nCol
                             anchors.fill: parent
-                            anchors.leftMargin: 13
-                            anchors.rightMargin: 9
-                            anchors.topMargin: 9
-                            anchors.bottomMargin: 9
-                            spacing: 3
+                            anchors.margins: 11
+                            spacing: 10
 
-                            RowLayout {
+                            Item {
+                                Layout.alignment: Qt.AlignTop
+                                implicitWidth: 38
+                                implicitHeight: 38
+
+                                M3Blob {
+                                    anchors.fill: parent
+                                    kind: ShellState.m3Shape
+                                    color: nCard.urgent ? Theme.m3ErrorContainer : Theme.m3PrimaryContainer
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: nCard.urgent ? "󰀨" : "󰂚"
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: Theme.fs(15)
+                                    color: nCard.urgent ? Theme.m3OnErrorContainer : Theme.m3OnPrimaryContainer
+                                }
+                            }
+
+                            ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: 6
+                                spacing: 2
 
-                                Rectangle {
-                                    implicitWidth: 20
-                                    implicitHeight: 20
-                                    radius: Theme.r(10)
-                                    color: nCard.urgent ? Theme.withAlpha(Theme.error, 0.20) : Theme.withAlpha(Theme.primary, 0.16)
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
 
                                     Text {
-                                        anchors.centerIn: parent
-                                        text: nCard.urgent ? "󰀨" : "󰂚"
-                                        font.family: Theme.iconFont
-                                        font.pixelSize: 10
-                                        color: nCard.urgent ? Theme.error : Theme.primary
+                                        Layout.maximumWidth: 160
+                                        elide: Text.ElideRight
+                                        text: nCard.modelData.appName || "System"
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fs(10)
+                                        font.weight: Font.Bold
+                                        color: nCard.urgent ? Theme.m3Error : Theme.m3Primary
+                                    }
+
+                                    Text {
+                                        text: nCard.modelData.timeStr || ""
+                                        font.family: Theme.monoFont
+                                        font.pixelSize: Theme.fs(9)
+                                        color: Theme.m3InkDim
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Rectangle {
+                                        implicitWidth: 24
+                                        implicitHeight: 24
+                                        radius: Theme.r(12)
+                                        color: dismissMouse.containsMouse ? Theme.m3SurfaceHighest : "transparent"
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "󰅖"
+                                            font.family: Theme.iconFont
+                                            font.pixelSize: Theme.fs(11)
+                                            color: Theme.m3InkDim
+                                        }
+
+                                        MouseArea {
+                                            id: dismissMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: ShellState.dismissNotification(nCard.modelData.uid)
+                                        }
                                     }
                                 }
 
                                 Text {
-                                    Layout.maximumWidth: 160
+                                    Layout.fillWidth: true
+                                    visible: {
+                                        const s = String(nCard.modelData.summary || "").trim();
+                                        const a = String(nCard.modelData.appName || "System").trim();
+                                        return s.length > 0 && s.toLowerCase() !== a.toLowerCase();
+                                    }
+                                    text: nCard.modelData.summary || ""
                                     elide: Text.ElideRight
-                                    text: nCard.modelData.appName || "System"
+                                    maximumLineCount: 1
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.fs(12)
                                     font.weight: Font.DemiBold
-                                    color: nCard.urgent ? Theme.error : Theme.primary
+                                    color: Theme.m3Ink
                                 }
 
                                 Text {
-                                    text: nCard.modelData.timeStr || ""
-                                    font.family: Theme.monoFont
-                                    font.pixelSize: 9
-                                    color: Theme.fgSurfaceVariant
+                                    Layout.fillWidth: true
+                                    visible: text.length > 0
+                                    text: String(nCard.modelData.body || "").replace(/\n+/g, " ")
+                                    wrapMode: Text.WordWrap
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 2
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fs(11)
+                                    color: Theme.m3InkDim
                                 }
-
-                                Item { Layout.fillWidth: true }
-
-                                Rectangle {
-                                    implicitWidth: 20
-                                    implicitHeight: 20
-                                    radius: Theme.r(10)
-                                    color: dismissMouse.containsMouse ? Theme.hoverBg : "transparent"
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "󰅖"
-                                        font.family: Theme.iconFont
-                                        font.pixelSize: 10
-                                        color: Theme.fgSurfaceVariant
-                                    }
-
-                                    MouseArea {
-                                        id: dismissMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: ShellState.dismissNotification(nCard.modelData.uid)
-                                    }
-                                }
-                            }
-
-                            Text {
-                                Layout.fillWidth: true
-                                visible: {
-                                    const s = String(nCard.modelData.summary || "").trim();
-                                    const a = String(nCard.modelData.appName || "System").trim();
-                                    return s.length > 0 && s.toLowerCase() !== a.toLowerCase();
-                                }
-                                text: nCard.modelData.summary || ""
-                                elide: Text.ElideRight
-                                maximumLineCount: 1
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 11
-                                font.weight: Font.Bold
-                                color: Theme.fgSurface
-                            }
-
-                            Text {
-                                Layout.fillWidth: true
-                                visible: text.length > 0
-                                text: String(nCard.modelData.body || "").replace(/\n+/g, " ")
-                                wrapMode: Text.WordWrap
-                                elide: Text.ElideRight
-                                maximumLineCount: 2
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 10
-                                color: Theme.fgSurfaceVariant
                             }
                         }
                     }
@@ -1122,39 +1120,43 @@ RowLayout {
                 ColumnLayout {
                     anchors.centerIn: parent
                     visible: (ShellState.notificationHistory || []).length === 0
-                    spacing: 8
+                    spacing: 10
 
-                    Rectangle {
+                    Item {
                         Layout.alignment: Qt.AlignHCenter
-                        implicitWidth: 50
-                        implicitHeight: 50
-                        radius: Theme.r(25)
-                        color: Theme.subCardBg
+                        implicitWidth: 64
+                        implicitHeight: 64
+
+                        M3Blob {
+                            anchors.fill: parent
+                            kind: ShellState.m3Shape
+                            color: ShellState.dnd ? Theme.m3SecondaryContainer : Theme.m3SurfaceHigh
+                        }
 
                         Text {
                             anchors.centerIn: parent
                             text: ShellState.dnd ? "󰂛" : "󰂜"
                             font.family: Theme.iconFont
-                            font.pixelSize: 24
-                            color: ShellState.dnd ? Theme.warning : Theme.primary
+                            font.pixelSize: Theme.fs(24)
+                            color: ShellState.dnd ? Theme.m3OnSecondaryContainer : Theme.m3InkDim
                         }
                     }
 
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        text: ShellState.dnd ? "Do Not Disturb is active" : "No Notifications"
+                        text: ShellState.dnd ? "Do Not Disturb is active" : "All caught up"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                        color: Theme.fgSurface
+                        font.pixelSize: Theme.fs(13)
+                        font.weight: Font.DemiBold
+                        color: Theme.m3Ink
                     }
 
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        text: ShellState.dnd ? "Desktop alerts are silenced" : "You're all caught up"
+                        text: ShellState.dnd ? "Desktop alerts are silenced" : "No notifications"
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        color: Theme.fgSurfaceVariant
+                        font.pixelSize: Theme.fs(11)
+                        color: Theme.m3InkDim
                     }
                 }
             }
